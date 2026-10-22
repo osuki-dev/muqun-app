@@ -7,6 +7,7 @@ import {
   walk,
 } from '../../test-support/production-source';
 import { foldPaneWindow } from '../../terminal/history';
+import { createPaneOutputStore } from '../../terminal/pane-output-store';
 import type { CapturedHistoryRead } from '../terminal-history-pull';
 import {
   emptyPaneCache,
@@ -685,7 +686,8 @@ describe('captured traversal recovery', () => {
       const callback = node.arguments[0];
       if (callback?.type !== 'ArrowFunctionExpression') return;
       const code = source.code(callback);
-      if (code.includes('const probedOutput = readOutputWindow().output;')) effectSource = code;
+      if (code.includes('const probedOutput = outputStore.get().window.output;'))
+        effectSource = code;
     });
     if (!effectSource) throw new Error('Missing captured probe effect');
     let reads = 0;
@@ -714,7 +716,10 @@ describe('captured traversal recovery', () => {
       MAX_PANE_OUTPUT_LINES: 2_000,
       capturedProbeDue,
       capturedProbeState,
-      readOutputWindow: () => ({ output: 'live viewport', capturedRows: 0 }),
+      outputStore: createPaneOutputStore({
+        window: { output: 'live viewport', capturedRows: 0 },
+        revision: -1,
+      }),
       readPaneHistory: async () => {
         reads += 1;
         return page(['captured row']);
@@ -756,28 +761,31 @@ describe('captured traversal recovery', () => {
     ) as (switched: boolean, input: Record<string, unknown>) => void;
     const cache = { current: emptyPaneCache };
     const owner = { current: 'previous-pane' };
+    const outputStore = createPaneOutputStore({
+      window: { output: 'captured row\nlive row', capturedRows: 1 },
+      revision: 1,
+    });
     const restored: { output: string; capturedRows: number }[] = [];
     const input = {
-      output: 'captured row\nlive row',
-      capturedRows: 1,
+      outputStore,
       paneId: 'next-pane',
       outputShape: 'ansi:main',
       paneCacheRef: cache,
       paneWindowOwnerRef: owner,
       heldShapeRef: { current: 'ansi:main' },
       outputLineLimitRef: { current: 240 },
-      paneRevisionRef: { current: 1 },
       canLoadEarlierOutputRef: { current: true },
       earlierOutputRowsRef: { current: 2 },
       rangeUnsupportedRef: { current: false },
       lastReadRef: { current: null },
       capturedHereRef: { current: null },
-      setOutput: (output: string, capturedRows = 0) => restored.push({ output, capturedRows }),
       setCanLoadEarlierOutput: () => {},
-      setPaneRevision: () => {},
     };
     handoff(true, input);
-    handoff(true, { ...input, output: 'next live', capturedRows: 0, paneId: 'previous-pane' });
+    restored.push(outputStore.get().window);
+    outputStore.setWindow({ output: 'next live', capturedRows: 0 });
+    handoff(true, { ...input, paneId: 'previous-pane' });
+    restored.push(outputStore.get().window);
     expect(restored).toEqual([
       { output: '', capturedRows: 0 },
       { output: 'captured row\nlive row', capturedRows: 1 },
