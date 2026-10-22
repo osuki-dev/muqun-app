@@ -1,5 +1,5 @@
 import type { MessageDescriptor } from '@lingui/core';
-import { normalizeCapabilities } from './server-capabilities';
+import { healthCapabilityNames, normalizeCapabilities } from './server-capabilities';
 import type { GatewayEndpoint } from '@/lib/gateway-client';
 import type { AgentCatalog, AgentProject } from '@/lib/agent-session';
 import type { AgentStatusInfo, GatewayDiscovery } from '@/lib/agent-protocol';
@@ -284,7 +284,7 @@ export function checkAgentServer(
               OPENCODE_READINESS_TIMEOUT_MS,
               (body) => {
                 if (body && typeof body === 'object' && !Array.isArray(body)) {
-                  capabilities = (body as { capabilities?: unknown }).capabilities;
+                  capabilities = healthCapabilityNames(body);
                 }
               }
             );

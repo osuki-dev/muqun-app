@@ -7,6 +7,7 @@ import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { faultProbeDue } from '@/lib/pairing-faults';
 import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
+import { healthCapabilityNames } from '@/lib/server-capabilities';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import {
@@ -160,7 +161,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
           const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
           noteGatewayGeneration(serverId, answer);
           if (answer?.capabilities) {
-            void useServerCapabilities.getState().record(serverId, answer.capabilities);
+            void useServerCapabilities.getState().record(serverId, healthCapabilityNames(answer));
           }
           // Kept for the warm only once it passes the same gate `loadHealth`
           // applies. A gateway whose terminal backend is down is reachable -- the

@@ -29,6 +29,8 @@ export interface PaneViewCapabilities {
   parts: boolean;
   /** The gateway declared `capabilities.agent_sessions` */
   agentSessions?: boolean;
+  /** The gateway reads this pane's agent transcript (`agent_transcripts_v1`). */
+  transcript?: boolean;
 }
 
 /**
@@ -73,7 +75,7 @@ export function availablePaneViewModes(capabilities: PaneViewCapabilities): Pane
   return PANE_VIEW_MODE_ORDER.filter((mode) => {
     if (mode === 'chat' && !CHAT_VIEW_ENABLED) return false;
     if (mode === 'terminal') return true;
-    if (capabilities.agentSessions) return true;
+    if (capabilities.agentSessions || capabilities.transcript) return true;
     return capabilities.agent && capabilities.parts;
   });
 }
