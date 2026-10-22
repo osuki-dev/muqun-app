@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { followHomeSession } from '@/components/home-thread';
 import {
@@ -7,13 +7,23 @@ import {
   type FormRequest,
   type PermissionRequest,
 } from '@/lib/agent-protocol';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { useMinuteNow } from '@/hooks/use-minute-now';
+import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { readPaneOutput } from '@/lib/gateway-client';
 import { sameComputer } from '@/lib/home-composer';
 import { homeWaitingTasks } from '@/lib/home-in-progress';
 import { homeThreadKey } from '@/lib/home-thread';
 import { paneAgentActivity } from '@/lib/pane-agent-line';
+import {
+  hasSharedPaneFeed,
+  paneFeedKey,
+  subscribeSharedPaneFeeds,
+  watchPaneFeed,
+} from '@/lib/pane-event-feeds';
+import { OUTPUT_EVENTS } from '@/lib/pane-event-names';
+import { initialPaneReadState, paneReadStep, type PaneReadEvent } from '@/lib/pane-read-scheduler';
 import {
   keepStageLines,
   sessionActivity,
@@ -113,10 +123,32 @@ export function useStageNeeds(serverId: string): StageNeeds & {
   return { ...needs, terminal };
 }
 
-/** How often the followed pane agent's screen is read while it works. */
-const PANE_ACTIVITY_READ_MS = 4_500;
 /** Rows of the pane's visible screen read for its activity. */
 const PANE_ACTIVITY_ROWS = 80;
+
+/**
+ * The Stage's own event feed, when no screen's feed serves the computer:
+ * output events only, with one working pane's visible screen inlined as text
+ * -- sampled on the computer and sent only when it changes -- and given up
+ * the moment the drawer or terminal opens a feed of its own.
+ */
+const STAGE_FEED = {
+  types: OUTPUT_EVENTS,
+  borrower: true,
+  stream: { source: 'visible', format: 'text', lines: PANE_ACTIVITY_ROWS },
+} as const;
+/**
+ * A streamed screen is parsed at most this often. The gateway samples every
+ * 150 ms, so an animating spinner sends a frame nearly every sample; only the
+ * newest frame of a burst is parsed.
+ */
+const STREAM_PARSE_MIN_MS = 250;
+const noop = () => {};
+
+type PaneSource = {
+  subject: Extract<StageActivitySubject, { kind: 'pane' }>;
+  source: string;
+};
 
 type SeenActivity = {
   serverId: string;
@@ -148,7 +180,12 @@ function ownsComputer(serverId: string): (() => boolean) | null {
   };
 }
 
-/** At most five active speakers, followed only while the Stage is visible. */
+/**
+ * At most five active speakers, followed only while the Stage is visible.
+ * Working pane agents are heard through the computer's event feed: one pane's
+ * screen streams in it, the rest are read on its hints, and all of them on a
+ * 4.5 s poll whenever no feed is up.
+ */
 export function useStageProgress(serverId: string): StageProgress[] {
   const tasks = useServerTasksStore((state) => state.index[serverId]?.tasks ?? NO_TASKS);
   const panes = useServerAgents((state) => state.byServer[serverId]);
@@ -253,10 +290,34 @@ export function useStageProgress(serverId: string): StageProgress[] {
     );
     return JSON.stringify(followable.filter(({ subject }) => streamed.has(subject.key)));
   }, [sources, recency]);
-  const paneSubscriptions = useMemo(
-    () => JSON.stringify(sources.filter(({ subject }) => subject.kind === 'pane')),
+  const paneSources = useMemo(
+    () =>
+      sources.flatMap(({ subject, source }) =>
+        subject.kind === 'pane' ? [{ subject, source } satisfies PaneSource] : []
+      ),
     [sources]
   );
+  const paneSubscriptions = useMemo(() => JSON.stringify(paneSources), [paneSources]);
+  // The feed streams one screen: the most recently active pane's, held while
+  // it keeps working so a swap in rank does not reopen the feed.
+  const [streamed, setStreamed] = useState<string | null>(null);
+  const nextStreamed = useMemo(() => {
+    if (paneSources.some(({ source }) => source === streamed)) return streamed;
+    let best: PaneSource | undefined;
+    let bestRank = Number.POSITIVE_INFINITY;
+    for (const entry of paneSources) {
+      const rank = recency.indexOf(entry.subject.key);
+      const at = rank < 0 ? Number.MAX_SAFE_INTEGER : rank;
+      if (at < bestRank) {
+        best = entry;
+        bestRank = at;
+      }
+    }
+    return best?.source ?? null;
+  }, [paneSources, recency, streamed]);
+  if (nextStreamed !== streamed) setStreamed(nextStreamed);
+  const streamedPaneId =
+    paneSources.find(({ source }) => source === nextStreamed)?.subject.paneId ?? null;
   const connectionRecord = useGatewayConnectionStore((state) => state.record);
   const sessionFollowers = useRef(new Map<string, { owns: () => boolean; close: () => void }>());
   const paneSessionId = panes?.sessionId;
@@ -346,40 +407,191 @@ export function useStageProgress(serverId: string): StageProgress[] {
     };
   }, []);
 
+  // Working pane agents: one event feed for the computer, shared with the
+  // reply drawer and the terminal. Never a second: the Stage opens its own only
+  // while no screen holds one for this computer, and then streams one pane's
+  // screen in it.
+  const record = connectionRecord?.serverId === serverId ? connectionRecord : null;
+  const working = paneSources.length > 0 && Boolean(paneSessionId && record);
+  const tunnel = useGatewayTunnel(record, working);
+  const feedKey =
+    working && tunnel.baseUrl && paneSessionId ? paneFeedKey(tunnel.baseUrl, paneSessionId) : null;
+  const shared = useSyncExternalStore(
+    subscribeSharedPaneFeeds,
+    () => feedKey !== null && hasSharedPaneFeed(feedKey)
+  );
+  const ownFeed = feedKey !== null && !shared && streamedPaneId !== null;
+  /** Where the own feed's frames go: the pane effect running now. */
+  const frames = useRef<((paneId: string, text: string) => void) | null>(null);
+  usePaneEvents(
+    tunnel.baseUrl,
+    record?.token ?? null,
+    paneSessionId ?? '',
+    ownFeed ? streamedPaneId : null,
+    ownFeed,
+    0,
+    {
+      // Changes and the connection arrive through `watchPaneFeed`.
+      onPaneRevision: noop,
+      onPaneOutput: (revised, _revision, text) => frames.current?.(revised, text),
+      onStructureChanged: noop,
+      onConnected: noop,
+    },
+    STAGE_FEED
+  );
   useEffect(() => {
     const owns = ownsComputer(serverId);
-    if (!owns) return;
+    if (!owns || !paneSessionId) return;
+    const entries = JSON.parse(paneSubscriptions) as PaneSource[];
+    if (entries.length === 0) return;
     let active = true;
-    const paneSources = JSON.parse(paneSubscriptions) as {
-      subject: Extract<StageActivitySubject, { kind: 'pane' }>;
-      source: string;
-    }[];
-    // One bounded visible-screen read across all terminals, never five parallel histories.
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    // The own feed's pane, while its frames flow, is never read.
+    const streamedEntry = ownFeed
+      ? entries.find(({ source }) => source === nextStreamed)
+      : undefined;
+    let streaming = false;
+    const pool = () => (streaming ? entries.filter((entry) => entry !== streamedEntry) : entries);
+    // Lines already noted: an unchanged line costs no state update at all.
+    const noted = new Map<string, string>();
+    const heard = ({ subject, source }: PaneSource, text: string | undefined) => {
+      if (!text || !active || !owns() || noted.get(subject.key) === `${source}\n${text}`) return;
+      noted.set(subject.key, `${source}\n${text}`);
+      note(subject.key, source, text, Date.now());
+    };
+
+    // The rest are read: one visible-screen read at a time across all of
+    // them, hinted panes first, else in turn on the poll (`paneReadStep`).
+    const hinted = new Set(entries.map(({ subject }) => subject.paneId));
     let nextPane = 0;
-    const readPane = () => {
-      timer = null;
-      const entry = paneSources[nextPane % paneSources.length];
-      if (!active || !owns() || !paneSessionId || entry?.subject.kind !== 'pane') return;
-      nextPane += 1;
-      const { subject, source } = entry;
-      void readPaneOutput(paneSessionId, subject.paneId, 'text', PANE_ACTIVITY_ROWS, 'visible')
+    let state = initialPaneReadState();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let timerAtMs: number | undefined;
+    const step = (event: PaneReadEvent) => {
+      if (!active) return;
+      const nowMs = Date.now();
+      const plan = paneReadStep(state, event, nowMs);
+      state = plan.state;
+      // One timer, moved only when the time it is due changes.
+      if (plan.wakeAtMs !== timerAtMs) {
+        if (timer) clearTimeout(timer);
+        timer = null;
+        timerAtMs = plan.wakeAtMs;
+        if (plan.wakeAtMs !== undefined)
+          timer = setTimeout(() => {
+            timer = null;
+            timerAtMs = undefined;
+            step({ type: 'tick' });
+          }, plan.wakeAtMs - nowMs);
+      }
+      const id = plan.read;
+      if (id === undefined) return;
+      const candidates = pool();
+      let entry = candidates.find(({ subject }) => hinted.has(subject.paneId));
+      if (!entry) {
+        entry = candidates[nextPane % candidates.length];
+        nextPane += 1;
+      }
+      if (!entry) {
+        step({ type: 'settled', id });
+        return;
+      }
+      hinted.delete(entry.subject.paneId);
+      void readPaneOutput(
+        paneSessionId,
+        entry.subject.paneId,
+        'text',
+        PANE_ACTIVITY_ROWS,
+        'visible'
+      )
         .then(
+          // Only the newest read's answer: one given up as stuck may be stale.
           (output) => {
-            if (active && owns()) note(subject.key, source, paneAgentActivity(output), Date.now());
+            if (id === state.latest) heard(entry, paneAgentActivity(output));
           },
+          // A pane that cannot be read says nothing; the next read may.
           () => {}
         )
-        .finally(() => {
-          if (active && owns()) timer = setTimeout(readPane, PANE_ACTIVITY_READ_MS);
-        });
+        .finally(() => step({ type: 'settled', id }));
+      // Other hinted panes are read next, a gap later.
+      if (candidates.some(({ subject }) => hinted.has(subject.paneId))) step({ type: 'changed' });
     };
-    if (paneSources.length > 0) readPane();
+    const streamingChanged = (on: boolean) => {
+      streaming = on;
+      if (!on && streamedEntry) hinted.add(streamedEntry.subject.paneId);
+      // Nothing is read only while the streamed screen is all there is.
+      step({ type: 'streaming', on: pool().length === 0 });
+      if (!on) step({ type: 'changed' });
+    };
+
+    // The streamed screen: the newest frame of a burst, parsed at most
+    // `STREAM_PARSE_MIN_MS` apart.
+    let frameText: string | null = null;
+    let parsedAtMs = Number.NEGATIVE_INFINITY;
+    let parseTimer: ReturnType<typeof setTimeout> | null = null;
+    const parse = () => {
+      parseTimer = null;
+      if (!active || !streamedEntry || frameText === null) return;
+      const text = frameText;
+      frameText = null;
+      parsedAtMs = Date.now();
+      heard(streamedEntry, paneAgentActivity(text));
+    };
+    const frame = (revised: string, text: string) => {
+      if (!active || revised !== streamedEntry?.subject.paneId) return;
+      if (!streaming) streamingChanged(true);
+      frameText = text;
+      if (parseTimer) return;
+      const waitMs = parsedAtMs + STREAM_PARSE_MIN_MS - Date.now();
+      if (waitMs <= 0) parse();
+      else parseTimer = setTimeout(parse, waitMs);
+    };
+    if (streamedEntry) frames.current = frame;
+    // What printed while the feed was down went unheard: the rest are read
+    // once it is back (the own feed's screen follows its connecting at once).
+    // Before the first connection, the reads at mount cover it.
+    let watching = false;
+    let missed = false;
+    const unwatch = feedKey
+      ? watchPaneFeed(feedKey, {
+          onLive: (live) => {
+            if (!live) {
+              missed = watching;
+              if (streaming) streamingChanged(false);
+              return;
+            }
+            if (!missed) return;
+            missed = false;
+            for (const entry of entries)
+              if (entry !== streamedEntry) hinted.add(entry.subject.paneId);
+            if (hinted.size > 0) step({ type: 'connected' });
+          },
+          onChanged: (changed) => {
+            if (streaming && changed === streamedEntry?.subject.paneId) return;
+            if (!entries.some(({ subject }) => subject.paneId === changed)) return;
+            hinted.add(changed);
+            step({ type: 'changed' });
+          },
+        })
+      : noop;
+    watching = true;
+    step({ type: 'tick' });
     return () => {
       active = false;
       if (timer) clearTimeout(timer);
+      if (parseTimer) clearTimeout(parseTimer);
+      if (frames.current === frame) frames.current = null;
+      unwatch();
     };
-  }, [serverId, connectionRecord, paneSessionId, paneSubscriptions, note]);
+  }, [
+    serverId,
+    connectionRecord,
+    paneSessionId,
+    paneSubscriptions,
+    nextStreamed,
+    feedKey,
+    ownFeed,
+    note,
+  ]);
 
   // The dock's activity is the one input that moves several times a second:
   // it rebuilds these few rows, and `keepStageLines` keeps every unchanged one.

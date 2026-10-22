@@ -9,6 +9,7 @@ import { streamRecordCrypto } from '@/lib/gateway-transport';
 import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/lib/gateway-client';
 import { rethrow } from '@/lib/compiler-safe-control-flow';
 import { onNetworkChange } from '@/lib/network-events';
+import { openPaneFeed, paneFeedKey } from '@/lib/pane-event-feeds';
 import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog';
 import {
   APPROVAL_EVENTS,
@@ -98,6 +99,21 @@ type HerdrEventPayload = {
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
 
+type PaneEventOptions = {
+  /** The event names to ask for, in place of everything the workspace uses. */
+  types?: readonly string[];
+  /**
+   * A reader's own fallback feed, opened only while no screen's feed serves
+   * the session (`lib/pane-event-feeds`). Every other feed is shared.
+   */
+  borrower?: boolean;
+  /**
+   * How `streamPaneId`'s inlined output is read: by default the recent
+   * unwrapped lines as ANSI, as the terminal paints them.
+   */
+  stream?: { source: 'visible' | 'recent-unwrapped'; format: 'text' | 'ansi'; lines?: number };
+};
+
 export function usePaneEvents(
   gatewayUrl: string | null,
   token: string | null,
@@ -107,7 +123,8 @@ export function usePaneEvents(
   enabled: boolean,
   /** Incremented when the app returns to the foreground to replace a suspended socket. */
   restartKey: number,
-  handlers: PaneEventHandlers
+  handlers: PaneEventHandlers,
+  options: PaneEventOptions = {}
 ): void {
   // One long-lived subscription with nothing rendered from it to memoize. Its
   // stream loop is control flow React Compiler cannot lower, so it stays
@@ -120,13 +137,18 @@ export function usePaneEvents(
     handlersRef.current = handlers;
   });
 
+  const types = (options.types ?? SUBSCRIBED_EVENTS).join(',');
+  const borrower = options.borrower ?? false;
+  const streamSource = options.stream?.source ?? 'recent-unwrapped';
+  const streamFormat = options.stream?.format ?? 'ansi';
+  const streamLines = options.stream?.lines;
+
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer is cleared on unmount in the effect cleanup below.
   useEffect(() => {
     if (!enabled || !gatewayUrl || !token || !sessionId) {
       return () => {};
     }
 
-    const types = SUBSCRIBED_EVENTS.join(',');
     const base = gatewayUrl.replace(/\/$/, '');
     const params = new URLSearchParams({ types });
     // Ask the gateway to inline this pane's output into its update events. A
@@ -134,12 +156,15 @@ export function usePaneEvents(
     // to onPaneRevision + a read with no version check needed.
     if (streamPaneId) {
       params.set('stream_pane', streamPaneId);
-      params.set('stream_format', 'ansi');
-      params.set('stream_source', 'recent-unwrapped');
+      params.set('stream_format', streamFormat);
+      params.set('stream_source', streamSource);
+      if (streamLines !== undefined) params.set('stream_lines', String(streamLines));
     }
     const url = `${base}/api/sessions/${encodeURIComponent(sessionId)}/events?${params.toString()}`;
 
     const approvalNames = new Set<string>(APPROVAL_EVENTS);
+    // Announced to readers that only need to know when a pane printed.
+    const feed = openPaneFeed(paneFeedKey(base, sessionId), borrower);
     let cancelled = false;
     let controller: AbortController | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -164,6 +189,7 @@ export function usePaneEvents(
         if (pane?.pane_id) {
           const revision = pane.revision ?? 0;
           // When the gateway inlined the output, paint it directly -- no read.
+          feed.changed(pane.pane_id);
           if (typeof payload.data?.output === 'string') {
             handlersRef.current.onOutputFrame?.(payload);
             handlersRef.current.onPaneOutput(pane.pane_id, revision, payload.data.output);
@@ -271,6 +297,7 @@ export function usePaneEvents(
           // An abort does not reliably wake a read parked on a dead socket.
           void reader.cancel().catch(() => {});
         };
+        feed.connected(true);
         handlersRef.current.onConnected();
 
         while (!cancelled) {
@@ -304,6 +331,7 @@ export function usePaneEvents(
         attempt.abort();
       }
       restart = null;
+      feed.connected(false);
 
       if (cancelled) return;
       handlersRef.current.onDisconnected?.();
@@ -344,6 +372,19 @@ export function usePaneEvents(
       releaseNetwork();
       restart = null;
       controller?.abort();
+      feed.close();
     };
-  }, [enabled, gatewayUrl, restartKey, sessionId, streamPaneId, token]);
+  }, [
+    enabled,
+    gatewayUrl,
+    restartKey,
+    sessionId,
+    streamPaneId,
+    token,
+    types,
+    borrower,
+    streamSource,
+    streamFormat,
+    streamLines,
+  ]);
 }

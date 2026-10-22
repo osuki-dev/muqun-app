@@ -763,7 +763,7 @@ export function sessionActivity(
 }
 
 /** A subtitle's text changes at most this often; it appears and leaves at once. */
-export const STAGE_SUBTITLE_MIN_MS = 2_000;
+export const STAGE_SUBTITLE_MIN_MS = 1_000;
 
 /**
  * What the subtitle does with a new line: show it now, or wait `waitMs`
