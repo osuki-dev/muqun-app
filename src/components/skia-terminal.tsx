@@ -90,6 +90,7 @@ import {
   pinchedTerminalScale,
   terminalFitToWidthScale,
   terminalFontSize,
+  terminalMirrorFitScale,
   terminalOpenScale,
   terminalOpenView,
   terminalPanMinX,
@@ -386,10 +387,27 @@ function useArmPaneOpen(
   paneOpenScale: number,
   scale: SharedValue<number>,
   translateX: SharedValue<number>,
-  placedOpenKeyRef: { current: string | null }
+  placedOpenKeyRef: { current: string | null },
+  terminalId: string,
+  easeRefit: boolean
 ): void {
+  // The pane the last adjust was for. A new key on the same pane is a refit --
+  // its width arrived after the first frame, tmux re-split it, the canvas was
+  // resized -- and the reader is already looking at it, so the change eases
+  // rather than jumps. A switch, and the first adjust after mount, snap: the
+  // picture is new either way.
+  const armedPaneRef = useRef<string | null>(null);
   const arm = useEffectEvent(() => {
     if (!ready) return;
+    const refit = easeRefit && armedPaneRef.current === terminalId;
+    armedPaneRef.current = terminalId;
+    if (refit) {
+      // The offsets follow the scale (see the reaction on it in the canvas), so
+      // the reader keeps their place while the picture eases to the new fit.
+      scale.set(withTiming(paneOpenScale, timing('short')));
+      placedOpenKeyRef.current = null;
+      return;
+    }
     scale.set(paneOpenScale);
     // The pan goes back to the left edge, as it always has on open.
     translateX.set(0);
@@ -435,6 +453,7 @@ export function SkiaTerminal({
   paneRows,
   paneCursorColumn,
   paneCursorRow,
+  paneScale = 'remembered',
   touchInput,
 }: {
   /**
@@ -558,6 +577,15 @@ export function SkiaTerminal({
   /** The program's cursor, when the gateway reports one. Both or neither. */
   paneCursorColumn?: number;
   paneCursorRow?: number;
+  /**
+   * How the pane's resting size is chosen. `'remembered'` (the terminal
+   * screen): a pinch the reader made for this pane at this width wins over the
+   * fit, and a new pinch is remembered. `'mirror'` (Home's reply drawer): always
+   * the fit (`terminalMirrorFitScale`), which also shrinks a wider pane down to a
+   * readable size; a pinch here lasts until the canvas closes and is not written
+   * down, so neither screen's pinch resizes the other.
+   */
+  paneScale?: 'remembered' | 'mirror';
   /**
    * The far side's input channel, for a pane whose program has asked to hear
    * about the pointer. Left out by a caller that has no such channel -- the
@@ -1380,7 +1408,10 @@ export function SkiaTerminal({
   // puts its last column exactly on the right edge when it is narrower than
   // the canvas (or one column over it), 1 for a wider pane, which pans. See
   // `terminalFitToWidthScale`.
-  const paneRestingScale = terminalFitToWidthScale(fitGeometry, fitColumns);
+  const mirror = paneScale === 'mirror';
+  const paneRestingScale = mirror
+    ? terminalMirrorFitScale(fitGeometry, fitColumns)
+    : terminalFitToWidthScale(fitGeometry, fitColumns);
   // The size this pane is about to open at -- the remembered pinch if it has
   // one, the fit otherwise. Computed here rather than inside the switch render
   // below because the placement needs it too: how many of the pane's cells are
@@ -1390,12 +1421,14 @@ export function SkiaTerminal({
   // reused pane id had this pane at 1.44 while the placement still counted at
   // 1:1. `loadPaneScales` is a plain object after its first read (see it), so
   // asking every render costs a lookup.
-  const paneOpenScale = terminalOpenScale({
-    paneId: terminalId,
-    remembered: loadPaneScales(),
-    fit: fitGeometry,
-    paneColumns: fitColumns,
-  });
+  const paneOpenScale = mirror
+    ? paneRestingScale
+    : terminalOpenScale({
+        paneId: terminalId,
+        remembered: loadPaneScales(),
+        fit: fitGeometry,
+        paneColumns: fitColumns,
+      });
   // Which cell of the pane the reader is put in front of. `{ 0, 0 }` for every
   // pane that is not a full-screen program bigger than this phone's grid, which
   // is every pane that opens correctly today. See `terminalOpenView`.
@@ -1452,7 +1485,11 @@ export function SkiaTerminal({
     paneOpenScale,
     scale,
     translateX,
-    placedOpenKeyRef
+    placedOpenKeyRef,
+    terminalId,
+    // A placement (an editor bigger than this grid) is measured at the scale
+    // it lands on, so that one still snaps; every other refit eases.
+    openView.row === 0 && openView.column === 0
   );
 
   // What the placement needs, read from the one frame that can honour it. Both
@@ -1477,7 +1514,7 @@ export function SkiaTerminal({
   // keeps that scale (`terminalScaleOnPinchEnd`), until it is pinched again or
   // tmux reports another width.
   const rememberPinch = useStableHandler((pinched: number) => {
-    if (viewport.width <= 0) return;
+    if (viewport.width <= 0 || mirror) return;
     savePaneScales(
       terminalScaleOnPinchEnd(terminalId, pinched, loadPaneScales(), paneRestingScale, fitColumns)
     );
@@ -1753,6 +1790,38 @@ export function SkiaTerminal({
               historyHeight * scale.get(),
               animatedTopClearance.get()
             )
+      );
+    }
+  );
+
+  // A refit the reader did not make (the pane resized on the computer, its
+  // width arriving after the first frame) eases `scale` without a gesture. A
+  // reader following output is kept at the bottom by the reaction above; one
+  // scrolled up keeps the row at the top of the view, and the pan keeps the
+  // same column at the left, instead of the picture growing out from under
+  // them. A pinch moves the offsets itself, so it is left alone.
+  useAnimatedReaction(
+    () => scale.get(),
+    (next, previous) => {
+      if (previous === null || next === previous || previous <= 0) return;
+      if (gesturing.get()) return;
+      const ratio = next / previous;
+      translateX.set(
+        Math.max(
+          terminalPanMinX(viewport.width, textWidth, next),
+          Math.min(0, translateX.get() * ratio)
+        )
+      );
+      if (followOutput.get()) return;
+      const top = animatedTopInset.get();
+      translateY.set(
+        clampScrollOffset(
+          top + (translateY.get() - top) * ratio,
+          animatedVisibleHeight.get() - contentHeight * next,
+          top,
+          historyHeight * next,
+          animatedTopClearance.get()
+        )
       );
     }
   );

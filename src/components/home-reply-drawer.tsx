@@ -886,6 +886,8 @@ function DrawerSession({
 }
 
 const doNothing = () => {};
+/** How often an open drawer re-reads its pane's size while output streams. */
+const PANE_GEOMETRY_REFRESH_MS = 2000;
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
 /**
@@ -937,6 +939,25 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
       () => {}
     );
   });
+  // herdr sends no event when a pane is resized on the computer, but the
+  // program in it redraws for its new width, so output is the cue to look at
+  // the pane's size again: at most once per `PANE_GEOMETRY_REFRESH_MS` while
+  // output streams, the last call trailing the burst. The canvas eases to the
+  // new fit (`SkiaTerminal`'s refit).
+  const geometryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshGeometry = useStableHandler(() => {
+    if (geometryTimer.current) return;
+    geometryTimer.current = setTimeout(() => {
+      geometryTimer.current = null;
+      loadPane();
+    }, PANE_GEOMETRY_REFRESH_MS);
+  });
+  useEffect(
+    () => () => {
+      if (geometryTimer.current) clearTimeout(geometryTimer.current);
+    },
+    []
+  );
   const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
     const shape = readShape();
     setHeld((current) =>
@@ -994,10 +1015,14 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     useMemo(
       () => ({
         onPaneRevision: (revised: string) => {
-          if (revised === paneId) read();
+          if (revised !== paneId) return;
+          read();
+          refreshGeometry();
         },
         onPaneOutput: (revised: string, _revision: number, text: string) => {
-          if (revised === paneId) fold(text, 'frame');
+          if (revised !== paneId) return;
+          fold(text, 'frame');
+          refreshGeometry();
         },
         onStructureChanged: loadPane,
         onLayoutChanged: loadPane,
@@ -1009,7 +1034,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
         onDisconnected: () => setStreamUp(false),
         onOutputFrame: (payload: unknown) => noteGatewayGeneration(serverId, payload),
       }),
-      [paneId, serverId, read, fold, loadPane]
+      [paneId, serverId, read, fold, loadPane, refreshGeometry]
     )
   );
 
@@ -1041,6 +1066,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
           screenRows={screenRows}
           ownsScreen={ownsScreen}
           screenFocused
+          paneScale="mirror"
           paneColumns={pane ? numberField(pane, 'width') || undefined : undefined}
           paneRows={pane ? numberField(pane, 'height') || undefined : undefined}
           paneCursorColumn={optionalNumberField(pane, 'cursor_x')}

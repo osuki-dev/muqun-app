@@ -212,6 +212,32 @@ export function terminalFitToWidthScale(
   return 1;
 }
 
+/**
+ * The scale a mirror of a pane rests at: Home's reply drawer, a glance at a
+ * pane the reader is not driving. Always the pane's own width against this
+ * canvas, never a pinch remembered from the terminal screen.
+ *
+ * - **Narrower than the canvas**: scaled up to fill it, capped at
+ *   `TERMINAL_MAX_FIT_SCALE` (as `terminalFitToWidthScale`).
+ * - **Wider**: scaled down to fill it, but never below `TERMINAL_MIN_FONT_PT`;
+ *   whatever is still too wide at that size pans. Card #643's one-size rule is
+ *   about the terminal screen, where the reader reads at the setting's size; a
+ *   glance is better served by seeing more of the pane at once.
+ *
+ * `undefined` columns or an unmeasured canvas mean 1: no fit at all.
+ */
+export function terminalMirrorFitScale(
+  geometry: TerminalFitGeometry,
+  paneColumns?: number
+): number {
+  if (typeof paneColumns !== 'number' || !(paneColumns > 0)) return 1;
+  const exact = terminalExactFillScale(geometry, paneColumns);
+  if (exact === null) return 1;
+  if (exact >= 1) return Math.min(exact, TERMINAL_MAX_FIT_SCALE);
+  const floor = Math.min(1, TERMINAL_MIN_FONT_PT / geometry.fontSize);
+  return Math.max(exact, floor);
+}
+
 /** The point size the setting names, falling back to the middle one. */
 export function terminalFontSize(size: TerminalTextSize): number {
   return TERMINAL_TEXT_SIZE_POINTS[size] ?? TERMINAL_TEXT_SIZE_POINTS.default;
@@ -333,7 +359,13 @@ export interface TerminalOpenScaleInput {
  * back to it (see its own note). So the one ambiguous case -- a reader who
  * pinches to within half a percent of the fit -- resolves as a fit, which draws
  * exactly what they asked for now and re-fits later. Ambiguous because the two
- * are the same number; harmless because the number is the same.
+ * are the same number; harmless because the number is the same. *
+ * One floor on a remembered pinch: it never opens the pane narrower than the
+ * view. A pinch out on a pane already narrower than the phone shows only empty
+ * width beside it, and once remembered it opened that pane half-empty for
+ * good -- on Home's drawer as well as here -- which reads as broken rather than
+ * as a choice. Zooming in, and zooming out across a pane wider than the view,
+ * are kept exactly as pinched.
  */
 export function terminalOpenScale({
   paneId,
@@ -343,7 +375,13 @@ export function terminalOpenScale({
 }: TerminalOpenScaleInput): number {
   const value = remembered[terminalScaleKey(paneId, paneColumns)];
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return terminalScaleOnPaneOpen(paneId, remembered, paneColumns);
+    const pinched = terminalScaleOnPaneOpen(paneId, remembered, paneColumns);
+    // Never narrower than the view: a pinch may zoom in, or out across a wide
+    // pane, but a remembered one that would leave the pane's last column short
+    // of the right edge opens at the scale that puts it there instead.
+    const exact = typeof paneColumns === 'number' ? terminalExactFillScale(fit, paneColumns) : null;
+    if (exact === null) return pinched;
+    return Math.max(pinched, Math.min(exact, TERMINAL_MAX_FIT_SCALE));
   }
   return terminalFitToWidthScale(fit, paneColumns);
 }
