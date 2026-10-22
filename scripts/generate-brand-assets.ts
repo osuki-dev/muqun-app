@@ -39,9 +39,47 @@ function magick(args: string[]) {
 for (const spec of specs) {
   if (selectedIds.size > 0 && !selectedIds.has(spec.id)) continue;
   const folder = `assets/icons/${spec.directory}`;
-  // Preserve original Classic artwork and imagegen-prepared full-bleed icon canvases.
-  if (spec.directory === 'classic' || spec.fullBleed) continue;
+  // Classic's hand-drawn in-app mark and launcher exports are the originals.
+  if (spec.directory === 'classic') continue;
   const master = `${folder}/mark.png`;
+  // The in-app mark (Settings footer, launch loader, lock screen, Home) follows the
+  // selected launcher icon. Cutouts sit on a transparent canvas; a full-bleed master
+  // has no cutout, so it becomes a rounded icon tile instead of an opaque square.
+  magick([
+    master,
+    '-resize',
+    '384x384',
+    ...(spec.fullBleed
+      ? [
+          '-alpha',
+          'set',
+          '(',
+          '-size',
+          '384x384',
+          'xc:none',
+          '-fill',
+          'white',
+          '-draw',
+          'roundrectangle 0,0,383,383,86,86',
+          ')',
+          '-compose',
+          'DstIn',
+          '-composite',
+          '-compose',
+          'over',
+        ]
+      : []),
+    '-gravity',
+    'center',
+    '-background',
+    'none',
+    '-extent',
+    '512x512',
+    ...encode,
+    `${folder}/brand-mark.png`,
+  ]);
+  // Preserve imagegen-prepared full-bleed icon canvases.
+  if (spec.fullBleed) continue;
   for (const [filename, background] of [
     ['icon.png', spec.light],
     ...(spec.dark === spec.light ? [] : [['icon-dark.png', spec.dark]]),
@@ -144,19 +182,6 @@ magick([
   'black',
   ...encode,
   'assets/icons/monochrome.png',
-]);
-magick([
-  'assets/icons/mascot/mark.png',
-  '-resize',
-  '384x384',
-  '-gravity',
-  'center',
-  '-background',
-  'none',
-  '-extent',
-  '512x512',
-  ...encode,
-  'assets/icons/mascot/brand-mark.png',
 ]);
 magick([
   'assets/icons/classic/icon.png',
