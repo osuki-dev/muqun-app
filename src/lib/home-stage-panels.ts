@@ -53,7 +53,7 @@ export type StagePanel = {
   needsYouCount: number;
   /** Recent sessions on this computer, as Home's Recent list holds them. */
   sessionCount: number;
-  /** When the app last confirmed its agents with it, for "last seen". */
+  /** When the app last confirmed its agents with it, for "last seen"; offline only. */
   lastSeenMs?: number;
   /**
    * Its agents, waiting on the reader first, then running, then the rest,
@@ -128,7 +128,9 @@ export function stagePanels({
       workingCount,
       needsYouCount,
       sessionCount: sessions.get(server.serverId) ?? 0,
-      ...(snapshot ? { lastSeenMs: snapshot.checkedAtMs } : {}),
+      // Shown only while offline; kept off a reachable panel so a routine
+      // mirror pass (a new `checkedAtMs`) leaves the panels structurally equal.
+      ...(snapshot && offline ? { lastSeenMs: snapshot.checkedAtMs } : {}),
       agents: lines,
     };
   });

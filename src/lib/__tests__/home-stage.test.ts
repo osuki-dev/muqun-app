@@ -675,7 +675,8 @@ describe('stage panels', () => {
     expect(fresh.map((panel) => panel.tone)).toEqual(['online', 'offline']);
     const stale = stagePanels({ ...base, agentsByServer: agents(now - 60 * 60 * 1000) });
     expect(stale[0]!.working).toBe(false);
-    expect(stale[0]!.lastSeenMs).toBe(now - 60 * 60 * 1000);
+    // Last seen is an offline panel's alone: a reachable one never carries it.
+    expect(stale[0]!.lastSeenMs).toBeUndefined();
   });
 
   test('attention comes from open requests or a blocked agent, per computer', () => {

@@ -14,7 +14,12 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -23,7 +28,8 @@ import { EdgeFade } from '@/components/edge-fade';
 import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
-import { useStableHandler } from '@/hooks/use-render-refs';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
+import { useStructuralValue } from '@/hooks/use-structural-value';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
@@ -37,7 +43,7 @@ import { stageProgressSession } from '@/lib/stage-progress-session';
 import type { StageProgress } from '@/lib/stage-overlay';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
-import { fadeIn, fadeOut, SETTLE } from '@/lib/motion';
+import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -173,7 +179,9 @@ export function HomeStage({
     setBurst((count) => count + 1);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [latestDoneMs]);
-  const panels = useMemo(
+  // Rebuilt on every task frame, pane mirror pass and minute; kept by identity
+  // while nothing shown changed, so the Stage below can skip the render.
+  const built = useMemo(
     () =>
       stagePanels({
         servers,
@@ -186,16 +194,39 @@ export function HomeStage({
       }),
     [servers, connectionStatuses, agentsByServer, attention, tasks, recentEntries, nowMs]
   );
+  const panels = useStructuralValue(built);
   const selectedIndex = stageSelectedIndex(panels, chosenServerId);
   const sessions = useMemo(
     () => (chosenServerId ? filterHomeRecent(recentEntries, chosenServerId) : []),
     [recentEntries, chosenServerId]
   );
-  const at = (index: number) => panels[wrapStageIndex(index, panels.length)]?.serverId;
-  const run = (action: (serverId: string) => void) => (index: number) => {
-    const serverId = at(index);
-    if (serverId) action(serverId);
+  // Stable across renders, so a store update here does not re-render the GPU
+  // scene through fresh callbacks; each reads the panels as last rendered.
+  const readPanels = useLatestReader(panels);
+  const at = (index: number) => {
+    const current = readPanels();
+    return current[wrapStageIndex(index, current.length)]?.serverId;
   };
+  const select = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onSelectServer(serverId);
+  });
+  const open = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenServer(serverId);
+  });
+  const openAgent = useStableHandler((index: number, paneId?: string, sessionId?: string) => {
+    const serverId = at(index);
+    if (serverId) onOpenServer(serverId, paneId, sessionId);
+  });
+  const openTasks = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenTasks(serverId);
+  });
+  const openDetails = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenDetails(serverId);
+  });
   return (
     <HomeStageLayout
       {...layout}
@@ -203,14 +234,11 @@ export function HomeStage({
       selectedIndex={selectedIndex}
       sessions={sessions}
       burst={burst}
-      onSelect={run(onSelectServer)}
-      onOpen={run(onOpenServer)}
-      onOpenAgent={(index, paneId, sessionId) => {
-        const serverId = at(index);
-        if (serverId) onOpenServer(serverId, paneId, sessionId);
-      }}
-      onOpenTasks={run(onOpenTasks)}
-      onOpenDetails={run(onOpenDetails)}
+      onSelect={select}
+      onOpen={open}
+      onOpenAgent={openAgent}
+      onOpenTasks={openTasks}
+      onOpenDetails={openDetails}
     />
   );
 }
@@ -507,7 +535,10 @@ export function HomeStageLayout({
         }}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
-          <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
+          <Animated.View
+            pointerEvents="box-none"
+            entering={fadeIn('short')}
+            exiting={fadeOut('short')}>
             <StageFootLine
               serverId={selected?.serverId}
               compact={typing}
@@ -727,7 +758,15 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
   );
 }
 
-/** Subtitles reserve their own height, above the sessions and the keyboard-aware dock. */
+/**
+ * The agent chips' row, or over it what working agents report. The row keeps
+ * the chips' height whether or not subtitles show, so the foot the art stands
+ * on never moves: the subtitles float, anchored to the row's bottom, the first
+ * in the chips' place and more growing upward over the art, while the chips
+ * fade out under them and back when they go. While typing the row folds away
+ * so the strip sits on the composer, and up to two one-line subtitles float
+ * above the strip.
+ */
 function StageFootLine({
   serverId,
   subtitle,
@@ -744,11 +783,30 @@ function StageFootLine({
   children: ReactNode;
 }) {
   const [shown, setShown] = useState(false);
+  const covered = subtitle && shown;
+  const chips = useSharedValue(covered ? 0 : 1);
+  useEffect(() => {
+    chips.set(withTiming(covered ? 0 : 1, timing('short')));
+  }, [chips, covered]);
+  const chipsStyle = useAnimatedStyle(() => ({ opacity: chips.get() }));
   return (
-    <View>
-      {!compact && !(subtitle && shown) ? children : null}
+    <View pointerEvents="box-none">
+      {compact ? null : (
+        <Animated.View
+          pointerEvents="box-none"
+          entering={fadeIn('short')}
+          exiting={fadeOut('short')}>
+          <Animated.View
+            pointerEvents={covered ? 'none' : 'auto'}
+            accessibilityElementsHidden={covered}
+            importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}
+            style={chipsStyle}>
+            {children}
+          </Animated.View>
+        </Animated.View>
+      )}
       {serverId && subtitle && maxRows > 0 ? (
-        <View style={styles.footLine}>
+        <View pointerEvents="box-none" style={styles.footLine}>
           <StageSubtitle
             key={serverId}
             serverId={serverId}
@@ -791,7 +849,13 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', left: 16, right: 16 },
   bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottom: { position: 'absolute', left: 0, right: 0, gap: 8 },
-  footLine: { paddingHorizontal: HOME_DOCK_OUTER_INSET },
+  footLine: {
+    position: 'absolute',
+    left: HOME_DOCK_OUTER_INSET,
+    right: HOME_DOCK_OUTER_INSET,
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
   empty: { paddingHorizontal: 16 },
   handleRow: {
     alignSelf: 'center',

@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { memo, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -88,14 +88,12 @@ function HeldSubtitleLine({
     return () => clearTimeout(timer);
   }, [nextKey, nextText, shown, readLine]);
   // Keep the newest routing identity even while the words are held for readability.
-  return (
-    <SubtitleLine
-      serverId={serverId}
-      line={{ ...line, text: shown.line?.text ?? line.text }}
-      compact={compact}
-      onOpen={onOpen}
-    />
+  const heldText = shown.line?.text ?? line.text;
+  const displayed = useMemo(
+    () => (heldText === line.text ? line : { ...line, text: heldText }),
+    [line, heldText]
   );
+  return <SubtitleLine serverId={serverId} line={displayed} compact={compact} onOpen={onOpen} />;
 }
 
 /**
@@ -104,7 +102,7 @@ function HeldSubtitleLine({
  * agent's name leads in the accent, and the report's bold, emphasis and code
  * keep their marks.
  */
-function SubtitleLine({
+const SubtitleLine = memo(function SubtitleLine({
   serverId,
   line,
   compact,
@@ -176,7 +174,7 @@ function SubtitleLine({
       </PressableScale>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   stack: { gap: 4 },
