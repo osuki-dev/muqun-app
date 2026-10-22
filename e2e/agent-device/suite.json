@@ -3751,6 +3751,7 @@
         "mode": "visible",
         "run": "flows/settings.ad#storage-visible"
       },
+      { "run": "flows/settings.ad#storage-anchor" },
       {
         "target": {
           "text": "Clear cache, [0-9].*"
