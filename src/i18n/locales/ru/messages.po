@@ -807,6 +807,14 @@ msgstr "Ключ API (необязательно)"
 msgid "API URL"
 msgstr "URL API"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "Код приложения"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "Данные приложения"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Значок приложения"
@@ -827,6 +835,10 @@ msgstr "Блокировка приложения недоступна"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "Название приложения и слоган"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "Обновления приложения"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "Сборка"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Встроенные"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "Кэш"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -4752,6 +4768,10 @@ msgstr "Открывает этот компьютер"
 msgid "Options for {0}"
 msgstr "Параметры {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "Прочий кэш"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "Другие компьютеры"
@@ -6908,6 +6928,10 @@ msgstr "Не удалось проверить предыдущую отправ
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Панель как есть, на своей сетке и в своих цветах"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "Остальной кэш будет удалён при следующем запуске Muqun"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "На этом экране произошла ошибка. Попробуйте ещё раз — ваши компьютеры остаются привязанными"
@@ -7340,6 +7364,10 @@ msgstr "Слишком много изменений для списка. Это
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Вызов инструмента"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "Всего"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

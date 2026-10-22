@@ -807,6 +807,14 @@ msgstr "Clé API (facultative)"
 msgid "API URL"
 msgstr "URL de l’API"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "Code de l’app"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "Données de l’app"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Icône de l’app"
@@ -827,6 +835,10 @@ msgstr "Verrouillage de l’app indisponible"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "Nom de l’app et slogan"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "Mises à jour de l’app"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "Construire"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Intégrés"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "Cache"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -4752,6 +4768,10 @@ msgstr "Ouvre cet ordinateur"
 msgid "Options for {0}"
 msgstr "Options pour {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "Autre cache"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "Autres ordinateurs"
@@ -6908,6 +6928,10 @@ msgstr "L’envoi précédent n’a pas pu être vérifié"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Le panneau brut, sur sa grille et dans ses propres couleurs"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "Le reste du cache sera supprimé à la prochaine ouverture de Muqun"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "L’écran a rencontré une erreur. Réessayez — vos ordinateurs restent appairés"
@@ -7340,6 +7364,10 @@ msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Appel d’outil"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "Total"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

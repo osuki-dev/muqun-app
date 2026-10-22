@@ -34,6 +34,12 @@ container's permanent teardown against these late callbacks. This is an
 independently verified native lifecycle defect, not proof that it caused a
 particular user-reported file-preview close crash.
 
+Android image cache: ImageDownloader keeps an OkHttp disk cache of up to
+100 MB in cache/enrm_image_cache, beside expo-image's own cache of the same
+pictures. Cap it at 32 MB; Muqun also removes it at launch after Clear cache,
+since the library offers no clear call. Remove this hunk when upstream makes
+the cache size configurable.
+
 diff --git a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
 --- a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
 +++ b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
@@ -226,3 +232,16 @@ new file mode 100644
 +    schedule.invoke(view) // Previously throws RejectedExecutionException synchronously.
 +  }
 +}
+diff --git a/android/src/main/java/com/swmansion/enriched/markdown/utils/text/ImageDownloader.kt b/android/src/main/java/com/swmansion/enriched/markdown/utils/text/ImageDownloader.kt
+index 7a2071e..af75582 100644
+--- a/android/src/main/java/com/swmansion/enriched/markdown/utils/text/ImageDownloader.kt
++++ b/android/src/main/java/com/swmansion/enriched/markdown/utils/text/ImageDownloader.kt
+@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
+ 
+ object ImageDownloader {
+   private const val TAG = "ImageDownloader"
+-  private const val DISK_CACHE_SIZE = 100L * 1024 * 1024
++  private const val DISK_CACHE_SIZE = 32L * 1024 * 1024
+   private const val TIMEOUT = 15L
+ 
+   private val mainHandler = Handler(Looper.getMainLooper())

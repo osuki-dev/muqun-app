@@ -179,7 +179,8 @@
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "@osuki-dev/ui@2.0.0-beta.5": "patches/@osuki-dev%2Fui@2.0.0-beta.5.patch",
-    "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch"
+    "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch",
+    "expo-image@58.0.16": "patches/expo-image@58.0.16.patch"
   },
   "trustedDependencies": [
     "react-native-skia",

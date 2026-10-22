@@ -1,15 +1,14 @@
-import {
-  clearCache,
-  isCacheEntryProtected,
-  scheduleAutomaticCacheCleanup,
-} from '@/lib/cache-cleanup';
+import { clearCache, inspectCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
- * How much room Muqun's cache is taking, and the two buttons that give some of
- * it back.
+ * How much room Muqun takes, and the two buttons that give some of it back.
  *
- * Only reclaimable categories are shown: images and temporary copies. Engine
- * caches and persistent user data are not presented as a cleaning action.
+ * On Android the first rows are the figures its own Storage screen shows (app,
+ * data, cache), read through `StorageStatsManager`; iOS has no such figures, so
+ * there the cache is measured by walking it. App code, app data and app
+ * updates are read-only. The cache is split into what Clear removes now
+ * (images, temporary files), and the rest: engine caches that stay, and the
+ * Markdown image cache, which Clear leaves for the next launch.
  *
  * The clear is an allow-list, decided in `lib/cache-storage.ts` and not here.
  * Nothing on this screen may reach outside `Paths.cache`: the paired gateways,
@@ -28,17 +27,28 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  * are, and `removeUnusedThemes` below states the chain the bytes actually go
  * through.
  *
- * Both walks run off the first frame. A Glide cache at its 250 MB ceiling is
- * thousands of files, and `Directory.size` recurses in native code, so the
- * measurement is deferred past the push and yields between top-level entries
- * rather than asking for all of it on one tick.
+ * Both walks run off the first frame. A Glide cache at its 100 MB ceiling is
+ * thousands of files; the cache walk (`inspectCache`) measures them through the
+ * legacy async API, so the recursion happens off the JavaScript thread.
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Directory, Paths } from 'expo-file-system';
+import { Directory } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
-import { NextIcon, FileHistoryIcon, PhotosIcon, AppearanceIcon, DeleteIcon } from '@/icons';
+import {
+  NextIcon,
+  FileHistoryIcon,
+  PhotosIcon,
+  AppearanceIcon,
+  DeleteIcon,
+  PhoneIcon,
+  CodeIcon,
+  StorageIcon,
+  DownloadIcon,
+  StackIcon,
+  FolderIcon,
+} from '@/icons';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -51,13 +61,9 @@ import {
   SettingsCard,
 } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import {
-  type CacheRootEntry,
-  type CacheTotals,
-  clearableCacheBytes,
-  formatCacheSize,
-  measureCache,
-} from '@/lib/cache-storage';
+import { type CacheTotals, formatCacheSize } from '@/lib/cache-storage';
+import { readAppStorageStats, readAppUpdateBytes, type AppStorageStats } from '@/lib/app-storage';
+import { isLaunchCachePurgePending } from '@/lib/launch-cache-purge';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { useAppSettings } from '@/stores/app-settings';
 import { isCacheCleanupIntervalDays } from '@/lib/cache-cleanup-policy';
@@ -83,41 +89,13 @@ function whenIdle(timeout: number): Promise<void> {
 }
 
 /**
- * One pass over the top level of the cache directory.
- *
- * Top level only: `size` on a `Directory` already recurses natively, which is
- * one cheap call per entry instead of thousands of round trips through the
- * bridge for a Glide cache. The yield sits between entries, so the longest the
- * UI ever waits on this is one directory's own walk.
- */
-async function readCacheRoot(): Promise<{ root: string; entries: CacheRootEntry[] }> {
-  const root = Paths.cache;
-  const entries: CacheRootEntry[] = [];
-  for (const item of root.list()) {
-    await whenIdle(100);
-    let bytes = 0;
-    try {
-      // `Directory.size` is `number | null` and `File.size` is `number`; both
-      // are readable off the union without narrowing, and both can throw when
-      // the OS refuses the read.
-      bytes = item.size ?? 0;
-    } catch {
-      // An unreadable entry is worth nothing to the total rather than worth
-      // abandoning the whole measurement for.
-    }
-    entries.push({ name: item.name, uri: item.uri, bytes });
-  }
-  return { root: root.uri, entries };
-}
-
-/**
  * One pass over the theme asset directory, which is flat by construction.
  *
  * `theme/assets.native.ts` writes content-addressed files side by side with
  * nothing between them, so every entry here is one `size` on a file -- a stat,
  * not the recursive walk a cache entry costs. That is why the yield sits in
  * front of the listing rather than between its entries: the whole of this walk
- * is cheaper than one step of `readCacheRoot`'s, and a theme library is fifty
+ * is cheaper than one step of the cache walk, and a theme library is fifty
  * entries at its ceiling rather than thousands.
  */
 async function readThemeAssets(): Promise<ThemeAssetFile[]> {
@@ -139,6 +117,19 @@ async function readThemeAssets(): Promise<ThemeAssetFile[]> {
   }
   return files;
 }
+
+const EMPTY_TOTALS: CacheTotals = { images: 0, temporary: 0, other: 0, total: 0 };
+
+/** One measurement, set at once so the rows never disagree with each other. */
+type StorageSnapshot = {
+  buckets: CacheTotals;
+  reclaimableBytes: number;
+  /** Android's own figures; null on iOS and on builds without the module. */
+  stats: AppStorageStats | null;
+  updatesBytes: number;
+  /** Clear cache left the Markdown image cache for the next launch. */
+  purgePending: boolean;
+};
 
 // Only the action slot moves; the capacity rows and sheet ground stay mounted.
 const actionFade = fadeIn('short').withInitialValues({ opacity: 0.65 });
@@ -177,8 +168,7 @@ export function SettingsStorage() {
   const themes = useThemeLibrary((state) => state.library.themes);
   const selection = useThemeLibrary((state) => state.library.selection);
 
-  const [totals, setTotals] = useState<CacheTotals | null>(null);
-  const [reclaimableBytes, setReclaimableBytes] = useState(0);
+  const [snapshot, setSnapshot] = useState<StorageSnapshot | null>(null);
   const [themeFiles, setThemeFiles] = useState<ThemeAssetFile[] | null>(null);
   /** Which of the two actions is armed, because never both at once. */
   const [armed, setArmed] = useState<'cache' | 'themes' | null>(null);
@@ -197,21 +187,20 @@ export function SettingsStorage() {
   }, []);
 
   const measure = useCallback(async () => {
-    try {
-      const { root, entries } = await readCacheRoot();
-      if (mounted.current) {
-        setTotals(measureCache(entries));
-        setReclaimableBytes(clearableCacheBytes(entries, root, isCacheEntryProtected));
-      }
-    } catch {
-      // A platform with no readable cache directory -- web, or an OS that has
-      // taken the whole thing away under us -- reports an empty cache rather
-      // than a permanently spinning row.
-      if (mounted.current) {
-        setTotals(measureCache([]));
-        setReclaimableBytes(0);
-      }
-    }
+    // No readable cache directory -- web, or an OS that has taken the whole
+    // thing away under us -- reports an empty cache rather than a permanently
+    // spinning row.
+    const plan = await inspectCache();
+    const stats = await readAppStorageStats();
+    const updatesBytes = await readAppUpdateBytes();
+    if (!mounted.current) return;
+    setSnapshot({
+      buckets: plan ? plan.buckets : EMPTY_TOTALS,
+      reclaimableBytes: plan ? plan.reclaimableBytes : 0,
+      stats,
+      updatesBytes,
+      purgePending: isLaunchCachePurgePending(),
+    });
   }, []);
 
   const measureThemes = useCallback(async () => {
@@ -336,10 +325,24 @@ export function SettingsStorage() {
   }
 
   const calculating = t`Calculating…`;
-  const images = totals ? formatCacheSize(totals.images) : calculating;
-  const temporary = totals ? formatCacheSize(totals.temporary) : calculating;
-  const clearable = totals ? formatCacheSize(reclaimableBytes) : calculating;
-  const hasRetainedCache = totals !== null && totals.images + totals.temporary > reclaimableBytes;
+  const size = (bytes: number | undefined) =>
+    snapshot && bytes !== undefined ? formatCacheSize(bytes) : calculating;
+  const buckets = snapshot?.buckets;
+  const stats = snapshot?.stats ?? null;
+  // Android's figure is the one its Settings screen shows; it also counts
+  // code_cache, which the walk does not open. Whatever the walk could not
+  // name is "Other cache", so the three rows add up to the Cache row.
+  const cacheBytes = buckets ? Math.max(stats ? stats.cacheBytes : 0, buckets.total) : undefined;
+  const otherBytes =
+    buckets && cacheBytes !== undefined
+      ? Math.max(0, cacheBytes - buckets.images - buckets.temporary)
+      : undefined;
+  const clearable = size(snapshot?.reclaimableBytes);
+  const hasRetainedCache =
+    snapshot !== null &&
+    cacheBytes !== undefined &&
+    cacheBytes > snapshot.reclaimableBytes &&
+    !snapshot.purgePending;
   const clearDetail = incomplete ? t`Some files could not be removed · ${clearable}` : clearable;
   // The count comes from the library and the bytes from the walk, so this is
   // recomputed rather than held in state: a removal updates the library on the
@@ -377,19 +380,63 @@ export function SettingsStorage() {
           }}
         />
       </SettingsBlock>
+      {stats ? (
+        <>
+          <SettingsInfoRow
+            icon={PhoneIcon}
+            label={t`Total`}
+            detail={size(stats.appBytes + stats.dataBytes + stats.cacheBytes)}
+            testID="settings-storage-total-row"
+          />
+          <SettingsInfoRow
+            icon={CodeIcon}
+            label={t`App code`}
+            detail={size(stats.appBytes)}
+            testID="settings-storage-app-row"
+          />
+          <SettingsInfoRow
+            icon={StorageIcon}
+            label={t`App data`}
+            detail={size(stats.dataBytes)}
+            testID="settings-storage-data-row"
+          />
+        </>
+      ) : null}
+      <SettingsInfoRow
+        icon={DownloadIcon}
+        label={t`App updates`}
+        detail={size(snapshot?.updatesBytes)}
+        testID="settings-storage-updates-row"
+      />
+      <SettingsInfoRow
+        icon={StackIcon}
+        label={t`Cache`}
+        detail={size(cacheBytes)}
+        testID="settings-storage-cache-row"
+      />
       <SettingsInfoRow
         icon={PhotosIcon}
         label={t`Images`}
-        detail={images}
+        detail={size(buckets?.images)}
         testID="settings-storage-images-row"
       />
       <SettingsInfoRow
         icon={FileHistoryIcon}
         label={t`Temporary files`}
-        detail={temporary}
+        detail={size(buckets?.temporary)}
         testID="settings-storage-temporary-row"
       />
-      {hasRetainedCache ? (
+      <SettingsInfoRow
+        icon={FolderIcon}
+        label={t`Other cache`}
+        detail={size(otherBytes)}
+        testID="settings-storage-other-row"
+      />
+      {snapshot?.purgePending ? (
+        <Text variant="caption" color={theme.colors.textMuted} style={styles.retainedHint}>
+          <Trans>The rest of the cache is removed the next time Muqun opens.</Trans>
+        </Text>
+      ) : hasRetainedCache ? (
         <Text variant="caption" color={theme.colors.textMuted} style={styles.retainedHint}>
           <Trans>Files in use and managed caches are kept.</Trans>
         </Text>
@@ -457,7 +504,7 @@ export function SettingsStorage() {
             trailing={NextIcon}
             label={t`Clear cache`}
             detail={clearDetail}
-            disabled={!totals}
+            disabled={!snapshot}
             testID="settings-clear-cache-row"
             onPress={() => setArmed('cache')}
           />

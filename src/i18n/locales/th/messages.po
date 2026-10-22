@@ -807,6 +807,14 @@ msgstr "คีย์ API (ไม่บังคับ)"
 msgid "API URL"
 msgstr "URL ของ API"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "โค้ดแอป"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "ข้อมูลแอป"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "ไอคอนแอป"
@@ -827,6 +835,10 @@ msgstr "การล็อกแอปไม่พร้อมใช้งาน
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "ชื่อแอปและคำโปรย"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "อัปเดตแอป"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "สร้าง (Build)"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "มีมาให้ในแอป"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "แคช"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -4752,6 +4768,10 @@ msgstr "เปิดคอมพิวเตอร์เครื่องนี
 msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "แคชอื่น ๆ"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "คอมพิวเตอร์เครื่องอื่น"
@@ -6908,6 +6928,10 @@ msgstr "ไม่สามารถตรวจสอบการส่งคร
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "พาเนลดิบ บนกริดและใช้สีของตัวเอง"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "แคชที่เหลือจะถูกลบเมื่อเปิด Muqun ครั้งถัดไป"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง คอมพิวเตอร์ของคุณยังจับคู่อยู่"
@@ -7340,6 +7364,10 @@ msgstr "มีการเปลี่ยนแปลงมากเกินก
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "การเรียกใช้เครื่องมือ"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "ทั้งหมด"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

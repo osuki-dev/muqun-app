@@ -807,6 +807,14 @@ msgstr "Khóa API (không bắt buộc)"
 msgid "API URL"
 msgstr "URL API"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "Mã ứng dụng"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "Dữ liệu ứng dụng"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Biểu tượng ứng dụng"
@@ -827,6 +835,10 @@ msgstr "Khóa ứng dụng không khả dụng"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "Tên ứng dụng và khẩu hiệu"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "Bản cập nhật ứng dụng"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "Xây dựng"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Có sẵn"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "Bộ nhớ đệm"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -4752,6 +4768,10 @@ msgstr "Mở máy tính này"
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "Bộ nhớ đệm khác"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "Máy tính khác"
@@ -6908,6 +6928,10 @@ msgstr "Không thể kiểm tra lần gửi trước"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Ngăn nguyên bản, trên lưới của nó và với màu sắc riêng"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "Phần bộ nhớ đệm còn lại sẽ được xóa vào lần tới bạn mở Muqun"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy tính của bạn vẫn được ghép nối"
@@ -7340,6 +7364,10 @@ msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, khô
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Lệnh gọi công cụ"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "Tổng cộng"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

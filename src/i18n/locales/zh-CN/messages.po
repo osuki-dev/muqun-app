@@ -807,6 +807,14 @@ msgstr "API Key（选填）"
 msgid "API URL"
 msgstr "API 地址"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "应用本体"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "应用数据"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "应用图标"
@@ -827,6 +835,10 @@ msgstr "应用锁不可用"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "App 名称和标语"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "应用更新"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "构建 (Build)"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "内置"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "缓存"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -4752,6 +4768,10 @@ msgstr "打开这台电脑"
 msgid "Options for {0}"
 msgstr "{0} 的选项"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "其他缓存"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "其他电脑"
@@ -6908,6 +6928,10 @@ msgstr "无法核对上次发送的状态"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字符网格和配色"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "其余缓存会在下次打开牧群时清除"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "这个页面出错了。请重试 — 你配对的电脑不受影响"
@@ -7340,6 +7364,10 @@ msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具调用"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "总计"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

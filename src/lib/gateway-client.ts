@@ -1,5 +1,5 @@
 import { protectTemporaryCacheEntry } from './cache-cleanup';
-import { nativeImageCache } from './native-image-cache';
+import { originalImageCache, ORIGINAL_IMAGE_SEED_LIMIT } from './original-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
@@ -1138,7 +1138,7 @@ function configureApi(
     currentTransportKey !== transportKey ||
     currentTransport !== transport
   )
-    nativeImageCache.invalidate();
+    originalImageCache.invalidate();
   currentBaseUrl = baseUrl;
   currentToken = token;
   currentDeviceId = deviceId;
@@ -1382,7 +1382,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     assertCurrent();
     if (signal?.aborted) throw new Error('Image read cancelled');
     if (rangedOriginal && (source.uri === plan.original.uri || source.uri === plan.fallback.uri)) {
-      const epoch = nativeImageCache.epoch();
+      const epoch = originalImageCache.epoch();
       const versionResponse = plan.version
         ? await requestImage(plan.version, signal, IMAGE_VERSION_BYTES)
         : null;
@@ -1404,10 +1404,10 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
       if (cacheKey && fixed) {
         let cached: PreviewImageSource | null = null;
         try {
-          const path = await nativeImageCache.path(cacheKey);
+          const path = await originalImageCache.path(cacheKey);
           if (path) cached = await copyCachedOriginalImageFile(path, fixed);
         } catch {
-          // Native eviction/Clear cache can race the lookup and copy: use the authenticated reader.
+          // Trimming or Clear cache can race the lookup and copy: use the authenticated reader.
         }
         if (cached) {
           try {
@@ -1431,9 +1431,8 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
       try {
         assertCurrent();
         if (signal?.aborted) throw new Error('Image read cancelled');
-        // iOS seeds via Data(contentsOf:), so large originals keep the bounded streaming path.
-        if (cacheKey && fixed && fixed.size <= 64 * 1024 * 1024) {
-          await nativeImageCache.seed(downloaded.uri, cacheKey, epoch).catch(() => undefined);
+        if (cacheKey && fixed && fixed.size <= ORIGINAL_IMAGE_SEED_LIMIT) {
+          await originalImageCache.seed(downloaded.uri, cacheKey, epoch).catch(() => undefined);
         }
         assertCurrent();
         if (signal?.aborted) throw new Error('Image read cancelled');
@@ -1901,16 +1900,12 @@ export async function readAssetImageSource(
  * Where the markdown renderer loads an image an agent embedded by host path
  * (`image_assets`, see `message-images.ts`). On a plain transport that is the
  * gateway URL itself, fetched by the renderer with `gatewayAuthHeaders()`. The
- * renderer cannot open an encrypted transport's envelope, so there it is null
- * and `readMessageImageFile` lands the authenticated bytes in a cache file.
+ * renderer cannot open an encrypted transport's envelope, so there it is null.
  */
 export function messageImageUrl(url: string): string | null {
   if (currentTransport === GATEWAY_TRANSPORT) return null;
   return gatewayUrl(url);
 }
-
-/** One download per image per launch, shared by every part that shows it. */
-const messageImageFiles = new Map<string, Promise<string>>();
 
 const IMAGE_EXTENSIONS: Record<string, string> = {
   'image/png': 'png',
@@ -1920,33 +1915,6 @@ const IMAGE_EXTENSIONS: Record<string, string> = {
   'image/heic': 'heic',
   'image/avif': 'avif',
 };
-
-/** The encrypted-transport path of `messageImageUrl`: a `file://` URI. */
-export function readMessageImageFile(asset: { asset_id: string; url: string }): Promise<string> {
-  const known = messageImageFiles.get(asset.asset_id);
-  if (known) return known;
-  const pending = (async () => {
-    const response = await encryptedGatewayFetch(
-      gatewayUrl(asset.url),
-      { headers: gatewayAuthHeaders() },
-      ASSET_CONTENT_TIMEOUT_MS
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const mime = response.headers.get('content-type')?.split(';')[0] ?? '';
-    const extension = IMAGE_EXTENSIONS[mime];
-    if (!extension) throw new Error('Gateway did not return an image.');
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    const file = new File(Paths.cache, `message-image-${asset.asset_id}.${extension}`);
-    if (file.exists) file.delete();
-    file.create();
-    await file.write(bytes);
-    return file.uri;
-  })();
-  messageImageFiles.set(asset.asset_id, pending);
-  // A failure is not remembered: the next render may find the gateway back.
-  pending.catch(() => messageImageFiles.delete(asset.asset_id));
-  return pending;
-}
 
 /**
  * Text, markdown and code are read into a string because that is what the

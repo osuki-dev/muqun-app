@@ -1,4 +1,4 @@
-import { cleanupPreviousMediaCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
+import { sweepCacheAtLaunch, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
@@ -223,7 +223,15 @@ export default function RootLayout() {
   const fontsReady = useUserFontsReady();
 
   useEffect(() => {
-    void cleanupPreviousMediaCache();
+    // Measuring the cache walks thousands of image files; leave launch alone.
+    let handle: number | undefined;
+    const timer = setTimeout(() => {
+      handle = requestIdleCallback(() => void sweepCacheAtLaunch(), { timeout: 5000 });
+    }, 3000);
+    return () => {
+      clearTimeout(timer);
+      if (handle !== undefined) cancelIdleCallback(handle);
+    };
   }, []);
 
   useEffect(() => {
