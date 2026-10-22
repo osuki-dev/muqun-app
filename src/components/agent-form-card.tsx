@@ -208,7 +208,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <TextField
             value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
             onChangeText={(text) => setValue(field.key, text)}
-            placeholder={field.placeholder ?? t`Type here…`}
+            placeholder={field.placeholder ?? t`Type here`}
             placeholderTextColor={theme.colors.textSubtle}
             onFocus={onFieldFocus}
             style={[

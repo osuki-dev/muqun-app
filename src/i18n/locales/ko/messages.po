@@ -4020,8 +4020,8 @@ msgid "New conversation"
 msgstr "새 대화"
 
 #: src/components/home-composer-dock.tsx
-msgid "New conversation with {agentLabel}…"
-msgstr "{agentLabel}와(과) 새 대화…"
+msgid "New conversation with {agentLabel}"
+msgstr "{agentLabel}와(과) 새 대화"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -5420,8 +5420,8 @@ msgid "Reply to"
 msgstr "답장 대상"
 
 #: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}…"
-msgstr "{threadAgentName}에게 답장…"
+msgid "Reply to {threadAgentName}"
+msgstr "{threadAgentName}에게 답장"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -5882,17 +5882,14 @@ msgstr "보내기"
 msgid "Send {spoken}"
 msgstr "{spoken} 보내기"
 
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "메시지 보내기"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, $ for skills, @ for files…"
-msgstr "메시지 보내기, / 명령어, $ 스킬, @ 파일…"
-
-#: src/components/agent-composer.tsx
-msgid "Send a message…"
-msgstr "메시지 보내기…"
+msgid "Send a message, type / for commands, $ for skills, @ for files"
+msgstr "메시지 보내기, / 명령어, $ 스킬, @ 파일"
 
 #: src/components/agent-composer.tsx
 msgid "Send message"
@@ -7431,8 +7428,8 @@ msgid "Type changed"
 msgstr "형식 변경됨"
 
 #: src/components/agent-form-card.tsx
-msgid "Type here…"
-msgstr "여기에 입력…"
+msgid "Type here"
+msgstr "여기에 입력"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx

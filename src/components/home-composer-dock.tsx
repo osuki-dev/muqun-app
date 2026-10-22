@@ -1907,9 +1907,7 @@ export function HomeComposerDock({
       disabled={target.kind === 'none'}
       interactionBlockedReason={offlineReason}
       agentName={agentLabel}
-      placeholder={
-        thread ? t`Reply to ${threadAgentName}…` : t`New conversation with ${agentLabel}…`
-      }
+      placeholder={thread ? t`Reply to ${threadAgentName}` : t`New conversation with ${agentLabel}`}
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
       skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}

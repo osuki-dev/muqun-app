@@ -2521,8 +2521,8 @@ export const AgentComposer = memo(function AgentComposer({
                         ? t`${agentName} is offline`
                         : t`The agent is offline`
                       : (placeholder ??
-                        t`Send a message, type / for commands, $ for skills, @ for files…`),
-                    shortPlaceholder: t`Send a message…`,
+                        t`Send a message, type / for commands, $ for skills, @ for files`),
+                    shortPlaceholder: t`Send a message`,
                     editable: !sending && !disabled,
                     testID: inputTestID,
                     selection,

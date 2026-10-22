@@ -4020,8 +4020,8 @@ msgid "New conversation"
 msgstr "New conversation"
 
 #: src/components/home-composer-dock.tsx
-msgid "New conversation with {agentLabel}…"
-msgstr "New conversation with {agentLabel}…"
+msgid "New conversation with {agentLabel}"
+msgstr "New conversation with {agentLabel}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -5420,8 +5420,8 @@ msgid "Reply to"
 msgstr "Reply to"
 
 #: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}…"
-msgstr "Reply to {threadAgentName}…"
+msgid "Reply to {threadAgentName}"
+msgstr "Reply to {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -5882,17 +5882,14 @@ msgstr "Send"
 msgid "Send {spoken}"
 msgstr "Send {spoken}"
 
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Send a message"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, $ for skills, @ for files…"
-msgstr "Send a message, type / for commands, $ for skills, @ for files…"
-
-#: src/components/agent-composer.tsx
-msgid "Send a message…"
-msgstr "Send a message…"
+msgid "Send a message, type / for commands, $ for skills, @ for files"
+msgstr "Send a message, type / for commands, $ for skills, @ for files"
 
 #: src/components/agent-composer.tsx
 msgid "Send message"
@@ -7431,8 +7428,8 @@ msgid "Type changed"
 msgstr "Type changed"
 
 #: src/components/agent-form-card.tsx
-msgid "Type here…"
-msgstr "Type here…"
+msgid "Type here"
+msgstr "Type here"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
