@@ -21,11 +21,13 @@ import type { HomeAttentionSnapshot } from './home-attention';
 import { homeTargetAgentId } from './home-recents';
 import {
   isServerAgentsStale,
+  MAX_SERVER_AGENTS,
   SERVER_AGENTS_STALE_AFTER_MS,
   type ServerAgent,
   type ServerAgentsSnapshot,
 } from './server-agents';
 import type { TaskView } from './task-ledger';
+import { stageProgressSession } from './stage-progress-session';
 
 type SessionTarget = HomeAttentionSnapshot['target'];
 
@@ -243,6 +245,10 @@ export function stageSingleChoice(form: FormRequest): StageChoice | null {
 // -- The progress subtitle ---------------------------------------------------
 
 export type StageProgress = Asker & {
+  /** Opaque conversation ID, kept separate from the provider-scoped display key. */
+  asid?: string;
+  /** The pane incarnation that produced this line, never inferred from its name. */
+  terminal?: { sessionId: string; instanceId?: string; shellPid?: number };
   /** Which agent is speaking: a change of speaker is a new line. */
   key: string;
   text: string;
@@ -254,6 +260,7 @@ export type StageProgress = Asker & {
  * its screen or its session stream, and when it was read.
  */
 export type StageActivityInput = Asker & {
+  asid?: string;
   key: string;
   text: string;
   atMs: number;
@@ -273,43 +280,124 @@ function clean(text: string | undefined): string | undefined {
  * shows idle or done is not working, whatever its last line said. Null when
  * nothing working reported anything.
  */
-export function stageProgress(input: {
+type StageProgressInput = {
+  serverId?: string;
   tasks: readonly TaskView[];
   panes?: ServerAgentsSnapshot;
   activity?: StageActivityInput;
+  activities?: readonly StageActivityInput[];
+  sessions?: GatewayAgentSessionsSnapshot;
   nowMs: number;
-}): StageProgress | null {
-  const agents = freshAgents(input.panes, input.nowMs);
-  let best: StageProgress | null = null;
+};
+
+/** Working conversations, once each, in stable identity order rather than update order. */
+export function stageProgressLines(input: StageProgressInput): StageProgress[] {
+  const serverId = input.serverId ?? input.panes?.serverId ?? input.sessions?.serverId;
+  const panes = input.panes?.serverId === serverId ? input.panes : undefined;
+  const agents = freshAgents(panes, input.nowMs);
+  const sessions =
+    input.sessions &&
+    input.sessions.serverId === serverId &&
+    input.nowMs - input.sessions.observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
+      ? input.sessions
+      : undefined;
+  const lines = new Map<string, StageProgress>();
   const consider = (line: StageProgress) => {
-    if (!best || line.atMs > best.atMs) best = line;
+    // Use the same scoped, incarnation-checked mapping as a subtitle tap.
+    const entry =
+      line.terminal && serverId
+        ? stageProgressSession({ line, serverId, entries: [], sessions, panes, nowMs: input.nowMs })
+        : null;
+    if (entry?.destination.type === 'agent-session') {
+      const target = entry.destination.target;
+      line = {
+        ...line,
+        key: stageSessionKey(target.asid, target.agentId),
+        asid: target.asid,
+        agentId: target.agentId,
+      };
+    }
+    const previous = lines.get(line.key);
+    if (!previous || line.atMs > previous.atMs) lines.set(line.key, line);
   };
   for (const task of input.tasks) {
     if (task.state !== 'working') continue;
     const text = clean(task.progress);
     if (!text) continue;
     const { binding } = task;
+    if (binding.kind === 'agent_session' && sessions && sessions.observedAtMs >= task.updatedMs) {
+      const reported = sessions.sessions.find(
+        (session) => session.asid === binding.asid && session.agentId === binding.agentId
+      );
+      if (reported && !RUNNING_SESSION.includes(reported.status as AgentRunStatus)) continue;
+    }
     const pane =
       binding.kind === 'pane' ? agents.find((agent) => agent.paneId === binding.paneId) : undefined;
-    if (pane && pane.status !== 'working') continue;
+    if (binding.kind === 'pane') {
+      if (panes?.sessionId && panes.sessionId !== binding.sessionId) continue;
+      if (
+        pane &&
+        (pane.status !== 'working' || (binding.shellPid && pane.shellPid !== binding.shellPid))
+      )
+        continue;
+      if (
+        panes?.sessionId === binding.sessionId &&
+        !isServerAgentsStale(panes, input.nowMs) &&
+        !pane &&
+        panes.agents.length < MAX_SERVER_AGENTS
+      )
+        continue;
+      const associated = sessions?.sessions.filter(
+        (session) =>
+          session.terminal?.sessionId === binding.sessionId &&
+          session.terminal?.paneId === binding.paneId &&
+          (!binding.agentId || session.agentId === binding.agentId)
+      );
+      if (
+        sessions &&
+        sessions.observedAtMs >= task.updatedMs &&
+        associated?.length === 1 &&
+        !RUNNING_SESSION.includes(associated[0]!.status as AgentRunStatus)
+      )
+        continue;
+    }
     const agentId =
       binding.kind === 'agent_session' || binding.kind === 'pane' ? binding.agentId : undefined;
     consider({
       ...(pane?.agentLabel ? { agentLabel: pane.agentLabel } : {}),
       ...(agentId ? { agentId } : {}),
+      ...(binding.kind === 'pane'
+        ? {
+            terminal: {
+              sessionId: binding.sessionId,
+              ...(binding.shellPid ? { shellPid: binding.shellPid } : {}),
+              ...(panes?.sessionId === binding.sessionId &&
+              (!binding.shellPid || pane?.shellPid === binding.shellPid)
+                ? {
+                    ...(pane?.instanceId ? { instanceId: pane.instanceId } : {}),
+                    ...(!binding.shellPid && pane?.shellPid ? { shellPid: pane.shellPid } : {}),
+                  }
+                : {}),
+            },
+          }
+        : {}),
+      ...(binding.kind === 'agent_session' ? { asid: binding.asid } : {}),
       key:
         binding.kind === 'pane'
           ? `pane:${binding.paneId}`
           : binding.kind === 'agent_session'
-            ? `session:${binding.asid}`
+            ? stageSessionKey(binding.asid, binding.agentId)
             : `task:${task.taskId}`,
       text,
       atMs: task.updatedMs,
     });
   }
-  const activity = input.activity;
-  const activityText = clean(activity?.text);
-  if (activity && activityText) {
+  for (const activity of [
+    ...(input.activities ?? []),
+    ...(input.activity ? [input.activity] : []),
+  ]) {
+    const activityText = clean(activity.text);
+    if (!activityText) continue;
     const pane =
       activity.paneId !== undefined
         ? agents.find((agent) => agent.paneId === activity.paneId)
@@ -320,15 +408,37 @@ export function stageProgress(input: {
       consider({
         ...(label ? { agentLabel: label } : {}),
         ...(activity.agentId ? { agentId: activity.agentId } : {}),
-        key: activity.key,
+        ...(pane && panes?.sessionId
+          ? {
+              terminal: {
+                sessionId: panes.sessionId,
+                ...(pane.instanceId ? { instanceId: pane.instanceId } : {}),
+                ...(pane.shellPid ? { shellPid: pane.shellPid } : {}),
+              },
+            }
+          : {}),
+        ...(activity.asid ? { asid: activity.asid } : {}),
+        key: activity.asid ? stageSessionKey(activity.asid, activity.agentId) : activity.key,
         text: activityText,
         atMs: activity.atMs,
       });
   }
+  return [...lines.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+/** Compatibility for surfaces that need only the newest reported line. */
+export function stageProgress(input: StageProgressInput): StageProgress | null {
+  let best: StageProgress | null = null;
+  for (const line of stageProgressLines(input)) if (!best || line.atMs > best.atMs) best = line;
   return best;
 }
 
 // -- Which agent the subtitle follows ----------------------------------------
+
+/** Provider identity participates even when two providers reuse a conversation ID. */
+export function stageSessionKey(asid: string, agentId?: string): string {
+  return `session:${JSON.stringify([agentId ?? null, asid])}`;
+}
 
 /** A working agent whose current activity the subtitle follows. */
 export type StageActivitySubject =
@@ -367,7 +477,7 @@ const RUNNING_SESSION: readonly AgentRunStatus[] = ['busy', 'retry'];
  * activity changed within `STAGE_ACTIVITY_HOLD_MS`, so two busy agents do not
  * trade the line at every mirror refresh. Null when nothing works.
  */
-export function stageActivitySubject(input: {
+type StageActivitySubjectsInput = {
   serverId: string;
   panes?: ServerAgentsSnapshot;
   sessions?: GatewayAgentSessionsSnapshot;
@@ -375,7 +485,9 @@ export function stageActivitySubject(input: {
   current?: string;
   activeAtMs: Readonly<Record<string, number>>;
   nowMs: number;
-}): StageActivitySubject | null {
+};
+
+function rankedStageActivitySubjects(input: StageActivitySubjectsInput) {
   const { serverId, dock, activeAtMs, nowMs } = input;
   const ranked: { subject: StageActivitySubject; atMs: number; dock: boolean }[] = [];
   const sessions =
@@ -384,16 +496,23 @@ export function stageActivitySubject(input: {
       ? input.sessions
       : undefined;
   const sessionPanes = new Set<string>();
-  const dockSession = dock?.kind === 'session' ? dock : undefined;
+  const rawDock = dock?.kind === 'session' ? dock : undefined;
+  const dockOwners =
+    rawDock && !rawDock.agentId
+      ? sessions?.sessions.filter((session) => session.asid === rawDock.asid)
+      : undefined;
+  // Older dock records may omit the provider; repair only an unambiguous owner.
+  const dockSession =
+    rawDock && dockOwners?.length === 1 ? { ...rawDock, agentId: dockOwners[0]!.agentId } : rawDock;
   const seenSessions = new Set<string>();
   const addSession = (
     session: { sessionId: string; asid: string; agentId?: string },
     updatedMs: number
   ) => {
-    const key = `session:${session.asid}`;
+    const key = stageSessionKey(session.asid, session.agentId);
     if (seenSessions.has(key)) return;
     seenSessions.add(key);
-    const isDock = dockSession?.asid === session.asid;
+    const isDock = dockSession?.asid === session.asid && dockSession.agentId === session.agentId;
     ranked.push({
       subject: {
         kind: 'session',
@@ -411,11 +530,24 @@ export function stageActivitySubject(input: {
   if (dockSession?.status !== undefined && RUNNING_SESSION.includes(dockSession.status))
     addSession(
       dockSession,
-      sessions?.sessions.find((row) => row.asid === dockSession.asid)?.updatedMs ?? 0
+      sessions?.sessions.find(
+        (row) => row.asid === dockSession.asid && row.agentId === dockSession.agentId
+      )?.updatedMs ?? 0
     );
   for (const session of sessions?.sessions ?? []) {
-    if (session.terminal) sessionPanes.add(session.terminal.paneId);
-    if (dockSession?.asid === session.asid && dockSession.status !== undefined) continue;
+    if (
+      session.terminal &&
+      input.panes?.serverId === serverId &&
+      session.terminal.sessionId === input.panes.sessionId &&
+      sessions!.observedAtMs >= input.panes.checkedAtMs
+    )
+      sessionPanes.add(session.terminal.paneId);
+    if (
+      dockSession?.asid === session.asid &&
+      dockSession.agentId === session.agentId &&
+      dockSession.status !== undefined
+    )
+      continue;
     if (!RUNNING_SESSION.includes(session.status as AgentRunStatus)) continue;
     addSession(
       { sessionId: sessions!.sessionId, asid: session.asid, agentId: session.agentId },
@@ -423,7 +555,10 @@ export function stageActivitySubject(input: {
     );
   }
   const checkedAtMs = input.panes?.checkedAtMs ?? 0;
-  for (const agent of freshAgents(input.panes, nowMs)) {
+  for (const agent of freshAgents(
+    input.panes?.serverId === serverId ? input.panes : undefined,
+    nowMs
+  )) {
     if (!agent.hasAgent || agent.status !== 'working' || !agent.paneId) continue;
     if (paneNeedsYou(agent) || sessionPanes.has(agent.paneId)) continue;
     const key = `pane:${agent.paneId}`;
@@ -439,6 +574,24 @@ export function stageActivitySubject(input: {
       dock: isDock,
     });
   }
+  return ranked;
+}
+
+/** Subscribe to at most five stable speakers, so stream updates never reorder the rows. */
+export function stageActivitySubjects(input: StageActivitySubjectsInput): StageActivitySubject[] {
+  return rankedStageActivitySubjects(input)
+    .map((row) => row.subject)
+    .sort((a, b) =>
+      a.kind === b.kind ? a.key.localeCompare(b.key) : a.kind === 'session' ? -1 : 1
+    )
+    .slice(0, 5);
+}
+
+export function stageActivitySubject(
+  input: StageActivitySubjectsInput
+): StageActivitySubject | null {
+  const ranked = rankedStageActivitySubjects(input);
+  const { activeAtMs, nowMs } = input;
   if (input.current) {
     const held = ranked.find((row) => row.subject.key === input.current);
     const changedAtMs = activeAtMs[input.current];

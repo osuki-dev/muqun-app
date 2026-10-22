@@ -1,12 +1,12 @@
+import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { withAlpha } from '@/lib/color';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { inlineMarkdownSpans } from '@/lib/markdown-text';
 import { calmFadeIn, calmFadeOut } from '@/lib/motion';
@@ -15,26 +15,53 @@ import { useAgents } from '@/stores/agents';
 import { SHEET_FROST_ALPHA, surfaceBackgroundFill } from '@/theme/surface-background';
 import { useStageProgress } from './use-stage-overlay';
 
-/**
- * What a working agent on the selected computer last reported, as one or two
- * faint lines at the art's foot: "claude · running tests…". Nothing while no
- * agent reports anything. A new line replaces the old with a short
- * cross-fade when the agent changes, and in place when the same agent says
- * something new, at most once every two seconds (`stageSubtitleStep`); the text
- * is never animated otherwise, so an idle Stage runs nothing.
- */
+/** Compact, independently updating speakers above the session strip. */
 export function StageSubtitle({
   serverId,
+  compact = false,
+  maxRows = 5,
   onShownChange,
   onOpen,
 }: {
   serverId: string;
-  /** Whether a line is up, so the agent chips it stands in for can step aside. */
+  compact?: boolean;
+  maxRows?: number;
   onShownChange?: (shown: boolean) => void;
-  /** A tap opens the agent the line is about, as its chip would. */
   onOpen?: (line: StageProgress) => void;
 }) {
-  const line = useStageProgress(serverId);
+  const lines = useStageProgress(serverId);
+  const visible = lines.length > 0;
+  const report = useEffectEvent((next: boolean) => onShownChange?.(next));
+  useEffect(() => {
+    report(visible);
+  }, [visible]);
+  useEffect(() => () => report(false), []);
+  return visible ? (
+    <View testID="home-stage-subtitle" style={styles.stack}>
+      {lines.slice(0, Math.min(maxRows, compact ? 2 : 5)).map((line) => (
+        <HeldSubtitleLine
+          key={line.key}
+          serverId={serverId}
+          line={line}
+          compact={compact}
+          onOpen={onOpen}
+        />
+      ))}
+    </View>
+  ) : null;
+}
+
+function HeldSubtitleLine({
+  serverId,
+  line,
+  compact,
+  onOpen,
+}: {
+  serverId: string;
+  line: StageProgress;
+  compact: boolean;
+  onOpen?: (line: StageProgress) => void;
+}) {
   const [shown, setShown] = useState<{ line: StageProgress | null; atMs: number }>({
     line: null,
     atMs: 0,
@@ -60,17 +87,15 @@ export function StageSubtitle({
     const timer = setTimeout(show, step.waitMs);
     return () => clearTimeout(timer);
   }, [nextKey, nextText, shown, readLine]);
-  const visible = shown.line !== null;
-  const report = useEffectEvent((next: boolean) => onShownChange?.(next));
-  useEffect(() => {
-    report(visible);
-  }, [visible]);
-  useEffect(() => () => report(false), []);
-  // Keyed by its agent: a new agent's line fades in over the old one, and the
-  // same agent's next words replace its own in place, with no fade to redo.
-  return shown.line ? (
-    <SubtitleLine key={shown.line.key} serverId={serverId} line={shown.line} onOpen={onOpen} />
-  ) : null;
+  // Keep the newest routing identity even while the words are held for readability.
+  return (
+    <SubtitleLine
+      serverId={serverId}
+      line={{ ...line, text: shown.line?.text ?? line.text }}
+      compact={compact}
+      onOpen={onOpen}
+    />
+  );
 }
 
 /**
@@ -82,12 +107,15 @@ export function StageSubtitle({
 function SubtitleLine({
   serverId,
   line,
+  compact,
   onOpen,
 }: {
   serverId: string;
   line: StageProgress;
+  compact: boolean;
   onOpen?: (line: StageProgress) => void;
 }) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const monoFontFamily = useMonoFontFamily();
@@ -96,33 +124,32 @@ function SubtitleLine({
   const spans = useMemo(() => inlineMarkdownSpans(line.text), [line.text]);
   return (
     <Animated.View
-      testID="home-stage-subtitle"
+      testID={`home-stage-subtitle-${line.key}`}
       pointerEvents="box-none"
       entering={calmFadeIn()}
       exiting={calmFadeOut()}
       style={styles.line}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={`${who}, ${line.text}`}
+        accessibilityLabel={`${who}, ${t`Working`}, ${line.text}`}
         disabled={!onOpen}
         onPress={() => onOpen?.(line)}
         style={[
           styles.plate,
           {
             backgroundColor: surfaceBackgroundFill(theme.colors.surfaceRaised, SHEET_FROST_ALPHA),
-            borderColor: withAlpha(theme.colors.border, 0.6),
             borderRadius: profile.chrome.control,
           },
         ]}>
         <Text
           variant="caption"
-          numberOfLines={2}
+          numberOfLines={compact ? 1 : 2}
           ellipsizeMode="tail"
           color={theme.colors.textMuted}>
           <Text variant="caption" weight="semibold" color={theme.colors.primary}>
             {who}
           </Text>
-          {'  '}
+          {` · ${t`Working`}  `}
           {spans.map((span, index) =>
             span.mark === 'code' ? (
               <Text
@@ -152,12 +179,14 @@ function SubtitleLine({
 }
 
 const styles = StyleSheet.create({
-  line: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'flex-start' },
+  stack: { gap: 4 },
+  line: { alignSelf: 'stretch' },
   plate: {
-    maxWidth: '100%',
+    alignSelf: 'stretch',
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   emphasis: { fontStyle: 'italic' },
 });

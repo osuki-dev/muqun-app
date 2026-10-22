@@ -444,3 +444,58 @@ test("the gateway's terminal provenance rides into the Continue snapshot", () =>
   expect(listed.terminal).toEqual({ sessionId: 'dev', paneId: 'p-cc' });
   expect(gatewayAgentSessions([info('native', 10)])[0].terminal).toBeUndefined();
 });
+
+test('an agent terminal binding cannot hide a same-ID pane in another or unknown routing session', () => {
+  for (const sessionId of ['other', undefined]) {
+    const rows = homeContinueEntries({
+      ...base,
+      snapshots: {
+        desk: {
+          serverId: 'desk',
+          sessionId,
+          checkedAtMs: 1,
+          agents: [
+            { id: 'cc', paneId: 'p-cc', name: 'Other shell', hasAgent: false, status: 'idle' },
+          ],
+        },
+      },
+      gatewaySessions: snapshot([
+        session('cc-session', 8_000, { terminal: { sessionId: 'dev', paneId: 'p-cc' } }),
+      ]),
+    });
+    expect(rows.map((row) => row.destination.type)).toEqual(['agent-session', 'pane']);
+  }
+});
+
+test('an older session listing cannot hide a reused pane from a newer mirror', () => {
+  const input = {
+    ...base,
+    snapshots: {
+      desk: {
+        serverId: 'desk',
+        sessionId: 'dev',
+        checkedAtMs: 2_000,
+        agents: [
+          {
+            id: 'next',
+            instanceId: 'new-instance',
+            paneId: 'p-cc',
+            name: 'New work',
+            hasAgent: true,
+            status: 'idle' as const,
+          },
+        ],
+      },
+    },
+    gatewaySessions: snapshot([
+      session('old-session', 500, { terminal: { sessionId: 'dev', paneId: 'p-cc' } }),
+    ]),
+  };
+  expect(homeContinueEntries(input).map((row) => row.title)).toContain('New work');
+  expect(
+    homeContinueEntries({
+      ...input,
+      gatewaySessions: { ...input.gatewaySessions, observedAtMs: 2_001 },
+    }).map((row) => row.destination.type)
+  ).toEqual(['agent-session']);
+});

@@ -3,6 +3,7 @@ import { expect, test } from 'bun:test';
 import {
   goneSessionKey,
   homeContinueEntries,
+  homeContinueCommand,
   type GatewayAgentSession,
   type GatewayAgentSessionsSnapshot,
 } from '../home-continue';
@@ -139,7 +140,7 @@ test('a pane Home started stands in until the pane mirror reads it, then the mir
   };
   const before = homeContinueEntries({ ...base, snapshots: { desk: older }, threads: [pane] });
   expect(before[0]).toMatchObject({
-    key: JSON.stringify(['desk', 'instance', 'inst-9']),
+    key: JSON.stringify([JSON.stringify(['desk', 'instance', 'inst-9']), 'dev']),
     atMs: 4_000,
     agentLabel: 'codex',
     destination: { type: 'pane', serverId: 'desk', paneId: 'p9' },
@@ -173,4 +174,118 @@ test('a pane Home started stands in until the pane mirror reads it, then the mir
   expect(
     closed.some((row) => row.destination.type === 'pane' && row.destination.paneId === 'p9')
   ).toBe(false);
+});
+
+test('a just-started pane keeps its known routing session before the mirror catches up', () => {
+  const pane: HomeThreadPane = {
+    kind: 'pane',
+    serverId: 'desk',
+    sessionId: 'other-routing-session',
+    paneId: 'p9',
+    title: 'New work',
+    setAtMs: 4_000,
+  };
+  const rows = homeContinueEntries({ ...base, threads: [pane] });
+  expect(homeContinueCommand(rows[0]!.destination)).toEqual({
+    type: 'resume-server',
+    target: {
+      kind: 'gateway-terminal',
+      serverId: 'desk',
+      sessionId: 'other-routing-session',
+      paneId: 'p9',
+    },
+  });
+});
+
+test('a mirror in another routing session cannot merge or retire a same-ID Home pane', () => {
+  const pane: HomeThreadPane = {
+    kind: 'pane',
+    serverId: 'desk',
+    sessionId: 'work',
+    paneId: 'p1',
+    title: 'Work conversation',
+    setAtMs: 4_000,
+    sentAtMs: 4_000,
+  };
+  for (const sessionId of ['dev', undefined]) {
+    const rows = homeContinueEntries({
+      ...base,
+      threads: [pane],
+      snapshots: {
+        desk: {
+          serverId: 'desk',
+          sessionId,
+          checkedAtMs: 5_000,
+          agents: [
+            { id: 'p1', paneId: 'p1', name: 'Other shell', hasAgent: false, status: 'idle' },
+          ],
+        },
+      },
+    });
+    expect(rows).toHaveLength(2);
+    expect(new Set(rows.map((row) => row.key)).size).toBe(2);
+    expect(
+      rows
+        .map((row) => homeContinueCommand(row.destination))
+        .find((command) => command.type === 'resume-server' && command.target.sessionId === 'work')
+    ).toEqual({
+      type: 'resume-server',
+      target: { kind: 'gateway-terminal', serverId: 'desk', sessionId: 'work', paneId: 'p1' },
+    });
+  }
+});
+
+test('same session IDs owned by different providers keep separate Home thread destinations', () => {
+  const rows = homeContinueEntries({
+    ...base,
+    gatewaySessions: listing([{ ...listed('new', 3_000), agentId: 'claude' }]),
+    threads: [started],
+  });
+  expect(rows).toHaveLength(2);
+  expect(rows.map((row) => homeContinueCommand(row.destination))).toEqual([
+    {
+      type: 'open-agent',
+      target: {
+        kind: 'agent-session',
+        serverId: 'desk',
+        sessionId: 'muqun-home',
+        directory: '/work',
+        asid: 'new',
+        agentId: 'codex',
+      },
+    },
+    {
+      type: 'open-agent',
+      target: {
+        kind: 'agent-session',
+        serverId: 'desk',
+        sessionId: 'dev',
+        directory: '/work',
+        asid: 'new',
+        agentId: 'claude',
+      },
+    },
+  ]);
+});
+
+test('an older listing cannot hide a pane targeted by Home afterward', () => {
+  const rows = homeContinueEntries({
+    ...base,
+    gatewaySessions: listing(
+      [{ ...listed('old', 1_000), terminal: { sessionId: 'dev', paneId: 'p9' } }],
+      2_000
+    ),
+    threads: [
+      {
+        kind: 'pane',
+        serverId: 'desk',
+        sessionId: 'dev',
+        paneId: 'p9',
+        instanceId: 'new',
+        title: 'New work',
+        setAtMs: 3_000,
+      },
+    ],
+  });
+  expect(rows.map((row) => row.destination.type)).toEqual(['pane', 'agent-session']);
 });

@@ -928,9 +928,9 @@ export function HomeOverview({
     recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
   const recentShown = filterHomeRecent(recentEntries, recentFilter);
 
-  function openServer(serverId: string, paneId?: string) {
+  function openServer(serverId: string, paneId?: string, sessionId?: string) {
     retryHomeRefresh(serverId);
-    void commands.openServer(serverId, paneId);
+    void commands.openServer(serverId, paneId, sessionId);
   }
 
   function resumeServerTarget(target: HomeServerEntry) {
@@ -1131,7 +1131,7 @@ export function HomeOverview({
   };
   function openThread(target: HomeThreadTarget) {
     if (target.kind === 'pane') {
-      openServer(target.serverId, target.paneId);
+      openServer(target.serverId, target.paneId, target.sessionId);
       return;
     }
     if (target.kind !== 'session') return;

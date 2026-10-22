@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { followHomeSession } from '@/components/home-thread';
-import type { FormRequest, PermissionRequest } from '@/lib/agent-protocol';
+import type { AgentRunStatus, FormRequest, PermissionRequest } from '@/lib/agent-protocol';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { readPaneOutput } from '@/lib/gateway-client';
@@ -11,10 +11,11 @@ import { homeThreadKey } from '@/lib/home-thread';
 import { paneAgentActivity } from '@/lib/pane-agent-line';
 import {
   sessionActivity,
-  stageActivitySubject,
+  stageActivitySubjects,
   stageNeeds,
-  stageProgress,
+  stageProgressLines,
   type StageActivityInput,
+  type StageActivitySubject,
   type StageDockInput,
   type StageNeeds,
   type StageProgress,
@@ -99,11 +100,9 @@ const PANE_ACTIVITY_READ_MS = 4_500;
 const PANE_ACTIVITY_ROWS = 80;
 
 type SeenActivity = {
-  /** The agent whose activity last changed: the one the subtitle holds on to. */
-  current?: string;
-  /** When each followed agent's activity last changed, on this device's clock. */
-  activeAtMs: Readonly<Record<string, number>>;
-  line?: { key: string; text: string; atMs: number };
+  serverId: string;
+  lines: Readonly<Record<string, { source: string; text: string; atMs: number }>>;
+  statuses: Readonly<Record<string, { sessionId: string; status: AgentRunStatus; atMs: number }>>;
 };
 
 /** Whether the gateway connection is still this computer's, as it was when a read began. */
@@ -116,17 +115,8 @@ function ownsComputer(serverId: string): (() => boolean) | null {
   };
 }
 
-/**
- * The newest progress an agent working on `serverId` reported: its ledger
- * task's progress line, or what the most recently active working agent
- * (`stageActivitySubject`) is doing now. A pane agent's visible screen is read
- * every few seconds while it works (`paneAgentActivity`); a session agent's
- * activity comes from its session stream -- the dock's own, already open, or
- * the agent's while it is followed. Mounted only while Home is in front, the
- * app is active and the Stage shows, so nothing is read otherwise, and the
- * reads stop the moment the agent stops working.
- */
-export function useStageProgress(serverId: string): StageProgress | null {
+/** At most five active speakers, followed only while the Stage is visible. */
+export function useStageProgress(serverId: string): StageProgress[] {
   const tasks = useServerTasksStore((state) => state.index[serverId]?.tasks ?? NO_TASKS);
   const panes = useServerAgents((state) => state.byServer[serverId]);
   const sessions = useHomeAgentSessions((state) => state.byServer[serverId]);
@@ -139,7 +129,31 @@ export function useStageProgress(serverId: string): StageProgress | null {
     threadKey !== null && state.key === threadKey ? state.live.activity : undefined
   );
   const nowMs = useMinuteNow();
-  const [seen, setSeen] = useState<SeenActivity>({ activeAtMs: {} });
+  const [seen, setSeen] = useState<SeenActivity>({ serverId, lines: {}, statuses: {} });
+  const liveSessions = sessions
+    ? {
+        ...sessions,
+        sessions: sessions.sessions.map((session) => {
+          if (
+            thread?.kind === 'session' &&
+            thread.asid === session.asid &&
+            (!thread.agentId || !session.agentId || thread.agentId === session.agentId) &&
+            thread.sessionId === sessions.sessionId &&
+            dockStatus
+          ) {
+            return { ...session, status: dockStatus };
+          }
+          const observed =
+            seen.serverId === serverId
+              ? seen.statuses[JSON.stringify([session.agentId ?? null, session.asid])]
+              : undefined;
+          return observed?.sessionId === sessions.sessionId &&
+            observed.atMs >= sessions.observedAtMs
+            ? { ...session, status: observed.status }
+            : session;
+        }),
+      }
+    : undefined;
   const dock: StageDockInput | undefined =
     thread?.kind === 'session'
       ? {
@@ -152,114 +166,154 @@ export function useStageProgress(serverId: string): StageProgress | null {
       : thread?.kind === 'pane'
         ? { kind: 'pane', paneId: thread.paneId }
         : undefined;
-  const dockKey = thread?.kind === 'session' ? `session:${thread.asid}` : undefined;
-  const subject = stageActivitySubject({
+  const subjects = stageActivitySubjects({
     serverId,
     ...(panes ? { panes } : {}),
-    ...(sessions ? { sessions } : {}),
+    ...(liveSessions ? { sessions: liveSessions } : {}),
     ...(dock ? { dock } : {}),
-    ...(seen.current ? { current: seen.current } : {}),
-    activeAtMs:
-      dockKey && dockActivity
-        ? { ...seen.activeAtMs, [dockKey]: dockActivity.atMs }
-        : seen.activeAtMs,
+    activeAtMs: {},
     nowMs,
   });
-
-  const note = useStableHandler((key: string, text: string | undefined, atMs: number) => {
-    if (!text) return;
-    setSeen((previous) =>
-      previous.line?.key === key && previous.line.text === text
-        ? previous
-        : {
-            current: key,
-            activeAtMs: { ...previous.activeAtMs, [key]: Date.now() },
-            line: { key, text, atMs },
-          }
-    );
+  // Include terminal incarnation in the subscription identity, not its mutable label.
+  const sources = subjects.map((subject) => {
+    const pane =
+      subject.kind === 'pane'
+        ? panes?.agents.find((agent) => agent.paneId === subject.paneId)
+        : undefined;
+    return {
+      subject,
+      ambiguous:
+        subject.kind === 'session' &&
+        (sessions?.sessions.filter((session) => session.asid === subject.asid).length ?? 0) > 1,
+      source:
+        subject.kind === 'pane'
+          ? JSON.stringify([panes?.sessionId, subject.paneId, pane?.instanceId, pane?.shellPid])
+          : JSON.stringify([subject.sessionId, subject.agentId, subject.asid]),
+    };
   });
-
-  // A pane agent at work: its visible screen, read every few seconds.
-  const paneId = subject?.kind === 'pane' ? subject.paneId : undefined;
+  const subscriptions = JSON.stringify(sources);
   const paneSessionId = panes?.sessionId;
+  const note = useStableHandler(
+    (key: string, source: string, text: string | undefined, atMs: number) => {
+      if (!text) return;
+      setSeen((previous) => {
+        const lines = previous.serverId === serverId ? previous.lines : {};
+        if (lines[key]?.source === source && lines[key]?.text === text) return previous;
+        return {
+          serverId,
+          lines: { ...lines, [key]: { source, text, atMs } },
+          statuses: previous.serverId === serverId ? previous.statuses : {},
+        };
+      });
+    }
+  );
+  const noteStatus = useStableHandler((key: string, sessionId: string, status: AgentRunStatus) => {
+    setSeen((previous) => ({
+      serverId,
+      lines: previous.serverId === serverId ? previous.lines : {},
+      statuses: {
+        ...(previous.serverId === serverId ? previous.statuses : {}),
+        [key]: { sessionId, status, atMs: Date.now() },
+      },
+    }));
+  });
   useEffect(() => {
-    if (!paneId || !paneSessionId) return;
     const owns = ownsComputer(serverId);
     if (!owns) return;
-    const key = `pane:${paneId}`;
     let active = true;
+    const cleanups: (() => void)[] = [];
+    const followed = JSON.parse(subscriptions) as {
+      subject: StageActivitySubject;
+      ambiguous: boolean;
+      source: string;
+    }[];
+    for (const { subject, source, ambiguous } of followed) {
+      if (subject.kind === 'session') {
+        if (subject.dock || ambiguous) continue;
+        const statusKey = JSON.stringify([subject.agentId ?? null, subject.asid]);
+        let verified = false;
+        const heard = (activity: ReturnType<typeof sessionActivity>) => {
+          if (active && owns() && verified && activity)
+            note(subject.key, source, activity.text, activity.atMs);
+        };
+        cleanups.push(
+          followHomeSession({
+            serverId,
+            sessionId: subject.sessionId,
+            asid: subject.asid,
+            onSnapshot: (snapshot) => {
+              if (!active || !owns()) return;
+              verified =
+                !!snapshot.info && (!subject.agentId || snapshot.info.agent_id === subject.agentId);
+              if (!verified) return;
+              if (snapshot.info) noteStatus(statusKey, subject.sessionId, snapshot.info.status);
+              heard(sessionActivity(snapshot.timeline));
+            },
+            onEvent: (event) => {
+              if (event.type === 'agent.timeline.upsert') heard(sessionActivity(event.items));
+              if (active && owns() && verified && event.type === 'agent.status.changed')
+                noteStatus(statusKey, subject.sessionId, event.status);
+            },
+          })
+        );
+      }
+    }
+    // One bounded visible-screen read across all terminals, never five parallel histories.
+    const paneSources = followed.filter((row) => row.subject.kind === 'pane');
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const read = () => {
+    let nextPane = 0;
+    const readPane = () => {
       timer = null;
-      void readPaneOutput(paneSessionId, paneId, 'text', PANE_ACTIVITY_ROWS, 'visible')
+      const entry = paneSources[nextPane % paneSources.length];
+      if (!active || !owns() || !paneSessionId || entry?.subject.kind !== 'pane') return;
+      nextPane += 1;
+      const { subject, source } = entry;
+      void readPaneOutput(paneSessionId, subject.paneId, 'text', PANE_ACTIVITY_ROWS, 'visible')
         .then(
           (output) => {
-            if (active && owns()) note(key, paneAgentActivity(output), Date.now());
+            if (active && owns()) note(subject.key, source, paneAgentActivity(output), Date.now());
           },
-          // A pane that cannot be read says nothing; the next read may.
           () => {}
         )
         .finally(() => {
-          if (active) timer = setTimeout(read, PANE_ACTIVITY_READ_MS);
+          if (active && owns()) timer = setTimeout(readPane, PANE_ACTIVITY_READ_MS);
         });
     };
-    read();
+    if (paneSources.length > 0) readPane();
     return () => {
       active = false;
       if (timer) clearTimeout(timer);
+      for (const cleanup of cleanups) cleanup();
     };
-  }, [serverId, paneId, paneSessionId, note]);
+  }, [serverId, paneSessionId, subscriptions, note, noteStatus]);
 
-  // A session agent other than the dock's: its stream, while it is followed.
-  const follow = subject?.kind === 'session' && !subject.dock ? subject : undefined;
-  const followSessionId = follow?.sessionId;
-  const followAsid = follow?.asid;
-  useEffect(() => {
-    if (!followSessionId || !followAsid) return;
-    const key = `session:${followAsid}`;
-    const heard = (activity: ReturnType<typeof sessionActivity>) => {
-      if (activity) note(key, activity.text, activity.atMs);
-    };
-    return followHomeSession({
-      serverId,
-      sessionId: followSessionId,
-      asid: followAsid,
-      onSnapshot: (snapshot) => heard(sessionActivity(snapshot.timeline)),
-      onEvent: (event) => {
-        if (event.type === 'agent.timeline.upsert') heard(sessionActivity(event.items));
-      },
-    });
-  }, [serverId, followSessionId, followAsid, note]);
-
-  let activity: StageActivityInput | undefined;
-  if (subject?.kind === 'session' && subject.dock) {
-    if (dockActivity)
-      activity = {
-        key: subject.key,
-        ...(subject.agentId ? { agentId: subject.agentId } : {}),
-        text: dockActivity.text,
-        atMs: dockActivity.atMs,
-      };
-  } else if (subject && seen.line?.key === subject.key) {
-    activity = {
+  const activities: StageActivityInput[] = [];
+  for (const { subject, source } of sources) {
+    const line =
+      subject.kind === 'session' && subject.dock
+        ? dockActivity
+        : seen.serverId === serverId && seen.lines[subject.key]?.source === source
+          ? seen.lines[subject.key]
+          : undefined;
+    if (!line) continue;
+    activities.push({
       key: subject.key,
       ...(subject.kind === 'pane'
         ? {
             paneId: subject.paneId,
             ...(subject.agentLabel ? { agentLabel: subject.agentLabel } : {}),
           }
-        : subject.agentId
-          ? { agentId: subject.agentId }
-          : {}),
-      text: seen.line.text,
-      // When this device saw it change: what the agent is doing now.
-      atMs: Math.max(seen.line.atMs, seen.activeAtMs[subject.key] ?? 0),
-    };
+        : { asid: subject.asid, ...(subject.agentId ? { agentId: subject.agentId } : {}) }),
+      text: line.text,
+      atMs: line.atMs,
+    });
   }
-  return stageProgress({
+  return stageProgressLines({
+    serverId,
     tasks,
-    ...(panes ? { panes } : {}),
-    ...(activity ? { activity } : {}),
+    panes,
+    sessions: liveSessions,
+    activities,
     nowMs,
-  });
+  }).slice(0, 5);
 }

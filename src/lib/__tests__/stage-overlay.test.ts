@@ -10,6 +10,9 @@ import {
   stageActivitySubject,
   stageNeeds,
   stageProgress,
+  stageProgressLines,
+  stageActivitySubjects,
+  stageSessionKey,
   stageSingleChoice,
   stageSubtitleStep,
   STAGE_SUBTITLE_MIN_MS,
@@ -226,7 +229,8 @@ describe('stageProgress', () => {
     });
     expect(line).toEqual({
       agentId: 'opencode',
-      key: 'session:a9',
+      key: stageSessionKey('a9', 'opencode'),
+      asid: 'a9',
       text: 'writing the migration',
       atMs: NOW - 1_000,
     });
@@ -333,7 +337,7 @@ describe('stageActivitySubject', () => {
     });
     expect(subject).toEqual({
       kind: 'session',
-      key: 'session:s1',
+      key: stageSessionKey('s1', 'opencode'),
       sessionId: 'herdr',
       asid: 's1',
       agentId: 'opencode',
@@ -365,7 +369,7 @@ describe('stageActivitySubject', () => {
     expect(
       stageActivitySubject({
         serverId: SERVER,
-        panes: mirror([agent('p1')], NOW),
+        panes: { ...mirror([agent('p1')], NOW - 3_000), sessionId: 'herdr' },
         sessions: listing([{ asid: 's1', status: 'busy', updatedMs: NOW - 9_000, paneId: 'p1' }]),
         activeAtMs: {},
         nowMs: NOW,
@@ -466,5 +470,199 @@ describe('sessionActivity', () => {
       ])
     ).toEqual({ text: 'Reading.', atMs: 1 });
     expect(sessionActivity([])).toBeUndefined();
+  });
+});
+
+describe('stageProgressLines', () => {
+  const panes = {
+    ...mirror([agent('p1', { instanceId: 'live', shellPid: 42 })]),
+    sessionId: 'herdr',
+  };
+  const sessions: GatewayAgentSessionsSnapshot = {
+    serverId: SERVER,
+    sessionId: 'herdr',
+    observedAtMs: NOW,
+    sessions: [
+      {
+        asid: 'a1',
+        agentId: 'claude',
+        title: 'same name',
+        directory: '/repo',
+        status: 'busy',
+        updatedMs: NOW - 500,
+        terminal: { sessionId: 'herdr', paneId: 'p1' },
+      },
+    ],
+  };
+  const paneTask = task('pane', {
+    progress: 'older terminal progress',
+    binding: { kind: 'pane', sessionId: 'herdr', paneId: 'p1', shellPid: 42, agentId: 'claude' },
+  });
+  test('merges only a verified pane association and keeps the newest reported line', () => {
+    const lines = stageProgressLines({
+      serverId: SERVER,
+      panes,
+      sessions,
+      tasks: [paneTask],
+      activities: [
+        {
+          key: stageSessionKey('a1', 'claude'),
+          asid: 'a1',
+          agentId: 'claude',
+          text: 'newer session progress',
+          atMs: NOW,
+        },
+      ],
+      nowMs: NOW,
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({
+      key: stageSessionKey('a1', 'claude'),
+      asid: 'a1',
+      text: 'newer session progress',
+    });
+  });
+  test('a reused shell, another workspace, and a removed pane cannot revive a ledger subtitle', () => {
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes,
+        sessions,
+        tasks: [
+          {
+            ...paneTask,
+            binding: { kind: 'pane', sessionId: 'herdr', paneId: 'p1', shellPid: 41 },
+          },
+        ],
+        nowMs: NOW,
+      })
+    ).toEqual([]);
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes: { ...panes, sessionId: 'other' },
+        sessions,
+        tasks: [paneTask],
+        nowMs: NOW,
+      })
+    ).toEqual([]);
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes: { ...panes, agents: [] },
+        sessions,
+        tasks: [paneTask],
+        nowMs: NOW,
+      })
+    ).toEqual([]);
+  });
+  test('another computer cannot turn a pane subtitle into a session', () => {
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes,
+        sessions: { ...sessions, serverId: 'other' },
+        tasks: [paneTask],
+        nowMs: NOW,
+      })[0]?.key
+    ).toBe('pane:p1');
+  });
+  test('fresh idle reports suppress leftover working tasks, but older reports do not override newer work', () => {
+    const idle = {
+      ...sessions,
+      sessions: sessions.sessions.map((session) => ({ ...session, status: 'idle' as const })),
+    };
+    const nativeTask = task('native', {
+      progress: 'old progress',
+      binding: { kind: 'agent_session', asid: 'a1', agentId: 'claude' },
+    });
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes,
+        sessions: idle,
+        tasks: [paneTask, nativeTask],
+        nowMs: NOW,
+      })
+    ).toEqual([]);
+    expect(
+      stageProgressLines({
+        serverId: SERVER,
+        panes,
+        sessions: { ...idle, observedAtMs: NOW - 10_000 },
+        tasks: [nativeTask],
+        nowMs: NOW,
+      })
+    ).toHaveLength(1);
+  });
+  test('provider-scoped identities remain distinct and update time never reorders them', () => {
+    const activities = ['claude', 'codex'].map((agentId, index) => ({
+      key: stageSessionKey('shared-asid', agentId),
+      asid: 'shared-asid',
+      agentId,
+      text: `line ${index}`,
+      atMs: NOW - index,
+    }));
+    const before = stageProgressLines({ tasks: [], activities, nowMs: NOW });
+    const after = stageProgressLines({
+      tasks: [],
+      activities: [...activities]
+        .reverse()
+        .map((activity, index) => ({ ...activity, atMs: NOW + index })),
+      nowMs: NOW,
+    });
+    expect(before).toHaveLength(2);
+    expect(after.map((line) => line.key)).toEqual(before.map((line) => line.key));
+  });
+  test('five subscriptions prefer sessions and remain stable across activity updates', () => {
+    const listing = {
+      ...sessions,
+      sessions: Array.from({ length: 7 }, (_, index) => ({
+        ...sessions.sessions[0]!,
+        asid: `a${index}`,
+        terminal: undefined,
+      })),
+    };
+    const input = { serverId: SERVER, panes, sessions: listing, activeAtMs: {}, nowMs: NOW };
+    const first = stageActivitySubjects(input);
+    expect(first).toHaveLength(5);
+    expect(first.every((subject) => subject.kind === 'session')).toBe(true);
+    expect(
+      stageActivitySubjects({
+        ...input,
+        activeAtMs: { [stageSessionKey('a6', 'claude')]: NOW + 1 },
+      }).map((subject) => subject.key)
+    ).toEqual(first.map((subject) => subject.key));
+    const duplicate = {
+      ...sessions,
+      sessions: [sessions.sessions[0]!, { ...sessions.sessions[0]!, agentId: 'codex' }],
+    };
+    expect(
+      stageActivitySubjects({ ...input, sessions: duplicate }).filter(
+        (subject) => subject.kind === 'session'
+      )
+    ).toHaveLength(2);
+  });
+  test('old or differently scoped terminal associations cannot suppress a current pane speaker', () => {
+    for (const listing of [
+      { ...sessions, observedAtMs: panes.checkedAtMs - 1 },
+      {
+        ...sessions,
+        sessions: sessions.sessions.map((session) => ({
+          ...session,
+          terminal: { sessionId: 'other', paneId: 'p1' },
+        })),
+      },
+    ]) {
+      expect(
+        stageActivitySubjects({
+          serverId: SERVER,
+          panes,
+          sessions: listing,
+          activeAtMs: {},
+          nowMs: NOW,
+        }).some((subject) => subject.kind === 'pane')
+      ).toBe(true);
+    }
   });
 });
