@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 
 import { followHomeSession } from '@/components/home-thread';
-import type { AgentRunStatus, FormRequest, PermissionRequest } from '@/lib/agent-protocol';
+import {
+  isBusyStatus,
+  type AgentRunStatus,
+  type FormRequest,
+  type PermissionRequest,
+} from '@/lib/agent-protocol';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { readPaneOutput } from '@/lib/gateway-client';
@@ -315,5 +320,32 @@ export function useStageProgress(serverId: string): StageProgress[] {
     sessions: liveSessions,
     activities,
     nowMs,
-  }).slice(0, 5);
+  })
+    .filter((line) => {
+      // A report with no navigable conversation is not a tappable subtitle.
+      if (!line.asid) return line.key.startsWith('pane:');
+      // Stream state is newer than the listing timestamp. In particular, an idle
+      // event must retire a leftover ledger report even if the list predates it.
+      if (
+        thread?.kind === 'session' &&
+        thread.asid === line.asid &&
+        (!thread.agentId || !line.agentId || thread.agentId === line.agentId) &&
+        dockStatus
+      ) {
+        return isBusyStatus(dockStatus);
+      }
+      const observed =
+        seen.serverId === serverId
+          ? seen.statuses[JSON.stringify([line.agentId ?? null, line.asid])]
+          : undefined;
+      if (
+        observed &&
+        observed.sessionId === sessions?.sessionId &&
+        observed.atMs >= Math.max(line.atMs, sessions.observedAtMs)
+      ) {
+        return isBusyStatus(observed.status);
+      }
+      return true;
+    })
+    .slice(0, 5);
 }
