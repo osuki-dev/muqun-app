@@ -142,3 +142,7 @@ example
 !/keys/hot-updater-public.pem
 # hot-updater
 .hot-updater/output
+
+# Local native OTA targets and deployment lock (never bundled or committed).
+/.hot-updater/native-builds/
+/.hot-updater/native-deploy.lock/
