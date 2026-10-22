@@ -88,6 +88,8 @@ function UpdateDialog() {
   // The exit into the restart: 0 shown, 1 gone.
   const leave = useSharedValue(0);
   const dust = useSharedValue(0);
+  // The dissolve's canvas, faded out rather than cut if the restart fails.
+  const ground = useSharedValue(1);
   useEffect(() => {
     enter.set(withTiming(1, calm(DURATION.medium)));
     if (!reduced) rise.set(withSpring(0, SETTLE));
@@ -97,6 +99,7 @@ function UpdateDialog() {
     transform: [{ translateY: rise.get() + leave.get() * (reduced ? 0 : 12) }],
   }));
   const scrimStyle = useAnimatedStyle(() => ({ opacity: 1 - leave.get() }));
+  const groundStyle = useAnimatedStyle(() => ({ opacity: ground.get() }));
 
   // The restart's curtain: the screen this update replaces, breaking into the
   // launch scene's ash over the theme's ground, before the reload runs.
@@ -117,6 +120,7 @@ function UpdateDialog() {
       return;
     }
     await new Promise<void>((resolve) => {
+      ground.set(1);
       setDrawn(() => resolve);
       setShot(picture);
     });
@@ -138,11 +142,19 @@ function UpdateDialog() {
   // A restart that failed brings the dialog back, with its Retry.
   useEffect(() => {
     if (restarting) return;
-    setShot(null);
-    setDrawn(null);
-    dust.set(0);
+    const clear = () => {
+      setShot(null);
+      setDrawn(null);
+    };
     leave.set(withTiming(0, calm(DURATION.medium)));
-  }, [dust, leave, restarting]);
+    ground.set(
+      withTiming(0, calm(DURATION.medium), (finished) => {
+        if (!finished) return;
+        dust.set(0);
+        scheduleOnRN(clear);
+      })
+    );
+  }, [dust, ground, leave, restarting]);
 
   const bullets = releaseNotes ? updateNoteBullets(releaseNotes) : null;
   const size =
@@ -176,10 +188,17 @@ function UpdateDialog() {
       onRequestClose={deferAppUpdate}>
       <GestureHandlerRootView style={styles.fill}>
         {shot ? (
-          <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Fill color={theme.colors.background} />
-            <SnapDust image={shot.image} width={shot.width} progress={dust} onReady={onDustReady} />
-          </Canvas>
+          <Animated.View style={[StyleSheet.absoluteFill, groundStyle]} pointerEvents="none">
+            <Canvas style={styles.fill}>
+              <Fill color={theme.colors.background} />
+              <SnapDust
+                image={shot.image}
+                width={shot.width}
+                progress={dust}
+                onReady={onDustReady}
+              />
+            </Canvas>
+          </Animated.View>
         ) : null}
         <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, scrimStyle]} />
         <View
