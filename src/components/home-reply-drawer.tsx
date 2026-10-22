@@ -49,6 +49,9 @@ import {
   type PaneReadWindow,
 } from '@/terminal/history';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { resolveThemeIcon } from '@/theme/icon-direction';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
 import { SheetGround } from '@/components/sheet-ground';
 import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
@@ -411,6 +414,20 @@ export function HomeReplyButton({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const needsYou = useHomeThreadState(target) === 'needs-you';
+  // The arrow turns to point down while the drawer it opens is up, and back
+  // as it closes: a pack's own conversation glyph keeps its orientation.
+  const { theme: customTheme, assets } = useEffectiveCustomTheme();
+  const ownGlyph =
+    resolveThemeIcon(customTheme?.manifest, assets, [{ name: 'chrome.conversation' }], (uri) =>
+      isRenderableThemeAsset(uri)
+    ) !== null;
+  const turn = useSharedValue(controller.open && !ownGlyph ? 1 : 0);
+  useEffect(() => {
+    turn.set(withTiming(controller.open && !ownGlyph ? 1 : 0, timing('short')));
+  }, [turn, controller.open, ownGlyph]);
+  const turnStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.get() * 180}deg` }],
+  }));
   return (
     <ComposerMenuButton
       testID="home-reply-button"
@@ -430,13 +447,15 @@ export function HomeReplyButton({
             }
           : undefined
       }>
-      <ThemeIcon
-        name="chrome.conversation"
-        alternate={CONVERSATION_ICON_ALTERNATE}
-        fallback={SessionIcon}
-        size={18}
-        color={controller.open ? theme.colors.primary : theme.colors.textMuted}
-      />
+      <Animated.View style={turnStyle}>
+        <ThemeIcon
+          name="chrome.conversation"
+          alternate={CONVERSATION_ICON_ALTERNATE}
+          fallback={SessionIcon}
+          size={18}
+          color={controller.open ? theme.colors.primary : theme.colors.textMuted}
+        />
+      </Animated.View>
       {needsYou ? (
         <Animated.View
           entering={fadeIn('short')}
