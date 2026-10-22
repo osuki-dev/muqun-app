@@ -47,9 +47,10 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 
 /**
  * The ladder the stage steps down when it cannot hold its frame budget:
- * `reduced` halves the particles and renders at a lower pixel ratio; `low`
- * drops the particles, renders at 1x and caps every frame at 30 fps;
- * `static` is the same layout drawn flat, without parallax
+ * `full` renders at the device's pixel ratio up to 2; `reduced` halves the
+ * particles and renders at 1.5 at most; `low` drops the particles, renders
+ * at 1x and caps every frame at 30 fps; `static` is the same layout drawn
+ * flat, without parallax
  * (§5, §11.7). It never climbs back within a session: a device that ran hot
  * once will again, and flapping costs more than it saves.
  */
@@ -148,7 +149,11 @@ export type StageEffects = {
   /** The idle drift, the hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
-  /** The highest pixel ratio the scene renders at. */
+  /**
+   * The highest pixel ratio the scene renders at; the device's own ratio
+   * below it. Shading cost grows with its square: 2.0 on a 3x phone shades
+   * about 44% of the native pixels, 1.5 a quarter, 1.0 a ninth.
+   */
   maxDpr: number;
   /** Minimum milliseconds between frames while a finger, the cover-flow or a dive moves it. */
   frameIntervalMs: number;
@@ -172,7 +177,7 @@ export function stageEffects(
     particleShare: quality === 'full' ? 1 : 0.5,
     pulse: !calm,
     tilt: !calm,
-    maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
+    maxDpr: quality === 'full' ? 2 : quality === 'reduced' ? 1.5 : 1,
     frameIntervalMs: low ? 1000 / 30 : 0,
     glideIntervalMs: 1000 / 30,
     idleIntervalMs: gpu && !calm ? 50 : null,

@@ -602,13 +602,13 @@ describe('frame pacing', () => {
     expect(stageEffects('full', gpu)).toMatchObject({
       particles: true,
       particleShare: 1,
-      maxDpr: 1.5,
+      maxDpr: 2,
       frameIntervalMs: 0,
     });
     expect(stageEffects('reduced', gpu)).toMatchObject({
       particles: true,
       particleShare: 0.5,
-      maxDpr: 1.25,
+      maxDpr: 1.5,
       frameIntervalMs: 0,
     });
     // The cheapest 3D rung: no particles, 1x, 30 fps.
