@@ -807,6 +807,14 @@ msgstr "API-Schlüssel (optional)"
 msgid "API URL"
 msgstr "API-URL"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "App-Code"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "App-Daten"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App-Symbol"
@@ -827,6 +835,10 @@ msgstr "App-Sperre nicht verfügbar"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "App-Name und Slogan"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "App-Updates"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "Build"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "Integriert"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "Cache"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -1877,7 +1893,6 @@ msgstr "Ctrl Z, anhalten"
 msgid "Controls"
 msgstr "Steuerung"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Gespräch"
@@ -4753,6 +4768,10 @@ msgstr "Öffnet diesen Computer"
 msgid "Options for {0}"
 msgstr "Optionen für {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "Weiterer Cache"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "Andere Computer"
@@ -5415,13 +5434,10 @@ msgstr "Audio erneut abspielen"
 msgid "Reply from Home"
 msgstr "Von Home antworten"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "Antwort an"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "Antwort an {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -6912,6 +6928,10 @@ msgstr "Der vorherige Versand konnte nicht geprüft werden"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Das rohe Panel, auf seinem Raster und in seinen eigenen Farben"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "Der restliche Cache wird beim nächsten Öffnen von Muqun entfernt"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "Auf diesem Bildschirm ist ein Fehler aufgetreten. Versuche es erneut — deine Computer bleiben gekoppelt"
@@ -7344,6 +7364,10 @@ msgstr "Zu viele Änderungen für eine Liste. Dies ist der Anfang, nicht alles"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Toolaufruf"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "Gesamt"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -7823,6 +7847,7 @@ msgid "While you were away"
 msgstr "Während du weg warst"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Arbeitet"

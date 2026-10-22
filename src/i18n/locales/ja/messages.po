@@ -807,6 +807,14 @@ msgstr "API キー（任意）"
 msgid "API URL"
 msgstr "API URL"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "アプリ本体"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "アプリデータ"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "アプリアイコン"
@@ -827,6 +835,10 @@ msgstr "アプリロックを利用できません"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "アプリ名とキャッチコピー"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "アプリのアップデート"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "ビルド (Build)"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "標準"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "キャッシュ"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -1877,7 +1893,6 @@ msgstr "コントロール Z、一時停止"
 msgid "Controls"
 msgstr "操作"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "会話"
@@ -4753,6 +4768,10 @@ msgstr "このコンピュータを開きます"
 msgid "Options for {0}"
 msgstr "{0} のオプション"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "その他のキャッシュ"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "ほかのコンピュータ"
@@ -5415,13 +5434,10 @@ msgstr "音声をもう一度再生"
 msgid "Reply from Home"
 msgstr "ホームから返信"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "返信先"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "{threadAgentName} に返信"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -6912,6 +6928,10 @@ msgstr "前回の送信状態を確認できませんでした"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "素のパネルを、文字グリッドと本来の色のまま表示します"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "残りのキャッシュは次回牧群を開いたときに削除されます"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "この画面でエラーが発生しました。もう一度お試しください。コンピュータのペアリングはそのまま残ります"
@@ -7344,6 +7364,10 @@ msgstr "変更が多すぎて一覧にできません。これは先頭部分で
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "ツール呼び出し"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "合計"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -7823,6 +7847,7 @@ msgid "While you were away"
 msgstr "離席中の変化"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"

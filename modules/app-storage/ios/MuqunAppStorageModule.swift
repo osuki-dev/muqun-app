@@ -18,5 +18,8 @@ public class MuqunAppStorageModule: Module {
         return true
       }
     }
+
+    // iOS has no per-app storage figures; the JavaScript side measures the cache.
+    AsyncFunction("getStorageStats") { () -> [String: Double]? in nil }
   }
 }

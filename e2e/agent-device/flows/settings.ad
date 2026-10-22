@@ -291,7 +291,7 @@ scroll down --pixels 160 --duration-ms 300
 wait stable 300 5000
 
 # section storage-scroll
-# STORAGE sits between SECURITY and ABOUT. Its four rows are within a screen of
+# STORAGE sits between SECURITY and ABOUT. Its rows are within a screen of
 # each other, so the ordinary flick is enough here: unlike the ALERTS heading in
 # `s56`, every target below is a full row rather than a 13pt instrument label,
 # and a flick that overshoots one of them still leaves it in the tree for the
@@ -316,7 +316,6 @@ wait stable 300 5000
 
 # section storage-visible
 is visible "${TARGET}"
-is hidden "id=\"settings-storage-other-row\""
 
 # section storage-press
 press "${TARGET}"

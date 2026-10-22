@@ -807,6 +807,14 @@ msgstr "API Key（選填）"
 msgid "API URL"
 msgstr "API 位址"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "App 本體"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "App 資料"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App 圖示"
@@ -827,6 +835,10 @@ msgstr "無法使用 App 鎖定"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "App 名稱和標語"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "App 更新"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -1107,6 +1119,10 @@ msgstr "構建 (Build)"
 #: src/components/settings-theme-sheet.tsx
 msgid "Built-in"
 msgstr "內建"
+
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "快取"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
@@ -1877,7 +1893,6 @@ msgstr "Ctrl Z 鍵，暫停"
 msgid "Controls"
 msgstr "控制"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "對話"
@@ -4753,6 +4768,10 @@ msgstr "打開這台電腦"
 msgid "Options for {0}"
 msgstr "{0} 的選項"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "其他快取"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "其他電腦"
@@ -5415,13 +5434,10 @@ msgstr "重播音訊"
 msgid "Reply from Home"
 msgstr "在主畫面回覆"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "回覆給"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "回覆 {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -6912,6 +6928,10 @@ msgstr "無法核對上次傳送的狀態"
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字元格線與色彩"
 
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "其餘快取會在下次開啟牧群時清除"
+
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
 msgstr "這個畫面發生錯誤。請再試一次，你配對的電腦不受影響"
@@ -7344,6 +7364,10 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具呼叫"
+
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "總計"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -7823,6 +7847,7 @@ msgid "While you were away"
 msgstr "離開期間"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"

@@ -38,4 +38,13 @@ export function requestLaunchCachePurge(): void {
   }
 }
 
+/** Whether Clear cache left work for the next launch. */
+export function isLaunchCachePurgePending(): boolean {
+  try {
+    return new File(Paths.cache, LAUNCH_PURGE_MARKER).exists;
+  } catch {
+    return false;
+  }
+}
+
 purgeLibraryCachesAtLaunch();
