@@ -177,10 +177,12 @@ const SubtitleLine = memo(function SubtitleLine({
 });
 
 const styles = StyleSheet.create({
-  stack: { gap: 4 },
-  line: { alignSelf: 'stretch' },
+  stack: { gap: 4, alignItems: 'flex-start' },
+  // As wide as its words, up to the row: a short report is a short plate.
+  line: { alignSelf: 'flex-start', maxWidth: '100%' },
   plate: {
-    alignSelf: 'stretch',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 12,

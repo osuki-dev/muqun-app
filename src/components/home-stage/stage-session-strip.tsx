@@ -169,7 +169,7 @@ export function StageSessionStrip({
     if (flip.generation > 0) resetScroll();
   }, [flip.generation]);
 
-  const visible = stageFlipVisibleSlots(width, CARD_ESTIMATE, STRIP_GAP, STRIP_PADDING);
+  const visible = stageFlipVisibleSlots(width, CARD_ESTIMATE, STRIP_GAP, STRIP_PADDING * 2);
   const bounds = { minWidth: CARD_MIN_WIDTH, maxWidth: Math.round(width * CARD_MAX_SHARE) };
   // Each session's card width as last laid out, by session, so the commit
   // that changes computer already gives every face turning away its own old
@@ -195,6 +195,9 @@ export function StageSessionStrip({
       // A card pressed while typing keeps the keyboard, and the draft, up.
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
+      // The strip is as wide as the composer under it, not the screen: a
+      // card that does not fit is cut at the composer's edge, never past it.
+      style={styles.frame}
       contentContainerStyle={styles.strip}>
       <LayoutAnimationConfig skipEntering>
         {sessions.map((entry, index) => {
@@ -509,7 +512,8 @@ function StageSessionTurn({
 }
 
 const styles = StyleSheet.create({
-  strip: { paddingHorizontal: STRIP_PADDING, gap: STRIP_GAP },
+  frame: { marginHorizontal: STRIP_PADDING },
+  strip: { gap: STRIP_GAP },
   slot: { alignSelf: 'flex-start' },
   card: {
     minHeight: CARD_HEIGHT[0],
