@@ -13,6 +13,7 @@ import { calmFadeIn, calmFadeOut } from '@/lib/motion';
 import { stageSubtitleStep, type StageProgress } from '@/lib/stage-overlay';
 import { useAgents } from '@/stores/agents';
 import { SHEET_FROST_ALPHA, surfaceBackgroundFill } from '@/theme/surface-background';
+import { STAGE_STRIP_CARD_HEIGHT, STAGE_STRIP_CARD_PADDING } from './stage-session-strip';
 import { useStageProgress } from './use-stage-overlay';
 
 /** Compact, independently updating speakers above the session strip. */
@@ -135,6 +136,10 @@ const SubtitleLine = memo(function SubtitleLine({
         style={[
           styles.plate,
           {
+            // The session cards' height and padding, so a one-line plate
+            // reads as one of the row's cards; two lines grow past it.
+            minHeight: STAGE_STRIP_CARD_HEIGHT[compact ? 1 : 0],
+            paddingVertical: STAGE_STRIP_CARD_PADDING[compact ? 1 : 0],
             backgroundColor: surfaceBackgroundFill(theme.colors.surfaceRaised, SHEET_FROST_ALPHA),
             borderRadius: profile.chrome.control,
           },
@@ -183,10 +188,8 @@ const styles = StyleSheet.create({
   plate: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    minHeight: 44,
     justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
   emphasis: { fontStyle: 'italic' },
 });
