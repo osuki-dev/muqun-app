@@ -774,7 +774,6 @@ export function HomeComposerDock({
     const key = homeThreadKey(current);
     const pills = threadPills(current);
     inFlightRef.current = true;
-    if (ready) playTransition('send');
     return settleAfter(
       async () => {
         setError(null);
@@ -1460,7 +1459,6 @@ export function HomeComposerDock({
     const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
     if (current && ready) return followUp(current, text, attachments ?? []);
     if (terminalAgent) {
-      if (!inFlightRef.current && ready) playTransition('send');
       // The terminal entry of a provider whose ledger carries goals into a
       // pane: the task is the computer's, with the pane as its delivery.
       const paneEntry = ledgerDelivery ? discoveredAgent(terminalAgent) : undefined;
@@ -1492,7 +1490,6 @@ export function HomeComposerDock({
       return attachments?.length ? start() : dispatchTask(text, start);
     }
     if (heldByModelGate()) return Promise.resolve(false);
-    if (!inFlightRef.current && ready) playTransition('send');
     // A session entry: a ledger task bound to the provider's native session
     // where the gateway takes the delivery by name and the provider lists it,
     // which is what lets the card follow the work and keep it across this
