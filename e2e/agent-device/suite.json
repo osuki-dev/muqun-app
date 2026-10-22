@@ -2923,6 +2923,7 @@
         "mode": "press",
         "run": "flows/settings.ad#reset-theme"
       },
+      { "include": "subflows/settings-after-theme" },
       {
         "target": {
           "text": "Theme, Osuki"
@@ -2993,6 +2994,7 @@
       {
         "run": "flows/settings.ad#s14"
       },
+      { "include": "subflows/settings-after-theme" },
       {
         "target": {
           "text": "Theme, Catppuccin"
@@ -3772,6 +3774,7 @@
       {
         "run": "flows/settings.ad#s82"
       },
+      { "include": "subflows/settings-after-theme" },
       {
         "target": {
           "text": "Theme, Osuki"
@@ -7119,6 +7122,18 @@
         ]
       },
       { "run": "flows/agent-tool-detail.ad#log-restored" }
+    ],
+    "subflows/settings-after-theme": [
+      { "run": "flows/settings.ad#theme-applied-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "run": "flows/settings.ad#s1"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": { "SETTINGS_GROUP": "appearance" }
+      }
     ],
     "subflows/open-settings-sheet": [
       {

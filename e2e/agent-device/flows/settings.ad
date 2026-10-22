@@ -57,6 +57,14 @@ press "${TARGET}"
 # quiet interval; the following theme assertions still verify the selection.
 wait stable 400 15000
 
+# section theme-applied-home
+# Applying a theme closes the entire picker stack and reveals Home. Reopen
+# Appearance explicitly before checking the saved theme or changing more settings.
+wait absent "id=settings-theme-sheet" 10000
+wait absent "id=settings-appearance-sheet" 10000
+wait "role=button label=\"Settings\"" 10000
+is visible "role=button label=\"Settings\""
+
 # section confirm-reset
 press "${TARGET}"
 
