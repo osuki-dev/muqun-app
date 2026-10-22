@@ -1067,6 +1067,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
           ownsScreen={ownsScreen}
           screenFocused
           paneScale="mirror"
+          opaqueCanvas={false}
           paneColumns={pane ? numberField(pane, 'width') || undefined : undefined}
           paneRows={pane ? numberField(pane, 'height') || undefined : undefined}
           paneCursorColumn={optionalNumberField(pane, 'cursor_x')}

@@ -193,8 +193,13 @@ import { graphemeWidth, splitGraphemes, substituteRenderedGrapheme } from '@/ter
 
 const horizontalPadding = TERMINAL_GRID_HORIZONTAL_PADDING;
 const verticalPadding = TERMINAL_GRID_VERTICAL_PADDING;
-/** How long a new canvas surface is given to draw its first frame before it is shown. */
-const CANVAS_FIRST_FRAME_MS = 50;
+/**
+ * How many display frames after layout a new canvas surface is given to land
+ * its first frame before the cover over it fades. A `TextureView` receives its
+ * surface on the first draw pass after it is attached, Skia draws into it, and
+ * the frame is composited on the pass after that; one more is margin.
+ */
+const CANVAS_FIRST_FRAME_FRAMES = 3;
 
 const AXIS_UNDECIDED = 0;
 const AXIS_HORIZONTAL = 1;
@@ -454,6 +459,7 @@ export function SkiaTerminal({
   paneCursorColumn,
   paneCursorRow,
   paneScale = 'remembered',
+  opaqueCanvas = true,
   touchInput,
 }: {
   /**
@@ -586,6 +592,13 @@ export function SkiaTerminal({
    * down, so neither screen's pinch resizes the other.
    */
   paneScale?: 'remembered' | 'mirror';
+  /**
+   * Whether the canvas may take the opaque fast path when its colours allow
+   * it. `false` for a terminal inside a view that fades (Home's reply drawer):
+   * an opaque `TextureView` under a parent's alpha is composited without
+   * blending and turns dark instead of fading.
+   */
+  opaqueCanvas?: boolean;
   /**
    * The far side's input channel, for a pane whose program has asked to hear
    * about the pointer. Left out by a caller that has no such channel -- the
@@ -849,18 +862,30 @@ export function SkiaTerminal({
     theme.colors.background,
     wallpaperBehind
   );
-  // A new native surface shows black until Skia's first frame lands, which on
-  // a light theme flashed a black box before the terminal. The canvas is held
-  // invisible over a container already painted in the terminal's own colour
-  // until that frame has had time to draw, then fades in (micro, instant
-  // under Reduce Motion). Once per mount: a pane switch that keeps the canvas
-  // keeps its surface and has nothing to hide.
-  const canvasReveal = useSharedValue(0);
+  // A new native surface is black until Skia's first frame lands. It is hidden
+  // under a cover painted in the canvas's own fill, which fades out once that
+  // frame has had a few display frames to arrive -- a cross-fade from the
+  // terminal's colour to its content, instant under Reduce Motion. Once per
+  // mount: a pane switch keeps the canvas and its surface.
+  //
+  // The cover fades, never the canvas. An opaque `TextureView` is composited
+  // without blending, so any alpha on it (or on an ancestor) darkens it towards
+  // black instead of showing what is behind it: fading the canvas itself in
+  // was the black flash it was meant to hide.
+  const canvasCover = useSharedValue(1);
+  const coverRequested = useRef(false);
   const revealCanvas = () => {
-    if (canvasReveal.get() !== 0) return;
-    canvasReveal.set(withDelay(CANVAS_FIRST_FRAME_MS, withTiming(1, timing('micro'))));
+    if (coverRequested.current) return;
+    coverRequested.current = true;
+    let frames = 0;
+    const tick = () => {
+      frames += 1;
+      if (frames < CANVAS_FIRST_FRAME_FRAMES) requestAnimationFrame(tick);
+      else canvasCover.set(withTiming(0, timing('short')));
+    };
+    requestAnimationFrame(tick);
   };
-  const canvasRevealStyle = useAnimatedStyle(() => ({ opacity: canvasReveal.get() }));
+  const canvasCoverStyle = useAnimatedStyle(() => ({ opacity: canvasCover.get() }));
 
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
@@ -3378,9 +3403,9 @@ export function SkiaTerminal({
             Keep the TextureView backing stable so parent clipping, transforms
             and sibling overlays remain correct. Skia applies opacity changes
             in place without replacing the native view. See `terminalCanvasPaint`. */}
-        <Animated.View style={[styles.canvas, canvasRevealStyle]} onLayout={revealCanvas}>
+        <View collapsable={false} style={styles.canvas} onLayout={revealCanvas}>
           <Canvas
-            android={{ backingView: 'TextureView', opaque: canvasIsOpaque }}
+            android={{ backingView: 'TextureView', opaque: canvasIsOpaque && opaqueCanvas }}
             style={StyleSheet.absoluteFill}>
             <Fill color={canvasFill} />
             <Group transform={contentTransform}>
@@ -3438,7 +3463,11 @@ export function SkiaTerminal({
               ) : null}
             </Group>
           </Canvas>
-        </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
+          />
+        </View>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (
         <Animated.View
