@@ -41,7 +41,7 @@ export function SnapDust({
   progress,
   onReady,
 }: {
-  /** Snapshot of the canvas's presented frame, captured off the native JS thread. */
+  /** `makeImageSnapshot()` of the canvas this is drawn into. */
   image: SkImage;
   /** The canvas's width in points; the snapshot is at device resolution. */
   width: number;

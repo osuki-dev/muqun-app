@@ -1,4 +1,4 @@
-/** Mounted theme renderers report submission to their native surface, independently of prefetch. */
+/** Mounted theme renderers report native display/draw completion, independently of prefetch. */
 const pending = new Map<string, symbol>();
 const listeners = new Set<() => void>();
 

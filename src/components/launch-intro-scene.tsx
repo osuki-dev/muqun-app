@@ -62,6 +62,7 @@ import {
   type InkBloomHole,
 } from '@/lib/ink-bloom-shader';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
 import { containedImageRect, coveredImageRect, type FeatherSize } from '@/lib/hero-feather';
 import {
   launchArtworkDeparture,
@@ -725,34 +726,18 @@ export function LaunchSceneIntro({
       fade();
       return;
     }
-    const canvas = canvasRef.current;
-    if (!canvas) {
+    const snapshot = recoverWithSync(
+      () => canvasRef.current?.makeImageSnapshot() ?? null,
+      () => null
+    );
+    if (!snapshot) {
       fade();
       return;
     }
-    // Replay the presented recording on Skia's worker. Re-recording this
-    // full scene synchronously here blocks both the exit and Home's input.
-    let live = true;
-    void canvas.makePresentedImageSnapshot().then(
-      (snapshot) => {
-        if (!live) {
-          snapshot?.dispose();
-          return;
-        }
-        if (!snapshot) {
-          fade();
-          return;
-        }
-        // At progress zero each grain is exactly where it was on screen.
-        setSnapImage(snapshot);
-      },
-      () => {
-        if (live) fade();
-      }
-    );
-    return () => {
-      live = false;
-    };
+    // The canvas's children become this frame, cut up; at progress 0 every
+    // grain is where it was cut from, so the swap is the frame already showing,
+    // and it holds there until the sweep starts (see below).
+    setSnapImage(snapshot);
   });
   // The sweep waits for two things, and holds the untouched frame until both:
   //
@@ -807,7 +792,9 @@ export function LaunchSceneIntro({
     request = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(request);
   }, [active, dustReady, homeRevealed, homeWaitOver]);
-  useEffect(() => followPhase(), [phase, active]);
+  useEffect(() => {
+    followPhase();
+  }, [phase, active]);
 
   const captureDeparture = useEffectEvent(() => {
     // Keep the original journey and clock. The derived offset only projects

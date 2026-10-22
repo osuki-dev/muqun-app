@@ -115,7 +115,7 @@ function HomeEditorialArtworkImage({
         : null,
     [box, focalPoint, image, fit, fullBleed, foreground]
   );
-  useSkiaDrawReady(canvas, imageRect, Boolean(image && imageRect && box), setDrawn);
+  useSkiaDrawReady(canvas, imageRect, Boolean(image && imageRect && box), () => setDrawn(true));
   const visibleTop = useMemo(() => {
     if (!cover || !image) return 0;
     const pixels = image.readPixels(0, 0, {

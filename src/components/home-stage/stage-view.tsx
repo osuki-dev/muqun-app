@@ -671,6 +671,7 @@ function StaticArt({ art, skia }: { art: NonNullable<StageArt>; skia: boolean })
   useThemeRenderReady(art.layer.uri, !drawsSkia || drawnImage === image);
   useSkiaDrawReady(canvas, image, drawsSkia, (ready) => {
     if (ready) setDrawnImage(image);
+    else setUndecodable(art.layer.uri);
   });
   if (plane.width <= 0 || plane.height <= 0) return null;
   if (!viaSkia) return <StaticArtImage art={art} />;
