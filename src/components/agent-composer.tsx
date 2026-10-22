@@ -208,7 +208,8 @@ function TreeMark({
  * cross-fade when they arrive.
  */
 const SessionChip = memo(function SessionChip({
-  node,
+  session,
+  hasChildren,
   active,
   current,
   lead,
@@ -217,7 +218,9 @@ const SessionChip = memo(function SessionChip({
   onMeasure,
   subtaskActivity,
 }: {
-  node: SessionNode;
+  /** Passed apart from its strip node, which is rebuilt on every read: a memoized chip keyed on the node re-rendered every chip each time. */
+  session: AgentSessionInfo;
+  hasChildren: boolean;
   active: boolean;
   /** This root is the session on screen, not merely a highlighted ancestor. */
   current: boolean;
@@ -238,7 +241,6 @@ const SessionChip = memo(function SessionChip({
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
 
-  const session = node.session;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
@@ -249,7 +251,7 @@ const SessionChip = memo(function SessionChip({
   const running = subtaskActivity?.running ?? 0;
   const waiting = subtaskActivity?.blocked ?? 0;
   const pressSession = () => {
-    if (current && node.hasChildren && onOpenTree) {
+    if (current && hasChildren && onOpenTree) {
       onOpenTree(session.asid);
     } else {
       onPress(session.asid);
@@ -268,9 +270,9 @@ const SessionChip = memo(function SessionChip({
         onPress={pressSession}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityHint={node.hasChildren ? t`Contains subagent sessions` : undefined}
+        accessibilityHint={hasChildren ? t`Contains subagent sessions` : undefined}
         accessibilityActions={
-          node.hasChildren && onOpenTree
+          hasChildren && onOpenTree
             ? [{ name: 'openSessionTree', label: t`Open session tree` }]
             : undefined
         }
@@ -340,7 +342,7 @@ const SessionChip = memo(function SessionChip({
             {title}
           </Text>
         </Animated.View>
-        {node.hasChildren ? (
+        {hasChildren ? (
           <TreeMark
             testID={`agent-composer-session-tree-mark-${session.asid}`}
             color={active ? theme.colors.onPrimary : theme.colors.primary}
@@ -1975,7 +1977,8 @@ export const AgentComposer = memo(function AgentComposer({
                   {sessionStrip.map((node) => (
                     <SessionChip
                       key={node.session.asid}
-                      node={node}
+                      session={node.session}
+                      hasChildren={node.hasChildren}
                       active={node.session.asid === selectedRootAsid}
                       current={node.session.asid === activeAsid}
                       lead={

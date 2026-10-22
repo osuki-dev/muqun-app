@@ -1,4 +1,5 @@
 import { isBusyStatus, normalizeAgentId, type AgentSessionInfo } from './agent-protocol';
+import { sameData } from './same-data';
 
 /** Separate projections for the root strip, nested sheet and legacy header swipe window. */
 
@@ -466,4 +467,28 @@ export function sessionsOfAgent<T extends Pick<AgentSessionInfo, 'agent_id'>>(
   if (!agentId) return sessions;
   const id = normalizeAgentId(agentId);
   return sessions.filter((session) => normalizeAgentId(session.agent_id) === id);
+}
+
+/**
+ * `next`, reusing every `previous` session whose data has not changed -- and
+ * `previous` itself when nothing did.
+ *
+ * Each inventory read and stream event hands over freshly parsed sessions. Kept
+ * as they arrive, every strip chip would re-render on every read, and a list
+ * that did not change at all would rebuild the strip, the header's swipe order
+ * and the sheets' snapshot for nothing.
+ */
+export function reuseUnchangedSessions(
+  previous: readonly AgentSessionInfo[],
+  next: readonly AgentSessionInfo[]
+): AgentSessionInfo[] {
+  const known = new Map(previous.map((session) => [session.asid, session]));
+  let same = previous.length === next.length;
+  const kept = next.map((session, position) => {
+    const held = known.get(session.asid);
+    const result = held && held !== session && sameData(held, session) ? held : session;
+    if (result !== previous[position]) same = false;
+    return result;
+  });
+  return same ? (previous as AgentSessionInfo[]) : kept;
 }
