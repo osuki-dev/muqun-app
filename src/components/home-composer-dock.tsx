@@ -1930,6 +1930,7 @@ export function HomeComposerDock({
       running={false}
       disabled={target.kind === 'none'}
       interactionBlockedReason={offlineReason}
+      blockedReasonInField
       agentName={agentLabel}
       placeholder={replyContext ? '' : t`New conversation with ${agentLabel}`}
       inputAccessibilityLabel={replyContext}

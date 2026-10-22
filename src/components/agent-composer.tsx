@@ -373,6 +373,12 @@ export interface AgentComposerProps {
   canMentionFiles?: boolean;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
+  /**
+   * Says why sending waits in the field's placeholder instead of a caption row
+   * above the field. Home's field carries a decoration that overhangs its rim
+   * into a clearance the dock reserves; a row in between leaves a hole.
+   */
+  blockedReasonInField?: boolean;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -624,6 +630,7 @@ export const AgentComposer = memo(function AgentComposer({
   canQueueWhileRunning = true,
   canMentionFiles = true,
   interactionBlockedReason,
+  blockedReasonInField = false,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
@@ -772,6 +779,10 @@ export const AgentComposer = memo(function AgentComposer({
   } | null>(null);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
+  const fieldBlockedReason =
+    blockedReasonInField && !promptAllowed
+      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
+      : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
@@ -2461,7 +2472,7 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {!promptAllowed ? (
+              {!promptAllowed && !fieldBlockedReason ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {interactionBlockedReason ?? (
                     <Trans>
@@ -2528,9 +2539,11 @@ export const AgentComposer = memo(function AgentComposer({
                       ? agentName
                         ? t`${agentName} is offline`
                         : t`The agent is offline`
-                      : (placeholder ??
+                      : (fieldBlockedReason ??
+                        placeholder ??
                         t`Send a message, type / for commands, $ for skills, @ for files`),
-                    shortPlaceholder: placeholder === '' ? '' : t`Send a message`,
+                    shortPlaceholder:
+                      fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
                     accessibilityLabel: inputAccessibilityLabel,
                     editable: !sending && !disabled,
                     testID: inputTestID,
