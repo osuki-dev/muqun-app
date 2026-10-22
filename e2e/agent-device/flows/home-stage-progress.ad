@@ -1,0 +1,41 @@
+# Explicit offline fixture; the normal Stage stores, followers and routes render it.
+
+# section layout
+open "muqun:///settings-home-layout"
+wait stable 400 5000
+
+# section press
+press "${TARGET}"
+
+# section start
+open "muqun:///?stageProgressFixture=linked"
+wait stable 600 5000
+
+# section visible
+is visible "${TARGET}"
+
+# section hidden
+is hidden "${TARGET}"
+
+# section cleanup
+open "muqun:///?stageProgressFixture=off"
+wait stable 300 5000
+open "muqun:///settings-home-layout"
+wait stable 400 5000
+
+# section home
+open "muqun:///"
+wait stable 300 5000
+
+# section reply-menu
+longpress "${TARGET}" 700
+wait stable 300 5000
+
+# section draft
+fill id="home-composer-input" "Unsent Stage QA draft"
+wait stable 300 5000
+
+# section clear-draft
+fill id="home-composer-input" ""
+keyboard dismiss
+wait stable 400 5000

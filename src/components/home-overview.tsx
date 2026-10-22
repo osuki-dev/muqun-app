@@ -1,3 +1,4 @@
+import { startDemoStageProgress, stopDemoStageProgress } from '@/lib/demo-stage-progress-native';
 import {
   HOME_TOOLBAR_BUTTON_SIZE,
   HOME_TOOLBAR_ICON_SIZE,
@@ -909,7 +910,15 @@ export function HomeOverview({
     reachabilityByServer: padReachabilityByServer,
     activeConnection,
   });
-  const { homeContinueFixture } = useLocalSearchParams<{ homeContinueFixture?: string }>();
+  const { homeContinueFixture, stageProgressFixture } = useLocalSearchParams<{
+    homeContinueFixture?: string;
+    stageProgressFixture?: string;
+  }>();
+  useEffect(() => {
+    if (!isDemoRecord(record)) return;
+    if (stageProgressFixture === 'linked') startDemoStageProgress(record!.serverId, true);
+    if (stageProgressFixture === 'off') stopDemoStageProgress();
+  }, [record, stageProgressFixture]);
   const demoSearchEntries = demoContinueSearchEntries(homeContinueFixture, isDemoRecord(record));
   const recentEntries = demoSearchEntries ?? availableRecentEntries;
   const [continueQuery, setContinueQuery] = useState('');
