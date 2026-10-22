@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { NextIcon, NoticeIcon } from '@/icons';
+import { useSyncExternalStore } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 
@@ -13,7 +14,7 @@ import {
   useTaskRowLine,
   useTaskAttentionView,
 } from '@/components/task-row';
-import { useMinuteNow } from '@/hooks/use-minute-now';
+import { readMinuteNow, subscribeMinuteNow, useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -38,6 +39,7 @@ import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerAgents } from '@/stores/server-agents';
+import { useServerTasksStore } from '@/stores/server-tasks';
 import type { ServerAgentsIndex } from '@/lib/server-agents';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -94,24 +96,52 @@ function attentionRows(
  */
 export function useHasHomeAttention({
   servers,
-  taskServerIds = [],
+  taskServerIds = NO_SERVER_IDS,
 }: {
   servers: readonly GatewayRecord[];
   taskServerIds?: readonly string[];
 }): boolean {
-  const observations = useHomeAttention((state) => state.byTarget);
-  const index = useTaskIndexFor(taskServerIds);
-  const panes = useServerAgents((state) => state.byServer);
-  const nowMs = useMinuteNow();
-  const { pending, waiting } = attentionRows(
-    observations,
-    index,
-    servers,
-    taskServerIds,
-    panes,
-    nowMs
-  );
-  return pending.length > 0 || waiting.length > 0;
+  // Read as one boolean over the stores rather than through four selectors:
+  // the caller is Home itself, and every pane pass, task frame and minute
+  // would otherwise re-render the whole screen to recompute an unchanged
+  // answer. Only a flip of the boolean re-renders the caller.
+  const read = () => {
+    const { pending, waiting } = attentionRows(
+      useHomeAttention.getState().byTarget,
+      taskIndexOf(useServerTasksStore.getState().index, taskServerIds),
+      servers,
+      taskServerIds,
+      useServerAgents.getState().byServer,
+      readMinuteNow()
+    );
+    return pending.length > 0 || waiting.length > 0;
+  };
+  return useSyncExternalStore(subscribeAttentionInputs, read, read);
+}
+
+const NO_SERVER_IDS: readonly string[] = [];
+
+/** The ledger of just these computers, as `useTaskIndexFor` reads it. */
+function taskIndexOf(index: ServerTasksIndex, serverIds: readonly string[]): ServerTasksIndex {
+  const kept: ServerTasksIndex = {};
+  for (const serverId of serverIds) {
+    const entry = index[serverId];
+    if (entry) kept[serverId] = entry;
+  }
+  return kept;
+}
+
+/** Everything `useHasHomeAttention` reads: three stores and the minute clock. */
+function subscribeAttentionInputs(onChange: () => void): () => void {
+  const unsubscribe = [
+    useHomeAttention.subscribe(onChange),
+    useServerTasksStore.subscribe(onChange),
+    useServerAgents.subscribe(onChange),
+    subscribeMinuteNow(onChange),
+  ];
+  return () => {
+    for (const stop of unsubscribe) stop();
+  };
 }
 
 /**
