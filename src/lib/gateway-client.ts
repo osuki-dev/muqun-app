@@ -1,5 +1,5 @@
 import { protectTemporaryCacheEntry } from './cache-cleanup';
-import { nativeImageCache } from './native-image-cache';
+import { originalImageCache, ORIGINAL_IMAGE_SEED_LIMIT } from './original-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
 import { TransportNegotiation, type TransportVersion } from './transport-negotiation';
@@ -1138,7 +1138,7 @@ function configureApi(
     currentTransportKey !== transportKey ||
     currentTransport !== transport
   )
-    nativeImageCache.invalidate();
+    originalImageCache.invalidate();
   currentBaseUrl = baseUrl;
   currentToken = token;
   currentDeviceId = deviceId;
@@ -1382,7 +1382,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     assertCurrent();
     if (signal?.aborted) throw new Error('Image read cancelled');
     if (rangedOriginal && (source.uri === plan.original.uri || source.uri === plan.fallback.uri)) {
-      const epoch = nativeImageCache.epoch();
+      const epoch = originalImageCache.epoch();
       const versionResponse = plan.version
         ? await requestImage(plan.version, signal, IMAGE_VERSION_BYTES)
         : null;
@@ -1404,10 +1404,10 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
       if (cacheKey && fixed) {
         let cached: PreviewImageSource | null = null;
         try {
-          const path = await nativeImageCache.path(cacheKey);
+          const path = await originalImageCache.path(cacheKey);
           if (path) cached = await copyCachedOriginalImageFile(path, fixed);
         } catch {
-          // Native eviction/Clear cache can race the lookup and copy: use the authenticated reader.
+          // Trimming or Clear cache can race the lookup and copy: use the authenticated reader.
         }
         if (cached) {
           try {
@@ -1431,9 +1431,8 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
       try {
         assertCurrent();
         if (signal?.aborted) throw new Error('Image read cancelled');
-        // iOS seeds via Data(contentsOf:), so large originals keep the bounded streaming path.
-        if (cacheKey && fixed && fixed.size <= 64 * 1024 * 1024) {
-          await nativeImageCache.seed(downloaded.uri, cacheKey, epoch).catch(() => undefined);
+        if (cacheKey && fixed && fixed.size <= ORIGINAL_IMAGE_SEED_LIMIT) {
+          await originalImageCache.seed(downloaded.uri, cacheKey, epoch).catch(() => undefined);
         }
         assertCurrent();
         if (signal?.aborted) throw new Error('Image read cancelled');

@@ -70,15 +70,21 @@ export type CacheTotals = {
  * - `enrm_image_cache` is `react-native-enriched-markdown`'s Android image
  *   cache, named in `ImageDownloader.kt`.
  *
+ * - `image-originals` is Muqun's own folder of verified full-size originals,
+ *   capped and trimmed by `original-image-cache.ts`.
+ *
  * A name that turns out to be wrong costs a row's accuracy and nothing else:
  * the bytes are reported under `other`, and neither this list nor any other
  * is what deletes the two image-library directories. See
  * `DELETABLE_CACHE_DIRECTORIES`.
  */
+export const ORIGINAL_IMAGE_CACHE_DIRECTORY = 'image-originals';
+
 export const IMAGE_CACHE_DIRECTORIES = [
   'image_manager_disk_cache',
   'com.hackemist.SDImageCache',
   'enrm_image_cache',
+  ORIGINAL_IMAGE_CACHE_DIRECTORY,
 ] as const;
 
 /**
@@ -185,8 +191,11 @@ export function clearableCacheBytes(
     planCacheDeletions(entries, rootUri, Number.MAX_SAFE_INTEGER).map((entry) => entry.uri)
   );
   return entries.reduce((bytes, entry) => {
+    // Emptied through their owners' clear calls rather than by path.
     const nativeImageCache =
-      entry.name === 'image_manager_disk_cache' || entry.name === 'com.hackemist.SDImageCache';
+      entry.name === 'image_manager_disk_cache' ||
+      entry.name === 'com.hackemist.SDImageCache' ||
+      entry.name === ORIGINAL_IMAGE_CACHE_DIRECTORY;
     return isInsideCacheRoot(entry.uri, rootUri) &&
       !isProtected(entry.name) &&
       entry.name !== 'enrm_image_cache' &&
@@ -236,6 +245,25 @@ export function planCacheDeletions(
       (isDeletableCacheEntry(entry.name) || staleMedia) && isInsideCacheRoot(entry.uri, rootUri)
     );
   });
+}
+
+/**
+ * Least recently written first, the files to delete so the rest fit `capBytes`.
+ * Unknown or negative sizes count as zero rather than as room given back.
+ */
+export function planLruTrim(
+  files: readonly { name: string; bytes: number; modifiedAtMs: number }[],
+  capBytes: number
+): string[] {
+  const size = (bytes: number) => (Number.isFinite(bytes) && bytes > 0 ? bytes : 0);
+  let total = files.reduce((sum, file) => sum + size(file.bytes), 0);
+  const doomed: string[] = [];
+  for (const file of [...files].sort((a, b) => a.modifiedAtMs - b.modifiedAtMs)) {
+    if (total <= capBytes) break;
+    doomed.push(file.name);
+    total -= size(file.bytes);
+  }
+  return doomed;
 }
 
 /**

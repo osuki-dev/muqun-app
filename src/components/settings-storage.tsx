@@ -28,7 +28,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  * are, and `removeUnusedThemes` below states the chain the bytes actually go
  * through.
  *
- * Both walks run off the first frame. A Glide cache at its 250 MB ceiling is
+ * Both walks run off the first frame. A Glide cache at its 100 MB ceiling is
  * thousands of files, and `Directory.size` recurses in native code, so the
  * measurement is deferred past the push and yields between top-level entries
  * rather than asking for all of it on one tick.

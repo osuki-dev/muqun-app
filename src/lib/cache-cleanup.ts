@@ -1,4 +1,5 @@
 import { nativeImageCache } from './native-image-cache';
+import { originalImageCache } from './original-image-cache';
 import { cacheDirectory, deleteAsync, readDirectoryAsync } from 'expo-file-system/legacy';
 import { AppState } from 'react-native';
 import {
@@ -53,6 +54,11 @@ export function clearCache(shouldContinue: () => boolean = () => true): Promise<
       let succeeded = true;
       try {
         if (!(await nativeImageCache.clear())) succeeded = false;
+      } catch {
+        succeeded = false;
+      }
+      try {
+        await originalImageCache.clear();
       } catch {
         succeeded = false;
       }
