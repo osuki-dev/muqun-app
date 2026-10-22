@@ -83,7 +83,17 @@ id, while private AX keeps the label on the control and hides its children.
 Text targets are for static copy, or for asserting a label alongside an id.
 `scroll down|up <amount> --in-sheet` drags inside an iPad form sheet, where
 the native scroll does not reliably move the list; other devices scroll the
-viewport by the same amount.
+viewport by the same amount. `scroll bottom --in-sheet` flicks inside an
+Android tablet's sheet, whose background list stays in the tree and can make
+the native `scroll bottom` report no progress; other devices use the native
+command.
+
+The runner sets `DEVICE_KIND` to `iphone` or `ipad` from the simulator name,
+and to `android-tablet` or `android-phone` from the display's smallest width
+(600 dp and up is a tablet). Steps branch on it with `when`. A flow whose
+surface exists only on some kinds lists them in `devices`, and the gate leaves
+it out elsewhere: `home-stage-progress` runs on phones only, since tablets never
+show the Stage layout.
 
 The full gate is the device acceptance and holds only core flows: a flow stays
 only if it proves a core user path or a contract that unit tests cannot. Its 20

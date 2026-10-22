@@ -163,7 +163,8 @@
       "program": "flows/home-stage-progress",
       "cleanup": "subflows/stop-stage-progress",
       "tags": ["full", "agents", "workspace"],
-      "platforms": ["ios", "android"]
+      "platforms": ["ios", "android"],
+      "devices": ["iphone", "android-phone"]
     }
   ],
   "programs": {

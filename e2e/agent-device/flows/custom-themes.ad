@@ -210,8 +210,9 @@ is visible "label=\"Theme, Osuki\""
 # leaves it against the bottom edge, and the press that follows lands on the
 # navigation bar rather than the row -- the settings flow measured that at
 # y=2398 on a 1080x2400 device. `scroll bottom` is a position the list always
-# has, whatever is in it.
-scroll bottom
+# has, whatever is in it. On an Android tablet the Settings list stays in the
+# tree beside the sheet, so the runner flicks inside the sheet (`--in-sheet`).
+scroll bottom --in-sheet
 wait stable 400 5000
 
 # section storage-visible
