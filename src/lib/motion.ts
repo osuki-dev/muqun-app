@@ -243,6 +243,14 @@ export const RISE_DISTANCE = 6;
 export const PULSE_PERIOD = 2600;
 
 /**
+ * One slow breath of something waiting on the reader, such as the update
+ * dialog's ring: long enough that it reads as alive rather than as asking.
+ * A period, like `PULSE_PERIOD`; its amplitude belongs to the caller and
+ * should stay small.
+ */
+export const BREATH_PERIOD = 4800;
+
+/**
  * One pass of a segment travelling an indeterminate progress track.
  *
  * A period, like `PULSE_PERIOD` and `LogoLoader`'s breath -- not a transition

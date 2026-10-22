@@ -850,7 +850,6 @@ msgid "Apply theme"
 msgstr "应用主题"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "正在应用…"
 
@@ -2687,6 +2686,7 @@ msgid "Downloading theme"
 msgstr "正在下载主题"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
 
@@ -3033,14 +3033,6 @@ msgstr "从一个目标，开始推进工作"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前置摄像头。将二维码朝向屏幕"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "完整包大小：{fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "完整更新包的大小，文件复用可能减少实际下载量"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3408,6 +3400,7 @@ msgid "Installing images"
 msgstr "正在安装图片"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "安装中…"
 
@@ -5486,10 +5479,6 @@ msgstr "重置时间：{0}"
 msgid "Restart Muqun to finish updating"
 msgstr "请重启 Muqun 以完成更新"
 
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "正在重启 Muqun…"
-
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
 msgstr "恢复默认"
@@ -7565,13 +7554,8 @@ msgid "Up arrow"
 msgstr "向上键"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "有可用更新"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7597,6 +7581,10 @@ msgstr "请更新此主机上的 Muqun Gateway 以使用 {agentName}"
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "立即更新"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "更新已就绪"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7625,10 +7613,6 @@ msgstr "更新 Gateway 后即可预览视频输出"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "重新打开时更新"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "正在更新牧群…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"

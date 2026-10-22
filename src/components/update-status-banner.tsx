@@ -1,71 +1,171 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { formatAssetSize } from '@/lib/asset-display';
-import { measuredUpdateProgress } from '@/lib/update-progress-shader';
-import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
-import { DownloadIcon, RedoIcon } from '@/icons';
+import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated from 'react-native-reanimated';
-import { UpdateDownloadProgress } from '@/components/update-download-progress';
-import { UpdateReleaseNotes } from '@/components/update-release-notes';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Canvas, Fill } from 'react-native-skia';
+import { scheduleOnRN } from 'react-native-worklets';
 
+import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
-import { fadeIn } from '@/lib/motion';
+import { useSurfacePhotograph, type SurfacePhotograph } from '@/components/reskin-transition';
+import { UpdateReleaseNotes } from '@/components/update-release-notes';
+import { UpdateRing, type UpdateRingState } from '@/components/update-ring';
+import { formatAssetSize } from '@/lib/asset-display';
+import { deferAppUpdate, updateAppNow, useAppUpdateStore } from '@/lib/app-updates';
+import { calmFadeIn, calmFadeOut, DURATION, entryRise, SETTLE, timing } from '@/lib/motion';
+import { setUpdateCurtain } from '@/lib/update-curtain';
+import { updateNoteBullets } from '@/lib/update-note-bullets';
+import { disposeViewPhotograph } from '@/lib/view-photograph';
+
+const RISE = 28;
+/** The launch snap's own length (`launch-intro-timeline.ts`). */
+const DISSOLVE_MS = DURATION.long + DURATION.medium;
+/** The ring closing, the check drawing, and a beat to see it. */
+const CHECK_SETTLE_MS = DURATION.short + DURATION.medium + 100 + 260;
+const calm = (duration: number) => timing(duration, { reduceMotion: ReduceMotion.Never });
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export function UpdateStatusBanner() {
+  const phase = useAppUpdateStore((state) => state.phase);
+  const visible = [
+    'available',
+    'download-failed',
+    'restart-failed',
+    'downloading',
+    'applying',
+    'restarting',
+  ].includes(phase);
+  // The dialog mounts with the prompt and unmounts with it, so its ring and
+  // every clock in it stop the moment it is gone.
+  return visible ? <UpdateDialog /> : null;
+}
+
+function UpdateDialog() {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
-  const surfaceBackground = useSurfaceBackground();
-  // `t` from the hook, not the global `t` from `@lingui/core/macro`.
-  //
-  // React Compiler is enabled, and it will memoize a global `t` call whose
-  // arguments have not changed -- it has no way to know the result also depends
-  // on the active locale. The symptom is a half-translated screen after a
-  // language switch: `<Trans>` elements move and everything built from a `t`
-  // call keeps the old language. The hook's `t` is bound to the Lingui context,
-  // so the compiler sees a dependency that actually changes.
+  // The hook's `t`, bound to the Lingui context, so a language switch reaches
+  // every string here under the React Compiler.
   const { t } = useLingui();
-
   const theme = useThemeTokens();
+  const reduced = useReducedMotion();
+  const photographSurface = useSurfacePhotograph();
+
   const phase = useAppUpdateStore((state) => state.phase);
-  const downloadedProgress = useAppUpdateStore((state) => state.progress);
+  const progress = useAppUpdateStore((state) => state.progress);
   const releaseNotes = useAppUpdateStore((state) => state.releaseNotes);
-  const downloadedBytes = useAppUpdateStore((state) => state.downloadedBytes);
-  const totalBytes = useAppUpdateStore((state) => state.totalBytes);
   const downloadSize = useAppUpdateStore((state) => state.downloadSize);
   const downloadSizeStatus = useAppUpdateStore((state) => state.downloadSizeStatus);
   const transitionKind = useAppUpdateStore((state) => state.transitionKind);
   const required = useAppUpdateStore((state) => state.required);
-  const releaseId = useAppUpdateStore((state) => state.releaseId);
-  const downloading = phase === 'downloading';
-  const restarting = phase === 'restarting';
-  const restartFailed = phase === 'restart-failed';
-  const applying = phase === 'applying';
   const downloadFailed = phase === 'download-failed';
+  const restartFailed = phase === 'restart-failed';
+  const restarting = phase === 'restarting';
   const actionable = phase === 'available' || downloadFailed || restartFailed;
-  const visible = actionable || downloading || applying || restarting;
 
-  if (!visible) return null;
+  const ringState: UpdateRingState =
+    restarting || restartFailed
+      ? 'done'
+      : phase === 'downloading' || phase === 'applying'
+        ? 'progress'
+        : 'waiting';
+  const measured = phase === 'downloading' && Number.isFinite(progress) ? progress : 0;
 
-  const label = restarting
-    ? t`Restarting Muqun…`
+  // Entrance: the sheet rises on the settle spring; Reduce Motion fades only.
+  const enter = useSharedValue(0);
+  const rise = useSharedValue(reduced ? 0 : RISE);
+  // The exit into the restart: 0 shown, 1 gone.
+  const leave = useSharedValue(0);
+  const dust = useSharedValue(0);
+  useEffect(() => {
+    enter.set(withTiming(1, calm(DURATION.medium)));
+    if (!reduced) rise.set(withSpring(0, SETTLE));
+  }, [enter, reduced, rise]);
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity: enter.get() * (1 - leave.get()),
+    transform: [{ translateY: rise.get() + leave.get() * (reduced ? 0 : 12) }],
+  }));
+  const scrimStyle = useAnimatedStyle(() => ({ opacity: 1 - leave.get() }));
+
+  // The restart's curtain: the screen this update replaces, breaking into the
+  // launch scene's ash over the theme's ground, before the reload runs.
+  const [shot, setShot] = useState<SurfacePhotograph | null>(null);
+  const [drawn, setDrawn] = useState<(() => void) | null>(null);
+  useEffect(() => {
+    if (!shot) return;
+    return () => disposeViewPhotograph(shot.image);
+  }, [shot]);
+  const playCurtain = useEffectEvent(async () => {
+    await wait(CHECK_SETTLE_MS);
+    const picture =
+      reduced || !SNAP_DUST_EFFECT ? null : await photographSurface('root').catch(() => null);
+    if (!picture) {
+      // Without a picture, the dialog alone fades away.
+      leave.set(withTiming(1, calm(DURATION.medium)));
+      await wait(DURATION.medium);
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      setDrawn(() => resolve);
+      setShot(picture);
+    });
+  });
+  useEffect(() => setUpdateCurtain(() => playCurtain()), []);
+  // The dust is in the canvas: one clock from here, linear like the launch's.
+  const onDustReady = () => {
+    leave.set(withTiming(1, calm(DURATION.medium)));
+    dust.set(
+      withTiming(
+        1,
+        { duration: DISSOLVE_MS, easing: Easing.linear, reduceMotion: ReduceMotion.Never },
+        (finished) => {
+          if (finished && drawn) scheduleOnRN(drawn);
+        }
+      )
+    );
+  };
+  // A restart that failed brings the dialog back, with its Retry.
+  useEffect(() => {
+    if (restarting) return;
+    setShot(null);
+    setDrawn(null);
+    dust.set(0);
+    leave.set(withTiming(0, calm(DURATION.medium)));
+  }, [dust, leave, restarting]);
+
+  const bullets = releaseNotes ? updateNoteBullets(releaseNotes) : null;
+  const size =
+    transitionKind === 'ADOPT_RELEASE' || transitionKind === 'USE_BUILTIN'
+      ? null
+      : downloadSizeStatus === 'checking'
+        ? t`Checking download size…`
+        : downloadSizeStatus === 'failed'
+          ? t`Could not check download size. Try again.`
+          : downloadSize?.fullBytes
+            ? formatAssetSize(downloadSize.fullBytes)
+            : null;
+  const footnote = downloadFailed
+    ? t`Update download failed. Try again.`
     : restartFailed
       ? t`Restart Muqun to finish updating`
-      : downloadFailed
-        ? t`Update download failed. Try again.`
-        : applying
-          ? t`Applying…`
-          : downloading
-            ? t`Updating Muqun…`
-            : t`Update available`;
-  const transferred =
-    downloadedBytes === undefined ? undefined : formatAssetSize(downloadedBytes) || '0 B';
-  const total = totalBytes === undefined ? undefined : formatAssetSize(totalBytes) || '0 B';
-  const fullPackage = downloadSize?.fullBytes ? formatAssetSize(downloadSize.fullBytes) : undefined;
+      : size;
+  const status = phase === 'downloading' ? t`Downloading…` : t`Installing…`;
+  const primaryLabel = downloadSizeStatus
+    ? t`Retry size check`
+    : downloadFailed || restartFailed
+      ? t`Retry`
+      : t`Update now`;
 
   return (
     <Modal
@@ -74,17 +174,24 @@ export function UpdateStatusBanner() {
       animationType="fade"
       statusBarTranslucent
       onRequestClose={deferAppUpdate}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={styles.fill}>
+        {shot ? (
+          <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Fill color={theme.colors.background} />
+            <SnapDust image={shot.image} width={shot.width} progress={dust} onReady={onDustReady} />
+          </Canvas>
+        ) : null}
+        <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, scrimStyle]} />
         <View
           style={[
             styles.overlay,
             { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
           ]}>
-          <View
+          <Animated.View
             testID="update-consent-prompt"
             accessibilityViewIsModal
             style={[
-              styles.banner,
+              styles.sheet,
               notificationSurfaceStyle,
               {
                 // Opacity audit: dialog -- a modal consent prompt over a dim
@@ -92,147 +199,118 @@ export function UpdateStatusBanner() {
                 backgroundColor: theme.colors.surface,
                 maxHeight: Math.max(0, height - insets.top - insets.bottom - 32),
               },
+              sheetStyle,
             ]}>
+            <View style={styles.header}>
+              <View
+                testID="update-download-progress"
+                accessibilityRole={ringState === 'progress' ? 'progressbar' : undefined}
+                accessibilityValue={
+                  ringState === 'progress'
+                    ? { min: 0, max: 100, now: Math.floor(Math.min(1, measured) * 100) }
+                    : undefined
+                }>
+                <UpdateRing state={ringState} progress={Math.max(0, Math.min(1, measured))} />
+              </View>
+              <Text variant="body" weight="medium" style={styles.title}>
+                {t`Update ready`}
+              </Text>
+            </View>
+            {required ? (
+              <Text variant="bodySmall" color={theme.colors.textMuted}>
+                {t`This update is required to continue using Muqun. Read what's new, then update when you're ready.`}
+              </Text>
+            ) : null}
             <ScrollView
               testID="update-prompt-scroll"
               accessibilityLabel={t`What's new`}
+              nestedScrollEnabled
               style={styles.body}
               contentContainerStyle={styles.bodyContent}>
-              <View style={styles.header}>
-                <View
-                  style={[
-                    styles.icon,
-                    { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-                  ]}>
-                  <Animated.View
-                    key={downloading ? 'downloading' : 'restarting'}
-                    entering={fadeIn('short')}>
-                    {downloading ? (
-                      <DownloadIcon size={15} color={theme.colors.primary} />
-                    ) : (
-                      <RedoIcon size={15} color={theme.colors.primary} />
-                    )}
-                  </Animated.View>
+              {bullets ? (
+                <View testID="update-release-notes" style={styles.bullets}>
+                  {bullets.map((bullet, index) => (
+                    <Animated.View
+                      key={`${index}:${bullet}`}
+                      entering={
+                        reduced ? calmFadeIn('short') : entryRise(index, bullets.length, 120)
+                      }
+                      style={styles.bullet}>
+                      <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} />
+                      <Text variant="body" color={theme.colors.text} style={styles.bulletText}>
+                        {bullet}
+                      </Text>
+                    </Animated.View>
+                  ))}
                 </View>
-                <View style={styles.content}>
-                  <Text variant="body" weight="medium" accessibilityLiveRegion="polite">
-                    {label}
-                  </Text>
-                  {downloading || restarting || restartFailed ? (
-                    <UpdateDownloadProgress value={downloadedProgress} downloading={downloading} />
-                  ) : null}
-                  {transferred || downloading || restarting ? (
-                    <View style={styles.progressRow}>
-                      {transferred ? (
-                        <Text
-                          testID="update-download-bytes"
-                          variant="caption"
-                          weight="regular"
-                          color={theme.colors.textMuted}
-                          style={styles.transfer}>
-                          {total ? `${transferred} / ${total}` : transferred}
-                        </Text>
-                      ) : null}
-                      {downloading || restarting ? (
-                        <Text variant="caption" weight="regular" color={theme.colors.textMuted}>
-                          {Math.floor(measuredUpdateProgress(downloadedProgress) * 100)}%
-                        </Text>
-                      ) : null}
-                    </View>
-                  ) : null}
-                </View>
-              </View>
-              {releaseId ? (
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.identifier}>
-                  {t`Update`} · {releaseId.slice(0, 8)}
-                </Text>
-              ) : null}
-              {actionable &&
-              !restartFailed &&
-              transitionKind !== 'ADOPT_RELEASE' &&
-              transitionKind !== 'USE_BUILTIN' ? (
-                <View testID="update-download-size" style={styles.identifier}>
-                  <Text variant="bodySmall" color={theme.colors.textMuted}>
-                    {downloadSizeStatus === 'checking'
-                      ? t`Checking download size…`
-                      : downloadSizeStatus === 'failed'
-                        ? t`Could not check download size. Try again.`
-                        : t`Full package size: ${fullPackage}`}
-                  </Text>
-                  {fullPackage ? (
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {t`Full package size. File reuse may reduce the download.`}
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
-              {required ? (
-                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
-                  {t`This update is required to continue using Muqun. Read what's new, then update when you're ready.`}
-                </Text>
-              ) : null}
-              {releaseNotes ? (
-                // The notes get a box of their own with a fixed ceiling and a
-                // visible scrollbar, so a long changelog scrolls inside it and
-                // the size line above and the actions below stay in view.
-                <ScrollView
-                  testID="update-release-notes"
-                  nestedScrollEnabled
-                  persistentScrollbar
-                  showsVerticalScrollIndicator
-                  style={[
-                    styles.notesBox,
-                    {
-                      maxHeight: Math.max(120, Math.round(height * 0.32)),
-                      backgroundColor: theme.colors.surfaceRaised,
-                    },
-                  ]}
-                  contentContainerStyle={styles.notes}>
+              ) : releaseNotes ? (
+                <View testID="update-release-notes">
                   <UpdateReleaseNotes notes={releaseNotes} bundled={false} />
-                </ScrollView>
+                </View>
               ) : (
-                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.identifier}>
+                <Text variant="bodySmall" color={theme.colors.textMuted}>
                   {t`No changelog was provided for this update.`}
                 </Text>
               )}
             </ScrollView>
-            {actionable ? (
-              <View testID="update-prompt-actions" style={styles.actions}>
-                {!required ? (
-                  <PressableScale
-                    testID="update-later"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Later`}
-                    onPress={deferAppUpdate}
-                    style={styles.action}>
-                    <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Later`}</Text>
-                  </PressableScale>
-                ) : null}
-                <PressableScale
-                  testID="update-now"
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    downloadSizeStatus
-                      ? t`Retry size check`
-                      : downloadFailed || restartFailed
-                        ? t`Retry`
-                        : t`Update now`
-                  }
-                  onPress={() => {
-                    void updateAppNow();
-                  }}
-                  style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
-                  <Text variant="bodySmall" color={theme.colors.primary}>
-                    {downloadSizeStatus
-                      ? t`Retry size check`
-                      : downloadFailed || restartFailed
-                        ? t`Retry`
-                        : t`Update now`}
-                  </Text>
-                </PressableScale>
-              </View>
+            {footnote ? (
+              <Text
+                testID="update-download-size"
+                variant="caption"
+                color={theme.colors.textMuted}
+                accessibilityLiveRegion="polite">
+                {footnote}
+              </Text>
             ) : null}
-          </View>
+            {/* One reserved row: the buttons, or the status that replaces them. */}
+            <View style={styles.footer}>
+              {actionable ? (
+                <Animated.View
+                  key="actions"
+                  testID="update-prompt-actions"
+                  entering={calmFadeIn('short')}
+                  exiting={calmFadeOut('micro')}
+                  style={[StyleSheet.absoluteFill, styles.actions]}>
+                  {!required ? (
+                    <PressableScale
+                      testID="update-later"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Later`}
+                      onPress={deferAppUpdate}
+                      style={styles.action}>
+                      <Text variant="bodySmall" color={theme.colors.textMuted}>{t`Later`}</Text>
+                    </PressableScale>
+                  ) : null}
+                  <PressableScale
+                    testID="update-now"
+                    accessibilityRole="button"
+                    accessibilityLabel={primaryLabel}
+                    onPress={() => {
+                      void updateAppNow();
+                    }}
+                    style={[styles.action, { backgroundColor: theme.colors.primary }]}>
+                    <Text variant="bodySmall" weight="medium" color={theme.colors.onPrimary}>
+                      {primaryLabel}
+                    </Text>
+                  </PressableScale>
+                </Animated.View>
+              ) : (
+                <Animated.View
+                  key="status"
+                  testID="update-status-line"
+                  entering={calmFadeIn('short')}
+                  exiting={calmFadeOut('micro')}
+                  style={[StyleSheet.absoluteFill, styles.status]}>
+                  <Text
+                    variant="bodySmall"
+                    color={theme.colors.textMuted}
+                    accessibilityLiveRegion="polite">
+                    {status}
+                  </Text>
+                </Animated.View>
+              )}
+            </View>
+          </Animated.View>
         </View>
       </GestureHandlerRootView>
     </Modal>
@@ -240,49 +318,38 @@ export function UpdateStatusBanner() {
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  scrim: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  banner: {
+  sheet: {
     width: '100%',
     maxWidth: 420,
     padding: 16,
     gap: 12,
   },
-  // Header, explanation and notes share one shrinkable scroller. The action
-  // footer never competes with their intrinsic height, even with large text.
-  body: { flexShrink: 1, minHeight: 0 },
-  bodyContent: { gap: 12 },
-  identifier: { paddingHorizontal: 4 },
-  actions: { flexShrink: 0, flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  title: { flex: 1 },
+  // Only the notes scroll; the size line and the action row stay in view.
+  body: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
+  bodyContent: { paddingHorizontal: 2 },
+  bullets: { gap: 10 },
+  bullet: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  dot: { width: 5, height: 5, borderRadius: 3, marginTop: 9, opacity: 0.8 },
+  bulletText: { flex: 1 },
+  footer: { height: 44, flexShrink: 0 },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8 },
   action: {
     flexShrink: 1,
     minWidth: 0,
-    minHeight: 44,
+    height: 44,
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
     borderRadius: 12,
   },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  icon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    gap: 6,
-    paddingRight: 10,
-  },
-  notesBox: { flexGrow: 0, borderRadius: 12 },
-  notes: { paddingHorizontal: 10, paddingVertical: 8 },
-  progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
-  transfer: { flex: 1 },
+  status: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' },
 });

@@ -850,7 +850,6 @@ msgid "Apply theme"
 msgstr "ใช้ธีม"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "กำลังใช้…"
 
@@ -2687,6 +2686,7 @@ msgid "Downloading theme"
 msgstr "กำลังดาวน์โหลดธีม"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "กำลังดาวน์โหลด…"
 
@@ -3033,14 +3033,6 @@ msgstr "จากเป้าหมายสู่งานที่กำลั
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "ขนาดแพ็กเกจเต็ม: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "ขนาดแพ็กเกจเต็ม การใช้ไฟล์เดิมอาจลดขนาดดาวน์โหลด"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3408,6 +3400,7 @@ msgid "Installing images"
 msgstr "กำลังติดตั้งรูปภาพ"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "กำลังติดตั้ง…"
 
@@ -5486,10 +5479,6 @@ msgstr "รีเซ็ตเมื่อ {0}"
 msgid "Restart Muqun to finish updating"
 msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จสมบูรณ์"
 
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "กำลังเริ่ม Muqun ใหม่…"
-
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
 msgstr "คืนค่าเริ่มต้น"
@@ -7565,13 +7554,8 @@ msgid "Up arrow"
 msgstr "ลูกศรขึ้น"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "อัปเดต"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "มีอัปเดตพร้อมใช้งาน"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7597,6 +7581,10 @@ msgstr "อัปเดต Muqun Gateway บนโฮสต์นี้เพื
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "อัปเดตตอนนี้"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "อัปเดตพร้อมแล้ว"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7625,10 +7613,6 @@ msgstr "อัปเดต Gateway เพื่อดูตัวอย่าง
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "อัปเดตเมื่อเปิดใหม่"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "กำลังอัปเดต Muqun…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"

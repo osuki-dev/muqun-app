@@ -850,7 +850,6 @@ msgid "Apply theme"
 msgstr "테마 적용"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "적용 중…"
 
@@ -2687,6 +2686,7 @@ msgid "Downloading theme"
 msgstr "테마 다운로드 중"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "다운로드 중…"
 
@@ -3033,14 +3033,6 @@ msgstr "목표를 보내고, 일을 시작하세요"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "전체 패키지 크기: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "전체 패키지 크기입니다. 파일 재사용으로 실제 다운로드 크기가 줄어들 수 있습니다"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3408,6 +3400,7 @@ msgid "Installing images"
 msgstr "이미지 설치 중"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "설치 중…"
 
@@ -5486,10 +5479,6 @@ msgstr "초기화: {0}"
 msgid "Restart Muqun to finish updating"
 msgstr "업데이트를 완료하려면 Muqun을 다시 시작하세요"
 
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Muqun을 다시 시작하는 중…"
-
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
 msgstr "기본값으로 복원"
@@ -7565,13 +7554,8 @@ msgid "Up arrow"
 msgstr "위쪽 화살표"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "업데이트"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "업데이트가 있습니다"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7597,6 +7581,10 @@ msgstr "{agentName}을(를) 사용하려면 이 호스트의 Muqun Gateway를 �
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "지금 업데이트"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "업데이트 준비 완료"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7625,10 +7613,6 @@ msgstr "동영상 출력을 미리 보려면 Gateway를 업데이트하세요"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "다시 열면 업데이트됩니다"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "Muqun 업데이트 중…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"

@@ -850,7 +850,6 @@ msgid "Apply theme"
 msgstr "套用主題"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "正在套用…"
 
@@ -2687,6 +2686,7 @@ msgid "Downloading theme"
 msgstr "正在下載主題"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "正在下載…"
 
@@ -3033,14 +3033,6 @@ msgstr "從一個目標，開始推進工作"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "完整套件大小：{fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "完整更新套件的大小，檔案重用可能減少實際下載量"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3408,6 +3400,7 @@ msgid "Installing images"
 msgstr "正在安裝圖片"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "安裝中…"
 
@@ -5486,10 +5479,6 @@ msgstr "重設時間：{0}"
 msgid "Restart Muqun to finish updating"
 msgstr "請重新啟動 Muqun 以完成更新"
 
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "正在重新啟動 Muqun…"
-
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
 msgstr "恢復預設"
@@ -7565,13 +7554,8 @@ msgid "Up arrow"
 msgstr "向上鍵"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "有可用更新"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7597,6 +7581,10 @@ msgstr "請更新此主機上的 Muqun Gateway 以使用 {agentName}"
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "立即更新"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "更新已就緒"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7625,10 +7613,6 @@ msgstr "更新 Gateway 後即可預覽影片輸出"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "重新開啟時更新"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "正在更新牧群…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
