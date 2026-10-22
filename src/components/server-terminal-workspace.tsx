@@ -222,6 +222,7 @@ import { ComposerPopup } from '@/components/composer-popup';
 import { useDraftStoreComposerPopup } from '@/hooks/use-composer-popup';
 import { useStoreSelector } from '@/hooks/use-store-selector';
 import { useStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import {
   createComposerDraftStore,
   type ComposerDraft,
@@ -2600,7 +2601,6 @@ export function ServerTerminalWorkspace({
   // cached first frames do not become new observations. The shared Home model
   // applies the reader's agent-only filter without rewriting stored snapshots.
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
-  const reachabilityProbes = useServerReachability((state) => state.probes);
 
   useEffect(() => {
     void hydrateServerAgents();
@@ -4806,22 +4806,23 @@ export function ServerTerminalWorkspace({
   }, [selectedServer, serverId, gatewayPhase]);
   useEffect(() => () => useActiveConnection.getState().set(undefined), []);
 
-  const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
-    () =>
+  // The rail's answers rather than the probes behind them: a probe is replaced
+  // on every check (its time moves even when its answer does not), and holding
+  // the whole map re-rendered this screen on each. Compared shallowly, so only
+  // a light that changes colour reaches it.
+  const railReachabilityByServer = useServerReachability(
+    useShallow((state): Record<string, ServerReachability> =>
       Object.fromEntries(
-        railServers.map((server) => {
-          const activeConnection = selectedServer ? { serverId, phase: gatewayPhase } : undefined;
-          return [
+        railServers.map((server) => [
+          server.serverId,
+          resolveServerReachability(
             server.serverId,
-            resolveServerReachability(
-              server.serverId,
-              reachabilityProbes[server.serverId],
-              activeConnection
-            ),
-          ];
-        })
-      ),
-    [gatewayPhase, railServers, reachabilityProbes, selectedServer, serverId]
+            state.probes[server.serverId],
+            selectedServer ? { serverId, phase: gatewayPhase } : undefined
+          ),
+        ])
+      )
+    )
   );
 
   function selectPadServer(server: GatewayRecord) {
