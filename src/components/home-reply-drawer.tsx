@@ -154,11 +154,13 @@ const DUST_DURATION = 'medium';
 /**
  * How long an opening sheet, unseen, waits for its photograph before it
  * slides in instead: its mount and layout, a frame for the native view to
- * take its size, and the picture. Reforming after it, the sheet is whole by
- * the time the slide would have been, and a wait short of being felt as a
- * stall.
+ * take its size, and the picture. On the emulator (debug, software GPU) the
+ * picture alone takes 130–245 ms; a phone's release build is well under
+ * that, so 200 ms lets the reform play there while a slow photograph still
+ * never reads as a stall: nothing is on screen until either the ash or the
+ * slide starts.
  */
-const OPEN_SHOT_WAIT_MS = 100;
+const OPEN_SHOT_WAIT_MS = 200;
 /** How long a closing sheet, still shown, waits for its photograph before sliding out. */
 const CLOSE_SHOT_WAIT_MS = 160;
 /** The longest the ash may take: past it the drawer is reset rather than left under a canvas. */
