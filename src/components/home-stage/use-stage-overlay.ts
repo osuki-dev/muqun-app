@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { followHomeSession } from '@/components/home-thread';
 import {
@@ -196,7 +196,16 @@ export function useStageProgress(serverId: string): StageProgress[] {
           : JSON.stringify([subject.sessionId, subject.agentId, subject.asid]),
     };
   });
-  const subscriptions = JSON.stringify(sources);
+  const sessionSubscriptions = JSON.stringify(
+    sources.filter(
+      ({ subject, ambiguous }) => subject.kind === 'session' && !subject.dock && !ambiguous
+    )
+  );
+  const paneSubscriptions = JSON.stringify(
+    sources.filter(({ subject }) => subject.kind === 'pane')
+  );
+  const connectionRecord = useGatewayConnectionStore((state) => state.record);
+  const sessionFollowers = useRef(new Map<string, { owns: () => boolean; close: () => void }>());
   const paneSessionId = panes?.sessionId;
   const note = useStableHandler(
     (key: string, source: string, text: string | undefined, atMs: number) => {
@@ -223,48 +232,76 @@ export function useStageProgress(serverId: string): StageProgress[] {
     }));
   });
   useEffect(() => {
+    const followers = sessionFollowers.current;
+    const followed = JSON.parse(sessionSubscriptions) as {
+      subject: Extract<StageActivitySubject, { kind: 'session' }>;
+      source: string;
+    }[];
+    const identity = (source: string) => JSON.stringify([serverId, source]);
+    const wanted = new Set(followed.map(({ source }) => identity(source)));
+    for (const [key, follower] of followers) {
+      if (wanted.has(key) && follower.owns()) continue;
+      follower.close();
+      followers.delete(key);
+    }
+    const owns = ownsComputer(serverId);
+    if (!owns) return;
+    for (const { subject, source } of followed) {
+      const key = identity(source);
+      if (followers.has(key)) continue;
+      let active = true;
+      let verified = false;
+      const statusKey = JSON.stringify([subject.agentId ?? null, subject.asid]);
+      const heard = (activity: ReturnType<typeof sessionActivity>) => {
+        if (active && owns() && verified && activity)
+          note(subject.key, source, activity.text, activity.atMs);
+      };
+      const stop = followHomeSession({
+        serverId,
+        sessionId: subject.sessionId,
+        asid: subject.asid,
+        onSnapshot: (snapshot) => {
+          if (!active || !owns()) return;
+          verified =
+            !!snapshot.info && (!subject.agentId || snapshot.info.agent_id === subject.agentId);
+          if (!verified) return;
+          if (snapshot.info) noteStatus(statusKey, subject.sessionId, snapshot.info.status);
+          heard(sessionActivity(snapshot.timeline));
+        },
+        onEvent: (event) => {
+          if (!active || !owns()) return;
+          if (event.type === 'agent.timeline.upsert') heard(sessionActivity(event.items));
+          if (verified && event.type === 'agent.status.changed')
+            noteStatus(statusKey, subject.sessionId, event.status);
+        },
+      });
+      followers.set(key, {
+        owns,
+        close: () => {
+          active = false;
+          stop();
+        },
+      });
+    }
+  }, [serverId, connectionRecord, sessionSubscriptions, note, noteStatus]);
+  // Changes in one speaker reconcile above; only leaving Stage closes everyone.
+  useEffect(() => {
+    const followers = sessionFollowers.current;
+    return () => {
+      for (const follower of followers.values()) follower.close();
+      followers.clear();
+    };
+  }, []);
+
+  useEffect(() => {
     const owns = ownsComputer(serverId);
     if (!owns) return;
     let active = true;
-    const cleanups: (() => void)[] = [];
-    const followed = JSON.parse(subscriptions) as {
-      subject: StageActivitySubject;
-      ambiguous: boolean;
+    const paneSources = JSON.parse(paneSubscriptions) as {
+      subject: Extract<StageActivitySubject, { kind: 'pane' }>;
       source: string;
     }[];
-    for (const { subject, source, ambiguous } of followed) {
-      if (subject.kind === 'session') {
-        if (subject.dock || ambiguous) continue;
-        const statusKey = JSON.stringify([subject.agentId ?? null, subject.asid]);
-        let verified = false;
-        const heard = (activity: ReturnType<typeof sessionActivity>) => {
-          if (active && owns() && verified && activity)
-            note(subject.key, source, activity.text, activity.atMs);
-        };
-        cleanups.push(
-          followHomeSession({
-            serverId,
-            sessionId: subject.sessionId,
-            asid: subject.asid,
-            onSnapshot: (snapshot) => {
-              if (!active || !owns()) return;
-              verified =
-                !!snapshot.info && (!subject.agentId || snapshot.info.agent_id === subject.agentId);
-              if (!verified) return;
-              if (snapshot.info) noteStatus(statusKey, subject.sessionId, snapshot.info.status);
-              heard(sessionActivity(snapshot.timeline));
-            },
-            onEvent: (event) => {
-              if (event.type === 'agent.timeline.upsert') heard(sessionActivity(event.items));
-              if (active && owns() && verified && event.type === 'agent.status.changed')
-                noteStatus(statusKey, subject.sessionId, event.status);
-            },
-          })
-        );
-      }
-    }
     // One bounded visible-screen read across all terminals, never five parallel histories.
-    const paneSources = followed.filter((row) => row.subject.kind === 'pane');
     let timer: ReturnType<typeof setTimeout> | null = null;
     let nextPane = 0;
     const readPane = () => {
@@ -288,9 +325,8 @@ export function useStageProgress(serverId: string): StageProgress[] {
     return () => {
       active = false;
       if (timer) clearTimeout(timer);
-      for (const cleanup of cleanups) cleanup();
     };
-  }, [serverId, paneSessionId, subscriptions, note, noteStatus]);
+  }, [serverId, connectionRecord, paneSessionId, paneSubscriptions, note]);
 
   const activities: StageActivityInput[] = [];
   for (const { subject, source } of sources) {

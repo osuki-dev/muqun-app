@@ -1,5 +1,5 @@
 import { createRoot, unmountComponentAtNode } from '@react-three/fiber';
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 import { Canvas, importDevice, type CanvasRef } from 'react-native-webgpu';
 import { Skia } from 'react-native-skia';
@@ -37,6 +37,11 @@ export default function GpuStage(props: StageSceneProps) {
     pendingPresentation.current = props.onPresented;
   }, [props.onPresented]);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const surfaceReset = useEffectEvent(() => {
+    pendingPresentation.current = undefined;
+    props.onSurfaceReset?.();
+  });
+  useLayoutEffect(() => surfaceReset(), [size]);
   const renderLatest = useEffectEvent(() =>
     root.current?.render(
       <MapErrorBoundary onError={props.onError}>

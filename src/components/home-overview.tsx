@@ -1635,7 +1635,7 @@ export function HomeOverview({
                         editorial
                         bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                         label={t`Settings`}
-                        onPress={() => router.push('/settings')}>
+                        onPress={() => void commands.manageConnections()}>
                         <ThemeIcon
                           name="chrome.settings"
                           fallback={SettingsIcon}

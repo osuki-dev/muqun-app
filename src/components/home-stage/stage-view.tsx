@@ -243,24 +243,21 @@ export function StageView({
     [theme.colors]
   );
 
-  // Texture decode is not a presented frame. Keep the static stage over the
-  // canvas until this exact scene has drawn; waking after blur needs a new frame.
-  const presentation = useMemo(
-    () => ({
-      backdrop,
-      painting,
-      hero,
-      frame,
-      colors,
-      resolvedMode,
-      role,
-      attempt,
-      paused,
-      settled,
-    }),
-    [backdrop, painting, hero, frame, colors, resolvedMode, role, attempt, paused, settled]
-  );
-  const [presented, setPresented] = useState<object | null>(null);
+  // Only actual scene content or a replacement canvas invalidates its frame.
+  // Blur pauses drawing; it must retain that frame instead of mounting a new
+  // static canvas over Home during the native navigation transition.
+  const presentation = JSON.stringify([
+    attempt,
+    colors,
+    resolvedMode,
+    role,
+    backdrop && [backdrop.texture.uuid, backdrop.layer],
+    painting && [painting.texture.uuid, painting.layer],
+    hero && [hero.texture.uuid, hero.layer],
+    frame && [frame.texture.uuid, frame.layer],
+  ]);
+  const [presented, setPresented] = useState<string | null>(null);
+  const onSurfaceReset = useCallback(() => setPresented(null), []);
   const onPresented = useCallback(() => {
     if (settled && !paused) setPresented(presentation);
   }, [presentation, settled, paused]);
@@ -424,6 +421,7 @@ export function StageView({
                 onQualityDrop={lowered}
                 onError={fail}
                 onPresented={onPresented}
+                onSurfaceReset={onSurfaceReset}
               />
             </Suspense>
           </MapErrorBoundary>
