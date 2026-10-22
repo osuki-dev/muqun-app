@@ -22,7 +22,10 @@ export class DeliverySelection<T> {
 
   update(value: T | ((previous: T) => T)): T {
     const next = typeof value === 'function' ? (value as (previous: T) => T)(this.current) : value;
-    if (!this.same(this.current, next)) this.ownership.invalidate();
+    // The same destination keeps the value it had, so publishing it again is a
+    // no-op for whoever renders from it.
+    if (this.same(this.current, next)) return this.current;
+    this.ownership.invalidate();
     this.current = next;
     return next;
   }
