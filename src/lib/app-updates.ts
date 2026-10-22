@@ -4,6 +4,7 @@ import { getActiveLocale } from '../i18n/active-locale';
 import { fetchOtaReleaseNotes } from './ota-release-notes';
 import { fetchOtaDownloadSize } from './ota-download-size';
 import { createOtaUpdateMetadata } from './ota-update-metadata';
+import { drawUpdateCurtain } from './update-curtain';
 import { Platform, TurboModuleRegistry } from 'react-native';
 import { create } from 'zustand';
 
@@ -54,7 +55,8 @@ function createClient(): UpdateClient | null {
         return target ? fetchOtaDownloadSize(target, settings.clientApiKey) : Promise.resolve(null);
       },
       addListener: instance.addListener,
-      reload: instance.reload,
+      // The dialog's check mark and dissolve play first, within a fixed bound.
+      reload: () => drawUpdateCurtain().then(() => instance.reload()),
       getRunningReleaseId: async () =>
         runningAppReleaseId(
           await instance.getActiveUpdateState(),

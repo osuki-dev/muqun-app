@@ -1,6 +1,7 @@
 # OTA metadata endpoints
 
-The Cloudflare Worker runs Hot Updater 1.0.1 and mounts only its client handlers.
+The Cloudflare Worker uses the root Hot Updater package pins and mounts only its
+client handlers.
 Requests to the update domain use the existing `x-api-key` client credential.
 Provider credentials and signing keys never belong in App requests. Localized
 notes retain their existing schema; download-size metadata uses SDK endpoints

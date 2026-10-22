@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { DownloadIcon, PauseIcon, StartIcon, UndoIcon } from '@/icons';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

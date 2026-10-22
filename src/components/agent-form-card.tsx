@@ -208,7 +208,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <TextField
             value={field.options?.some((option) => option.value === currentVal) ? '' : currentVal}
             onChangeText={(text) => setValue(field.key, text)}
-            placeholder={field.placeholder ?? t`Type here…`}
+            placeholder={field.placeholder ?? t`Type here`}
             placeholderTextColor={theme.colors.textSubtle}
             onFocus={onFieldFocus}
             style={[
@@ -217,7 +217,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               inputFont,
               {
                 color: theme.colors.text,
-                borderColor: theme.colors.border,
+                borderColor: 'transparent',
                 backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
               },
             ]}
@@ -247,7 +247,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                               ? withAlpha(theme.colors.primary, 0.13)
                               : theme.colors.surfaceRaised
                           ),
-                          borderColor: selected ? theme.colors.primary : theme.colors.border,
+                          borderColor: selected ? theme.colors.primary : 'transparent',
                         },
                       ]}>
                       {selected ? <DoneIcon size={12} color={theme.colors.primary} /> : null}
@@ -316,7 +316,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 inputFont,
                 {
                   color: theme.colors.text,
-                  borderColor: theme.colors.border,
+                  borderColor: 'transparent',
                   backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
                 },
               ]}
@@ -360,7 +360,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                             ? withAlpha(theme.colors.primary, 0.13)
                             : theme.colors.surfaceRaised
                         ),
-                        borderColor: selected ? theme.colors.primary : theme.colors.border,
+                        borderColor: selected ? theme.colors.primary : 'transparent',
                       },
                     ]}>
                     {selected ? <DoneIcon size={12} color={theme.colors.primary} /> : null}
@@ -403,7 +403,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 { borderRadius: profile.chrome.control },
                 {
                   backgroundColor: withAlpha(theme.colors.info, 0.1),
-                  borderColor: theme.colors.info,
+                  borderColor: 'transparent',
                 },
               ]}>
               <OpenExternalIcon size={13} color={theme.colors.info} />
@@ -436,7 +436,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         { borderRadius: profile.chrome.noticeCard },
         {
           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-          borderColor: theme.colors.info,
+          borderColor: 'transparent',
         },
       ]}>
       {/* Title */}

@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { DocumentIcon } from '@/icons';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';

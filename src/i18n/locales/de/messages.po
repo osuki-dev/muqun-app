@@ -96,6 +96,11 @@ msgstr "{0, plural, one {# weitere Zeile} other {# weitere Zeilen}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, one {# Vorgang} other {# Vorgänge}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, one {# Anfrage wartet} other {# Anfragen warten}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -131,6 +136,11 @@ msgstr "{0} (dieses Gerät)"
 #: src/lib/attachments.ts
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0} wurde nicht hochgeladen. Erneut versuchen oder entfernen, um zu senden"
+
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr "{0} Ereignisse, neueste zuerst"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -326,6 +336,10 @@ msgstr "{count} Anfragen zuletzt beobachtet"
 msgid "{done} of {0} done"
 msgstr "{done} von {0} erledigt"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} von {device} des Geräts"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} führt noch einen älteren Eintrag für {name}. Entferne diesen Eintrag auf {from}"
@@ -370,6 +384,10 @@ msgstr "{minutes, plural, one {# Minute} other {# Minuten}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys}-Kombinationen funktionieren erst, wenn das Programm in diesem Terminal erweiterte Tasten aktiviert"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, one {# weitere braucht dich} other {# weitere brauchen dich}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name} (Terminal)"
@@ -406,6 +424,10 @@ msgstr "{panelCount, plural, one {# aktiv} other {# aktiv}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName} (Terminal)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, eine Stufe höher wird getestet"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -419,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} von {0} laufen"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, begrenzt auf {cap} px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: nicht geladen, begrenzt auf {cap} px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -441,6 +471,10 @@ msgstr "{waiting, plural, one {# braucht dich} other {# brauchen dich}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more} weitere"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -718,6 +752,10 @@ msgstr "Einmal erlauben"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Kamera erlauben oder stattdessen die Adresse eingeben"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "Erlauben: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "Bereits aktiv"
@@ -763,6 +801,7 @@ msgstr "und {rest} weitere"
 msgid "another computer"
 msgstr "einem anderen Computer"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Antwort"
@@ -784,6 +823,14 @@ msgstr "API-Schlüssel (optional)"
 msgid "API URL"
 msgstr "API-URL"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "App-Code"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "App-Daten"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App-Symbol"
@@ -804,6 +851,10 @@ msgstr "App-Sperre nicht verfügbar"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "App-Name und Slogan"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "App-Updates"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -827,7 +878,6 @@ msgid "Apply theme"
 msgstr "Design anwenden"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "Wird angewendet …"
 
@@ -1085,6 +1135,10 @@ msgstr "Build"
 msgid "Built-in"
 msgstr "Integriert"
 
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "Cache"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "Cache gelesen"
@@ -1321,6 +1375,7 @@ msgstr "Worktree auswählen"
 msgid "Classic"
 msgstr "Klassisch"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "Leeren"
@@ -1853,7 +1908,6 @@ msgstr "Ctrl Z, anhalten"
 msgid "Controls"
 msgstr "Steuerung"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Gespräch"
@@ -1862,6 +1916,7 @@ msgstr "Gespräch"
 msgid "Conversational help and open-ended project questions."
 msgstr "Hilfe im Gespräch und offene Fragen zum Projekt"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1887,6 +1942,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Kopiert ihn, bereit zum Einfügen in ein Terminal"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -2228,7 +2284,7 @@ msgid "Could not rename"
 msgstr "Umbenennen fehlgeschlagen"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "Antwort nicht möglich"
 
@@ -2387,6 +2443,7 @@ msgid "Cropped preview · Open full image"
 msgstr "Beschnittene Vorschau · Vollständiges Bild öffnen"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -2661,6 +2718,7 @@ msgid "Downloading theme"
 msgstr "Theme wird geladen"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "Wird heruntergeladen …"
 
@@ -2830,7 +2888,6 @@ msgid "Export theme"
 msgstr "Design exportieren"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3008,14 +3065,6 @@ msgstr "Vom Ziel zur laufenden Arbeit"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Vollständige Paketgröße: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "Größe des vollständigen Pakets. Wiederverwendete Dateien können den Download verkleinern"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3248,7 +3297,6 @@ msgid "How to use Muqun"
 msgstr "Muqun verwenden"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inaktiv"
@@ -3296,8 +3344,8 @@ msgid "Images download from"
 msgstr "Bilder werden geladen von"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "Datei importieren…"
+msgid "Import a file"
+msgstr "Datei importieren"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -3384,6 +3432,7 @@ msgid "Installing images"
 msgstr "Bilder werden installiert"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "Wird installiert…"
 
@@ -3958,7 +4007,6 @@ msgstr "Einrichtung nötig"
 msgid "Needs update"
 msgstr "Update nötig"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -3975,6 +4023,7 @@ msgid "Needs your attention"
 msgstr "Deine Hilfe ist nötig"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -3991,13 +4040,12 @@ msgid "Never seen"
 msgstr "Nie gesehen"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
 #: src/components/home-composer-dock.tsx
-msgid "New conversation with {agentLabel}…"
-msgstr "Neues Gespräch mit {agentLabel}…"
+msgid "New conversation with {agentLabel}"
+msgstr "Neues Gespräch mit {agentLabel}"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4047,8 +4095,8 @@ msgid "New workspace"
 msgstr "Neuer Workspace"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "Neuer Worktree…"
+msgid "New worktree"
+msgstr "Neuer Worktree"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4260,6 +4308,10 @@ msgstr "Noch keine SSH-Hosts gespeichert"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "Noch keine SSH-Hosts. Füge einen hinzu, um eine Shell auf jedem erreichbaren Rechner zu öffnen"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr "Noch keine Bühnenbild-Ereignisse aufgezeichnet"
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "Keine Einzelbilder"
@@ -4434,7 +4486,6 @@ msgid "Off"
 msgstr "Aus"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4444,9 +4495,11 @@ msgstr "Offline"
 msgid "OFFLINE"
 msgstr "OFFLINE"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "Offline · zuletzt gesehen {0}"
 
@@ -4489,8 +4542,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "Nur dieser Eintrag auf der Startseite wird ausgeblendet. Die Aufgabe und ihr Verlauf bleiben verfügbar. Laufende Arbeit wird nicht gestoppt"
 
 #: src/components/home-connections.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4724,6 +4777,10 @@ msgstr "Öffnet diesen Computer"
 msgid "Options for {0}"
 msgstr "Optionen für {0}"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "Weiterer Cache"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "Andere Computer"
@@ -4855,8 +4912,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "Öffentlichen Theme-Link oder GitHub-Repository-URL einfügen"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "URL einfügen…"
+msgid "Paste a URL"
+msgstr "URL einfügen"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."
@@ -4893,6 +4950,7 @@ msgid "Permission"
 msgstr "Berechtigung"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "Berechtigung erforderlich"
 
@@ -4903,6 +4961,10 @@ msgstr "Fotomediathek"
 #: src/components/theme-link-import.tsx
 msgid "Pinned commit"
 msgstr "Festgelegter Commit"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "Pixelverhältnis"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
@@ -5056,6 +5118,10 @@ msgstr "Öffentlicher Schlüssel kopiert"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "Qualitätsstufe"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -5385,13 +5451,10 @@ msgstr "Audio erneut abspielen"
 msgid "Reply from Home"
 msgstr "Von Home antworten"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "Antwort an"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}…"
-msgstr "Antwort an {threadAgentName}…"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -5459,10 +5522,6 @@ msgstr "Wird zurückgesetzt am {0}"
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Muqun neu starten, um das Update abzuschließen"
-
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Muqun wird neu gestartet…"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
@@ -5852,17 +5911,14 @@ msgstr "Senden"
 msgid "Send {spoken}"
 msgstr "{spoken} senden"
 
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Nachricht senden"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, $ for skills, @ for files…"
-msgstr "Nachricht senden, / für Befehle, $ für Skills, @ für Dateien…"
-
-#: src/components/agent-composer.tsx
-msgid "Send a message…"
-msgstr "Nachricht senden…"
+msgid "Send a message, type / for commands, $ for skills, @ for files"
+msgstr "Nachricht senden, / für Befehle, $ für Skills, @ für Dateien"
 
 #: src/components/agent-composer.tsx
 msgid "Send message"
@@ -6260,6 +6316,14 @@ msgstr "SSH-Tunnel über {host} ist unterbrochen"
 msgid "Stage"
 msgstr "Bühne"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr "Bühnen-Diagnose"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr "Bühnen-Protokoll kopiert"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "Vorgemerkt"
@@ -6368,7 +6432,6 @@ msgstr "{name} wird gestartet"
 msgid "Starting the camera"
 msgstr "Kamera wird gestartet"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6430,10 +6493,6 @@ msgstr "Stoppen und transkribieren"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "Aufgabe nicht mehr zuweisen"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Stop following this conversation"
-msgstr "Diesem Gespräch nicht mehr folgen"
 
 #: src/components/home-stage/stage-session-strip.tsx
 msgid "Stop replying to {title}"
@@ -6566,10 +6625,6 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Foto aufnehmen"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · start a new task"
-msgstr "Tippen · neue Aufgabe"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -6723,6 +6778,10 @@ msgstr "Schriftgröße"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "Text für den Simulator"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "Texturen"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
@@ -6885,6 +6944,10 @@ msgstr "Der vorherige Versand konnte nicht geprüft werden"
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Das rohe Panel, auf seinem Raster und in seinen eigenen Farben"
+
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "Der restliche Cache wird beim nächsten Öffnen von Muqun entfernt"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7319,6 +7382,10 @@ msgstr "Zu viele Änderungen für eine Liste. Dies ist der Anfang, nicht alles"
 msgid "Tool call"
 msgstr "Toolaufruf"
 
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "Gesamt"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "folgt {upstream}"
@@ -7402,8 +7469,8 @@ msgid "Type changed"
 msgstr "Typ geändert"
 
 #: src/components/agent-form-card.tsx
-msgid "Type here…"
-msgstr "Hier eingeben…"
+msgid "Type here"
+msgstr "Hier eingeben"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -7543,13 +7610,8 @@ msgid "Up arrow"
 msgstr "Pfeil nach oben"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Aktualisieren"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "Update verfügbar"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7575,6 +7637,10 @@ msgstr "Aktualisiere Muqun Gateway auf diesem Host, um {agentName} zu nutzen"
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "Jetzt aktualisieren"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "Update bereit"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7603,10 +7669,6 @@ msgstr "Aktualisiere das Gateway, um Videoausgaben anzusehen"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "Aktualisiert beim erneuten Öffnen"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "Muqun wird aktualisiert…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
@@ -7687,6 +7749,10 @@ msgstr "Variabel · {0}"
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "Ansehen"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Dateiänderungen anzeigen"
@@ -7755,9 +7821,17 @@ msgstr "Die Modellliste dieses Computers wird noch geladen. Sende gleich noch ei
 msgid "Waiting for uploads to finish…"
 msgstr "Warten auf den Abschluss der Uploads…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "Wartet im Terminal auf dich"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "Wartet auf deine Antwort"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "Wartet auf deine Eingabe"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
@@ -7785,7 +7859,7 @@ msgid "While you were away"
 msgstr "Während du weg warst"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Arbeitet"

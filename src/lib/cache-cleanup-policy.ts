@@ -1,4 +1,4 @@
-/** Automatic cleanup is opt-in; intervals are elapsed days, not file ages. */
+/** Automatic cleanup: on (10 days) for new installs; intervals are elapsed days, not file ages. */
 export type CacheCleanupIntervalDays = 0 | 10 | 30;
 
 export function isCacheCleanupIntervalDays(value: unknown): value is CacheCleanupIntervalDays {

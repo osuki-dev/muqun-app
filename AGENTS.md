@@ -121,3 +121,16 @@ through Play internal testing and promote the tested production-channel binary.
 Store-track changes do not change the embedded Hot Updater channel. Keep
 versionCodes increasing; upload and Play distribution certificates differ.
 There is no separate APK distribution or tag-triggered binary build.
+
+Successful local native builds register OTA targets under
+`.hot-updater/native-builds/<channel>/<platform>.json`; keep these generated
+records out of Git and EAS uploads. Use `update:preview` or `update:production`
+with `android`, `ios`, or `both` and a localized notes manifest. The wrapper
+selects the matching native records; do not manually replace the root fingerprint,
+guess from the newest artifact, or regenerate a fingerprint to bypass compatibility.
+Use `both` for one dual-platform deployment instead of concurrent commands in the
+same checkout. Fingerprints identify native compatibility, not channels; preserve
+the official fingerprint schema. Promoting OTA bytes from preview to production
+requires matching production native compatibility and verified release notes;
+promotion does not switch a binary's embedded channel. See the release runbook
+for partial-publication handling and interrupted-deployment recovery.

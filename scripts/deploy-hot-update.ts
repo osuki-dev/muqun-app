@@ -9,12 +9,12 @@ import { localizedReleaseNotes } from '../infrastructure/ota-notes/plugin';
 import { parseOtaNotesManifest } from '../infrastructure/ota-notes/manifest';
 import { fetchOtaReleaseNote } from '../src/lib/ota-release-notes';
 import {
-  deployedOtaReleaseId,
+  deployedOtaReleaseIds,
   finishOtaPublication,
-  nativeOtaFingerprintHash,
-  publishOtaNotesAndEnable,
+  prepareOtaNotesEnablement,
   recordOtaPublicationFailure,
 } from './publish-ota-notes';
+import { nativeUpdateDeployment, withNativeUpdateFingerprint } from './native-update-target';
 import { readHotUpdaterAppConfig } from './hot-updater-app-config';
 
 if (existsSync('.env.hotupdater')) process.loadEnvFile('.env.hotupdater');
@@ -23,17 +23,17 @@ const platform = process.argv[3];
 const notesPath = process.argv[4];
 if (
   !['preview', 'production', 'ota-test'].includes(channel ?? '') ||
-  !['android', 'ios'].includes(platform ?? '') ||
+  !['android', 'ios', 'both'].includes(platform ?? '') ||
   !notesPath ||
   process.argv.length !== 5
 ) {
   throw new Error(
-    'Usage: bun scripts/deploy-hot-update.ts <preview|production|ota-test> <android|ios> <notes.json>'
+    'Usage: bun scripts/deploy-hot-update.ts <preview|production|ota-test> <android|ios|both> <notes.json>'
   );
 }
 // Validate every translation before invoking the CLI or touching remote state.
 const notes = parseOtaNotesManifest(JSON.parse(readFileSync(notesPath, 'utf8')));
-const selectedPlatform = platform === 'ios' ? 'ios' : 'android';
+const selectedPlatform = platform === 'both' ? 'both' : platform === 'ios' ? 'ios' : 'android';
 const required = [
   'HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID',
   'HOT_UPDATER_CLOUDFLARE_D1_DATABASE_ID',
@@ -51,10 +51,12 @@ if (process.env.EXPO_PUBLIC_HOT_UPDATER_ENABLED !== '1')
 if (process.env.HOT_UPDATER_CHANNEL !== channel)
   throw new Error('Build and deployment channels must match');
 readHotUpdaterAppConfig(process.env, process.cwd());
-if (!existsSync('fingerprint.json'))
-  throw new Error('Missing fingerprint.json from the corresponding native release build');
-const fingerprint: unknown = JSON.parse(readFileSync('fingerprint.json', 'utf8'));
-const fingerprintHash = nativeOtaFingerprintHash(fingerprint, selectedPlatform);
+const deployment = nativeUpdateDeployment(process.cwd(), channel ?? '', selectedPlatform);
+for (const target of deployment.targets) {
+  console.log(
+    `OTA target: ${channel}/${target.platform} — ${target.artifact.name} — ${target.fingerprintHash}`
+  );
+}
 const server = createHotUpdater({
   database: d1Database({
     accountId: process.env.HOT_UPDATER_CLOUDFLARE_ACCOUNT_ID ?? '',
@@ -75,7 +77,7 @@ const server = createHotUpdater({
 const workspace = mkdtempSync(join(tmpdir(), 'muqun-ota-'));
 const logPath = join(workspace, 'deploy.log');
 closeSync(openSync(logPath, 'wx', 0o600));
-let releaseId: string | null = null;
+let receipts: { platform: 'ios' | 'android'; releaseId: string }[] = [];
 let phase = 'schema preflight';
 let succeeded = false;
 try {
@@ -86,21 +88,22 @@ try {
   let result;
   try {
     // No auto-regeneration: native changes must be reviewed and built before OTA.
-    result = spawnSync(
-      'bunx',
-      [
-        '--no-install',
-        'hot-updater',
-        'deploy',
-        '--platform',
-        platform ?? '',
-        '--channel',
-        channel ?? '',
-        '--disabled',
-        '--message',
-        notes.en,
-      ],
-      { stdio: ['ignore', log, log] }
+    result = withNativeUpdateFingerprint(process.cwd(), deployment.fingerprint, () =>
+      spawnSync(
+        'bunx',
+        [
+          '--no-install',
+          'hot-updater',
+          'deploy',
+          ...(selectedPlatform === 'both' ? [] : ['--platform', selectedPlatform]),
+          '--channel',
+          channel ?? '',
+          '--disabled',
+          '--message',
+          notes.en,
+        ],
+        { stdio: ['ignore', log, log] }
+      )
     );
   } finally {
     closeSync(log);
@@ -108,30 +111,40 @@ try {
   if (result.error) throw result.error;
   if (result.status !== 0)
     throw new Error(`Disabled deployment failed (exit ${result.status ?? 'unknown'})`);
-  releaseId = deployedOtaReleaseId(readFileSync(logPath, 'utf8'));
-  console.log(`Disabled OTA release: ${releaseId}`);
-  phase = 'notes verification and guarded enablement';
-  await publishOtaNotesAndEnable(
-    server.core,
-    {
-      publish: server.api.localized_release_notes.publish,
-      get: (id, locale) =>
-        fetchOtaReleaseNote(id, locale, process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY ?? ''),
-    },
-    releaseId,
-    notes,
-    {
-      channel: channel ?? '',
-      platform: selectedPlatform,
-      fingerprintHash,
-    }
+  receipts = deployedOtaReleaseIds(
+    readFileSync(logPath, 'utf8'),
+    deployment.targets.map((target) => target.platform)
   );
-  console.log(`Enabled OTA release with verified notes: ${releaseId}`);
+  for (const receipt of receipts)
+    console.log(`Disabled OTA release (${receipt.platform}): ${receipt.releaseId}`);
+  phase = 'notes verification';
+  const enablements: { platform: string; releaseId: string; enable: () => Promise<void> }[] = [];
+  for (const receipt of receipts) {
+    const target = deployment.targets.find((candidate) => candidate.platform === receipt.platform);
+    if (!target) throw new Error('Unexpected platform in deployment receipt');
+    const enable = await prepareOtaNotesEnablement(
+      server.core,
+      {
+        publish: server.api.localized_release_notes.publish,
+        get: (id, locale) =>
+          fetchOtaReleaseNote(id, locale, process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY ?? ''),
+      },
+      receipt.releaseId,
+      notes,
+      { channel: channel ?? '', platform: target.platform, fingerprintHash: target.fingerprintHash }
+    );
+    enablements.push({ ...receipt, enable });
+  }
+  for (const entry of enablements) {
+    phase = `enablement (${entry.platform})`;
+    await entry.enable();
+    console.log(`Enabled OTA release with verified notes (${entry.platform}): ${entry.releaseId}`);
+  }
   succeeded = true;
 } catch (error) {
   recordOtaPublicationFailure(logPath, phase, error);
   console.error(
-    `OTA publication failed during ${phase}. No automatic retry was attempted.${releaseId ? ` Inspect release ${releaseId} before retrying.` : ' Inspect deployment state before retrying.'}`
+    `OTA publication failed during ${phase}. No automatic retry was attempted.${receipts.length ? ` Inspect releases ${receipts.map((receipt) => receipt.releaseId).join(', ')} before retrying.` : ' Inspect deployment state before retrying.'}`
   );
   process.exitCode = 1;
 } finally {

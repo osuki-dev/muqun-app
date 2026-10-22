@@ -6,26 +6,75 @@ import {
   Skia,
   type SkImage,
 } from 'react-native-skia';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 
+import { hasTransparentArtworkUpperEdges } from '@/lib/artwork-edge-alpha';
 import { stageClearFraction } from '@/lib/home-stage-layers';
-import { createRefCountedCache } from '@/lib/ref-counted-cache';
+import { createRefCountedCache, type CacheHandle } from '@/lib/ref-counted-cache';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import {
+  currentStageArtEpoch,
+  noteStageArtFailure,
+  recordStageArtEvent,
+  useStageArtEpoch,
+} from '@/lib/stage-art-diagnostics';
+import {
+  stageArtErrorText,
+  stageArtRetryEdge,
+  stageArtShouldRetry,
+  type StageArtSlot,
+  type StageArtStep,
+} from '@/lib/stage-art-log';
 import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
 
 /** The longest edge a picture is shrunk to before its clear pixels are counted. */
 const MEASURE_EDGE = 128;
 /** What measuring a picture finds: its clear share (0..1) and its width over its height. */
 export type StagePictureFacts = { clear: number; aspect: number };
-/** Pictures already measured: a theme's pictures are measured once. */
+/**
+ * Pictures already measured: a theme's pictures are measured once. Only real
+ * measurements are kept; a fallback guess is measured again next time. Theme
+ * assets are named by their content hash, so a URI never changes meaning.
+ */
 const measuredFacts = new Map<string, StagePictureFacts>();
+
+/**
+ * A picture's failures and whether it may be tried again: a failure holds
+ * until Home comes back (the retry epoch moves), a few times a session
+ * (`stageArtShouldRetry`). `failures` is how many times it has failed so far,
+ * which also shrinks the next texture.
+ */
+function useStageArtRetry(uri: string | undefined) {
+  const epoch = useStageArtEpoch();
+  const [failure, setFailure] = useState<{
+    uri: string;
+    epoch: number;
+    failures: number;
+  } | null>(null);
+  const mine = uri && failure?.uri === uri ? failure : null;
+  const failed =
+    mine !== null &&
+    !stageArtShouldRetry({ failures: mine.failures, failedEpoch: mine.epoch, epoch });
+  const fail = (record: {
+    uri: string;
+    slot: StageArtSlot;
+    step: StageArtStep;
+    error?: unknown;
+    maxEdge?: number;
+  }) => {
+    const failures = noteStageArtFailure(record);
+    setFailure({ uri: record.uri, epoch: currentStageArtEpoch(), failures });
+  };
+  return { failed, failures: mine?.failures ?? 0, fail };
+}
 
 /**
  * The share of `image` that is (near-)transparent, counted on a small copy:
  * the decoded picture is the shared one, drawn down once and read back as
- * alpha only. An opaque picture is not read at all.
+ * alpha only. An opaque picture is not read at all. Null when it could not be
+ * read back.
  */
-function measureClear(image: SkImage): number {
+function measureClear(image: SkImage): number | null {
   if (image.getImageInfo().alphaType === AlphaType.Opaque) return 0;
   const width = image.width();
   const height = image.height();
@@ -34,7 +83,7 @@ function measureClear(image: SkImage): number {
   const targetWidth = Math.max(1, Math.round(width * scale));
   const targetHeight = Math.max(1, Math.round(height * scale));
   const surface = Skia.Surface.MakeRaster(targetWidth, targetHeight);
-  if (!surface) return 0;
+  if (!surface) return null;
   try {
     const canvas = surface.getCanvas();
     canvas.clear(Skia.Color('transparent'));
@@ -54,7 +103,7 @@ function measureClear(image: SkImage): number {
         colorType: ColorType.Alpha_8,
         alphaType: AlphaType.Unpremul,
       });
-      return alpha instanceof Uint8Array ? stageClearFraction(alpha) : 0;
+      return alpha instanceof Uint8Array ? stageClearFraction(alpha) : null;
     } finally {
       snapshot.dispose();
     }
@@ -64,30 +113,79 @@ function measureClear(image: SkImage): number {
 }
 
 /**
+ * Measure `image`; when its alpha cannot be counted, fall back to the 2D
+ * Home's rule for artwork (clear upper edges make a cut-out) and to a whole
+ * scene for anything else, so the picture is still drawn. `fallback` says why.
+ */
+function measurePicture(
+  image: SkImage,
+  slot: 'artwork' | 'wallpaper'
+): { facts: StagePictureFacts; fallback?: string } {
+  const height = image.height();
+  const aspect = height > 0 ? image.width() / height : 1;
+  let reason = 'The alpha readback returned nothing';
+  try {
+    const clear = measureClear(image);
+    if (clear !== null) return { facts: { clear, aspect } };
+  } catch (error) {
+    reason = stageArtErrorText(error) ?? reason;
+  }
+  if (slot === 'artwork') {
+    try {
+      const cutout = hasTransparentArtworkUpperEdges(
+        image.width(),
+        height,
+        (x, y) =>
+          image.readPixels(x, y, {
+            width: 1,
+            height: 1,
+            colorType: ColorType.Alpha_8,
+            alphaType: AlphaType.Unpremul,
+          })?.[0]
+      );
+      return { facts: { clear: cutout ? 1 : 0, aspect }, fallback: reason };
+    } catch {
+      // A scene, below.
+    }
+  }
+  return { facts: { clear: 0, aspect }, fallback: reason };
+}
+
+/**
  * How much of the picture at `uri` is clear (0..1), which decides the layer
  * it becomes, and its shape, which lays it out: `null` while it loads,
- * `undefined` for no picture or one that failed to load.
+ * `undefined` for no picture or one that failed to load (until Home comes
+ * back and it is tried again).
  */
 export function useStagePictureFacts(
-  uri: string | undefined
+  uri: string | undefined,
+  slot: 'artwork' | 'wallpaper'
 ): StagePictureFacts | null | undefined {
   const known = uri ? measuredFacts.get(uri) : undefined;
-  const [failed, setFailed] = useState<string | null>(null);
-  const image = useSharedSkiaImage(known === undefined ? uri : undefined, () =>
-    setFailed(uri ?? null)
+  const retry = useStageArtRetry(uri);
+  const image = useSharedSkiaImage(
+    known === undefined && !retry.failed ? uri : undefined,
+    (error) => {
+      if (uri) retry.fail({ uri, slot, step: 'decode', error });
+    }
   );
   const [measured, setMeasured] = useState<{ uri: string; facts: StagePictureFacts } | null>(null);
   useEffect(() => {
     if (!uri || !image || measuredFacts.has(uri)) return;
-    const height = image.height();
-    const facts = {
-      clear: measureClear(image),
-      aspect: height > 0 ? image.width() / height : 1,
-    };
-    measuredFacts.set(uri, facts);
+    const { facts, fallback } = measurePicture(image, slot);
+    if (!fallback) measuredFacts.set(uri, facts);
+    recordStageArtEvent({
+      slot,
+      step: 'measure',
+      status: fallback ? 'fallback' : 'ok',
+      uri,
+      width: image.width(),
+      height: image.height(),
+      error: fallback,
+    });
     setMeasured({ uri, facts });
-  }, [image, uri]);
-  if (!uri || failed === uri) return undefined;
+  }, [image, uri, slot]);
+  if (!uri || retry.failed) return undefined;
   if (known !== undefined) return known;
   return measured?.uri === uri ? measured.facts : null;
 }
@@ -95,18 +193,37 @@ export function useStagePictureFacts(
 /**
  * Theme pictures as Stage textures. The picture is decoded by the same shared
  * Skia cache Classic and Editorial draw from, then drawn once at the stage's
- * texture cap (<= 2048 px backdrop, <= 1536 px art, §11.7) and read back as
- * RGBA. Converted textures are shared and ref-counted per picture and size, so
+ * texture cap (<= 2560 px cover layers, <= 2048 px art, never more than the
+ * screen's height in pixels; `stage-view.tsx`) and read back as RGBA. The
+ * decoded picture stays at its own size in that cache; only the texture
+ * follows the cap. A conversion too large for memory (a raster surface or
+ * readback that comes back empty, an allocation that throws) fails the
+ * picture, which falls back to the static stage and is retried at half the
+ * cap. Converted textures are shared and ref-counted per picture and size, so
  * a theme's light and dark pictures are cached separately and both go within a
  * second of nobody showing them (leaving the layout, or a new theme).
+ *
+ * The decoded picture reaches the loader through `pending`, set and cleared
+ * around the one `acquire` that may start a load, so no stale (and possibly
+ * already disposed) picture is left behind for a later load of the same key.
  */
 const pending = new Map<string, SkImage>();
+/** Why the last load of each key failed; cleared on success. */
+const textureFailures = new Map<string, string>();
 const cache = createRefCountedCache<StageTextureSource>({
   load: async (key) => {
     const image = pending.get(key);
-    pending.delete(key);
+    if (!image) return null;
     const maxEdge = Number(key.slice(0, key.indexOf('|')));
-    return image ? downsample(image, maxEdge) : null;
+    try {
+      const source = downsample(image, maxEdge);
+      if (source) textureFailures.delete(key);
+      else textureFailures.set(key, 'The pixel readback returned nothing');
+      return source;
+    } catch (error) {
+      textureFailures.set(key, stageArtErrorText(error) ?? 'Downsampling failed');
+      return null;
+    }
   },
   dispose: (source) => source.texture.dispose(),
 });
@@ -159,29 +276,69 @@ export type StageTextureState =
   | { status: 'ready'; source: StageTextureSource }
   | { status: 'failed' };
 
-/** The picture at `uri` as a texture capped at `maxEdge` px, shared while held. */
-export function useStageTexture(uri: string | undefined, maxEdge: number): StageTextureState {
-  const [failed, setFailed] = useState<string | null>(null);
-  const image = useSharedSkiaImage(uri, () => setFailed(uri ?? null));
-  const key = uri ? `${Math.round(maxEdge)}|${uri}` : null;
-  const [loaded, setLoaded] = useState<{ key: string; source: StageTextureSource } | null>(null);
+/**
+ * The picture at `uri` as a texture capped at `maxEdge` px, shared while held.
+ * A failure is logged and holds until Home comes back; each retry halves the
+ * cap (`stageArtRetryEdge`).
+ */
+export function useStageTexture(
+  uri: string | undefined,
+  maxEdge: number,
+  slot: StageArtSlot
+): StageTextureState {
+  const retry = useStageArtRetry(uri);
+  const active = retry.failed ? undefined : uri;
+  const edge = stageArtRetryEdge(maxEdge, retry.failures);
+  const image = useSharedSkiaImage(active, (error) => {
+    if (active) retry.fail({ uri: active, slot, step: 'decode', error });
+  });
+  const key = active ? `${edge}|${active}` : null;
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    handle: CacheHandle<StageTextureSource>;
+  } | null>(null);
+  const loadFailed = useEffectEvent((failedUri: string, failedKey: string) =>
+    retry.fail({
+      uri: failedUri,
+      slot,
+      step: 'downsample',
+      error: textureFailures.get(failedKey),
+      maxEdge: edge,
+    })
+  );
   useEffect(() => {
-    if (!key || !image) return;
-    if (!cache.peek(key)) pending.set(key, image);
+    if (!key || !active || !image) return;
+    const fresh = !cache.peek(key);
+    pending.set(key, image);
     const handle = cache.acquire(key);
+    pending.delete(key);
     let live = true;
     void handle.promise.then((source) => {
       if (!live) return;
-      if (source) setLoaded({ key, source });
-      else setFailed(uri ?? null);
+      if (!source) {
+        loadFailed(active, key);
+        return;
+      }
+      if (fresh)
+        recordStageArtEvent({
+          slot,
+          step: 'downsample',
+          status: 'ok',
+          uri: active,
+          width: image.width(),
+          height: image.height(),
+          maxEdge: edge,
+        });
+      setLoaded({ key, handle });
     });
     return () => {
       live = false;
       handle.release();
     };
-  }, [image, key, uri]);
-  if (!uri || !key) return { status: 'none' };
-  if (failed === uri) return { status: 'failed' };
-  if (loaded?.key === key) return { status: 'ready', source: loaded.source };
+  }, [image, key, active, slot, edge]);
+  if (!uri) return { status: 'none' };
+  if (retry.failed) return { status: 'failed' };
+  const source = loaded?.key === key ? loaded.handle.current() : null;
+  if (source) return { status: 'ready', source };
   return { status: 'loading' };
 }

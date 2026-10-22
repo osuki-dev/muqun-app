@@ -1,4 +1,4 @@
-/** A bounded rim of particles: open choices, collect a selection, then send. */
+/** A bounded rim of particles: open choices, then collect a selection. */
 export const HOME_COMPOSER_TRANSITION_SKSL = `
 uniform float2 size;
 uniform float radius;
@@ -48,13 +48,10 @@ half4 main(float2 coord) {
     if (phase < 0.5) {
       // Two small streams fan out from the options end of the field.
       t = 0.78 + (seed - 0.5) * eased * 1.5;
-    } else if (phase < 1.5) {
+    } else {
       // The chosen value gathers back toward the draft.
       float delta = fract(0.78 - seed + 0.5) - 0.5;
       t = seed + delta * eased;
-    } else {
-      // An input gesture moving toward Send, with no success/progress claim.
-      t = 0.78 - eased * 0.31 + (seed - 0.5) * (0.12 + p * 0.08);
     }
     float2 center = rim(t);
     float2 inward = normalize(size * 0.5 - center);
@@ -62,7 +59,7 @@ half4 main(float2 coord) {
     float dist = length(coord - center);
     float core = 1.0 - smoothstep(0.4, 1.4 + noise * 0.7, dist);
     float halo = exp(-dist * dist / 18.0) * 0.26;
-    float2 tail = rim(t + (phase > 1.5 ? 1.0 : -1.0) * (0.006 + noise * 0.008));
+    float2 tail = rim(t - (0.006 + noise * 0.008));
     float2 direction = center - tail;
     float along = clamp(dot(coord - tail, direction) / max(dot(direction, direction), 0.01), 0.0, 1.0);
     float trail = (1.0 - smoothstep(0.4, 1.4, length(coord - tail - direction * along))) * along;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { paneAgentLine, paneAgentRead } from '@/lib/pane-agent-line';
+import { paneAgentActivity, paneAgentLine, paneAgentRead } from '@/lib/pane-agent-line';
 
 const screen = (...lines: string[]) => lines.join('\n');
 
@@ -209,5 +209,129 @@ describe('paneAgentRead: which message the reply answers, and whether the agent 
     expect(
       paneAgentLine(['> hi', '', 'Update available! Run: mise upgrade claude', '> '].join('\n'))
     ).toBeUndefined();
+  });
+});
+
+describe('paneAgentActivity', () => {
+  const claudeComposer = [
+    '',
+    '╭──────────────────────────────────────────────────────────────╮',
+    '│ >                                                            │',
+    '╰──────────────────────────────────────────────────────────────╯',
+    '  ⏵⏵ accept edits on (shift+tab to cycle)   Update available! Run: claude update',
+  ];
+
+  test('Claude Code: a running tool call is what it is doing, under its spinner too', () => {
+    const capture = screen(
+      '> run the tests and fix what fails',
+      '',
+      '⏺ I will run the suite first.',
+      '',
+      '⏺ Bash(bun test src)',
+      '  ⎿  Running…',
+      '',
+      '✻ Cogitating… (12s · ↑ 1.2k tokens · esc to interrupt)',
+      ...claudeComposer
+    );
+    expect(paneAgentActivity(capture)).toBe('Bash: bun test src');
+  });
+
+  test('Claude Code: after a finished call, the spinner under it is newest', () => {
+    const capture = screen(
+      '> add tests for the parser',
+      '',
+      '⏺ Read(src/lib/parser.ts)',
+      '  ⎿  Read 120 lines (ctrl+o to expand)',
+      '',
+      '✶ Pondering… (3m 4s · ↓ 2.1k tokens · esc to interrupt)',
+      ...claudeComposer
+    );
+    expect(paneAgentActivity(capture)).toBe('Pondering…');
+  });
+
+  test('Claude Code: a finished call with no spinner is the newest thing', () => {
+    const capture = screen(
+      '> look at the parser',
+      '',
+      '⏺ Reading the parser first.',
+      '',
+      '⏺ Read(src/lib/parser.ts)',
+      '  ⎿  Read 120 lines (ctrl+o to expand)',
+      ...claudeComposer
+    );
+    expect(paneAgentActivity(capture)).toBe('Read: src/lib/parser.ts');
+  });
+
+  test('Claude Code: its latest words when they come after the call', () => {
+    const capture = screen(
+      '> look at the parser',
+      '',
+      '⏺ Read(src/lib/parser.ts)',
+      '  ⎿  Read 120 lines (ctrl+o to expand)',
+      '',
+      '⏺ The parser drops the last token when the input ends without a',
+      '  newline; fixing that now.',
+      ...claudeComposer
+    );
+    expect(paneAgentActivity(capture)).toBe(
+      'The parser drops the last token when the input ends without a newline; fixing that now.'
+    );
+  });
+
+  test('Codex: the status line under finished work, with its elapsed time', () => {
+    const capture = screen(
+      '› fix the failing test',
+      '',
+      '• I will look at the failing test first.',
+      '',
+      '• Explored',
+      '  └ Read a.test.ts',
+      '    Search failing in src',
+      '',
+      '• Ran bun test src/lib',
+      '  └ 12 pass',
+      '    1 fail',
+      '',
+      '◦ Working (32s • esc to interrupt)',
+      '',
+      '› Implement {feature}',
+      '',
+      '  100% context left · ? for shortcuts'
+    );
+    expect(paneAgentActivity(capture)).toBe('Working');
+  });
+
+  test('Codex: an edit with nothing after it, and a one-word group with its detail', () => {
+    const edited = screen(
+      '› fix the failing test',
+      '',
+      '• Edited src/lib/a.ts (+3 -1)',
+      '    12 -  const a = 1;',
+      '    12 +  const a = 2;',
+      '',
+      '› Implement {feature}'
+    );
+    expect(paneAgentActivity(edited)).toBe('Edited src/lib/a.ts (+3 -1)');
+    const exploring = screen('› fix it', '', '• Exploring', '› Implement {feature}');
+    expect(paneAgentActivity(exploring)).toBe('Exploring');
+  });
+
+  test('indented tool output that looks like a spinner is not the status line', () => {
+    const capture = screen(
+      '> build it',
+      '',
+      '⏺ Bash(cargo build)',
+      '  ⎿  Compiling muqun v0.1.0',
+      '     Building…',
+      ...claudeComposer
+    );
+    expect(paneAgentActivity(capture)).toBe('Bash: cargo build');
+  });
+
+  test('nothing in the turn yet, or only notices: nothing', () => {
+    expect(
+      paneAgentActivity(screen('> hi', '', 'Update available! Run: claude update', '> '))
+    ).toBe(undefined);
+    expect(paneAgentActivity(screen('⏺ Old answer.', '> new question', '> '))).toBeUndefined();
   });
 });

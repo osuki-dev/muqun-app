@@ -87,7 +87,7 @@ export function AgentAssignmentBar({
       backgroundColor: surfaceBackground(
         selected ? theme.colors.primarySubtle : theme.colors.surfaceRaised
       ),
-      borderColor: selected ? theme.colors.primary : 'transparent',
+      borderColor: 'transparent',
     },
   ];
 

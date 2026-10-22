@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand/vanilla';
 
 import type { GatewaySocketState } from './gateway-socket';
 import { keepKeys } from './keep-keys';
+import { sameData } from './same-data';
 import { isTerminalTaskState, type TaskView } from './task-ledger';
 
 /**
@@ -61,18 +62,33 @@ export function replaceTasks(
   nowMs: number,
   requestedAtMs: number = nowMs
 ): ServerTasksIndex {
-  const held = new Map((index[serverId]?.tasks ?? []).map((task) => [task.taskId, task]));
+  const entry = index[serverId];
+  const held = new Map((entry?.tasks ?? []).map((task) => [task.taskId, task]));
   const listed = tasks.map((task) => {
     const known = held.get(task.taskId);
-    return known && known.updatedMs > task.updatedMs ? known : task;
+    if (!known) return task;
+    if (known.updatedMs > task.updatedMs) return known;
+    // The same view the last read gave: keep it, so the rows built from it stay still.
+    return sameData(known, task) ? known : task;
   });
   const named = new Set(tasks.map((task) => task.taskId));
   const arrived = [...held.values()].filter(
     (task) => !named.has(task.taskId) && (task.receivedAtMs ?? -Infinity) >= requestedAtMs
   );
+  const next = newestFirst([...listed, ...arrived]);
+  // A read that changed nothing is not news: the ledger keeps its identity, so
+  // every selector over this computer's tasks stays still. `fetchedAt` only
+  // has to say the ledger has been read, which it already does.
+  if (
+    entry &&
+    entry.fetchedAt !== null &&
+    entry.tasks.length === next.length &&
+    entry.tasks.every((task, position) => task === next[position])
+  )
+    return index;
   return {
     ...index,
-    [serverId]: { tasks: newestFirst([...listed, ...arrived]), fetchedAt: nowMs },
+    [serverId]: { tasks: next, fetchedAt: nowMs },
   };
 }
 
@@ -150,9 +166,10 @@ export function createServerTasksState(
           : { index, defaultCwd };
       }),
     replace: (serverId, tasks, requestedAtMs) =>
-      set((state) => ({
-        index: replaceTasks(state.index, serverId, tasks, now(), requestedAtMs),
-      })),
+      set((state) => {
+        const index = replaceTasks(state.index, serverId, tasks, now(), requestedAtMs);
+        return index === state.index ? state : { index };
+      }),
     upsert: (serverId, task) =>
       set((state) => ({
         index: upsertTask(state.index, serverId, { ...task, receivedAtMs: now() }),

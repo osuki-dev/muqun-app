@@ -443,7 +443,7 @@ export function InAppNotificationHost() {
               importantForAccessibility="no-hide-descendants"
               style={[
                 styles.backPage,
-                // Only a quiet page edge: no duplicate content or shadow
+                // Only a quiet filled page: no duplicate content or shadow
                 // beneath the translucent front card.
                 backPageClipStyle,
                 backSizeStyle,
@@ -452,7 +452,7 @@ export function InAppNotificationHost() {
                     colors.surfaceRaised,
                     depth === 1 ? 0.7 : 0.4
                   ),
-                  borderColor: surfaceBackgroundFill(colors.border, 0.35),
+                  borderColor: 'transparent',
                   transform: [{ translateY: depth * 3 }, { scaleX: 1 - depth * 0.025 }],
                 },
               ]}

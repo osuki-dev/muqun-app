@@ -7,8 +7,15 @@
  * thread from the drag, so they are worklets.
  */
 
-/** Where the drawer rests: shut, at its peek height, or nearly the whole window. */
+/**
+ * Where the drawer rests: shut, at its peek height, or nearly the whole window.
+ * It opens to `full`; `peek` is only a rest on the way down, reached by
+ * dragging an open drawer partway, and a drag further down closes it.
+ */
 export type ReplyDrawerSnap = 'closed' | 'peek' | 'full';
+
+/** Where a tap on the conversation button opens the drawer. */
+export const REPLY_DRAWER_OPEN_SNAP = 'full' satisfies ReplyDrawerSnap;
 
 /** The peek's top edge, as a share of the window from its bottom. */
 export const REPLY_DRAWER_PEEK_SHARE = 0.65;

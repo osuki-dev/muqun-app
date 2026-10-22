@@ -54,6 +54,7 @@ import { findAgent } from '@/lib/agent-discovery';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
+import { useHomeThreads } from '@/stores/home-thread';
 import { useHomeAttention } from '@/stores/home-attention';
 import { taskAttentionView } from '@/lib/task-attention';
 import {
@@ -200,6 +201,8 @@ export function useHomeRecentEntries({
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const goneSessions = useGoneAgentSessions((state) => state.keys);
+  // The dock's conversations are rows before any read names them.
+  const threads = useHomeThreads((state) => state.byServer);
   // Rows, not ages: a pass that only re-confirms the panes leaves this alone.
   const snapshots = useServerAgents(selectServerAgentsContent);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
@@ -349,6 +352,7 @@ export function useHomeRecentEntries({
     paneMode,
     gatewaySessions: agentSessions,
     goneSessions,
+    threads: Object.values(threads),
     connectionShortcutsElsewhere,
   });
   return available;

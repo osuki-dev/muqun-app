@@ -1,3 +1,4 @@
+import { demoStageSnapshot, demoStageSessions, DEMO_STAGE_ASIDS } from './demo-stage-progress';
 import { agentSnapshotRefreshQuery } from './agent-session-runtime';
 import { DEMO_COMPACTION_LOG_ASIDS, isDemoCompactionLogAsid } from './demo-compaction-log-native';
 import { DEMO_NOTICE_ASIDS, isDemoNoticeAsid } from './demo-notification-native';
@@ -292,6 +293,7 @@ export async function writeJson(
         DEMO_NATIVE_PREVIEW_ASID,
         DEMO_NATIVE_PREVIEW_CHILD_ASID,
         DEMO_ITALIC_BOUNDARY_ASID,
+        ...DEMO_STAGE_ASIDS.filter((asid) => demoStageSnapshot(asid)),
         ...DEMO_NOTICE_ASIDS,
         ...DEMO_COMPACTION_LOG_ASIDS,
       ].some((asid) => path === sessionRoute(asid, '/view'))
@@ -349,7 +351,7 @@ export async function listAgentSessionsObserved(
   query?: ListAgentSessionsQuery,
   signal?: AbortSignal
 ): Promise<ObservedAgentSessionList> {
-  if (usesOfflineDemo()) return { sessions: [], authoritative: true };
+  if (usesOfflineDemo()) return { sessions: demoStageSessions(), authoritative: true };
   const search = agentSessionListQuery(query);
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
@@ -588,7 +590,8 @@ export async function readAgentSessionAt(
   if (usesOfflineDemo(endpoint))
     return asid === DEMO_COMPACTION_ASID
       ? demoCompactionSnapshot()
-      : (demoCompactionLogsSnapshot(asid) ??
+      : (demoStageSnapshot(asid) ??
+          demoCompactionLogsSnapshot(asid) ??
           demoNotificationSnapshot(asid) ??
           demoNativePreviewSnapshot(asid));
   try {
@@ -614,6 +617,8 @@ export async function getAgentSessionSnapshot(
   options?: { refresh?: boolean; capabilities?: readonly string[] }
 ): Promise<AgentSessionSnapshot> {
   if (usesOfflineDemo()) {
+    const stage = demoStageSnapshot(asid);
+    if (stage) return stage;
     if (asid === DEMO_COMPACTION_ASID) return demoCompactionSnapshot();
     const compactionLogs = demoCompactionLogsSnapshot(asid);
     if (compactionLogs) return compactionLogs;

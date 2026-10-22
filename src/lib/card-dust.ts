@@ -5,8 +5,13 @@
  * way. Run with progress falling from 1, the same field reforms a card out of
  * the ash, which is how the deck brings the next computer in.
  *
+ * `axis` picks the edge the front starts at: 0 for a side (the deck's
+ * cards), 1 for the top or the bottom (Home's reply sheet). Along a side,
  * `direction` is -1 when the front starts at the left edge and the grains
- * drift left, +1 for the right. Coordinates and grain spacing are in points.
+ * drift left, +1 for the right; along the height it is -1 for the top edge
+ * and +1 for the bottom, the grains drifting that way too. A card's ash lifts
+ * as it blows sideways; a sheet's spreads outwards from its middle as it
+ * falls. Coordinates and grain spacing are in points.
  */
 export const CARD_DUST_SKSL = /* sksl */ `
 uniform shader image;
@@ -14,6 +19,7 @@ uniform float2 size;
 uniform float cell;
 uniform float progress;
 uniform float direction;
+uniform float axis;
 uniform float4 tint;
 
 float hash12(float2 p) {
@@ -36,18 +42,22 @@ half4 main(float2 pos) {
 
   float2 uv = pos / max(size, float2(1.0));
   // Distance from the leading edge, the one the pull is going towards.
-  float depth = clamp(direction < 0.0 ? uv.x : 1.0 - uv.x, 0.0, 1.0);
+  float along = axis < 0.5 ? uv.x : uv.y;
+  float depth = clamp(direction < 0.0 ? along : 1.0 - along, 0.0, 1.0);
+  // The way the ash blows, and the way it spreads as it goes.
+  float2 ahead = axis < 0.5 ? float2(direction, 0.0) : float2(0.0, direction);
+  float2 aside = axis < 0.5 ? float2(0.0, -1.0) : float2((uv.x - 0.5) * 2.0, 0.0);
   float billow = noise(pos / 58.0);
   float start = depth * 0.54 + billow * 0.14;
   float q = clamp((progress * 1.10 - start) / 0.42, 0.0, 1.0);
   if (q <= 0.0) return image.eval(pos);
 
   float loosen = smoothstep(0.0, 0.72, q);
-  float2 drift = float2(direction * (18.0 + 24.0 * billow), -24.0 - 30.0 * billow) * loosen;
+  float2 drift = (ahead * (18.0 + 24.0 * billow) + aside * (24.0 + 30.0 * billow)) * loosen;
   drift += float2(sin(pos.y / 75.0 + q * 3.0), cos(pos.x / 89.0 + q * 2.0)) * 7.0 * loosen;
   float2 source = pos - drift;
   float cloud = noise(source / 24.0 + float2(q * 0.7, -q * 0.4));
-  float2 grainFlow = float2(direction * 18.0, -28.0) * progress;
+  float2 grainFlow = (ahead * 18.0 + aside * 28.0) * progress;
   grainFlow += float2(sin(pos.y / 90.0 + progress * 3.0), cos(pos.x / 80.0 + progress * 2.0)) * 2.0 * progress;
   float2 grid = (pos - grainFlow) / max(cell, 1.0);
   float grainHash = hash12(floor(grid));

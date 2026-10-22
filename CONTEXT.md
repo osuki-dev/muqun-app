@@ -68,17 +68,17 @@ Network and domain services throw contextual errors for callers to present or re
 
 ## Configuration and Deployment
 
-`app.json` defines Expo SDK/native configuration, permissions, schemes, plugins, EAS project identity, and platform-specific privacy settings. `package.json` pins Expo SDK 58 packages and exposes EAS build, submit, and update commands. Releases use EAS builds for native binaries and EAS Update for compatible JavaScript changes.
+`app.json` defines Expo SDK/native configuration, permissions, schemes, plugins, EAS project identity, and platform-specific privacy settings. `package.json` pins Expo SDK 58 packages and exposes EAS build, submit, and update commands. Releases use local EAS builds for native binaries and Hot Updater for compatible JavaScript changes. See [store and OTA release commands](infrastructure/store-release.md); native compatibility records are selected by channel and platform.
 
 ## Documentation and Operations
 
-This repository holds the app and nothing else. The store listing copy, the App Review notes, the screenshot-rendering project and the submission runbooks are not here: they carry the App Review contact and a great deal of rendered artwork, and they live with the maintainers instead. `README.md` is the front page, this file is the longer map, and `AGENTS.md` is what a coding agent working in this tree is told. There is no dedicated on-call runbook in this repository. This is the only `CONTEXT.md` currently in the tree.
+This repository holds the app and nothing else. The store listing copy, the App Review notes, the screenshot-rendering project and private store submission notes are not here: they carry the App Review contact and a great deal of rendered artwork, and they live with the maintainers instead. `README.md` is the front page, this file is the longer map, and `AGENTS.md` is what a coding agent working in this tree is told. The repository maintains build and OTA operations in `infrastructure/store-release.md`. This is the only `CONTEXT.md` currently in the tree.
 
 ## Sharp Edges
 
 - Read the exact Expo SDK 58 versioned documentation before code changes.
 - A feature is not complete until the full offline end-to-end suite passes with one booted simulator or emulator and the app installed.
-- The theme picker must remain scrollable: the registry now contains thirty-two paired packs.
+- The theme picker must remain scrollable as installed theme packs change.
 - Form sheets have native layout constraints; `ScrollScreen` must remain the sheet root.
 - The native suite uses process relaunches and restores persistent preferences explicitly. Run it only on dedicated, unpaired test devices; it never erases user data.
 - OTA code can reach binaries that do not contain newly added native modules; guarded imports are intentional.
@@ -88,8 +88,8 @@ This repository holds the app and nothing else. The store listing copy, the App 
 
 The shared `VirtualKeyboard` emits characters or validated named keys; Gateway and
 SSH workspaces own dispatch. Contextual combinations and nvim actions share one
-shortcut strip. See [Terminal soft keyboard](docs/terminal-soft-keyboard.md) for
-modifier state, exact sequence semantics and device validation.
+shortcut strip. Modifier state and key sequences are implemented in `src/components/virtual-keyboard.tsx`
+and validated by the terminal flows in `e2e/agent-device/`.
 
 ## Linked checkout changes
 

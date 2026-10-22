@@ -3,13 +3,8 @@ import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import {
-  Spinner,
-  useThemeTokens,
-  PressableScale,
-  TextField,
-  type TextFieldProps,
-} from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, TextField, type TextFieldProps } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { MicrophoneIcon, MessageSendIcon } from '@/icons';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -85,6 +80,8 @@ export interface TerminalComposerProps {
   leading?: ReactNode;
   /** Noninteractive artwork; clipped by the field and hidden during dictation. */
   fieldBackground?: ReactNode;
+  /** Persistent context above the draft, inside the same input surface. */
+  fieldHeader?: ReactNode;
   /** An already resolved fill for a field without an enclosing material plate. */
   fieldBackgroundColor?: string;
   /** Optional bounded artwork overflow; the field and its controls remain clipped. */
@@ -125,6 +122,7 @@ export function TerminalComposer({
   voiceContext,
   leading,
   fieldBackground,
+  fieldHeader,
   fieldBackgroundColor,
   fieldBackgroundOutset,
   fieldDecoration,
@@ -331,6 +329,7 @@ export function TerminalComposer({
           voiceActive && { minHeight: clampVoiceHeight(voiceHeight) },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}
+        {fieldHeader}
         {/* Keep the draft mounted so recording inherits this exact field height. */}
         <Animated.View
           pointerEvents={voiceActive ? 'none' : 'auto'}

@@ -82,3 +82,7 @@ README.md
 /infrastructure/hot-updater/
 /keys/*
 !/keys/hot-updater-public.pem
+
+# Local native OTA targets and deployment lock (never bundled or committed).
+/.hot-updater/native-builds/
+/.hot-updater/native-deploy.lock/

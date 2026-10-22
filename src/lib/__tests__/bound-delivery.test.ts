@@ -639,9 +639,11 @@ test('actual workspace, tab and route-target A/B/A transitions suppress pending 
 
 test('selection no-ops preserve delivery and updater callbacks run once against the latest selection', () => {
   const owner = new DeliveryOwnership();
-  const selection = new DeliverySelection({ pane: 'a' }, (a, b) => a.pane === b.pane, owner);
+  const held = { pane: 'a' };
+  const selection = new DeliverySelection(held, (a, b) => a.pane === b.pane, owner);
   const current = owner.capture();
-  selection.update({ pane: 'a' });
+  // The same destination hands back the held value, so republishing it renders nothing.
+  expect(selection.update({ pane: 'a' })).toBe(held);
   expect(current()).toBe(true);
   let calls = 0;
   selection.update((previous) => {

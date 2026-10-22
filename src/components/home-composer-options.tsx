@@ -108,12 +108,12 @@ export function HomeComposerOptions({
         ))}
       </View>
       {replyTitle !== undefined ? (
-        <View style={styles.row}>
+        <View>
           <View
             testID="home-composer-option-reply"
             accessible
             accessibilityLabel={t`Replying to ${replyTitle}`}
-            style={styles.replyText}>
+            style={styles.row}>
             <Text
               variant="bodySmall"
               weight="regular"
@@ -126,7 +126,7 @@ export function HomeComposerOptions({
             <Text
               variant="bodySmall"
               weight="regular"
-              numberOfLines={1}
+              numberOfLines={2}
               ellipsizeMode="tail"
               color={theme.colors.text}
               style={styles.value}>
@@ -138,7 +138,7 @@ export function HomeComposerOptions({
               testID="home-composer-option-new-conversation"
               accessibilityRole="button"
               accessibilityLabel={t`New conversation`}
-              hitSlop={8}
+              style={[styles.row, styles.newConversation]}
               onPress={onNewConversation}>
               <Text variant="caption" weight="semibold" color={theme.colors.primary}>
                 {t`New conversation`}
@@ -230,6 +230,6 @@ const styles = StyleSheet.create({
   label: { flexShrink: 0 },
   measure: { position: 'absolute', top: 0, left: 0, opacity: 0, alignItems: 'flex-start' },
   value: { flex: 1, minWidth: 0 },
-  replyText: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  newConversation: { justifyContent: 'flex-end' },
   mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 26 },
 });

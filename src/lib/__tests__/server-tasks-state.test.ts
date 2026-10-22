@@ -116,6 +116,25 @@ describe('upsertTask', () => {
 });
 
 describe('replaceTasks', () => {
+  test('a read that changed nothing keeps the index, and an unchanged task keeps its identity', () => {
+    const first = replaceTasks({}, 's1', [task('a', 'working', 10), task('b', 'done', 5)], 100);
+    expect(replaceTasks(first, 's1', [task('a', 'working', 10), task('b', 'done', 5)], 200)).toBe(
+      first
+    );
+    const moved = replaceTasks(first, 's1', [task('a', 'done', 20), task('b', 'done', 5)], 300);
+    expect(moved).not.toBe(first);
+    expect(moved.s1?.fetchedAt).toBe(300);
+    expect(moved.s1?.tasks[0]?.state).toBe('done');
+    expect(moved.s1?.tasks[1]).toBe(first.s1?.tasks[1]);
+  });
+
+  test('a first read is recorded even when a frame already filed the same view', () => {
+    const framed = upsertTask({}, 's1', task('a', 'working', 10));
+    const read = replaceTasks(framed, 's1', [task('a', 'working', 10)], 100);
+    expect(read).not.toBe(framed);
+    expect(read.s1?.fetchedAt).toBe(100);
+  });
+
   test('sorts newest first and stamps the fetch time', () => {
     const index = replaceTasks({}, 's1', [task('a', 'done', 1), task('b', 'working', 9)], 42);
     expect(index.s1?.tasks.map((t) => t.taskId)).toEqual(['b', 'a']);
