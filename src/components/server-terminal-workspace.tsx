@@ -403,6 +403,7 @@ import {
   terminalOwnsScreen,
   terminalViewportRows,
 } from '@/terminal/history';
+import { createStreamReadFence } from '@/terminal/stream-read-fence';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import {
   forgetWarmWorkspace,
@@ -1439,6 +1440,9 @@ export function ServerTerminalWorkspace({
   const healthRef = useRef<HealthResponse | null>(null);
   const dataRequestIdRef = useRef(0);
   const outputRequestIdRef = useRef(0);
+  // A read that lands after a newer streamed frame is not applied: see
+  // `createStreamReadFence`.
+  const [streamReadFence] = useState(createStreamReadFence);
   const outputLineLimitRef = useRef(INITIAL_PANE_OUTPUT_LINES);
   const loadingEarlierOutputRef = useRef(false);
   const partsLineLimitRef = useRef(INITIAL_PANE_OUTPUT_LINES);
@@ -3665,6 +3669,7 @@ export function ServerTerminalWorkspace({
   const applyPaneOutput = useCallback(
     (requestPaneId: string, value: string, revision?: number, origin: PaneReadOrigin = 'frame') => {
       if (watchedPaneRef.current !== requestPaneId || loadingEarlierOutputRef.current) return;
+      if (origin === 'frame') streamReadFence.noteFrame();
       readRevisionRef.current = {
         paneId: requestPaneId,
         revision: typeof revision === 'number' ? revision : readRevisionRef.current.revision,
@@ -3713,7 +3718,7 @@ export function ServerTerminalWorkspace({
       }
       setError(null);
     },
-    [outputShapeRef, outputStore]
+    [outputShapeRef, outputStore, streamReadFence]
   );
 
   const refreshOutput = useCallback(async () => {
@@ -3732,6 +3737,7 @@ export function ServerTerminalWorkspace({
       watchedServerRef.current === requestServerId &&
       watchedPaneRef.current === requestPaneId &&
       outputRequestIdRef.current === requestId;
+    const notOvertaken = streamReadFence.begin();
     return recoverWith(
       async () => {
         // As deep as the reader has already paged, not the first page again. A
@@ -3745,7 +3751,7 @@ export function ServerTerminalWorkspace({
           outputLineLimitRef.current,
           outputSource
         );
-        if (!isCurrentRequest()) return;
+        if (!isCurrentRequest() || !notOvertaken()) return;
         const paneRevision = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw
           .revision;
         applyPaneOutput(
@@ -3773,6 +3779,7 @@ export function ServerTerminalWorkspace({
     outputSource,
     selection.paneId,
     serverId,
+    streamReadFence,
     t,
     watching,
   ]);
