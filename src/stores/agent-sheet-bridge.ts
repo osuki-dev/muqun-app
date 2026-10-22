@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+
+import { sameData } from '@/lib/same-data';
 import type { ChildrenByParent } from '@/lib/agent-session-tree';
 
 import type {
@@ -226,17 +228,20 @@ export const useAgentSheetBridge = create<AgentSheetBridge>((set, get) => ({
   publish: (patch) => {
     const current = get();
     // The workbench publishes from an effect that re-runs on every stream
-    // tick. Committing an identical snapshot would re-render every open sheet
-    // for nothing, so the equal case never reaches `set`.
-    let changed = false;
+    // tick, rebuilding small values (the model ref, token counts) with equal
+    // contents. Only a field whose contents changed is committed -- the rest
+    // keep their identity, so a sheet reading them stays still -- and an
+    // all-equal patch never reaches `set`.
+    const changed: Partial<AgentSheetSnapshot> = {};
+    let any = false;
     for (const key of Object.keys(patch) as (keyof AgentSheetSnapshot)[]) {
-      if (patch[key] !== current[key]) {
-        changed = true;
-        break;
-      }
+      const value = patch[key];
+      if (value === current[key] || sameData(value, current[key])) continue;
+      (changed as Record<string, unknown>)[key] = value;
+      any = true;
     }
-    if (!changed) return;
-    set(patch);
+    if (!any) return;
+    set(changed);
   },
   setActions: (actions) => set({ actions }),
   reset: () => set({ ...INITIAL, actions: NO_ACTIONS }),
