@@ -893,8 +893,21 @@ export function HomeOverview({
     openAgentInPlace: onOpenAgentInPlace,
     workspaceServerId: embedded ? activeConnection?.serverId : undefined,
   });
+  const { homeContinueFixture, stageProgressFixture } = useLocalSearchParams<{
+    homeContinueFixture?: string;
+    stageProgressFixture?: string;
+  }>();
+  // The offline fixture's transient connection is never a saved computer.
+  // Expose it only to this explicit QA Home, without changing persisted records.
+  const homeServers = useMemo(
+    () =>
+      stageProgressFixture === 'linked' && isDemoRecord(record) && record
+        ? [...records.filter((server) => server.serverId !== record.serverId), record]
+        : records,
+    [records, record, stageProgressFixture]
+  );
   const launchController = useHomeLaunchController({
-    servers: records,
+    servers: homeServers,
     selectedServerId: record?.serverId,
     connectionStatuses,
     reachabilityByServer: padReachabilityByServer,
@@ -904,20 +917,19 @@ export function HomeOverview({
   const availableRecentEntries = useHomeRecentEntries({
     // Every layout keeps its pane inventory in Continue; Classic's computer
     // cards below are entry points, not a second list of those panes.
-    servers: records,
+    servers: homeServers,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
     reachabilityByServer: padReachabilityByServer,
     activeConnection,
   });
-  const { homeContinueFixture, stageProgressFixture } = useLocalSearchParams<{
-    homeContinueFixture?: string;
-    stageProgressFixture?: string;
-  }>();
   useEffect(() => {
-    if (!isDemoRecord(record)) return;
-    if (stageProgressFixture === 'linked') startDemoStageProgress(record!.serverId, true);
-    if (stageProgressFixture === 'off') stopDemoStageProgress();
+    if (stageProgressFixture === 'off') {
+      stopDemoStageProgress();
+      return;
+    }
+    if (stageProgressFixture === 'linked' && isDemoRecord(record))
+      startDemoStageProgress(record!.serverId, true);
   }, [record, stageProgressFixture]);
   const demoSearchEntries = demoContinueSearchEntries(homeContinueFixture, isDemoRecord(record));
   const recentEntries = demoSearchEntries ?? availableRecentEntries;
@@ -1223,7 +1235,7 @@ export function HomeOverview({
         limit={5}
         linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
         selectedServerId={launchController.chosen?.serverId}
-        servers={records}
+        servers={homeServers}
         hosts={sshRows}
         available={recentShown}
         query={recentQuery}

@@ -467,6 +467,7 @@ export interface AgentComposerProps {
   attachmentTargetId?: string;
   /** Replaces the field's own invitation, e.g. to say why attaching is off. */
   placeholder?: string;
+  inputAccessibilityLabel?: string;
   /** Persistent recipient context above the draft, including while typing. */
   fieldHeader?: React.ReactNode;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
@@ -667,6 +668,7 @@ export const AgentComposer = memo(function AgentComposer({
   canAttach = true,
   attachmentTargetId,
   placeholder,
+  inputAccessibilityLabel,
   fieldHeader,
   sessionLead,
   onOpenDiffSheet,
@@ -2528,7 +2530,8 @@ export const AgentComposer = memo(function AgentComposer({
                         : t`The agent is offline`
                       : (placeholder ??
                         t`Send a message, type / for commands, $ for skills, @ for files`),
-                    shortPlaceholder: t`Send a message`,
+                    shortPlaceholder: placeholder === '' ? '' : t`Send a message`,
+                    accessibilityLabel: inputAccessibilityLabel,
                     editable: !sending && !disabled,
                     testID: inputTestID,
                     selection,

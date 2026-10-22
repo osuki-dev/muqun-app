@@ -14,12 +14,7 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -42,7 +37,7 @@ import { stageProgressSession } from '@/lib/stage-progress-session';
 import type { StageProgress } from '@/lib/stage-overlay';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
-import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, SETTLE } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -321,13 +316,8 @@ export function HomeStageLayout({
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
-  // The HUD's foot rides the dock: when the dock grows (Home's conversation
-  // strip arriving) or shrinks, the session strip moves with it rather than
-  // jumping a frame later.
-  const dockLift = useSharedValue(dockHeight);
-  useEffect(() => {
-    dockLift.set(withTiming(dockHeight, timing('short')));
-  }, [dockHeight, dockLift]);
+  // The dock lays out at its measured height immediately. Its neighbours must
+  // use that same height, without a second animation trailing a new reply header.
   // While typing, the strip rides up with the composer on the keyboard's own
   // motion and sits right above it; the rows over it step aside.
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
@@ -344,11 +334,9 @@ export function HomeStageLayout({
     )
   );
   const footStyle = useAnimatedStyle(() => ({
-    bottom: dockLift.get() + 6,
     transform: [{ translateY: keyboardOffset.get() }],
   }));
   const footScrimStyle = useAnimatedStyle(() => ({
-    height: dockLift.get() + 230,
     transform: [{ translateY: keyboardOffset.get() }],
   }));
 
@@ -504,12 +492,14 @@ export function HomeStageLayout({
       ) : null}
 
       {/* Bottom: a scrim, the handle and the selected computer's sessions, above the composer. */}
-      <Animated.View pointerEvents="none" style={[styles.bottomScrim, footScrimStyle]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.bottomScrim, { height: dockHeight + 230 }, footScrimStyle]}>
         <EdgeFade edge="bottom" color={theme.colors.background} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View
         pointerEvents="box-none"
-        style={[styles.bottom, footStyle]}
+        style={[styles.bottom, { bottom: dockHeight + 6 }, footStyle]}
         onLayout={(event) => {
           // The art stands on the resting foot: the rows stepping aside
           // while typing do not move it.

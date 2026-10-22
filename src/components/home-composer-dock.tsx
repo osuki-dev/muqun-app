@@ -1931,7 +1931,8 @@ export function HomeComposerDock({
       disabled={target.kind === 'none'}
       interactionBlockedReason={offlineReason}
       agentName={agentLabel}
-      placeholder={thread ? t`Reply to ${threadAgentName}` : t`New conversation with ${agentLabel}`}
+      placeholder={replyContext ? '' : t`New conversation with ${agentLabel}`}
+      inputAccessibilityLabel={replyContext}
       fieldHeader={
         replyContext ? (
           <Text
