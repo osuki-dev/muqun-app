@@ -873,6 +873,9 @@ export function SkiaTerminal({
   // black instead of showing what is behind it: fading the canvas itself in
   // was the black flash it was meant to hide.
   const canvasCover = useSharedValue(1);
+  // Gone once it has faded, so nothing about it is left for a later render
+  // (every streamed frame re-renders this component) to re-apply.
+  const [coverDone, setCoverDone] = useState(false);
   const coverRequested = useRef(false);
   const revealCanvas = () => {
     if (coverRequested.current) return;
@@ -881,7 +884,12 @@ export function SkiaTerminal({
     const tick = () => {
       frames += 1;
       if (frames < CANVAS_FIRST_FRAME_FRAMES) requestAnimationFrame(tick);
-      else canvasCover.set(withTiming(0, timing('short')));
+      else
+        canvasCover.set(
+          withTiming(0, timing('short'), (finished) => {
+            if (finished) scheduleOnRN(setCoverDone, true);
+          })
+        );
     };
     requestAnimationFrame(tick);
   };
@@ -1561,7 +1569,14 @@ export function SkiaTerminal({
   // top pull it up, and the offset has to move with the content or the reader
   // loses their place. The release after a freeze is where this stops being a
   // slow creep and becomes a jump, because it pays for the whole gesture at once.
-  useEffect(() => {
+  //
+  // A layout effect, in the commit that applies the frame: a passive effect
+  // runs after that commit has been painted, so a reader parked above a full
+  // window saw every new frame drawn once at the old offset -- the content
+  // climbing by the rows the window dropped -- and snapped back on the next
+  // frame. That one-frame jump was the flicker on every repaint of a streaming
+  // agent. Written here, the offset reaches the UI thread with the picture.
+  useLayoutEffect(() => {
     const previous = historyAnchorRef.current;
     const anchor = captureScrollAnchor(frame.lines);
     if (previous.terminalId !== terminalId) {
@@ -3463,10 +3478,12 @@ export function SkiaTerminal({
               ) : null}
             </Group>
           </Canvas>
-          <Animated.View
-            pointerEvents="none"
-            style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
-          />
+          {coverDone ? null : (
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
+            />
+          )}
         </View>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (

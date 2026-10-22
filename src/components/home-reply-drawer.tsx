@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } 
 import {
   ActivityIndicator,
   Animated as NativeAnimated,
+  AppState,
   BackHandler,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -888,6 +889,28 @@ function DrawerSession({
 const doNothing = () => {};
 /** How often an open drawer re-reads its pane's size while output streams. */
 const PANE_GEOMETRY_REFRESH_MS = 2000;
+
+/** The pane fields the drawer draws from (size, cursor, screen ownership). */
+const DRAWN_PANE_FIELDS = [
+  'width',
+  'height',
+  'cursor_x',
+  'cursor_y',
+  'terminal_title_stripped',
+  'foreground_command',
+] as const;
+
+function sameDrawnPane(a: HerdrEntity | undefined, b: HerdrEntity | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.id !== b.id) return false;
+  if (DRAWN_PANE_FIELDS.some((key) => a.raw[key] !== b.raw[key])) return false;
+  const scrollA = a.raw.scroll as Record<string, unknown> | undefined;
+  const scrollB = b.raw.scroll as Record<string, unknown> | undefined;
+  return (
+    scrollA?.viewport_rows === scrollB?.viewport_rows &&
+    scrollA?.alternate_on === scrollB?.alternate_on
+  );
+}
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
 /**
@@ -915,6 +938,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const sessionId =
     useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
   const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
+  const [paneRetry, setPaneRetry] = useState(0);
   const [held, setHeld] = useState<PaneReadWindow>({ output: '', capturedRows: 0 });
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -935,8 +959,15 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const loadPane = useStableHandler(() => {
     if (!sessionId) return;
     void loadPanes(sessionId).then(
-      (panes) => setPane(panes.find((item) => item.id === paneId)),
-      () => {}
+      (panes) => {
+        const next = panes.find((item) => item.id === paneId);
+        // A re-read that changed nothing this pane is drawn from keeps the
+        // object it had, so it re-renders nothing.
+        setPane((current) => (sameDrawnPane(current, next) ? current : next));
+      },
+      // A failed read leaves the pane without a size, so the fit cannot apply:
+      // try again shortly rather than waiting for the next output.
+      () => setPaneRetry((count) => count + 1)
     );
   });
   // herdr sends no event when a pane is resized on the computer, but the
@@ -949,7 +980,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     if (geometryTimer.current) return;
     geometryTimer.current = setTimeout(() => {
       geometryTimer.current = null;
-      loadPane();
+      if (AppState.currentState === 'active') loadPane();
     }, PANE_GEOMETRY_REFRESH_MS);
   });
   useEffect(
@@ -958,6 +989,11 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     },
     []
   );
+  useEffect(() => {
+    if (paneRetry === 0 || !appActive) return;
+    const timer = setTimeout(loadPane, PANE_GEOMETRY_REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [paneRetry, appActive, loadPane]);
   const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
     const shape = readShape();
     setHeld((current) =>
