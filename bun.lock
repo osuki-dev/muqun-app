@@ -120,7 +120,6 @@
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "expo-image@58.0.16": "patches/expo-image@58.0.16.patch",
   },
   "overrides": {
     "react-native-screens": "4.30.0",
