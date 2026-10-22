@@ -1877,7 +1877,6 @@ msgstr "Ctrl Z, приостановить"
 msgid "Controls"
 msgstr "Управление"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Разговор"
@@ -5415,13 +5414,10 @@ msgstr "Воспроизвести аудио снова"
 msgid "Reply from Home"
 msgstr "Ответить с главной"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "Ответ для"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "Ответить {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -7823,6 +7819,7 @@ msgid "While you were away"
 msgstr "Пока вас не было"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"

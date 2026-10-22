@@ -1877,7 +1877,6 @@ msgstr "Ctrl Z, suspendre"
 msgid "Controls"
 msgstr "Commandes"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "Conversation"
@@ -5415,13 +5414,10 @@ msgstr "Relire l’audio"
 msgid "Reply from Home"
 msgstr "Répondre depuis l’Accueil"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "Répondre à"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "Répondre à {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -7823,6 +7819,7 @@ msgid "While you were away"
 msgstr "Pendant votre absence"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "En cours"

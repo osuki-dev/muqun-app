@@ -1877,7 +1877,6 @@ msgstr "컨트롤 Z, 일시 중단"
 msgid "Controls"
 msgstr "제어"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "대화"
@@ -5415,13 +5414,10 @@ msgstr "오디오 다시 재생"
 msgid "Reply from Home"
 msgstr "홈에서 답장"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "답장 대상"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "{threadAgentName}에게 답장"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -7823,6 +7819,7 @@ msgid "While you were away"
 msgstr "자리를 비운 사이"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "작업 중"

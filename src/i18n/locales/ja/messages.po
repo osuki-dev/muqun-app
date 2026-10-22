@@ -1877,7 +1877,6 @@ msgstr "コントロール Z、一時停止"
 msgid "Controls"
 msgstr "操作"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "会話"
@@ -5415,13 +5414,10 @@ msgstr "音声をもう一度再生"
 msgid "Reply from Home"
 msgstr "ホームから返信"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "返信先"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "{threadAgentName} に返信"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -7823,6 +7819,7 @@ msgid "While you were away"
 msgstr "離席中の変化"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"

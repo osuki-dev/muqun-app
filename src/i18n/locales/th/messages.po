@@ -1877,7 +1877,6 @@ msgstr "Control Z พักกระบวนการ"
 msgid "Controls"
 msgstr "การควบคุม"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "บทสนทนา"
@@ -5415,13 +5414,10 @@ msgstr "เล่นเสียงอีกครั้ง"
 msgid "Reply from Home"
 msgstr "ตอบจากหน้าแรก"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "ตอบกลับถึง"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}"
-msgstr "ตอบ {threadAgentName}"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -7823,6 +7819,7 @@ msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "กำลังทำงาน"
