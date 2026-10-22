@@ -203,7 +203,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-session:[\"codex\",\"demo-stage-linked\"]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -211,7 +211,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-session:[\"codex\",\"demo-stage-independent\"]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -250,7 +250,7 @@
       },
       {
         "target": {
-          "id": "home-recent-open-[\"muqun-demo\",\"demo-stage-linked\",\"codex\"]"
+          "id": "home-recent-open-\\[\"muqun-demo\",\"demo-stage-linked\",\"codex\"\\]"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -295,7 +295,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-session:[\"codex\",\"demo-stage-linked\"]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
@@ -321,7 +321,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-session:[\"codex\",\"demo-stage-independent\"]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -329,7 +329,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-session:[\"codex\",\"demo-stage-independent\"]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
