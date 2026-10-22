@@ -35,7 +35,7 @@ export type DrawerDustEvent<Shot> =
   | { type: 'shot'; token: number; shot: Shot | null }
   /** The canvas over the sheet has presented its first frame. */
   | { type: 'drawn'; token: number }
-  /** The photograph's deadline passed. */
+  /** The photograph's deadline passed without one. */
   | { type: 'late'; token: number }
   /** The ash's timing finished, or was cut short (`finished` false). */
   | { type: 'ended'; token: number; finished: boolean }
@@ -116,7 +116,7 @@ export function stepDrawerDust<Shot>(
         effects: [{ effect: 'play', way: current.way }],
       };
     case 'late':
-      if (current.playing) return { next: current, effects: [] };
+      if (current.shot) return { next: current, effects: [] };
       return { next: null, effects: [{ effect: 'fallback', way: current.way }] };
     case 'ended':
       if (!current.playing) return { next: current, effects: [] };

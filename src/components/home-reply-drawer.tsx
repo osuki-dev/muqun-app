@@ -153,12 +153,14 @@ const PAD_MAX_WIDTH = 760;
 const DUST_DURATION = 'medium';
 /**
  * How long an opening sheet, unseen, waits for its photograph before it
- * slides in instead: a layout frame and the picture. Never a stall the
- * reader could feel.
+ * slides in instead: its mount and layout, a frame for the native view to
+ * take its size, and the picture. Reforming after it, the sheet is whole by
+ * the time the slide would have been, and a wait short of being felt as a
+ * stall.
  */
-const OPEN_SHOT_WAIT_MS = 50;
+const OPEN_SHOT_WAIT_MS = 100;
 /** How long a closing sheet, still shown, waits for its photograph before sliding out. */
-const CLOSE_SHOT_WAIT_MS = 120;
+const CLOSE_SHOT_WAIT_MS = 160;
 /** The longest the ash may take: past it the drawer is reset rather than left under a canvas. */
 const DUST_STALL_MS = 1500;
 
@@ -260,7 +262,8 @@ export function useHomeReplyDrawer({
     const { next, effects } = stepDrawerDust(current, event);
     if (next !== current) dustStore.setState({ dust: next });
     if (current?.shot && current.shot !== next?.shot) disposeLater(current.shot);
-    if (!next) cell.disarm();
+    // The photograph's deadline ends with the photograph; the stall guard takes over at play.
+    if (!next || next.shot) cell.disarm();
     for (const effect of effects) {
       switch (effect.effect) {
         case 'dispose':
@@ -268,7 +271,6 @@ export function useHomeReplyDrawer({
           break;
         case 'play': {
           const token = next!.token;
-          // The photograph's deadline gives way to the stall guard.
           cell.arm(() => {
             if (dustStore.getState().dust?.token === token) emit({ type: 'reset' });
           }, DUST_STALL_MS);
@@ -755,17 +757,21 @@ export function HomeReplyDrawer({
   useEffect(() => {
     if (shootToken === null || !size) return;
     let live = true;
-    // Do not retry with a GPU-to-CPU readback: the plain slide stands in
-    // where this device cannot share the texture.
-    photographView(stuff, size.width, size.height, { allowReadback: false })
-      .then((image) => (image ? { image, width: size.width, height: size.height } : null))
-      .catch(() => null)
-      .then((shot) => {
-        if (live) onShot(shootToken, shot);
-        else if (shot) disposeLater(shot);
-      });
+    // A frame on: the native view has its size only then. No retry with a
+    // GPU-to-CPU readback: the plain slide stands in where this device
+    // cannot share the texture.
+    const frame = requestAnimationFrame(() => {
+      photographView(stuff, size.width, size.height, { allowReadback: false })
+        .then((image) => (image ? { image, width: size.width, height: size.height } : null))
+        .catch(() => null)
+        .then((shot) => {
+          if (live) onShot(shootToken, shot);
+          else if (shot) disposeLater(shot);
+        });
+    });
     return () => {
       live = false;
+      cancelAnimationFrame(frame);
     };
   }, [shootToken, size, onShot]);
   const key = homeThreadKey(target);

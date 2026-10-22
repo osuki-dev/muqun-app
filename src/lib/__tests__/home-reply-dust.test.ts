@@ -75,9 +75,13 @@ describe('stepDrawerDust: closing', () => {
     });
   });
 
-  test('a photograph in but a canvas still to draw at the deadline: slide, and drop the picture', () => {
+  test('the deadline is only for the photograph: in, the canvas gets its frames', () => {
     const shotIn = stepDrawerDust(closing(), { type: 'shot', token: 2, shot: shotA }).next;
     expect(stepDrawerDust(shotIn, { type: 'late', token: 2 })).toEqual({
+      next: shotIn,
+      effects: [],
+    });
+    expect(stepDrawerDust(closing(), { type: 'late', token: 2 })).toEqual({
       next: null,
       effects: [{ effect: 'fallback', way: 'close' }],
     });
