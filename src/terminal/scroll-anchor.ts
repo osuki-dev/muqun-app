@@ -1,4 +1,4 @@
-import type { TerminalLine } from '@/terminal/types';
+import type { TerminalFrame, TerminalLine } from '@/terminal/types';
 
 /**
  * Keeping the reader's place when the frame underneath them changes shape.
@@ -506,4 +506,68 @@ export function historyHintOpacity(pullDistance: number, loading: boolean, intro
   // And the drag spans whatever is left between that floor and solid, so a
   // full pull is 1 whether the intro is still on screen or long gone.
   return Math.min(1, rest + pulled * (1 - rest));
+}
+
+/**
+ * How many rows a reader's frame may hold above the window before the window's
+ * own trim applies again (see {@link keepRowsAboveReader}).
+ */
+export const TERMINAL_KEPT_MAX_ROWS = 1000;
+
+/** A frame as shown, and how many of its top rows the window has already dropped. */
+export interface TerminalKeptFrame {
+  frame: TerminalFrame;
+  kept: number;
+}
+
+/**
+ * The frame to show: the new one, with the rows the window dropped off its top
+ * since the last frame put back, so the rows on screen never move when the
+ * window trims.
+ *
+ * A full window drops a row off the top for every row the agent prints. For a
+ * reader parked in history that moved everything they were looking at up by as
+ * many rows, and correcting it with the scroll offset cannot land in the same
+ * frame as the new picture -- the picture is committed by React, the offset by
+ * the UI thread -- so the content jumped up for one frame on every repaint and
+ * snapped back. Keeping the dropped rows means the frame only ever grows at
+ * the bottom, as it does before the window fills, and nothing above moves.
+ *
+ * While parked, rows are kept up to {@link TERMINAL_KEPT_MAX_ROWS}. While
+ * following, the frame holds the height it already has: the oldest kept rows
+ * are let go exactly as fast as new ones arrive, which a reader anchored to the
+ * bottom cannot see, and letting them all go at once would move the bottom.
+ *
+ * `previous` is what this returned last time. The new frame is aligned against
+ * the window part of it by row fingerprint (`measureRowsDropped`); anything that
+ * cannot be aligned -- a clear, a pane switch, prepended history -- starts again
+ * from the new frame.
+ */
+export function keepRowsAboveReader(
+  previous: TerminalKeptFrame | null,
+  next: TerminalFrame,
+  following: boolean
+): TerminalKeptFrame {
+  if (!previous) return { frame: next, kept: 0 };
+  if (previous.frame === next) return previous;
+  const held = previous.frame.lines;
+  const window = held.slice(previous.kept);
+  const dropped = measureRowsDropped(captureScrollAnchor(window), next.lines);
+  const aligned =
+    dropped > 0 ||
+    (window.length > 0 && next.lines.length > 0 && window[0].signature === next.lines[0].signature);
+  if (!aligned) return { frame: next, kept: 0 };
+  const available = previous.kept + dropped;
+  const limit = following ? held.length : TERMINAL_KEPT_MAX_ROWS;
+  const kept = Math.max(0, Math.min(available, limit - next.lines.length));
+  if (kept === 0) return { frame: next, kept: 0 };
+  return {
+    kept,
+    frame: {
+      ...next,
+      rows: next.rows + kept,
+      lines: [...held.slice(available - kept, available), ...next.lines],
+      cursor: { ...next.cursor, row: next.cursor.row + kept },
+    },
+  };
 }

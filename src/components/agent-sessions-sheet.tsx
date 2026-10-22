@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, type ScrollViewInstance } from 'react-native';
-import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import {
   NextIcon,

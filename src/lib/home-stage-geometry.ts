@@ -259,8 +259,6 @@ const PAINTING_BLEED_PT = 12;
 const HUD_NAME_BOTTOM_PT = 63;
 const HUD_NAME_LINE_PT = 36;
 export const STAGE_HUD_BOTTOM_PT = 96;
-/** A hint chip and its leader are about this tall: a hint never rises into the HUD. */
-const HINT_CLEARANCE_PT = 44;
 /** The figure's box tucks under the name as Editorial's cover art overlaps its title: by 35 %. */
 const COVER_BOX_TOP_PT = HUD_NAME_BOTTOM_PT - HUD_NAME_LINE_PT * 0.35;
 /** An inset picture keeps this far from the HUD above it and the foot rows below it. */
@@ -529,60 +527,40 @@ export function stageHeroPlacement(
   return placeArt(box, drawn, plane.y + plane.height * INSET_FADE_FROM, { x: 0, y: 0 });
 }
 
-/** Where a tap starts a new task, and where its first-visit hint hangs, in points. */
-export type StageHostTarget = { rect: StageBox; hint: { x: number; y: number } };
-
 /**
- * The new-task target, in every role: the figure's or inset picture's middle
- * (not its faded foot or a wide picture's sides); the painting's band below
- * the HUD down to where it fades; or, with no artwork, the world between the
- * HUD and its foot rows.
+ * Where the HUD's floating overlays -- the needs-you card, the progress
+ * subtitle -- may stand, in points from the view's top. Both hang from
+ * `bottom`, just above the foot rows (the agents, the sessions, the
+ * composer); `top` is as high as they may grow: under the HUD and, over a
+ * standing figure, under its face.
  */
-export function stageHostTarget(
+export type StageOverlayBand = { top: number; bottom: number };
+
+/** The overlays keep this far above the foot rows they stand on. */
+const OVERLAY_FOOT_GAP_PT = 10;
+/**
+ * A figure's head and shoulders fill about this share of its visible body
+ * from the top: an overlay stops under it.
+ */
+const FIGURE_FACE_SHARE = 0.42;
+
+export function stageOverlayBand(
   art: { kind: 'hero' | 'painting'; placement: StageArtPlacement } | null,
   viewport: StageViewport
-): StageHostTarget {
-  const hudBottom = viewport.inset + STAGE_HUD_BOTTOM_PT;
-  const hintAt = (rect: StageBox, share: number) => ({
-    x: rect.x + rect.width / 2,
-    y: Math.min(
-      rect.y + rect.height,
-      Math.max(rect.y + rect.height * share, hudBottom + HINT_CLEARANCE_PT)
-    ),
-  });
+): StageOverlayBand {
+  const hudBottom = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;
+  const bottom = Math.max(hudBottom, viewport.floor - OVERLAY_FOOT_GAP_PT);
   const plane = art?.placement.plane;
+  let top = hudBottom;
   if (art?.kind === 'hero' && plane && plane.height > 0) {
-    const width = Math.min(plane.width, plane.height * 0.6);
-    const top = Math.max(plane.y, hudBottom);
-    const body = plane.y + plane.height * Math.min(1, art.placement.fade.from);
-    const rect = {
-      x: plane.x + (plane.width - width) / 2,
-      y: top,
-      width,
-      height: Math.max(0, Math.min(body, viewport.floor) - top),
-    };
-    // On the chest: the chip hangs above its point, and must not cover the face.
-    return { rect, hint: hintAt(rect, 0.6) };
+    const shown = Math.max(plane.y, hudBottom);
+    const body = Math.min(
+      plane.y + plane.height * Math.min(1, art.placement.fade.from),
+      viewport.floor
+    );
+    if (body > shown) top = Math.max(top, shown + (body - shown) * FIGURE_FACE_SHARE);
   }
-  if (art?.kind === 'painting' && plane) {
-    const body = plane.y + plane.height * Math.min(1, art.placement.fade.from);
-    if (body - hudBottom > 48) {
-      const rect = {
-        x: viewport.width * 0.06,
-        y: hudBottom,
-        width: viewport.width * 0.88,
-        height: body - hudBottom,
-      };
-      return { rect, hint: hintAt(rect, 0.45) };
-    }
-  }
-  const rect = {
-    x: viewport.width * 0.1,
-    y: hudBottom + INSET_GAP_PT,
-    width: viewport.width * 0.8,
-    height: Math.max(0, viewport.floor - INSET_GAP_PT - hudBottom - INSET_GAP_PT),
-  };
-  return { rect, hint: hintAt(rect, 0.5) };
+  return { top: Math.min(top, bottom), bottom };
 }
 
 // -- Projection -------------------------------------------------------------

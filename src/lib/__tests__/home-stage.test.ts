@@ -6,9 +6,9 @@ import {
   stageDiveCamera,
   stageDragPosition,
   stageHeroPlacement,
-  stageHostTarget,
   stageIdleDrift,
   stageLayerCentre,
+  stageOverlayBand,
   stagePaintingPlacement,
   stageSwipePan,
   stageSwipeTarget,
@@ -27,14 +27,24 @@ import {
 import { stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
   createStageFrameBudget,
+  dropStageLadder,
+  holdStageLadder,
+  leaveStageLadder,
   lowestStageQuality,
   recordStageFrame,
+  returnStageLadder,
+  stageClimbWaitMs,
   stageEffects,
+  stageLadderQuality,
+  startStageLadder,
+  STAGE_CLIMB_AWAY_MS,
+  STAGE_RUNG_HELD_MS,
   stageIdleInterval,
   STAGE_AMBIENT_IDLE_MS,
   stepStageSpring,
   STAGE_CARD_SPRING,
   type StageFrameBudget,
+  type StageLadder,
 } from '../home-stage-motion';
 import {
   stageAgentRow,
@@ -353,37 +363,46 @@ describe('theme layout', () => {
     expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
   });
 
-  test('every role has a new-task target below the HUD and above the foot rows', () => {
+  test("the overlay band sits under the HUD and a figure's face, over the foot rows", () => {
     for (const viewport of PHONES) {
-      const targets = [
-        stageHostTarget(
-          { kind: 'hero', placement: stageHeroPlacement(hero(), viewport) },
-          viewport
-        ),
-        stageHostTarget(
-          {
-            kind: 'hero',
-            placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
-          },
-          viewport
-        ),
-        stageHostTarget(
-          {
-            kind: 'painting',
-            placement: stagePaintingPlacement({ aspect: 1, fit: 'cover', focal: centre }, viewport),
-          },
-          viewport
-        ),
-        stageHostTarget(null, viewport),
+      const figure = stageHeroPlacement(hero(), viewport);
+      const bands = [
+        { band: stageOverlayBand({ kind: 'hero', placement: figure }, viewport), plane: figure },
+        {
+          band: stageOverlayBand(
+            {
+              kind: 'hero',
+              placement: stageHeroPlacement(hero({ box: 'standard', feather: 'inset' }), viewport),
+            },
+            viewport
+          ),
+          plane: null,
+        },
+        {
+          band: stageOverlayBand(
+            {
+              kind: 'painting',
+              placement: stagePaintingPlacement(
+                { aspect: 1, fit: 'cover', focal: centre },
+                viewport
+              ),
+            },
+            viewport
+          ),
+          plane: null,
+        },
+        { band: stageOverlayBand(null, viewport), plane: null },
       ];
-      for (const { rect, hint } of targets) {
-        expect(rect.width).toBeGreaterThan(80);
-        expect(rect.height).toBeGreaterThan(120);
-        expect(rect.y).toBeGreaterThanOrEqual(hudBottom(viewport));
-        expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.floor);
-        // The hint chip hangs above its point: the point stays clear of the HUD.
-        expect(hint.y).toBeGreaterThanOrEqual(hudBottom(viewport) + 44);
-        expect(hint.y).toBeLessThanOrEqual(rect.y + rect.height);
+      for (const { band, plane } of bands) {
+        expect(band.top).toBeGreaterThan(hudBottom(viewport));
+        expect(band.bottom).toBeLessThan(viewport.floor);
+        // Room for a two-line card with its actions.
+        expect(band.bottom - band.top).toBeGreaterThanOrEqual(120);
+        if (plane) {
+          // Clear of the head: well into the figure's visible body.
+          const shown = Math.max(plane.plane.y, hudBottom(viewport));
+          expect(band.top).toBeGreaterThan(shown + (viewport.floor - shown) * 0.3);
+        }
       }
     }
   });
@@ -578,7 +597,7 @@ describe('frame pacing', () => {
     expect(run(createStageFrameBudget(), 200, 5000)).toBe('full');
   });
 
-  test('never climbs back, and stops at low rather than going static', () => {
+  test('a budget never climbs back, and stops at low rather than going static', () => {
     const budget = createStageFrameBudget();
     run(budget, 30, 2100);
     expect(run(budget, 1000 / 60, 20_000, 2100)).toBe('reduced');
@@ -588,18 +607,37 @@ describe('frame pacing', () => {
     expect(lowestStageQuality('reduced', 'low')).toBe('low');
   });
 
+  test('a rung holds after two windows within budget, never on a failing one', () => {
+    const fast = createStageFrameBudget('full');
+    run(fast, 1000 / 60, 2100);
+    expect(fast.held).toBe(false);
+    run(fast, 1000 / 60, 4200, 2100);
+    expect(fast.passedMs).toBeGreaterThanOrEqual(STAGE_RUNG_HELD_MS);
+    expect(fast.held).toBe(true);
+    // The ambient motion a return to Home starts (8 ms of work every 50 ms
+    // for six seconds) is enough to judge.
+    const ambient = createStageFrameBudget('full');
+    for (let now = 50; now <= 6000; now += 50)
+      recordStageFrame(ambient, { nowMs: now, frameMs: 8 });
+    expect(ambient.held).toBe(true);
+    const slow = createStageFrameBudget('full');
+    run(slow, 1000 / 60, 2100);
+    expect(run(slow, 30, 4200, 2100)).toBe('reduced');
+    expect(slow.held).toBe(false);
+  });
+
   test('each rung costs less; Reduce Motion stills everything', () => {
     const gpu = { gpuAvailable: true, reducedMotion: false };
     expect(stageEffects('full', gpu)).toMatchObject({
       particles: true,
       particleShare: 1,
-      maxDpr: 1.5,
+      maxDpr: 2,
       frameIntervalMs: 0,
     });
     expect(stageEffects('reduced', gpu)).toMatchObject({
       particles: true,
       particleShare: 0.5,
-      maxDpr: 1.25,
+      maxDpr: 1.5,
       frameIntervalMs: 0,
     });
     // The cheapest 3D rung: no particles, 1x, 30 fps.
@@ -615,6 +653,123 @@ describe('frame pacing', () => {
       pulse: false,
       tilt: false,
       idleIntervalMs: null,
+    });
+  });
+});
+
+describe('quality ladder recovery', () => {
+  const MIN = 60_000;
+  const fresh = (): StageLadder => startStageLadder(undefined, 0);
+  /** Stepped down from full to reduced at `atMs`, Home shown. */
+  const dropped = (atMs = 0) => dropStageLadder(fresh(), 'reduced', atMs);
+
+  test('starts at full, and a step down holds for the visit', () => {
+    expect(fresh()).toEqual({
+      settled: 'full',
+      trial: null,
+      strikes: 0,
+      lastDropAt: null,
+      awayAt: null,
+    });
+    const ladder = dropped();
+    expect(stageLadderQuality(ladder)).toBe('reduced');
+    expect(ladder.strikes).toBe(1);
+  });
+
+  test('a return after a minute away tries one rung up; a shorter absence does not', () => {
+    const left = leaveStageLadder(dropped(), 1000);
+    expect(stageLadderQuality(returnStageLadder(left, 1000 + STAGE_CLIMB_AWAY_MS - 1))).toBe(
+      'reduced'
+    );
+    const back = returnStageLadder(left, 1000 + STAGE_CLIMB_AWAY_MS);
+    expect(back.trial).toBe('full');
+    expect(stageLadderQuality(back)).toBe('full');
+    expect(back.awayAt).toBeNull();
+    // Showing Home again without leaving changes nothing.
+    expect(returnStageLadder(back, 10 * MIN)).toBe(back);
+  });
+
+  test('a trial that holds becomes the rung; one that fails steps back down', () => {
+    const trial = returnStageLadder(leaveStageLadder(dropped(), 0), MIN);
+    const held = holdStageLadder(trial, 'full');
+    expect(held).toMatchObject({ settled: 'full', trial: null, strikes: 1 });
+    // A hold for another rung than the trial is not a verdict.
+    expect(holdStageLadder(trial, 'reduced')).toBe(trial);
+    expect(holdStageLadder(dropped(), 'reduced').settled).toBe('reduced');
+    const failed = dropStageLadder(trial, 'reduced', MIN + 3000);
+    expect(failed).toMatchObject({ settled: 'reduced', trial: null, strikes: 2 });
+  });
+
+  test('climbs one rung at a time from low', () => {
+    const low = dropStageLadder(dropped(), 'low', 0);
+    expect(low.settled).toBe('low');
+    const trial = returnStageLadder(leaveStageLadder(low, 0), 10 * MIN);
+    expect(trial.trial).toBe('reduced');
+    expect(stageLadderQuality(holdStageLadder(trial, 'reduced'))).toBe('reduced');
+    // A drop from the reduced trial lands back on low.
+    expect(dropStageLadder(trial, 'low', 10 * MIN).settled).toBe('low');
+  });
+
+  test('leaving mid-trial abandons it without a strike', () => {
+    const trial = returnStageLadder(leaveStageLadder(dropped(), 0), MIN);
+    const left = leaveStageLadder(trial, MIN + 2000);
+    expect(left).toMatchObject({ settled: 'reduced', trial: null, strikes: 1 });
+    expect(returnStageLadder(left, MIN + 2000 + STAGE_CLIMB_AWAY_MS).trial).toBe('full');
+  });
+
+  test('hysteresis: each failed climb doubles the wait, up to half an hour', () => {
+    expect([1, 2, 3, 4, 6, 20].map(stageClimbWaitMs)).toEqual([
+      MIN,
+      2 * MIN,
+      4 * MIN,
+      8 * MIN,
+      30 * MIN,
+      30 * MIN,
+    ]);
+    // A device that fails every climb: count the climbs over two hours of
+    // returning to Home every minute and a half.
+    let ladder = dropped();
+    let climbs = 0;
+    for (let now = 0; now < 120 * MIN; now += 90_000) {
+      ladder = returnStageLadder(leaveStageLadder(ladder, now), now + 60_000);
+      if (ladder.trial) {
+        climbs += 1;
+        ladder = dropStageLadder(ladder, 'reduced', now + 63_000);
+      }
+    }
+    expect(climbs).toBeLessThanOrEqual(8);
+    expect(ladder.settled).toBe('reduced');
+    // A held climb keeps its strikes: the next failure waits longer still.
+    const strikes = ladder.strikes;
+    const held = holdStageLadder(
+      returnStageLadder(leaveStageLadder(ladder, 200 * MIN), 260 * MIN),
+      'full'
+    );
+    expect(held).toMatchObject({ settled: 'full', strikes });
+  });
+
+  test('a day without stepping down forgets the strikes', () => {
+    let ladder = dropped();
+    for (let index = 1; index < 5; index += 1)
+      ladder = dropStageLadder(ladder, 'reduced', index * MIN);
+    expect(ladder.strikes).toBe(5);
+    const later = dropStageLadder(ladder, 'reduced', 4 * MIN + 24 * 60 * MIN);
+    expect(later.strikes).toBe(1);
+  });
+
+  test('a launch restores the saved rung and tries one up, unless it stepped down just now', () => {
+    const saved = { settled: 'reduced', strikes: 1, lastDropAt: 0 };
+    expect(startStageLadder(saved, MIN)).toMatchObject({ settled: 'reduced', trial: 'full' });
+    expect(startStageLadder(saved, MIN - 1)).toMatchObject({ settled: 'reduced', trial: null });
+    expect(startStageLadder({ settled: 'full', strikes: 3, lastDropAt: 0 }, 0).trial).toBeNull();
+    // Anything unreadable starts afresh at full.
+    for (const junk of [null, 'low', { settled: 'static' }, { settled: 'ultra', strikes: -2 }])
+      expect(startStageLadder(junk, 0)).toMatchObject({ settled: 'full', trial: null, strikes: 0 });
+    expect(startStageLadder({ settled: 'low', strikes: 1.5, lastDropAt: 'x' }, 0)).toMatchObject({
+      settled: 'low',
+      trial: 'reduced',
+      strikes: 0,
+      lastDropAt: null,
     });
   });
 });
@@ -666,7 +821,8 @@ describe('stage panels', () => {
     expect(fresh.map((panel) => panel.tone)).toEqual(['online', 'offline']);
     const stale = stagePanels({ ...base, agentsByServer: agents(now - 60 * 60 * 1000) });
     expect(stale[0]!.working).toBe(false);
-    expect(stale[0]!.lastSeenMs).toBe(now - 60 * 60 * 1000);
+    // Last seen is an offline panel's alone: a reachable one never carries it.
+    expect(stale[0]!.lastSeenMs).toBeUndefined();
   });
 
   test('attention comes from open requests or a blocked agent, per computer', () => {

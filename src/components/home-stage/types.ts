@@ -58,6 +58,8 @@ export function createStageOpener(): StageOpener {
 }
 
 export type StageSceneProps = {
+  /** Chosen composition and texture conversions are ready for scene compilation. */
+  resourcesReady?: boolean;
   /** How many computers there are, and the selected one: the camera pans between them. */
   count: number;
   selected: number;
@@ -95,6 +97,12 @@ export type StageSceneProps = {
   bridge: StageBridge;
   /** Frame times say the device cannot hold the stage at this quality. */
   onQualityDrop: (next: StageQuality) => void;
-  /** WebGPU failed to start, or the device was lost: draw the static stage. */
-  onError: () => void;
+  /** Frame times say this quality has met the budget long enough to keep (`StageFrameBudget.held`). */
+  onQualityHeld?: (quality: StageQuality) => void;
+  /** A native canvas is mounted or resized and needs its own first frame. */
+  onSurfaceReset?: () => void;
+  /** A complete scene has been submitted to the native surface. */
+  onPresented?: () => void;
+  /** WebGPU failed to start or to draw, or the device was lost: draw the static stage. */
+  onError: (error?: unknown) => void;
 };

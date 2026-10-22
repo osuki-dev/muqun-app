@@ -1,12 +1,11 @@
 # Muqun OTA updates on Cloudflare
 
-This integration replaces Expo Updates with Hot Updater **1.0.0**. EAS still
+This integration uses Hot Updater, pinned with its adapters in `package.json`. EAS still
 builds and signs the native apps. The Expo project ID, `dev.osuki.muqun`, Android
-keystore, Apple team and app-store identities are unchanged. Existing Expo
-Updates binaries need a native app upgrade through the stores; an OTA cannot
-replace their native loader.
+keystore, Apple team and app-store identities are unchanged. Native loader changes
+require a store build.
 
-## Current activation state
+## Activation configuration
 
 OTA is **disabled unless `EXPO_PUBLIC_HOT_UPDATER_ENABLED=1` is explicitly supplied**.
 Unconfigured local and EAS builds continue to launch and make no update requests.
@@ -14,10 +13,9 @@ Enabling it requires a registered client API key and a checked-in RSA public key
 configuration fails before the build if either is missing or invalid. Disabling
 OTA is a build-time decision, not a remote kill switch for installed binaries.
 
-The proposed client origin is `https://updates.muqun.dev`. No Cloudflare resources,
-DNS records or releases have been deployed by this change. Template generation is
-not proof of a running server. Do not announce OTA availability before the native
-delivery and rollback checks below pass.
+The client origin is `https://updates.muqun.dev`. Verify deployed resources and
+native delivery using the checks below; generating the local scaffold does not
+provision infrastructure or establish release readiness.
 
 ## Runtime behavior
 
@@ -40,8 +38,6 @@ the verified bundle staged and reports that the user can restart Muqun manually;
 it never automatically retries or starts another download in that process.
 This immediate restart can interrupt the current screen and unsent in-memory
 draft; no new draft persistence or operation-waiting layer is introduced.
-Installations running the previous next-launch behavior still need one launch
-to adopt this updated behavior.
 Adopting a new release for the already-running artifact is silent and retains
 normal periodic checks; it does not display a misleading restart notice.
 Checks and download failures leave the current app usable; request details and
@@ -84,7 +80,7 @@ the upstream prebuilt Worker. Apply both migrations before deploying this Worker
 and before publishing any release with localized notes. Its client route uses
 the existing API-key authentication; no administrative routes are exposed.
 The generated Worker package uses the latest Wrangler CLI, invoked with
-`bunx wrangler`; Hot Updater and its adapters remain pinned at `1.0.0`. If the
+`bunx wrangler`; Hot Updater and its adapters use the root package pins. If the
 scaffold already has older Wrangler dependencies installed, rerun `bun install`
 after preparation before checking the CLI version or starting local validation.
 
@@ -138,33 +134,19 @@ release hash, verify that editing a native Kotlin/Swift file causes a stale
 fingerprint report, then restore it. Do not include generated manifest/plist
 hash fields in extra sources, which would make the hash self-referential.
 
-Archive `fingerprint.json` from the **actual native release build** alongside its
-commit, channel and public-key digest. It is deliberately ignored here because
-a local disabled prebuild is not a released compatibility baseline. Restore that
-exact file into the OTA checkout before deploying; never regenerate it simply
-to bypass a mismatch. A native change requires a new binary first.
-The archived file stores `ios` and `android` objects, each with `sources` and
-`hash`. Publication validates and compares only the selected platform's hash;
-the other platform's fingerprint and any root-level hash cannot substitute for it.
+Successful local native builds register their exact compatibility records by
+channel and platform. OTA publishing selects those records automatically; do not
+manually replace the root fingerprint or regenerate one to bypass a mismatch.
+Native-input changes require a new binary first. See [store and OTA release
+commands](store-release.md) for record locations, compatibility checks and recovery.
 
 ## Deploy only after native acceptance
 
-Deployment remains an explicit local operator action; there is no automatic
-push-triggered OTA workflow. The wrappers require real provider credentials,
-enabled/signed app configuration, matching channel and an existing release
-fingerprint before invoking Hot Updater:
-
-```sh
-bun run update:preview android release-notes/ota-notes.json
-bun run update:preview ios release-notes/ota-notes.json
-# After review and native compatibility verification:
-bun run update:production android release-notes/ota-notes.json
-bun run update:production ios release-notes/ota-notes.json
-```
-
-Use one platform at a time and stop after a failure. Never run `eas update` for
-this branch. Older Expo Updates installations retain their old update mechanism
-until they install the new binary; keep any legacy release operations separate.
+Deployment is an explicit local operator action; there is no push-triggered OTA
+workflow. Use the [store and OTA release commands](store-release.md) for
+single-platform or combined Android/iOS publication. The wrappers require real
+provider credentials, enabled/signed app configuration and compatible native
+records for every selected platform.
 
 The notes file is a reviewed JSON object mapping locale tags to Markdown strings.
 English (`en`) is required; other locales are optional. For example:
@@ -179,11 +161,13 @@ English (`en`) is required; other locales are optional. For example:
 Validation occurs before any build or remote mutation: 1–32 unique locales,
 nonempty Markdown, and at most 16,000 characters per note. Locale tags are stored
 case-insensitively. The wrapper deploys **disabled** with the English catalog
-message, reads the pinned CLI's exact single-platform commit receipt, and checks
-that release's disabled state, channel, platform and native fingerprint. It then
+message, reads the pinned CLI's exact commit receipt for each selected platform,
+and checks each release's disabled state, channel, platform and native fingerprint. It then
 uploads immutable `(release_id, locale)` rows with provider-backed server tooling,
 reads every translation back through the authenticated Worker endpoint, and
-enables only the expected release revision. A known disabled release's notes can
+verifies all selected releases before enabling their expected revisions. Enablement
+is sequential, not an atomic cross-platform transaction: inspect every reported
+release after a failure before retrying. A known disabled release's notes can
 be read with the client key for this check; it is still absent from the release
 catalog. A missing or outdated Worker endpoint leaves publication disabled.
 Provider credentials remain on the deployment machine; the app receives only
@@ -200,40 +184,19 @@ before any retry. Replacing published notes requires a new release; direct CLI o
 console enablement bypasses this wrapper's notes gate and must not be used for
 the localized publishing workflow.
 
-## Play preview package
+## Native artifact acceptance
 
-`bun run build:android:local preview` produces a signed store AAB with Hot
-Updater explicitly enabled on the `preview` channel. It inherits production's
-remote EAS signing credentials and versionCode increment; the application ID and
-Expo project stay unchanged. It does not upload, submit, tag or publish anything.
-The build uses `--freeze-credentials` and fails rather than generating new signing credentials.
-`bun run submit:android preview --path /path/to/verified.aab` submits that exact
-artifact to Play internal testing with a completed release. It does not rebuild
-or publish to the public production track. See [store release commands](../infrastructure/store-release.md)
-for production and iOS equivalents.
-
-The wrapper accepts the registered public `EXPO_PUBLIC_HOT_UPDATER_API_KEY` from
-the environment or ignored `.env.hotupdater`. It validates the committed public
-trust anchor before starting and excludes provider credentials and the private OTA
-signer from the child environment. `HOT_UPDATER_NATIVE_BUILD=1` prevents the config
-loader from importing deployment credentials during native packaging. The private
-signer is needed only when publishing signed OTA artifacts, not when building a
-native application that verifies them.
-
-Artifacts land under a unique `dist/eas-builds/android-preview-*/` directory, together with
-the fingerprint generated inside that exact native build. Preserve this fingerprint
-for subsequent OTA releases. Raw EAS logs can contain app signing credentials on
-failure, so the wrapper captures them privately and deletes them with the temporary
-build workspace after success or failure. It never prints the job payload. A failed
-build reports only its exit status and fixed phase/error-category labels, never
-arbitrary log lines.
+Build, submit, artifact storage and signing-environment details are maintained in
+[store release commands](store-release.md). Native packaging uses only the public
+OTA trust anchor and client credential; provider credentials and the private OTA
+signer belong only on the publishing machine. Preserve the exact native records.
 
 Before handing off a Play preview AAB, verify its JAR signature with `jarsigner
 -verify` and compare the certificate SHA-256 from `keytool -printcert -jarfile`
 against an existing signed release AAB. Use official bundletool's `dump manifest`
 to verify package ID, increased versionCode, `com.hotupdater.CHANNEL=preview`,
 `com.hotupdater.FINGERPRINT_HASH` matching the archived `fingerprint.json`, and
-the configured public key. Confirm no `expo.modules.updates.*` metadata remains.
+the configured public key.
 These checks prove the upload artifact's identity. Final upgrade acceptance uses
 the Play-distributed app, which is signed with Google's Play App Signing
 distribution certificate rather than the AAB's upload certificate.
@@ -259,7 +222,7 @@ distribution certificate rather than the AAB's upload certificate.
    in Play internal testing or TestFlight, then promote that exact tested build
    through Play Console or App Store Connect.
 
-## Sources checked
+## References
 
 - [Installation](https://hot-updater.dev/docs/get-started/installation)
 - [Expo adapter and native plugin](https://hot-updater.dev/docs/build-adapters/expo)
@@ -268,8 +231,7 @@ distribution certificate rather than the AAB's upload certificate.
 - [Fingerprint compatibility](https://hot-updater.dev/docs/guides/update-strategies/fingerprint)
 - [Bundle signing](https://hot-updater.dev/docs/guides/bundle-signing)
 - [Automatic rollback](https://hot-updater.dev/docs/concepts/automatic-rollback)
-- [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/)
+- [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/)
 
-The current Cloudflare guide still contains some v0 snippets. This implementation
-uses the installed **v1.0.0** SDK/plugin types and official v1 scaffold, including
-`HotUpdater.init()` and the plugin supplied by `@hot-updater/expo`.
+Use the installed SDK/plugin types and generated scaffold when upstream examples
+differ from the pinned version.

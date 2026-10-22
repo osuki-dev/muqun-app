@@ -8,7 +8,8 @@ import { FolderIcon, OpenFolderIcon, MoreIcon, DeleteIcon } from '@/icons';
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
-import { PressableScale, Text } from '@osuki-dev/ui';
+import { Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { gitFileStatusWord } from '@/i18n/labels';
 import {
   CHANGE_TREE_DIR_ROW_HEIGHT,

@@ -1,6 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';

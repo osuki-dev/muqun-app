@@ -1,4 +1,4 @@
-import { cleanupPreviousMediaCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
+import { sweepCacheAtLaunch, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
@@ -9,6 +9,7 @@ import {
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { SheetDragGuard } from '@/components/sheet-drag-guard';
 import { SheetFullscreenProvider, SheetRouteFrame } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
@@ -223,7 +224,15 @@ export default function RootLayout() {
   const fontsReady = useUserFontsReady();
 
   useEffect(() => {
-    void cleanupPreviousMediaCache();
+    // Measuring the cache walks thousands of image files; leave launch alone.
+    let handle: number | undefined;
+    const timer = setTimeout(() => {
+      handle = requestIdleCallback(() => void sweepCacheAtLaunch(), { timeout: 5000 });
+    }, 3000);
+    return () => {
+      clearTimeout(timer);
+      if (handle !== undefined) cancelIdleCallback(handle);
+    };
   }, []);
 
   useEffect(() => {
@@ -424,7 +433,10 @@ function RootContent() {
       <ToastProvider
         maxWidth={480}
         defaultDurationMs={2000}
-        toastStyle={[notificationSurfaceStyle, { borderWidth: StyleSheet.hairlineWidth }]}>
+        toastStyle={[
+          notificationSurfaceStyle,
+          { borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
+        ]}>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font
@@ -440,15 +452,18 @@ function RootContent() {
             <ThemeFileOpener />
             <AppLockGate>
               <Stack
-                screenLayout={({ children, options, route }) =>
+                screenLayout={({ children, options, route, navigation }) =>
                   options.presentation === 'formSheet' ? (
-                    isCenteredSettingsSheetRoute(route.name, isPad) ? (
-                      <SheetRouteFrame detents={options.sheetAllowedDetents}>
-                        {children}
-                      </SheetRouteFrame>
-                    ) : (
-                      <>{children}</>
-                    )
+                    // Presses on a sheet cancel while it is dragged; see `sheet-drag-guard.tsx`.
+                    <SheetDragGuard navigation={navigation}>
+                      {isCenteredSettingsSheetRoute(route.name, isPad) ? (
+                        <SheetRouteFrame detents={options.sheetAllowedDetents}>
+                          {children}
+                        </SheetRouteFrame>
+                      ) : (
+                        children
+                      )}
+                    </SheetDragGuard>
                   ) : (
                     <RouteScene modal={options.presentation === 'fullScreenModal'}>
                       {/* Native full-screen modals have no sheet grabber. Scenes
@@ -540,6 +555,10 @@ function RootContent() {
                   options={sheetRouteOptions('settings-storage')}
                 />
                 <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
+                <Stack.Screen
+                  name="settings-stage-diagnostics"
+                  options={sheetRouteOptions('settings-stage-diagnostics')}
+                />
                 <Stack.Screen
                   name="settings-terminal"
                   options={sheetRouteOptions('settings-terminal')}

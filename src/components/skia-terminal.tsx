@@ -21,7 +21,7 @@ import {
   type SkTypefaceFontProvider,
 } from 'react-native-skia';
 import { useThemeTokens, useToast, Button, PressableScale } from '@osuki-dev/ui';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
+import { useHasThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { DisclosureUpIcon } from '@/icons';
 
@@ -84,12 +84,14 @@ import {
   type TwoFingerFrame,
 } from '@/lib/tab-swipe';
 import { createMMKV } from 'react-native-mmkv';
+import { carryBox, carryForward } from '@/lib/carry-forward';
 import { terminalGridFor } from '@/lib/ssh-grid-metrics';
 import { keepNativeWidthRows } from '@/terminal/native-width';
 import {
   pinchedTerminalScale,
   terminalFitToWidthScale,
   terminalFontSize,
+  terminalMirrorFitScale,
   terminalOpenScale,
   terminalOpenView,
   terminalPanMinX,
@@ -161,6 +163,8 @@ import {
   historyHintOpacity,
   measureRowsDropped,
   measureRowsPrepended,
+  keepRowsAboveReader,
+  type TerminalKeptFrame,
   terminalBottomStop,
   terminalContentRows,
   terminalPullOvershoot,
@@ -192,6 +196,14 @@ import { graphemeWidth, splitGraphemes, substituteRenderedGrapheme } from '@/ter
 
 const horizontalPadding = TERMINAL_GRID_HORIZONTAL_PADDING;
 const verticalPadding = TERMINAL_GRID_VERTICAL_PADDING;
+/**
+ * How many display frames after layout a new canvas surface is given to land
+ * its first frame before the cover over it fades. A `TextureView` receives its
+ * surface on the first draw pass after it is attached, Skia draws into it, and
+ * the frame is composited on the pass after that; one more is margin.
+ */
+const CANVAS_FIRST_FRAME_FRAMES = 3;
+
 const AXIS_UNDECIDED = 0;
 const AXIS_HORIZONTAL = 1;
 const AXIS_VERTICAL = 2;
@@ -383,10 +395,27 @@ function useArmPaneOpen(
   paneOpenScale: number,
   scale: SharedValue<number>,
   translateX: SharedValue<number>,
-  placedOpenKeyRef: { current: string | null }
+  placedOpenKeyRef: { current: string | null },
+  terminalId: string,
+  easeRefit: boolean
 ): void {
+  // The pane the last adjust was for. A new key on the same pane is a refit --
+  // its width arrived after the first frame, tmux re-split it, the canvas was
+  // resized -- and the reader is already looking at it, so the change eases
+  // rather than jumps. A switch, and the first adjust after mount, snap: the
+  // picture is new either way.
+  const armedPaneRef = useRef<string | null>(null);
   const arm = useEffectEvent(() => {
     if (!ready) return;
+    const refit = easeRefit && armedPaneRef.current === terminalId;
+    armedPaneRef.current = terminalId;
+    if (refit) {
+      // The offsets follow the scale (see the reaction on it in the canvas), so
+      // the reader keeps their place while the picture eases to the new fit.
+      scale.set(withTiming(paneOpenScale, timing('short')));
+      placedOpenKeyRef.current = null;
+      return;
+    }
     scale.set(paneOpenScale);
     // The pan goes back to the left edge, as it always has on open.
     translateX.set(0);
@@ -432,6 +461,8 @@ export function SkiaTerminal({
   paneRows,
   paneCursorColumn,
   paneCursorRow,
+  paneScale = 'remembered',
+  opaqueCanvas = true,
   touchInput,
 }: {
   /**
@@ -556,6 +587,22 @@ export function SkiaTerminal({
   paneCursorColumn?: number;
   paneCursorRow?: number;
   /**
+   * How the pane's resting size is chosen. `'remembered'` (the terminal
+   * screen): a pinch the reader made for this pane at this width wins over the
+   * fit, and a new pinch is remembered. `'mirror'` (Home's reply drawer): always
+   * the fit (`terminalMirrorFitScale`), which also shrinks a wider pane down to a
+   * readable size; a pinch here lasts until the canvas closes and is not written
+   * down, so neither screen's pinch resizes the other.
+   */
+  paneScale?: 'remembered' | 'mirror';
+  /**
+   * Whether the canvas may take the opaque fast path when its colours allow
+   * it. `false` for a terminal inside a view that fades (Home's reply drawer):
+   * an opaque `TextureView` under a parent's alpha is composited without
+   * blending and turns dark instead of fading.
+   */
+  opaqueCanvas?: boolean;
+  /**
    * The far side's input channel, for a pane whose program has asked to hear
    * about the pointer. Left out by a caller that has no such channel -- the
    * gateway path, where the output arrives already rendered and the modes a
@@ -578,10 +625,9 @@ export function SkiaTerminal({
   // goes square with the rest of the app.
   const profile = useAppearanceProfile();
   const appActive = useAppActive();
-  // Whether anything patterned sits behind this canvas. `shell.background` is
-  // the only slot that reaches behind a terminal; Home's own wallpaper never
-  // has one over it.
-  const wallpaperBehind = useHasThemeArtwork('shell.wallpaper');
+  // Match the surrounding shell's artwork source so the opaque fast path
+  // never pre-blends over a flat color when a home-only wallpaper is behind it.
+  const wallpaperBehind = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { showToast } = useToast();
@@ -748,7 +794,7 @@ export function SkiaTerminal({
   // rows that changed (see `SnapshotLineCache`). Content-keyed and add-only
   // while parsing, so a render React throws away cannot leave it wrong.
   const [lineCache] = useState(createSnapshotLineCache);
-  const frame = useMemo(() => {
+  const windowFrame = useMemo(() => {
     if (appliedFrame) return appliedFrame;
     // The pane's rows are handed to the parse only for a program that owns
     // the screen. An editor's frame IS its grid, so a read one line short of
@@ -769,6 +815,27 @@ export function SkiaTerminal({
     // the rest (see `keepNativeWidthRows`). A full-screen frame is its grid.
     return ownsScreen ? parsed : keepNativeWidthRows(parsed);
   }, [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen, lineCache]);
+  // What is drawn: the window, with the rows it has dropped off its top kept
+  // above it so nothing on screen moves when it trims (`keepRowsAboveReader`).
+  // Per pane and per history revision: a switch, a pulled page or a program
+  // that owns the screen starts again from the window as it is.
+  const [keptBox] = useState(() => carryBox<{ key: string; kept: TerminalKeptFrame } | null>(null));
+  const keptKey = `${terminalId}:${coalescedRevision}`;
+  const frame = useMemo(
+    () =>
+      carryForward(keptBox, (previous) => ({
+        key: keptKey,
+        kept:
+          ownsScreen || appliedFrame
+            ? { frame: windowFrame, kept: 0 }
+            : keepRowsAboveReader(
+                previous?.key === keptKey ? previous.kept : null,
+                windowFrame,
+                following
+              ),
+      }))?.kept.frame ?? windowFrame,
+    [appliedFrame, following, keptBox, keptKey, ownsScreen, windowFrame]
+  );
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
   // whole argument is on `terminalPaneTheme`; what matters here is that this is
@@ -818,6 +885,38 @@ export function SkiaTerminal({
     theme.colors.background,
     wallpaperBehind
   );
+  // A new native surface is black until Skia's first frame lands. It is hidden
+  // under a cover painted in the canvas's own fill, which fades out once that
+  // frame has had a few display frames to arrive -- a cross-fade from the
+  // terminal's colour to its content, instant under Reduce Motion. Once per
+  // mount: a pane switch keeps the canvas and its surface.
+  //
+  // The cover fades, never the canvas. An opaque `TextureView` is composited
+  // without blending, so any alpha on it (or on an ancestor) darkens it towards
+  // black instead of showing what is behind it: fading the canvas itself in
+  // was the black flash it was meant to hide.
+  const canvasCover = useSharedValue(1);
+  // Gone once it has faded, so nothing about it is left for a later render
+  // (every streamed frame re-renders this component) to re-apply.
+  const [coverDone, setCoverDone] = useState(false);
+  const coverRequested = useRef(false);
+  const revealCanvas = () => {
+    if (coverRequested.current) return;
+    coverRequested.current = true;
+    let frames = 0;
+    const tick = () => {
+      frames += 1;
+      if (frames < CANVAS_FIRST_FRAME_FRAMES) requestAnimationFrame(tick);
+      else
+        canvasCover.set(
+          withTiming(0, timing('short'), (finished) => {
+            if (finished) scheduleOnRN(setCoverDone, true);
+          })
+        );
+    };
+    requestAnimationFrame(tick);
+  };
+  const canvasCoverStyle = useAnimatedStyle(() => ({ opacity: canvasCover.get() }));
 
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
@@ -1365,7 +1464,10 @@ export function SkiaTerminal({
   // puts its last column exactly on the right edge when it is narrower than
   // the canvas (or one column over it), 1 for a wider pane, which pans. See
   // `terminalFitToWidthScale`.
-  const paneRestingScale = terminalFitToWidthScale(fitGeometry, fitColumns);
+  const mirror = paneScale === 'mirror';
+  const paneRestingScale = mirror
+    ? terminalMirrorFitScale(fitGeometry, fitColumns)
+    : terminalFitToWidthScale(fitGeometry, fitColumns);
   // The size this pane is about to open at -- the remembered pinch if it has
   // one, the fit otherwise. Computed here rather than inside the switch render
   // below because the placement needs it too: how many of the pane's cells are
@@ -1375,12 +1477,14 @@ export function SkiaTerminal({
   // reused pane id had this pane at 1.44 while the placement still counted at
   // 1:1. `loadPaneScales` is a plain object after its first read (see it), so
   // asking every render costs a lookup.
-  const paneOpenScale = terminalOpenScale({
-    paneId: terminalId,
-    remembered: loadPaneScales(),
-    fit: fitGeometry,
-    paneColumns: fitColumns,
-  });
+  const paneOpenScale = mirror
+    ? paneRestingScale
+    : terminalOpenScale({
+        paneId: terminalId,
+        remembered: loadPaneScales(),
+        fit: fitGeometry,
+        paneColumns: fitColumns,
+      });
   // Which cell of the pane the reader is put in front of. `{ 0, 0 }` for every
   // pane that is not a full-screen program bigger than this phone's grid, which
   // is every pane that opens correctly today. See `terminalOpenView`.
@@ -1437,7 +1541,11 @@ export function SkiaTerminal({
     paneOpenScale,
     scale,
     translateX,
-    placedOpenKeyRef
+    placedOpenKeyRef,
+    terminalId,
+    // A placement (an editor bigger than this grid) is measured at the scale
+    // it lands on, so that one still snaps; every other refit eases.
+    openView.row === 0 && openView.column === 0
   );
 
   // What the placement needs, read from the one frame that can honour it. Both
@@ -1462,7 +1570,7 @@ export function SkiaTerminal({
   // keeps that scale (`terminalScaleOnPinchEnd`), until it is pinched again or
   // tmux reports another width.
   const rememberPinch = useStableHandler((pinched: number) => {
-    if (viewport.width <= 0) return;
+    if (viewport.width <= 0 || mirror) return;
     savePaneScales(
       terminalScaleOnPinchEnd(terminalId, pinched, loadPaneScales(), paneRestingScale, fitColumns)
     );
@@ -1484,7 +1592,17 @@ export function SkiaTerminal({
   // top pull it up, and the offset has to move with the content or the reader
   // loses their place. The release after a freeze is where this stops being a
   // slow creep and becomes a jump, because it pays for the whole gesture at once.
-  useEffect(() => {
+  //
+  // A drop is now rare: the rows a full window trims are kept above the reader
+  // (`keepRowsAboveReader`), so the frame does not lose its top on every
+  // repaint. What is left -- the kept rows reaching their cap, a frame that
+  // cannot be aligned -- still moves the offset here, in a layout effect so it
+  // is written in the commit that applies the frame. That narrows, but cannot
+  // close, the gap to the picture: the offset reaches the UI thread through
+  // Reanimated and the picture through Skia, and measured on the emulator a
+  // correction made only here still drew a one-frame jump about every 1.5 s
+  // (19 in 10 s from a passive effect, 6 from this, 0 with the rows kept).
+  useLayoutEffect(() => {
     const previous = historyAnchorRef.current;
     const anchor = captureScrollAnchor(frame.lines);
     if (previous.terminalId !== terminalId) {
@@ -1738,6 +1856,38 @@ export function SkiaTerminal({
               historyHeight * scale.get(),
               animatedTopClearance.get()
             )
+      );
+    }
+  );
+
+  // A refit the reader did not make (the pane resized on the computer, its
+  // width arriving after the first frame) eases `scale` without a gesture. A
+  // reader following output is kept at the bottom by the reaction above; one
+  // scrolled up keeps the row at the top of the view, and the pan keeps the
+  // same column at the left, instead of the picture growing out from under
+  // them. A pinch moves the offsets itself, so it is left alone.
+  useAnimatedReaction(
+    () => scale.get(),
+    (next, previous) => {
+      if (previous === null || next === previous || previous <= 0) return;
+      if (gesturing.get()) return;
+      const ratio = next / previous;
+      translateX.set(
+        Math.max(
+          terminalPanMinX(viewport.width, textWidth, next),
+          Math.min(0, translateX.get() * ratio)
+        )
+      );
+      if (followOutput.get()) return;
+      const top = animatedTopInset.get();
+      translateY.set(
+        clampScrollOffset(
+          top + (translateY.get() - top) * ratio,
+          animatedVisibleHeight.get() - contentHeight * next,
+          top,
+          historyHeight * next,
+          animatedTopClearance.get()
+        )
       );
     }
   );
@@ -3275,7 +3425,9 @@ export function SkiaTerminal({
   }
 
   return (
-    <View onLayout={handleLayout} style={styles.shell}>
+    <View
+      onLayout={handleLayout}
+      style={[styles.shell, canvasIsOpaque && { backgroundColor: canvasFill }]}>
       <GestureDetector gesture={gesture}>
         {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
             the native view outright, and the non-opaque one is a texture HWUI
@@ -3292,65 +3444,73 @@ export function SkiaTerminal({
             Keep the TextureView backing stable so parent clipping, transforms
             and sibling overlays remain correct. Skia applies opacity changes
             in place without replacing the native view. See `terminalCanvasPaint`. */}
-        <Canvas
-          android={{ backingView: 'TextureView', opaque: canvasIsOpaque }}
-          style={styles.canvas}>
-          <Fill color={canvasFill} />
-          <Group transform={contentTransform}>
-            {chunkDraws.map((chunk) => (
-              // A block records its rows from its own first row down and is
-              // placed by this transform, which is what lets a recording outlive
-              // the rows underneath it scrolling: a streaming pane re-draws the
-              // same display list one row higher instead of recording it again.
-              // The transform is a constant, not an animated value -- the one
-              // above it is the only thing moving, so there is no second live
-              // transform for this one to disagree with per frame.
-              //
-              // The key is positional on purpose: these are interchangeable
-              // siblings, and keying by content would collide the moment two
-              // blocks held the same rows.
-              <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
-                <Picture picture={chunk.picture} />
-              </Group>
-            ))}
-            {/*
+        <View collapsable={false} style={styles.canvas} onLayout={revealCanvas}>
+          <Canvas
+            android={{ backingView: 'TextureView', opaque: canvasIsOpaque && opaqueCanvas }}
+            style={StyleSheet.absoluteFill}>
+            <Fill color={canvasFill} />
+            <Group transform={contentTransform}>
+              {chunkDraws.map((chunk) => (
+                // A block records its rows from its own first row down and is
+                // placed by this transform, which is what lets a recording outlive
+                // the rows underneath it scrolling: a streaming pane re-draws the
+                // same display list one row higher instead of recording it again.
+                // The transform is a constant, not an animated value -- the one
+                // above it is the only thing moving, so there is no second live
+                // transform for this one to disagree with per frame.
+                //
+                // The key is positional on purpose: these are interchangeable
+                // siblings, and keying by content would collide the moment two
+                // blocks held the same rows.
+                <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
+                  <Picture picture={chunk.picture} />
+                </Group>
+              ))}
+              {/*
               Above the text, not behind it: a terminal's own background runs
               cell-to-cell and a highlight painted underneath would be invisible
               on every row an agent gave a background colour to. Translucent, so
               the text it is describing stays readable through it -- the reader
               is checking what they grabbed.
             */}
-            {highlightRects.map((highlight) => (
-              <Rect
-                key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
-                x={highlight.x}
-                y={highlight.y}
-                width={highlight.width}
-                height={highlight.height}
-                color={selectionFill}
-              />
-            ))}
-            {frame.cursor.visible && hasOutput ? (
-              // A slim beam caret rather than a full-cell underline: the
-              // underline read as a stray horizontal bar sitting under the
-              // last line.
-              //
-              // `output` as well, because a pane that has not answered yet
-              // parses to one empty row with the cursor at its origin -- and
-              // the grid is anchored to the bottom, so that origin is the
-              // bottom-left corner of the screen. The caret for a screen that
-              // does not exist yet drew as a blue tick in the corner of the
-              // connecting spinner, under the logo, pointing at nothing.
-              <Rect
-                x={horizontalPadding + frame.cursor.column * cellWidth}
-                y={verticalPadding + frame.cursor.row * lineHeight + 2}
-                width={2}
-                height={lineHeight - 4}
-                color={paneTheme.cursor}
-              />
-            ) : null}
-          </Group>
-        </Canvas>
+              {highlightRects.map((highlight) => (
+                <Rect
+                  key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
+                  x={highlight.x}
+                  y={highlight.y}
+                  width={highlight.width}
+                  height={highlight.height}
+                  color={selectionFill}
+                />
+              ))}
+              {frame.cursor.visible && hasOutput ? (
+                // A slim beam caret rather than a full-cell underline: the
+                // underline read as a stray horizontal bar sitting under the
+                // last line.
+                //
+                // `output` as well, because a pane that has not answered yet
+                // parses to one empty row with the cursor at its origin -- and
+                // the grid is anchored to the bottom, so that origin is the
+                // bottom-left corner of the screen. The caret for a screen that
+                // does not exist yet drew as a blue tick in the corner of the
+                // connecting spinner, under the logo, pointing at nothing.
+                <Rect
+                  x={horizontalPadding + frame.cursor.column * cellWidth}
+                  y={verticalPadding + frame.cursor.row * lineHeight + 2}
+                  width={2}
+                  height={lineHeight - 4}
+                  color={paneTheme.cursor}
+                />
+              ) : null}
+            </Group>
+          </Canvas>
+          {coverDone ? null : (
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
+            />
+          )}
+        </View>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (
         <Animated.View

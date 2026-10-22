@@ -1,0 +1,135 @@
+react-native-webgpu 0.17.0: bind imported-device asynchronous operations to
+its actual Dawn instance, and keep a separate pump per runtime/instance pair.
+Without this, imported Skia devices can wait forever for pipeline/error-scope
+callbacks while a different instance is pumped. Remove when upstream resolves
+an imported device's owner and supports multiple instances per JS runtime.
+
+diff --git a/cpp/rnwgpu/api/RNWebGPU.h b/cpp/rnwgpu/api/RNWebGPU.h
+--- a/cpp/rnwgpu/api/RNWebGPU.h
++++ b/cpp/rnwgpu/api/RNWebGPU.h
+@@ -86,10 +86,9 @@
+   // Wrap an externally created WGPUDevice (passed as a BigInt pointer, e.g.
+   // Skia's Graphite device from Skia.getNativeDevice()) in a GPUDevice.
+   // AddRefs the handle, so the original owner keeps its reference. Only sound
+-  // because the process links a single Dawn copy and the GPU instance is
+-  // shared with the exporter (see the GPU constructor): the calling runtime's
+-  // pump serves the instance the device lives on, so its async callbacks
+-  // settle normally.
++  // because the process links a single Dawn copy. Resolve the device's actual
++  // instance: runtime discovery may have created WebGPU before the exporting
++  // library loaded, so the default GPU instance is not necessarily its owner.
+   std::shared_ptr<GPUDevice> importDevice(jsi::Runtime &runtime,
+                                           void *pointer) {
+     if (pointer == nullptr) {
+@@ -99,7 +98,11 @@
+     auto raw = reinterpret_cast<WGPUDevice>(pointer);
+     wgpuDeviceAddRef(raw);
+     wgpu::Device device = wgpu::Device::Acquire(raw);
+-    auto ctx = async::RuntimeContext::getOrCreate(runtime, _gpu->get());
++    auto instance = device.GetAdapter().GetInstance();
++    if (!instance) {
++      throw std::runtime_error("importDevice: device has no owning instance");
++    }
++    auto ctx = async::RuntimeContext::getOrCreate(runtime, instance);
+     return std::make_shared<GPUDevice>(device, ctx, "Imported Device");
+   }
+ 
+diff --git a/cpp/rnwgpu/async/RuntimeContext.h b/cpp/rnwgpu/async/RuntimeContext.h
+--- a/cpp/rnwgpu/async/RuntimeContext.h
++++ b/cpp/rnwgpu/async/RuntimeContext.h
+@@ -22,10 +22,10 @@
+ namespace rnwgpu::async {
+ 
+ /**
+- * Per-runtime coordinator for asynchronous WebGPU operations.
++ * Per-runtime, per-instance coordinator for asynchronous WebGPU operations.
+  *
+- * Each JS runtime that uses WebGPU gets its own RuntimeContext, stored in the
+- * runtime's runtimeData. Async Dawn operations are registered with
++ * Each (JS runtime, Dawn instance) pair gets its own RuntimeContext, stored in
++ * the runtime's runtimeData. Imported devices can belong to another instance. Async Dawn operations are registered with
+  * CallbackMode::AllowProcessEvents and driven to completion by pumping
+  * `instance.ProcessEvents()` on the runtime's OWN thread via a self-
+  * rescheduling tick (scheduled through that runtime's setTimeout). Because
+@@ -78,7 +78,8 @@
+ 
+   RuntimeContext(jsi::Runtime &runtime, wgpu::Instance instance);
+ 
+-  static std::shared_ptr<RuntimeContext> get(jsi::Runtime &runtime);
++  static std::shared_ptr<RuntimeContext> get(jsi::Runtime &runtime,
++                                             wgpu::Instance instance);
+   static std::shared_ptr<RuntimeContext> getOrCreate(jsi::Runtime &runtime,
+                                                      wgpu::Instance instance);
+ 
+@@ -97,7 +98,7 @@
+     return _callInvoker;
+   }
+ 
+-  // The wgpu::Instance bound to this runtime.
++  // The wgpu::Instance served by this context on its owning runtime.
+   wgpu::Instance instance() const { return _instance; }
+ 
+   // The runtime this context belongs to. Safe for pointer-identity checks from
+diff --git a/cpp/rnwgpu/async/RuntimeContext.cpp b/cpp/rnwgpu/async/RuntimeContext.cpp
+--- a/cpp/rnwgpu/async/RuntimeContext.cpp
++++ b/cpp/rnwgpu/async/RuntimeContext.cpp
+@@ -3,6 +3,7 @@
+ #include <memory>
+ #include <stdexcept>
+ #include <utility>
++#include <unordered_map>
+ #include <vector>
+ 
+ #include <ReactCommon/CallInvoker.h>
+@@ -14,7 +15,7 @@
+ 
+ namespace {
+ struct RuntimeData {
+-  std::shared_ptr<RuntimeContext> context;
++  std::unordered_map<WGPUInstance, std::shared_ptr<RuntimeContext>> contexts;
+ };
+ constexpr const char *TAG = "RuntimeContext";
+ 
+@@ -46,17 +47,20 @@
+   Logger::logToConsole("[%s] Created (runtime=%p)", TAG, &runtime);
+ }
+ 
+-std::shared_ptr<RuntimeContext> RuntimeContext::get(jsi::Runtime &runtime) {
++std::shared_ptr<RuntimeContext>
++RuntimeContext::get(jsi::Runtime &runtime, wgpu::Instance instance) {
+   auto data = runtime.getRuntimeData(runtimeDataUUID());
+   if (!data) {
+     return nullptr;
+   }
+-  return std::static_pointer_cast<RuntimeData>(data)->context;
++  const auto &contexts = std::static_pointer_cast<RuntimeData>(data)->contexts;
++  auto existing = contexts.find(instance.Get());
++  return existing != contexts.end() ? existing->second : nullptr;
+ }
+ 
+ std::shared_ptr<RuntimeContext>
+ RuntimeContext::getOrCreate(jsi::Runtime &runtime, wgpu::Instance instance) {
+-  if (auto existing = get(runtime)) {
++  if (auto existing = get(runtime, instance)) {
+     return existing;
+   }
+   auto context = std::make_shared<RuntimeContext>(runtime, std::move(instance));
+@@ -65,9 +69,15 @@
+   if (&runtime == sMainRuntime) {
+     context->_callInvoker = sMainInvoker;
+   }
+-  auto data = std::make_shared<RuntimeData>();
+-  data->context = context;
+-  runtime.setRuntimeData(runtimeDataUUID(), data);
++  auto data = std::static_pointer_cast<RuntimeData>(
++      runtime.getRuntimeData(runtimeDataUUID()));
++  if (!data) {
++    data = std::make_shared<RuntimeData>();
++    runtime.setRuntimeData(runtimeDataUUID(), data);
++  }
++  // The context retains its instance, keeping this handle stable for the
++  // runtime's lifetime. Each instance's callbacks reach the matching pump.
++  data->contexts.emplace(context->instance().Get(), context);
+   return context;
+ }
+ 

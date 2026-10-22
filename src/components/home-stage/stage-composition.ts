@@ -29,8 +29,8 @@ export function useStageComposition({
   artwork?: StageImageInput | null;
   wallpaper?: StageImageInput | null;
 }): StageComposition {
-  const artworkFacts = useStagePictureFacts(artwork?.uri);
-  const wallpaperFacts = useStagePictureFacts(wallpaper?.uri);
+  const artworkFacts = useStagePictureFacts(artwork?.uri, 'artwork');
+  const wallpaperFacts = useStagePictureFacts(wallpaper?.uri, 'wallpaper');
   return useMemo(() => {
     const picture = (input: StageImageInput | null | undefined, facts: typeof artworkFacts) =>
       input && facts !== undefined

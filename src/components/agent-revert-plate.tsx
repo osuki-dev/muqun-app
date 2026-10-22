@@ -79,7 +79,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
           { borderRadius: profile.chrome.popover },
           {
             backgroundColor: floatingBackground(theme.colors.surfaceRaised),
-            borderColor: theme.colors.border,
+            borderColor: 'transparent',
           },
         ]}>
         <View style={styles.heading}>

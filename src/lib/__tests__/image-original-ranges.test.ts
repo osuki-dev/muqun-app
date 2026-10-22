@@ -13,7 +13,7 @@ import {
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { temporaryMediaCreatedAt, planCacheDeletions } from '../cache-storage';
+import { temporaryMediaCreatedAt, planStorageCleanup } from '../cache-storage';
 import {
   downloadOriginalImageRanges,
   IMAGE_RANGE_BYTES,
@@ -764,9 +764,16 @@ describe('bounded reads and verified file-only photo export policy', () => {
   test('owned download directories reuse existing interrupted-export recovery without deleting active media', () => {
     const name = 'file-export-123-1';
     const cache = 'file:///synthetic/cache/';
-    const entry = { name, uri: `${cache}${name}`, bytes: 33 * 1024 * 1024 };
+    const entry = { name, uri: `${cache}${name}`, bytes: 33 * 1024 * 1024, modifiedAtMs: 123 };
+    const plan = (active: boolean) =>
+      planStorageCleanup([entry], {
+        rootUri: cache,
+        nowMs: 300,
+        processStartedAtMs: 200,
+        protectedNames: new Set(active ? [name] : []),
+      }).deletions;
     expect(temporaryMediaCreatedAt(name)).toBe(123);
-    expect(planCacheDeletions([entry], cache, 200)).toEqual([entry]);
-    expect(planCacheDeletions([entry], cache, 100)).toEqual([]);
+    expect(plan(false)).toEqual([entry]);
+    expect(plan(true)).toEqual([]);
   });
 });

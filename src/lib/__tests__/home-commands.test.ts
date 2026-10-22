@@ -130,3 +130,23 @@ test('disposing an older owner does not cancel another layouts newer navigation'
   expect(next.navigations[0]).toMatchObject({ type: 'panels', serverId: 'b' });
   controller.dispose();
 });
+
+test('settings and pairing keep one navigation claim until Home leaves', async () => {
+  for (const type of ['manage-connections', 'pair-gateway'] as const) {
+    const state = harness();
+    const controller = createHomeCommandController(state.ports);
+    expect((await controller.dispatch({ type })).status).toBe('dispatched');
+    expect((await controller.dispatch({ type })).status).toBe('duplicate');
+    expect(state.navigations).toHaveLength(1);
+    state.blur();
+    expect((await controller.dispatch({ type })).status).toBe('superseded');
+    expect(state.navigations).toHaveLength(1);
+    controller.cancel();
+    controller.dispose();
+    const returned = harness();
+    const next = createHomeCommandController(returned.ports);
+    expect((await next.dispatch({ type })).status).toBe('dispatched');
+    expect(returned.navigations).toHaveLength(1);
+    next.dispose();
+  }
+});

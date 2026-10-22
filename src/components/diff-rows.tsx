@@ -22,7 +22,8 @@ import {
 } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Text, PressableScale } from '@osuki-dev/ui';
+import { Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { DisclosureDownIcon, DisclosureUpIcon } from '@/icons';
 
 // A type-only import, so this module never holds a runtime reference back to

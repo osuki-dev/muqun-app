@@ -1,5 +1,5 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
@@ -146,7 +146,11 @@ export default function AppDrawer({
 
   return (
     <View style={[styles.shell, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" effectsEnabled={wallpaperEffectsEnabled} />
+      <ThemeArtwork
+        slot="shell.wallpaper"
+        fallbackSlot={SHELL_WALLPAPER_FALLBACK}
+        effectsEnabled={wallpaperEffectsEnabled}
+      />
       {/*
         Entering and exiting rather than a width animated to nothing: the rail
         carries a shadow, and clipping a column down to zero would have meant

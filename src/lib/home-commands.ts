@@ -340,6 +340,9 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
   }
 
   async function dispatch(command: HomeCommand): Promise<HomeCommandResult> {
+    // Ignore late presses from an outgoing screen, before touching shared intent.
+    if (ports.sourceRouteActive?.() === false)
+      return { status: 'superseded', operationId: ++nextOperationId };
     const operation = begin(
       commandKey(command),
       command.type === 'resume-server' ||
@@ -499,11 +502,12 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
           return { status: 'dispatched', operationId: operation.id };
         case 'pair-gateway':
           ports.navigate({ type: 'pair' });
-          finish(operation);
+          // Native navigation is queued: keep the claim until Home blurs.
+          if (!ports.sourceRouteActive) finish(operation);
           return { status: 'dispatched', operationId: operation.id };
         case 'manage-connections':
           ports.navigate({ type: 'manage' });
-          finish(operation);
+          if (!ports.sourceRouteActive) finish(operation);
           return { status: 'dispatched', operationId: operation.id };
       }
     } catch (error) {

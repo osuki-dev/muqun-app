@@ -31,6 +31,7 @@ export function HomeSheetGrabber({ tint, style }: { tint?: string; style?: Style
 export function HomeSheetHeader({
   title,
   titleLines,
+  titleVariant = 'heading',
   caption,
   trailing,
   onClose,
@@ -38,6 +39,8 @@ export function HomeSheetHeader({
 }: {
   title: string;
   titleLines?: number;
+  /** A sheet that leaves room for its content asks for a smaller title. */
+  titleVariant?: 'heading' | 'subheading';
   /** One quiet line under the title. */
   caption?: ReactNode;
   trailing?: ReactNode;
@@ -49,7 +52,7 @@ export function HomeSheetHeader({
   return (
     <View style={homeSheetStyles.header}>
       <View style={homeSheetStyles.headerCopy}>
-        <Text variant="heading" accessibilityRole="header" numberOfLines={titleLines}>
+        <Text variant={titleVariant} accessibilityRole="header" numberOfLines={titleLines}>
           {title}
         </Text>
         {caption}

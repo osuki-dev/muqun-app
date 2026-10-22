@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ComputerIcon } from '@/icons';
 import { ScrollView, View } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -16,11 +16,15 @@ import {
 import { reachabilityDescription } from '@/i18n/labels';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useMinuteNow } from '@/hooks/use-minute-now';
+import { useTaskAge } from '@/hooks/use-task-age';
+import { homeTargetRow } from '@/lib/home-composer';
 import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { REACHABILITY_RECHECK_MS, serversToProbe } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
+import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 
 /**
@@ -45,6 +49,9 @@ export function HomeTargetSheet() {
   const openRequestId = useHomeTargetPicker((state) => state.openRequestId);
   const selectedServerId = useHomeTargetPicker((state) => state.selectedServerId);
   const reachabilityByServer = useHomeTargetPicker((state) => state.reachabilityByServer);
+  const agentsByServer = useServerAgents((state) => state.byServer);
+  const age = useTaskAge();
+  const nowMs = useMinuteNow();
   const choose = useHomeTargetPicker((state) => state.choose);
   const close = useHomeTargetPicker((state) => state.close);
   const requestIsActive = Number.isSafeInteger(requestId) && requestId === openRequestId;
@@ -98,6 +105,8 @@ export function HomeTargetSheet() {
 
   function select(serverId: string) {
     if (!requestIsActive || !records.some((server) => server.serverId === serverId)) return;
+    // An offline computer is listed, never chosen.
+    if (reachabilityByServer[serverId] === 'offline') return;
     choose(requestId, serverId);
     close(requestId);
     router.back();
@@ -107,14 +116,37 @@ export function HomeTargetSheet() {
 
   const rows = records.map((server) => {
     const reachability = reachabilityByServer[server.serverId] ?? 'unknown';
+    const lastSeenMs = agentsByServer[server.serverId]?.checkedAtMs;
+    const row = homeTargetRow({
+      serverId: server.serverId,
+      reachability,
+      currentServerId: selectedServerId,
+      ...(lastSeenMs !== undefined ? { lastSeenMs } : {}),
+    });
+    const caption =
+      row.lastSeenMs !== undefined
+        ? t`Offline · last seen ${age(row.lastSeenMs, nowMs)}`
+        : _(reachabilityDescription[reachability]);
+    // The current computer stays marked while it is offline: nothing switches on its own.
+    const currentOffline = requestIsActive && row.current && row.offline;
     return (
       <SheetSceneRow
         key={server.serverId}
         testID={`home-target-${server.serverId}`}
         title={server.label}
-        caption={_(reachabilityDescription[reachability])}
-        selected={requestIsActive && server.serverId === selectedServerId}
-        accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
+        caption={caption}
+        selected={requestIsActive && row.current}
+        disabled={!row.selectable}
+        meta={
+          currentOffline ? (
+            <Text variant="caption" weight="semibold" color={theme.colors.warning}>
+              {t`Current`}
+            </Text>
+          ) : undefined
+        }
+        accessibilityLabel={[server.label, currentOffline ? t`Current` : null, caption]
+          .filter(Boolean)
+          .join(', ')}
         leading={
           <ComputerIcon
             size={20}

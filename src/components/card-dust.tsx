@@ -86,6 +86,7 @@ export function CardDust({
     tint,
     progress: outProgress.get(),
     direction,
+    axis: 0,
   }));
   // Reformed against the other way, so it comes back from the leading edge
   // first and its ash, run backwards, still blows the way the pull went.
@@ -95,6 +96,7 @@ export function CardDust({
     tint,
     progress: inProgress.get(),
     direction: -direction,
+    axis: 0,
   }));
   if (!CARD_DUST_EFFECT) return null;
   return (
@@ -133,6 +135,80 @@ export function CardDust({
           </Fill>
         ) : null}
       </Group>
+    </Canvas>
+  );
+}
+
+/**
+ * One sheet through the dust, standing: the front starts at its bottom edge
+ * and the ash falls, spreading outwards. With `progress` rising from 0 the
+ * sheet erodes into the dock under it; falling from 1, the ash rises out of
+ * the dock and settles into the sheet from the top down, and at 0 the canvas
+ * shows the photograph whole, so the live sheet can take over unseen.
+ *
+ * The front's reach is `extent`: the sheet's height above the dock's field,
+ * so a sheet let go partway down erodes from where it stands, not from a
+ * bottom edge hidden under the dock. The canvas is the size of the photograph.
+ */
+export function SheetDust({
+  shot,
+  extent,
+  progress,
+  token,
+  onDrawn,
+}: {
+  shot: CardShot;
+  /** How far down from the photograph's top edge the front may reach, in points. */
+  extent: number;
+  progress: SharedValue<number>;
+  /** The transition this canvas draws, handed back to `onDrawn`. */
+  token: number;
+  /** The canvas has had time to present its first frame. */
+  onDrawn: (token: number) => void;
+}) {
+  const theme = useThemeTokens();
+  const tint = Array.from(Skia.Color(theme.colors.primary));
+  useEffect(() => {
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => onDrawn(token));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [onDrawn, token]);
+  const ratio = shot.image.width() / Math.max(1, shot.width);
+  const cell = snapCellSize(shot.width, shot.height, ratio);
+  const shotWidth = shot.width;
+  const reach = Math.max(1, Math.min(shot.height, extent));
+  const uniforms = useDerivedValue(() => ({
+    size: [shotWidth, reach],
+    cell,
+    tint,
+    progress: progress.get(),
+    direction: 1,
+    axis: 1,
+  }));
+  if (!CARD_DUST_EFFECT) return null;
+  return (
+    <Canvas
+      pointerEvents="none"
+      style={[styles.canvas, { width: shot.width, height: shot.height }]}>
+      <Fill>
+        <Shader source={CARD_DUST_EFFECT} uniforms={uniforms}>
+          <ImageShader
+            fit="fill"
+            height={shot.height}
+            image={shot.image}
+            tx="decal"
+            ty="decal"
+            width={shot.width}
+            x={0}
+            y={0}
+          />
+        </Shader>
+      </Fill>
     </Canvas>
   );
 }

@@ -17,6 +17,18 @@ const bucketName = process.env.HOT_UPDATER_CLOUDFLARE_R2_BUCKET_NAME;
 const accessKeyId = process.env.HOT_UPDATER_CLOUDFLARE_R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.HOT_UPDATER_CLOUDFLARE_R2_SECRET_ACCESS_KEY;
 
+// Both-platform deploys require the same adapter instances for their transaction.
+const database = d1Database({
+  accountId: accountId ?? '',
+  databaseId: databaseId ?? '',
+  cloudflareApiToken: cloudflareApiToken ?? '',
+});
+const storage = r2Storage({
+  accountId: accountId ?? '',
+  bucketName: bucketName ?? '',
+  credentials: { accessKeyId: accessKeyId ?? '', secretAccessKey: secretAccessKey ?? '' },
+});
+
 export default defineConfig((options) => {
   if (
     options &&
@@ -30,7 +42,10 @@ export default defineConfig((options) => {
     throw new Error('Hot Updater deployment requires configured Cloudflare credentials');
   }
   return {
-    build: expo({ outDir: 'dist/hot-updater', sourcemap: false }),
+    build: expo({
+      outDir: `dist/hot-updater/${options?.channel ?? 'native'}/${options?.platform ?? 'native'}`,
+      sourcemap: false,
+    }),
     updateStrategy: 'fingerprint',
     fingerprint: {
       extraSources: [
@@ -49,16 +64,8 @@ export default defineConfig((options) => {
     },
     // Native prebuild/fingerprint needs no deployment credentials. The deploy wrapper
     // requires every credential before invoking the CLI; missing adapters cannot publish.
-    database: d1Database({
-      accountId: accountId ?? '',
-      databaseId: databaseId ?? '',
-      cloudflareApiToken: cloudflareApiToken ?? '',
-    }),
-    storage: r2Storage({
-      accountId: accountId ?? '',
-      bucketName: bucketName ?? '',
-      credentials: { accessKeyId: accessKeyId ?? '', secretAccessKey: secretAccessKey ?? '' },
-    }),
+    database,
+    storage,
     plugins: [apiKeys(), insights(), remoteConfig(), localizedReleaseNotes()],
     signing: {
       enabled: true,

@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   NativeRunner,
+  androidDeviceKind,
   withinScrollViewport,
   appViewport,
   exactSelectorMatches,
@@ -846,6 +847,40 @@ describe('native end-to-end gate', () => {
     expect(selectFlows(suite, 'capture', 'android')).toEqual([]);
     expect(() => selectFlows(suite, 'full', 'ios', 'held')).toThrow('not shipped');
   });
+  test('a flow limited to device kinds is left out on the others', () => {
+    const phones: Suite = {
+      ...suite,
+      flows: [
+        ...suite.flows,
+        {
+          name: 'stage',
+          program: 'stage',
+          tags: ['full'],
+          platforms: ['android'],
+          devices: ['android-phone'],
+        },
+      ],
+    };
+    expect(selectFlows(phones, 'full', 'android', undefined, 'android-phone')).toHaveLength(2);
+    expect(selectFlows(phones, 'full', 'android', undefined, 'android-tablet')).toHaveLength(1);
+    expect(() => selectFlows(phones, 'full', 'android', 'stage', 'android-tablet')).toThrow(
+      'does not run on android-tablet'
+    );
+  });
+  test('an Android device is a tablet from a 600 dp smallest width', () => {
+    expect(androidDeviceKind('Physical size: 2560x1600', 'Physical density: 320')).toBe(
+      'android-tablet'
+    );
+    expect(androidDeviceKind('Physical size: 1080x2400', 'Physical density: 420')).toBe(
+      'android-phone'
+    );
+    expect(
+      androidDeviceKind(
+        'Physical size: 1600x2560\nOverride size: 1080x1920',
+        'Physical density: 320\nOverride density: 480'
+      )
+    ).toBe('android-phone');
+  });
   test('every landing flow belongs to a documented domain', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
@@ -1098,6 +1133,47 @@ describe('native end-to-end gate', () => {
         // A fractional amount is one pass, back down the same span.
         ['gesture', 'pan', '605', '505', '0', '305', '400'],
       ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('an Android tablet reaches a sheet bottom by flicks inside the sheet', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-bottom-'));
+    try {
+      await writeFile(path.join(directory, 'bottom.ad'), 'scroll bottom --in-sheet\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                {
+                  ...node,
+                  identifier: 'home-sheet',
+                  rect: { x: 0, y: 0, width: 2560, height: 1600 },
+                },
+                {
+                  ...node,
+                  identifier: 'settings-storage-sheet',
+                  rect: { x: 640, y: 288, width: 1280, height: 1312 },
+                },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('bottom.ad', { DEVICE_KIND: 'android-tablet' });
+      expect(calls.filter((args) => args[0] === 'gesture')).toEqual(
+        Array(3).fill(['gesture', 'pan', '1280', '1403', '0', '-787', '300'])
+      );
+      calls.length = 0;
+      await runner.runSection('bottom.ad', { DEVICE_KIND: 'android-phone' });
+      expect(calls.at(-1)).toEqual(['scroll', 'bottom']);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

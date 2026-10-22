@@ -86,7 +86,9 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
  * time it: a device that runs over its frame budget steps down the quality
  * ladder (`recordStageFrame`).
  */
-export function StageRuntime(props: StageSceneProps) {
+export function StageRuntime(
+  props: StageSceneProps & { onSceneReady?: () => void; onSceneChanged?: (ready: boolean) => void }
+) {
   const invalidate = useThree((state) => state.invalidate);
   const camera = useThree((state) => state.camera);
   const scene = useThree((state) => state.scene);
@@ -244,7 +246,31 @@ export function StageRuntime(props: StageSceneProps) {
   useEffect(() => wakeFor(paused), [paused]);
   useEffect(() => wakeFor(false), [dive]);
 
+  // Register only after the effects above have installed this render's layers.
+  // The native renderer acknowledges it after present(), once per scene change.
+  // Only what can need new pipelines or uploads asks for a compile: the
+  // pictures, the ambient effect itself and the role. The theme's colours,
+  // the effect's colours and aspect, and the quality rung are uniforms and the
+  // pixel ratio; drawing them as they are costs nothing, while a compile holds
+  // every frame until it is done.
+  const resourcesReady = props.resourcesReady ?? true;
+  const ambientEffectKey = JSON.stringify(ambientEffects);
+  const changed = useEffectEvent(() => {
+    props.onSceneChanged?.(resourcesReady);
+    wake();
+  });
+  useEffect(
+    () => changed(),
+    [backdropKey, paintingKey, heroKey, frameKey, role, ambientEffectKey, resourcesReady]
+  );
+  const { onSceneReady } = props;
+  useEffect(() => {
+    onSceneReady?.();
+    wake();
+  }, [onSceneReady]);
+
   const qualityDropped = useStableHandler((next: StageQuality) => props.onQualityDrop(next));
+  const qualityHeld = useStableHandler((rung: StageQuality) => props.onQualityHeld?.(rung));
 
   // Priority 1: this callback draws the frame itself, instead of Fiber.
   useFrame(() => {
@@ -329,6 +355,7 @@ export function StageRuntime(props: StageSceneProps) {
     // are evidence of nothing.
     if (!reducedMotion && (state.wasMoving || moving || ambient)) {
       const was = state.budget.quality;
+      const wasHeld = state.budget.held;
       const next = recordStageFrame(state.budget, {
         nowMs: now,
         // Only the frame's own work: the gap to the next frame also measures
@@ -337,6 +364,7 @@ export function StageRuntime(props: StageSceneProps) {
         frameMs: workMs,
       });
       if (next !== was) qualityDropped(next);
+      else if (!wasHeld && state.budget.held) qualityHeld(next);
     }
     if (stagePerf) {
       const { render } = (gl as unknown as WebGPURenderer).info;

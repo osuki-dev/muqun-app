@@ -1,5 +1,6 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Input, Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -681,6 +682,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t`Cancel editing ${server.label}`}
+          accessibilityState={{ disabled: saving }}
           disabled={saving}
           onPress={onDone}
           style={[
@@ -696,6 +698,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t`Save changes to ${server.label}`}
+          accessibilityState={{ disabled: saving, busy: saving }}
           feedback="selection"
           disabled={saving}
           onPress={() => void save()}
@@ -947,6 +950,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel={t`Confirm revoke ${device.name}`}
+              accessibilityState={{ disabled: revoking !== null, busy: revoking === device.id }}
               feedback="selection"
               disabled={revoking !== null}
               onPress={() => void revoke(device)}
@@ -964,6 +968,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel={t`Revoke ${device.name}`}
+              accessibilityState={{ disabled: revoking !== null, busy: revoking === device.id }}
               disabled={revoking !== null}
               onPress={() => setConfirming(device.id)}
               style={[styles.revoke, { borderRadius: profile.radius.sm }]}>
@@ -1022,7 +1027,7 @@ const styles = StyleSheet.create({
   editButtons: { flexDirection: 'row', gap: LADDER.gap },
   editButton: { flex: 1 },
   action: {
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: LADDER.snug,
     borderCurve: 'continuous',
     flexDirection: 'row',
@@ -1036,7 +1041,7 @@ const styles = StyleSheet.create({
   devices: { gap: LADDER.gap },
   deviceRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
   revoke: {
-    minHeight: 32,
+    minHeight: 44,
     paddingHorizontal: LADDER.snug,
     borderCurve: 'continuous',
     alignItems: 'center',

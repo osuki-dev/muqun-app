@@ -468,10 +468,10 @@ function navigateHome(
       router.navigate(destination.hostId ? `/ssh/${destination.hostId}` : '/ssh');
       return;
     case 'pair':
-      router.push('/explore');
+      router.navigate('/explore');
       return;
     case 'manage':
-      router.push('/settings');
+      router.navigate('/settings');
       return;
   }
 }

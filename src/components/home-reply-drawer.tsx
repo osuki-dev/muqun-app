@@ -1,11 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
-import { PressableScale, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
 import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated as NativeAnimated,
+  AppState,
   BackHandler,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -13,14 +15,17 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type ViewInstance,
 } from 'react-native';
 import type { LegendListRef } from '@legendapp/list/react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
+  cancelAnimation,
   Extrapolation,
   interpolate,
   makeMutable,
+  ReduceMotion,
   useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
@@ -30,13 +35,16 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { create } from 'zustand';
+import { create, useStore } from 'zustand';
+import { createStore } from 'zustand/vanilla';
 
 import { AgentFormCard } from '@/components/agent-form-card';
+import { CARD_DUST_EFFECT, SheetDust, type CardShot } from '@/components/card-dust';
 import { ComposerMenuButton } from '@/components/composer-attachment-button';
-import { SessionIcon } from '@/icons';
+import { OpenExternalIcon, SessionIcon } from '@/icons';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { useHomeSessionReplies } from '@/components/home-session-replies';
 import { useAppSettings } from '@/stores/app-settings';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import {
@@ -46,9 +54,14 @@ import {
   type PaneReadOrigin,
   type PaneReadWindow,
 } from '@/terminal/history';
+import { createStreamReadFence } from '@/terminal/stream-read-fence';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { resolveThemeIcon } from '@/theme/icon-direction';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
 import { SheetGround } from '@/components/sheet-ground';
+import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
 import {
   followHomeSession,
@@ -66,10 +79,8 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
-import { replyAgentForm, replyAgentPermission, type PermissionDecision } from '@/lib/agent-session';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
-import { withAlpha } from '@/lib/color';
 import {
   INITIAL_PANE_OUTPUT_LINES,
   loadPanes,
@@ -80,22 +91,29 @@ import {
 import { field, numberField, optionalNumberField } from '@/lib/herdr-entity';
 import { isFullScreenTuiPane } from '@/lib/terminal-keys';
 import { sameComputer } from '@/lib/home-composer';
-import { describeGatewayFailure } from '@/lib/network-error';
 import {
   REPLY_DRAWER_MIN_HEIGHT,
   replyDrawerHeights,
   replyDrawerRubberBand,
   replyDrawerSettle,
+  REPLY_DRAWER_OPEN_SNAP,
   replyDrawerSnapHeight,
   type ReplyDrawerSnap,
 } from '@/lib/home-reply-drawer';
-import { homeThreadKey, type HomeThreadState, type HomeThreadTarget } from '@/lib/home-thread';
+import {
+  beginDrawerDust,
+  stepDrawerDust,
+  type DrawerDust,
+  type DrawerDustEvent,
+  type DrawerDustWay,
+} from '@/lib/home-reply-dust';
+import { homeThreadKey, type HomeThreadTarget } from '@/lib/home-thread';
 import { calmFadeIn, fadeIn, SETTLE, timing } from '@/lib/motion';
 import { createTranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
+import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useHomeAttention } from '@/stores/home-attention';
 import { useHomeThreadLive } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
 
@@ -112,6 +130,15 @@ import { useServerAgents } from '@/stores/server-agents';
  *
  * The drawer draws -- and reads, streams or polls -- only while it is open or
  * being dragged: closed, Home costs what it did without it.
+ *
+ * It comes and goes as ash (`lib/home-reply-dust.ts`, the deck's dust along
+ * the sheet's height): opening, the sheet is mounted where it will rest,
+ * unseen, photographed as soon as it has laid out, and the ash rises out of
+ * the dock and settles into the picture; closing, the sheet is photographed
+ * where it stands and falls into the dock as ash. The canvas exists only
+ * while that plays. A drag keeps today's direct manipulation, and only a
+ * release that dismisses erodes. Reduce Motion, a device without the shader,
+ * or a photograph that fails or is late: the plain slide, as before.
  */
 
 /** Room between the drawer's last row and the field's top edge. */
@@ -123,6 +150,22 @@ const SCRIM_OPACITY = 0.28;
 const HISTORY_PAGE_SIZE = 40;
 /** A Pad's drawer is a card, never wider than a comfortable transcript. */
 const PAD_MAX_WIDTH = 760;
+/** The ash settling into an opening sheet, and a closing one falling into the dock. */
+const DUST_DURATION = 'medium';
+/**
+ * How long an opening sheet, unseen, waits for its photograph before it
+ * slides in instead: its mount and layout, a frame for the native view to
+ * take its size, and the picture. On the emulator (debug, software GPU) the
+ * picture alone takes 130–245 ms; a phone's release build is well under
+ * that, so 200 ms lets the reform play there while a slow photograph still
+ * never reads as a stall: nothing is on screen until either the ash or the
+ * slide starts.
+ */
+const OPEN_SHOT_WAIT_MS = 200;
+/** How long a closing sheet, still shown, waits for its photograph before sliding out. */
+const CLOSE_SHOT_WAIT_MS = 160;
+/** The longest the ash may take: past it the drawer is reset rather than left under a canvas. */
+const DUST_STALL_MS = 1500;
 
 /**
  * How open the drawer is, 0 to 1, for Home to recede by. One drawer, Home's
@@ -157,7 +200,8 @@ export function useHomeReplyDrawer({
   const heights = replyDrawerHeights({ windowHeight, topInset, field: clipHeight });
   const [snap, setSnap] = useState<ReplyDrawerSnap>('closed');
   /** Where it last rested open: its body keeps that height while it closes. */
-  const [resting, setResting] = useState<Exclude<ReplyDrawerSnap, 'closed'>>('peek');
+  const [resting, setResting] =
+    useState<Exclude<ReplyDrawerSnap, 'closed'>>(REPLY_DRAWER_OPEN_SNAP);
   /** The body is drawn: open, being dragged, or still settling shut. */
   const [mounted, setMounted] = useState(false);
   /** Visible height above the drawer's foot, keyboard aside. */
@@ -177,6 +221,17 @@ export function useHomeReplyDrawer({
     full.set(heights.full);
   }, [heights.peek, heights.full, peek, full]);
 
+  /** The ash: 0 is the sheet whole, 1 all ash. The scrim and Home's recede follow it. */
+  const dust = useSharedValue(0);
+  /** 1: the live sheet's content is hidden under the ash canvas. */
+  const veil = useSharedValue(0);
+  // The ash transition while it plays, outside React's state so that its
+  // steps re-render only the drawer, never the dock the controller lives in.
+  const [dustStore] = useState(() =>
+    createStore<{ dust: DrawerDust<CardShot> | null }>(() => ({ dust: null }))
+  );
+  const [cell] = useState(createDustCell);
+
   /** Run once the drawer has gone: what closing it was for (the conversation let go). */
   const afterClose = useRef<(() => void) | null>(null);
   const unmount = useStableHandler(() => {
@@ -185,13 +240,123 @@ export function useHomeReplyDrawer({
     afterClose.current = null;
     after?.();
   });
-  const settle = useStableHandler((next: ReplyDrawerSnap, velocityY?: number) => {
+  /** The plain slide: the sheet travels to `to`, carrying the throw's speed. */
+  const slide = useStableHandler((to: number, velocityY?: number) => {
+    fade.set(1);
+    height.set(
+      withSpring(to, { ...SETTLE, velocity: -(velocityY ?? 0) }, (finished) => {
+        'worklet';
+        if (finished && to === 0) scheduleOnRN(unmount);
+      })
+    );
+  });
+  // The ash's own callbacks (its timing's end, its stall guard) reach
+  // `apply` through the cell, which the effect after it points at it.
+  const emit = cell.emit;
+  /** No ash over the sheet: the canvas, if one is left, shows the photograph whole. */
+  const clearAsh = () => {
+    cancelAnimation(dust);
+    dust.set(0);
+    veil.set(0);
+  };
+  /** Feed the ash one event and carry out what it asks for. */
+  const apply = useStableHandler((event: DrawerDustEvent<CardShot>) => {
+    const current = dustStore.getState().dust;
+    const { next, effects } = stepDrawerDust(current, event);
+    if (next !== current) dustStore.setState({ dust: next });
+    if (current?.shot && current.shot !== next?.shot) disposeLater(current.shot);
+    // The photograph's deadline ends with the photograph; the stall guard takes over at play.
+    if (!next || next.shot) cell.disarm();
+    for (const effect of effects) {
+      switch (effect.effect) {
+        case 'dispose':
+          disposeLater(effect.shot);
+          break;
+        case 'play': {
+          const token = next!.token;
+          cell.arm(() => {
+            if (dustStore.getState().dust?.token === token) emit({ type: 'reset' });
+          }, DUST_STALL_MS);
+          const config = timing(DUST_DURATION, { reduceMotion: ReduceMotion.Never });
+          if (effect.way === 'open') {
+            // At 0 the canvas shows the photograph whole: the live sheet
+            // appears under it unseen, and the canvas goes a commit later.
+            dust.set(
+              withTiming(0, config, (finished) => {
+                'worklet';
+                if (finished) veil.set(0);
+                scheduleOnRN(emit, { type: 'ended', token, finished: finished === true });
+              })
+            );
+          } else {
+            veil.set(1);
+            dust.set(
+              withTiming(1, config, (finished) => {
+                'worklet';
+                if (finished) height.set(0);
+                scheduleOnRN(emit, { type: 'ended', token, finished: finished === true });
+              })
+            );
+          }
+          break;
+        }
+        case 'fallback':
+          clearAsh();
+          if (effect.way === 'open') height.set(0);
+          slide(effect.way === 'open' ? (current?.extent ?? 0) : 0);
+          break;
+        case 'settled':
+          // The sheet is down (close) or shown whole (open): nothing is
+          // left for these to change.
+          clearAsh();
+          if (effect.way === 'close') {
+            height.set(0);
+            unmount();
+          }
+          break;
+        case 'abandoned':
+          clearAsh();
+          break;
+      }
+    }
+  });
+  useEffect(() => cell.listen(apply), [cell, apply]);
+  const beginDust = useStableHandler((way: DrawerDustWay, extent: number) => {
+    const token = cell.nextToken();
+    dustStore.setState({ dust: beginDrawerDust(token, way, extent) });
+    cell.arm(
+      () => apply({ type: 'late', token }),
+      way === 'open' ? OPEN_SHOT_WAIT_MS : CLOSE_SHOT_WAIT_MS
+    );
+  });
+  // Home hidden mid-ash: the sheet is left live, or down, never under a canvas.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') apply({ type: 'reset' });
+    });
+    return () => {
+      subscription.remove();
+      cell.disarm();
+      const shot = dustStore.getState().dust?.shot;
+      if (shot) disposeLater(shot);
+      dustStore.setState({ dust: null });
+    };
+  }, [apply, cell, dustStore]);
+
+  /**
+   * Come to rest at `next`. `ash`: through the dust, when it can -- an open
+   * from a closed drawer, or a close of a standing one; anything else, and
+   * Reduce Motion or a device without the shader, slides.
+   */
+  const settle = useStableHandler((next: ReplyDrawerSnap, velocityY?: number, ash = false) => {
     const to = replyDrawerSnapHeight(next, { peek: peek.get(), full: full.get() });
     setSnap(next);
     if (next !== 'closed') {
       setMounted(true);
       setResting(next);
     }
+    // A transition still playing gives way: the sheet is left live where it is.
+    apply({ type: 'abandon' });
     if (reduced) {
       if (next === 'closed') {
         fade.set(
@@ -209,14 +374,30 @@ export function useHomeReplyDrawer({
       }
       return;
     }
-    fade.set(1);
-    height.set(
-      withSpring(to, { ...SETTLE, velocity: -(velocityY ?? 0) }, (finished) => {
-        'worklet';
-        if (finished && to === 0) scheduleOnRN(unmount);
-      })
-    );
+    if (ash && CARD_DUST_EFFECT) {
+      if (next === 'closed') {
+        if (height.get() > 0) {
+          beginDust('close', height.get());
+          return;
+        }
+      } else if (!mounted) {
+        // Where it will rest, unseen, for the photograph; the scrim waits on the ash.
+        fade.set(1);
+        height.set(to);
+        veil.set(1);
+        dust.set(1);
+        beginDust('open', to);
+        return;
+      }
+    }
+    slide(to, velocityY);
   });
+  /** A photograph of the sheet, or null when none could be taken. */
+  const shot = useStableHandler((token: number, image: CardShot | null) =>
+    apply({ type: 'shot', token, shot: image })
+  );
+  /** The canvas over the sheet has drawn. */
+  const drawn = useStableHandler((token: number) => apply({ type: 'drawn', token }));
   // A window or dock change while open keeps it at its snap. Only a change
   // of size: a change of snap is `settle`'s, with the throw's speed.
   const keepAtSnap = useEffectEvent(() => {
@@ -232,7 +413,8 @@ export function useHomeReplyDrawer({
       reduced
         ? 0
         : Math.min(1, Math.max(0, height.get() / Math.max(1, peek.get()))) *
-          (fade.get() > 0 ? 1 : 0),
+          (fade.get() > 0 ? 1 : 0) *
+          (1 - dust.get()),
     (progress) => homeReplyDrawerProgress.set(progress)
   );
   useEffect(() => () => homeReplyDrawerProgress.set(0), []);
@@ -241,16 +423,19 @@ export function useHomeReplyDrawer({
   }, [mounted]);
   useEffect(() => () => useHomeReplyDrawerActive.setState({ active: false }), []);
 
+  // A finger has the sheet: ash in flight gives way to it (the pan has
+  // already shown the sheet whole, on the UI thread).
   const begin = useStableHandler(() => {
+    apply({ type: 'abandon' });
     setMounted(true);
-    if (snap === 'closed') setSnap('peek');
+    if (snap === 'closed') setSnap(REPLY_DRAWER_OPEN_SNAP);
   });
   // The drawer's grabber and header always drag it. Its transcript scrolls
   // first (`scroll`, the list's own native scroll); `content` drags the drawer
   // only from a list at its top with the finger moving down, as a bottom sheet
   // does. The two run simultaneously so the scroll never waits on the pull.
   const gestures = useMemo(() => {
-    const input = { begin, settle, dragFrom, dragging, fade, full, height, peek };
+    const input = { begin, settle, dragFrom, dragging, dust, fade, full, height, peek, veil };
     const scroll = Gesture.Native();
     const content = createContentPan({
       ...input,
@@ -258,7 +443,20 @@ export function useHomeReplyDrawer({
       contentDragging,
     }).simultaneousWithExternalGesture(scroll);
     return { header: createDrawerPan(input), scroll, content };
-  }, [begin, settle, dragFrom, dragging, fade, full, height, peek, contentAtTop, contentDragging]);
+  }, [
+    begin,
+    settle,
+    dragFrom,
+    dragging,
+    dust,
+    fade,
+    full,
+    height,
+    peek,
+    veil,
+    contentAtTop,
+    contentDragging,
+  ]);
 
   return {
     snap,
@@ -270,31 +468,81 @@ export function useHomeReplyDrawer({
     field: clipHeight,
     height,
     fade,
+    dust,
+    veil,
+    dustStore,
+    shot,
+    drawn,
     gestures,
     contentAtTop,
     contentDragging,
-    show: () => settle('peek'),
+    /** Opens straight to full height; the peek is only a rest on a drag down. */
+    show: () => settle(REPLY_DRAWER_OPEN_SNAP, undefined, true),
     close: (after?: () => void) => {
       if (after) afterClose.current = after;
-      settle('closed');
+      settle('closed', undefined, true);
     },
   };
 }
 
+/**
+ * What the controller's handlers share outside React: the live transition's
+ * token, its one timer (the photograph's deadline, then the ash's stall
+ * guard) and the way back into `apply` for the ash's own callbacks. Made
+ * once per drawer.
+ */
+function createDustCell() {
+  let token = 0;
+  let listener: ((event: DrawerDustEvent<CardShot>) => void) | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const disarm = () => {
+    if (timer !== null) clearTimeout(timer);
+    timer = null;
+  };
+  return {
+    nextToken: () => {
+      token += 1;
+      return token;
+    },
+    listen: (next: (event: DrawerDustEvent<CardShot>) => void) => {
+      listener = next;
+      return () => {
+        if (listener === next) listener = null;
+      };
+    },
+    emit: (event: DrawerDustEvent<CardShot>) => listener?.(event),
+    arm: (run: () => void, afterMs: number) => {
+      disarm();
+      timer = setTimeout(run, afterMs);
+    },
+    disarm,
+  };
+}
+
+function disposeLater(shot: CardShot) {
+  // A frame later: a draw already in flight may still be sampling it.
+  requestAnimationFrame(() => requestAnimationFrame(() => disposeViewPhotograph(shot.image)));
+}
+
 type DrawerPanInput = {
   begin: () => void;
-  settle: (next: ReplyDrawerSnap, velocityY?: number) => void;
+  settle: (next: ReplyDrawerSnap, velocityY?: number, ash?: boolean) => void;
   dragFrom: SharedValue<number>;
   dragging: SharedValue<boolean>;
+  dust: SharedValue<number>;
   fade: SharedValue<number>;
   full: SharedValue<number>;
   height: SharedValue<number>;
   peek: SharedValue<number>;
+  veil: SharedValue<number>;
 };
 
-/** A pan that drags the drawer's height, and lets it go to the snap the throw reaches. */
+/**
+ * A pan that drags the drawer's height, and lets it go to the snap the throw
+ * reaches: through the ash when that is closed, sliding otherwise.
+ */
 function createDrawerPan(input: DrawerPanInput) {
-  const { begin, settle, dragFrom, dragging, fade, full, height, peek } = input;
+  const { begin, settle, dragFrom, dragging, dust, fade, full, height, peek, veil } = input;
   return Gesture.Pan()
     .activeOffsetY([-8, 8])
     .failOffsetX([-16, 16])
@@ -302,6 +550,10 @@ function createDrawerPan(input: DrawerPanInput) {
       dragging.set(true);
       dragFrom.set(height.get());
       fade.set(1);
+      // Ash in flight: the sheet is shown whole under the finger at once.
+      cancelAnimation(dust);
+      dust.set(0);
+      veil.set(0);
       scheduleOnRN(begin);
     })
     .onUpdate((event) => {
@@ -314,7 +566,7 @@ function createDrawerPan(input: DrawerPanInput) {
         velocityY: event.velocityY,
         heights: { peek: peek.get(), full: full.get() },
       });
-      scheduleOnRN(settle, next, event.velocityY);
+      scheduleOnRN(settle, next, event.velocityY, next === 'closed');
     });
 }
 
@@ -391,34 +643,10 @@ export function HomeReplyRecede({
 /** A pack without its own Conversation glyph lends its Home arrow, pointing up. */
 const CONVERSATION_ICON_ALTERNATE = { name: 'home.arrow', direction: 'up' } as const;
 
-/** The target's state as one word and its tone, as the drawer's chip says it. */
-function useStateWord(state: HomeThreadState, offline: boolean) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const word = offline
-    ? t`Offline`
-    : state === 'needs-you'
-      ? t`Needs you`
-      : state === 'working'
-        ? t`Working`
-        : state === 'failed'
-          ? t`Failed`
-          : state === 'starting'
-            ? t`Starting…`
-            : t`Idle`;
-  const tone =
-    !offline && (state === 'needs-you' || state === 'failed')
-      ? theme.colors.warning
-      : state === 'working' && !offline
-        ? theme.colors.primary
-        : theme.colors.textMuted;
-  return { word, tone };
-}
-
 /**
  * The dock's way into the conversation: a toolbar button beside the
  * attachment and options buttons, while there is a session or pane to show.
- * A tap raises the drawer to its peek, a long press opens the conversation in
+ * A tap raises the drawer to full height, a long press opens the conversation in
  * full. A small warm dot while it needs the reader.
  */
 export function HomeReplyButton({
@@ -433,6 +661,20 @@ export function HomeReplyButton({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const needsYou = useHomeThreadState(target) === 'needs-you';
+  // The arrow turns to point down while the drawer it opens is up, and back
+  // as it closes: a pack's own conversation glyph keeps its orientation.
+  const { theme: customTheme, assets } = useEffectiveCustomTheme();
+  const ownGlyph =
+    resolveThemeIcon(customTheme?.manifest, assets, [{ name: 'chrome.conversation' }], (uri) =>
+      isRenderableThemeAsset(uri)
+    ) !== null;
+  const turn = useSharedValue(controller.open && !ownGlyph ? 1 : 0);
+  useEffect(() => {
+    turn.set(withTiming(controller.open && !ownGlyph ? 1 : 0, timing('short')));
+  }, [turn, controller.open, ownGlyph]);
+  const turnStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.get() * 180}deg` }],
+  }));
   return (
     <ComposerMenuButton
       testID="home-reply-button"
@@ -452,13 +694,15 @@ export function HomeReplyButton({
             }
           : undefined
       }>
-      <ThemeIcon
-        name="chrome.conversation"
-        alternate={CONVERSATION_ICON_ALTERNATE}
-        fallback={SessionIcon}
-        size={18}
-        color={controller.open ? theme.colors.primary : theme.colors.textMuted}
-      />
+      <Animated.View style={turnStyle}>
+        <ThemeIcon
+          name="chrome.conversation"
+          alternate={CONVERSATION_ICON_ALTERNATE}
+          fallback={SessionIcon}
+          size={18}
+          color={controller.open ? theme.colors.primary : theme.colors.textMuted}
+        />
+      </Animated.View>
       {needsYou ? (
         <Animated.View
           entering={fadeIn('short')}
@@ -479,23 +723,18 @@ export function HomeReplyDrawer({
   target,
   controller,
   agentName,
-  offline,
   bleed,
   maxWidth,
   onOpenFull,
-  onNewConversation,
 }: {
   target: HomeThreadTarget;
   controller: HomeReplyDrawerController;
   agentName: string;
-  offline: boolean;
   /** How far the drawer reaches past the dock's own sides (the phone's gutter). */
   bleed: number;
   /** A Pad's drawer is a card of at most this width, centred on the dock. */
   maxWidth?: number;
   onOpenFull?: () => void;
-  /** Lets the conversation go: the next message starts a new one. */
-  onNewConversation: () => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -503,15 +742,46 @@ export function HomeReplyDrawer({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const keyboardHeight = useKeyboardState((state) => state.height);
-  const { heights, height, fade, reduced, open } = controller;
+  const { heights, height, fade, dust, veil, reduced, open } = controller;
   const close = useStableHandler(() => controller.close());
+  // The ash transition, if one plays: its photograph is of `stuff`, the
+  // sheet's ground and body, which the canvas then stands in for.
+  const transition = useStore(controller.dustStore, (state) => state.dust);
+  const shootToken = transition && !transition.shot ? transition.token : null;
+  const stuff = useRef<ViewInstance>(null);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const onStuffLayout = (event: LayoutChangeEvent) => {
+    const { width, height: tall } = event.nativeEvent.layout;
+    setSize((current) =>
+      current?.width === width && current?.height === tall ? current : { width, height: tall }
+    );
+  };
+  const onShot = controller.shot;
+  useEffect(() => {
+    if (shootToken === null || !size) return;
+    let live = true;
+    // A frame on: the native view has its size only then. No retry with a
+    // GPU-to-CPU readback: the plain slide stands in where this device
+    // cannot share the texture.
+    const frame = requestAnimationFrame(() => {
+      photographView(stuff, size.width, size.height, { allowReadback: false })
+        .then((image) => (image ? { image, width: size.width, height: size.height } : null))
+        .catch(() => null)
+        .then((shot) => {
+          if (live) onShot(shootToken, shot);
+          else if (shot) disposeLater(shot);
+        });
+    });
+    return () => {
+      live = false;
+      cancelAnimationFrame(frame);
+    };
+  }, [shootToken, size, onShot]);
   const key = homeThreadKey(target);
   const liveTitle = useHomeThreadLive((state) =>
     state.key === key ? state.live.title : undefined
   );
   const title = liveTitle || target.title || t`Conversation`;
-  const state = useHomeThreadState(target);
-  const { word, tone } = useStateWord(state, offline);
 
   // Back closes the drawer before it leaves Home.
   useEffect(() => {
@@ -532,11 +802,16 @@ export function HomeReplyDrawer({
     floor
   );
 
+  // The scrim follows the ash in and out, as it follows the sheet's travel.
   const scrimStyle = useAnimatedStyle(() => ({
     opacity:
       SCRIM_OPACITY *
-      (reduced ? fade.get() : Math.min(1, height.get() / Math.max(1, heights.peek))),
+      (reduced
+        ? fade.get()
+        : Math.min(1, height.get() / Math.max(1, heights.peek)) * (1 - dust.get())),
   }));
+  // The live sheet under the ash canvas: hidden while the ash stands in for it.
+  const veilStyle = useAnimatedStyle(() => ({ opacity: 1 - veil.get() }));
   // The dock, and the drawer in it, rises with the keyboard: what shows of
   // the drawer above the field shrinks by as much, so its top stays put.
   const sheetStyle = useAnimatedStyle(() => {
@@ -609,87 +884,96 @@ export function HomeReplyDrawer({
             },
             sheetStyle,
           ]}>
-          {/* The sheet ground: an opaque floor under a frosted tint, so
-              nothing of Home reads through the transcript. */}
-          <SheetGround tint="background" frosted />
-          <Animated.View style={[{ height: bodyHeight }, bodyStyle]}>
-            <GestureDetector gesture={controller.gestures.header}>
-              <View collapsable={false}>
-                <View style={styles.sheetGrabber}>
-                  <HomeSheetGrabber />
+          {/* One real native view, so it can be photographed shown or not. */}
+          <Animated.View style={[StyleSheet.absoluteFill, veilStyle]}>
+            <View ref={stuff} collapsable={false} onLayout={onStuffLayout} style={styles.fill}>
+              {/* Conversations and terminal panes share their full page's wallpaper, over an
+              opaque floor. Keep it static while Home's Stage is behind it. */}
+              {target.kind !== 'task' ? (
+                <View
+                  pointerEvents="none"
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}>
+                  <ThemeArtwork
+                    slot="shell.wallpaper"
+                    fallbackSlot={SHELL_WALLPAPER_FALLBACK}
+                    effectsEnabled={false}
+                  />
                 </View>
-                <HomeSheetHeader
-                  title={title}
-                  titleLines={1}
-                  closeTestID="home-reply-close"
-                  onClose={close}
-                  caption={
-                    <View style={styles.captionRow}>
-                      <Text
-                        variant="caption"
-                        color={theme.colors.textMuted}
-                        numberOfLines={1}
-                        style={styles.captionName}>
-                        {agentName}
-                      </Text>
-                      <PressableScale
-                        testID="home-reply-new"
-                        accessibilityRole="button"
-                        accessibilityLabel={t`Stop following this conversation`}
-                        hitSlop={8}
-                        onPress={() => controller.close(onNewConversation)}>
-                        <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                          {t`New conversation`}
-                        </Text>
-                      </PressableScale>
+              ) : (
+                <SheetGround tint="background" frosted />
+              )}
+              <Animated.View style={[{ height: bodyHeight }, bodyStyle]}>
+                <GestureDetector gesture={controller.gestures.header}>
+                  <View
+                    collapsable={false}
+                    style={
+                      target.kind !== 'task'
+                        ? { backgroundColor: theme.colors.background }
+                        : undefined
+                    }>
+                    <View style={styles.sheetGrabber}>
+                      <HomeSheetGrabber />
                     </View>
-                  }
-                  trailing={
-                    <>
-                      <View
-                        testID="home-reply-state"
-                        style={[styles.chip, { backgroundColor: withAlpha(tone, 0.14) }]}>
-                        <Text variant="caption" weight="semibold" color={tone} numberOfLines={1}>
-                          {word}
+                    <HomeSheetHeader
+                      title={title}
+                      titleLines={1}
+                      titleVariant="subheading"
+                      closeTestID="home-reply-close"
+                      onClose={close}
+                      caption={
+                        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                          {agentName}
                         </Text>
-                      </View>
-                      {onOpenFull ? (
-                        <PressableScale
-                          testID="home-reply-open"
-                          accessibilityRole="button"
-                          accessibilityLabel={t`Open the full conversation`}
-                          hitSlop={8}
-                          onPress={onOpenFull}
-                          style={styles.openButton}>
-                          <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                            {`${t`Open`} ↗`}
-                          </Text>
-                        </PressableScale>
-                      ) : null}
-                    </>
-                  }
-                />
-              </View>
-            </GestureDetector>
-            <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
-              {target.kind === 'session' ? (
-                <GestureDetector gesture={controller.gestures.content}>
-                  <View collapsable={false} style={styles.fill}>
-                    <DrawerSession
-                      target={target}
-                      scrollGesture={controller.gestures.scroll}
-                      atTop={controller.contentAtTop}
-                      dragging={controller.contentDragging}
+                      }
+                      trailing={
+                        onOpenFull ? (
+                          <PressableScale
+                            testID="home-reply-open"
+                            accessibilityRole="button"
+                            accessibilityLabel={t`Open the full conversation`}
+                            hitSlop={12}
+                            onPress={onOpenFull}>
+                            <OpenExternalIcon size={18} color={theme.colors.textMuted} />
+                          </PressableScale>
+                        ) : null
+                      }
                     />
                   </View>
                 </GestureDetector>
-              ) : target.kind === 'pane' ? (
-                // The terminal's own gestures own its bounds: no drawer gesture
-                // wraps it, so its scrollback pans and pinches win there.
-                <DrawerPane target={target} />
-              ) : null}
+                <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
+                  {target.kind === 'session' ? (
+                    <GestureDetector gesture={controller.gestures.content}>
+                      <View collapsable={false} style={styles.fill}>
+                        <DrawerSession
+                          target={target}
+                          scrollGesture={controller.gestures.scroll}
+                          atTop={controller.contentAtTop}
+                          dragging={controller.contentDragging}
+                        />
+                      </View>
+                    </GestureDetector>
+                  ) : target.kind === 'pane' ? (
+                    // The terminal's own gestures own its bounds: no drawer gesture
+                    // wraps it, so its scrollback pans and pinches win there.
+                    <DrawerPane target={target} />
+                  ) : null}
+                </View>
+              </Animated.View>
             </View>
           </Animated.View>
+          {transition?.shot ? (
+            <SheetDust
+              shot={transition.shot}
+              // The front reaches from the field's top edge: the ash rises
+              // out of the dock, and a sheet let go partway erodes from there.
+              extent={visibleOver(transition.extent, keyboardHeight, floor) - controller.field}
+              progress={dust}
+              token={transition.token}
+              onDrawn={controller.drawn}
+            />
+          ) : null}
         </Animated.View>
       </View>
     </>
@@ -726,7 +1010,6 @@ function DrawerSession({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
   const reduced = useReducedMotion();
   const markdownStyle = usePaneChatMarkdownStyle();
   const [store] = useState(createAgentTranscriptStore);
@@ -836,36 +1119,7 @@ function DrawerSession({
     state.key === key ? state.live.permissions : undefined
   );
   const forms = useHomeThreadLive((state) => (state.key === key ? state.live.forms : undefined));
-  const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
-  const decide = async (requestId: string, decision: PermissionDecision) => {
-    if (!owns()) return;
-    try {
-      await replyAgentPermission(sessionId, asid, requestId, decision);
-      useHomeAttention
-        .getState()
-        .resolve({ kind: 'agent-session', serverId, sessionId, directory: '', asid }, requestId);
-    } catch (failure) {
-      console.warn('Home could not reply to a permission:', failure);
-      showToast({
-        variant: 'danger',
-        title: t`Could not reply`,
-        message: describeGatewayFailure(failure, t`Could not reply`).message,
-      });
-    }
-  };
-  const answer = async (formId: string, answers: Record<string, unknown>) => {
-    if (!owns()) return;
-    try {
-      await replyAgentForm(sessionId, asid, formId, answers);
-    } catch (failure) {
-      console.warn('Home could not answer a question:', failure);
-      showToast({
-        variant: 'danger',
-        title: t`Could not reply`,
-        message: describeGatewayFailure(failure, t`Could not reply`).message,
-      });
-    }
-  };
+  const { decide, answer } = useHomeSessionReplies(target);
   const replyable = (forms ?? []).filter((form) => canReplyAgentForm(form, runtime));
   const requests =
     (permissions?.length ?? 0) > 0 || replyable.length > 0 ? (
@@ -974,6 +1228,30 @@ function DrawerSession({
 }
 
 const doNothing = () => {};
+/** How often an open drawer re-reads its pane's size while output streams. */
+const PANE_GEOMETRY_REFRESH_MS = 2000;
+
+/** The pane fields the drawer draws from (size, cursor, screen ownership). */
+const DRAWN_PANE_FIELDS = [
+  'width',
+  'height',
+  'cursor_x',
+  'cursor_y',
+  'terminal_title_stripped',
+  'foreground_command',
+] as const;
+
+function sameDrawnPane(a: HerdrEntity | undefined, b: HerdrEntity | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.id !== b.id) return false;
+  if (DRAWN_PANE_FIELDS.some((key) => a.raw[key] !== b.raw[key])) return false;
+  const scrollA = a.raw.scroll as Record<string, unknown> | undefined;
+  const scrollB = b.raw.scroll as Record<string, unknown> | undefined;
+  return (
+    scrollA?.viewport_rows === scrollB?.viewport_rows &&
+    scrollA?.alternate_on === scrollB?.alternate_on
+  );
+}
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
 /**
@@ -1001,6 +1279,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const sessionId =
     useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
   const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
+  const [paneRetry, setPaneRetry] = useState(0);
   const [held, setHeld] = useState<PaneReadWindow>({ output: '', capturedRows: 0 });
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -1021,11 +1300,46 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const loadPane = useStableHandler(() => {
     if (!sessionId) return;
     void loadPanes(sessionId).then(
-      (panes) => setPane(panes.find((item) => item.id === paneId)),
-      () => {}
+      (panes) => {
+        const next = panes.find((item) => item.id === paneId);
+        // A re-read that changed nothing this pane is drawn from keeps the
+        // object it had, so it re-renders nothing.
+        setPane((current) => (sameDrawnPane(current, next) ? current : next));
+      },
+      // A failed read leaves the pane without a size, so the fit cannot apply:
+      // try again shortly rather than waiting for the next output.
+      () => setPaneRetry((count) => count + 1)
     );
   });
+  // herdr sends no event when a pane is resized on the computer, but the
+  // program in it redraws for its new width, so output is the cue to look at
+  // the pane's size again: at most once per `PANE_GEOMETRY_REFRESH_MS` while
+  // output streams, the last call trailing the burst. The canvas eases to the
+  // new fit (`SkiaTerminal`'s refit).
+  const geometryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshGeometry = useStableHandler(() => {
+    if (geometryTimer.current) return;
+    geometryTimer.current = setTimeout(() => {
+      geometryTimer.current = null;
+      if (AppState.currentState === 'active') loadPane();
+    }, PANE_GEOMETRY_REFRESH_MS);
+  });
+  useEffect(
+    () => () => {
+      if (geometryTimer.current) clearTimeout(geometryTimer.current);
+    },
+    []
+  );
+  useEffect(() => {
+    if (paneRetry === 0 || !appActive) return;
+    const timer = setTimeout(loadPane, PANE_GEOMETRY_REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [paneRetry, appActive, loadPane]);
+  // A read that lands after a newer streamed frame is not applied: see
+  // `createStreamReadFence`.
+  const [streamReadFence] = useState(createStreamReadFence);
   const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
+    if (origin === 'frame') streamReadFence.noteFrame();
     const shape = readShape();
     setHeld((current) =>
       foldPaneWindow(
@@ -1046,11 +1360,13 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     const owner = useGatewayConnectionStore.getState().record;
     if (owner?.serverId !== serverId) return;
     reading.current = true;
+    const notOvertaken = streamReadFence.begin();
     void readPaneOutput(sessionId, paneId, 'ansi', INITIAL_PANE_OUTPUT_LINES, readShape().source)
       .then(
         (output) => {
           const now = useGatewayConnectionStore.getState().record;
-          if (sameComputer(now, owner) && now?.deviceId === owner.deviceId) fold(output, 'refresh');
+          if (sameComputer(now, owner) && now?.deviceId === owner.deviceId && notOvertaken())
+            fold(output, 'refresh');
         },
         () => {
           setFailed(true);
@@ -1082,10 +1398,14 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     useMemo(
       () => ({
         onPaneRevision: (revised: string) => {
-          if (revised === paneId) read();
+          if (revised !== paneId) return;
+          read();
+          refreshGeometry();
         },
         onPaneOutput: (revised: string, _revision: number, text: string) => {
-          if (revised === paneId) fold(text, 'frame');
+          if (revised !== paneId) return;
+          fold(text, 'frame');
+          refreshGeometry();
         },
         onStructureChanged: loadPane,
         onLayoutChanged: loadPane,
@@ -1097,7 +1417,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
         onDisconnected: () => setStreamUp(false),
         onOutputFrame: (payload: unknown) => noteGatewayGeneration(serverId, payload),
       }),
-      [paneId, serverId, read, fold, loadPane]
+      [paneId, serverId, read, fold, loadPane, refreshGeometry]
     )
   );
 
@@ -1114,10 +1434,7 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
       </View>
     );
   return (
-    <Animated.View
-      testID="home-reply-pane"
-      entering={fadeIn('short')}
-      style={[styles.pane, { backgroundColor: terminal.background }]}>
+    <Animated.View testID="home-reply-pane" entering={fadeIn('short')} style={styles.pane}>
       <TerminalBoundary
         resetKey={paneId}
         background={terminal.background}
@@ -1129,6 +1446,8 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
           screenRows={screenRows}
           ownsScreen={ownsScreen}
           screenFocused
+          paneScale="mirror"
+          opaqueCanvas={false}
           paneColumns={pane ? numberField(pane, 'width') || undefined : undefined}
           paneRows={pane ? numberField(pane, 'height') || undefined : undefined}
           paneCursorColumn={optionalNumberField(pane, 'cursor_x')}
@@ -1146,10 +1465,6 @@ const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
   sheet: { position: 'absolute', bottom: -80, overflow: 'hidden' },
   sheetGrabber: { alignItems: 'center', paddingTop: 8 },
-  captionRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  captionName: { flexShrink: 1 },
-  chip: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
-  openButton: { paddingHorizontal: 2, paddingVertical: 4 },
   body: { flex: 1 },
   fill: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },

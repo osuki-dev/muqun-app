@@ -13,6 +13,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -27,25 +28,35 @@ import { EdgeFade } from '@/components/edge-fade';
 import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
-import { useStableHandler } from '@/hooks/use-render-refs';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
+import { useStructuralValue } from '@/hooks/use-structural-value';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { filterHomeRecent, type HomeContinueEntry } from '@/lib/home-continue';
-import { wrapStageIndex } from '@/lib/home-stage-geometry';
+import type { HomeTaskRow } from '@/lib/home-in-progress';
+import type { HomeTarget } from '@/lib/home-recents';
+import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
+import { stageProgressSession } from '@/lib/stage-progress-session';
+import type { StageProgress } from '@/lib/stage-overlay';
 import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
-import { SETTLE, timing } from '@/lib/motion';
+import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
+import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
+import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
-import { StageAgentRow } from './stage-agent-row';
+import { STAGE_AGENT_ROW_HEIGHT, StageAgentRow } from './stage-agent-row';
+import { StageOverlay } from './stage-overlay';
+import { StageSubtitle } from './stage-subtitle';
 import { useStageComposition, type StageImageInput } from './stage-composition';
 import { StageSessionStrip } from './stage-session-strip';
+import { useStageTextHalo, type StageTextHalo } from './stage-text-halo';
 import { StageView } from './stage-view';
 import { createStageOpener } from './types';
 
@@ -89,10 +100,15 @@ export type HomeStageLayoutProps = {
   onSelect: (index: number) => void;
   onOpen: (index: number) => void;
   /** An agent's chip: its computer, at the agent's pane when known. */
-  onOpenAgent: (index: number, paneId?: string) => void;
+  onOpenAgent: (index: number, paneId?: string, sessionId?: string) => void;
   onOpenTasks: (index: number) => void;
   onOpenDetails: (index: number) => void;
-  onNewTask: () => void;
+  /** The needs-you card's View: a session's conversation, as Needs you opens it. */
+  onOpenRequest: (target: HomeTarget) => void;
+  /** The needs-you card's View on a waiting ledger task, as Needs you opens it. */
+  onOpenWaitingTask: (row: HomeTaskRow) => void;
+  /** A double tap on the art: a new task on the composer's computer. */
+  onNewTask?: () => void;
   onViewport: (height: number) => void;
 };
 
@@ -117,7 +133,7 @@ export type HomeStageProps = Omit<
   recentEntries: readonly HomeContinueEntry[];
   onSelectServer: (serverId: string) => void;
   /** Open a computer; at `paneId` when an agent's chip was tapped. */
-  onOpenServer: (serverId: string, paneId?: string) => void;
+  onOpenServer: (serverId: string, paneId?: string, sessionId?: string) => void;
   onOpenTasks: (serverId: string) => void;
   onOpenDetails: (serverId: string) => void;
 };
@@ -163,7 +179,9 @@ export function HomeStage({
     setBurst((count) => count + 1);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [latestDoneMs]);
-  const panels = useMemo(
+  // Rebuilt on every task frame, pane mirror pass and minute; kept by identity
+  // while nothing shown changed, so the Stage below can skip the render.
+  const built = useMemo(
     () =>
       stagePanels({
         servers,
@@ -176,19 +194,39 @@ export function HomeStage({
       }),
     [servers, connectionStatuses, agentsByServer, attention, tasks, recentEntries, nowMs]
   );
+  const panels = useStructuralValue(built);
   const selectedIndex = stageSelectedIndex(panels, chosenServerId);
   const sessions = useMemo(
-    () =>
-      chosenServerId
-        ? filterHomeRecent(recentEntries, chosenServerId).slice(0, STAGE_STRIP_LIMIT)
-        : [],
+    () => (chosenServerId ? filterHomeRecent(recentEntries, chosenServerId) : []),
     [recentEntries, chosenServerId]
   );
-  const at = (index: number) => panels[wrapStageIndex(index, panels.length)]?.serverId;
-  const run = (action: (serverId: string) => void) => (index: number) => {
-    const serverId = at(index);
-    if (serverId) action(serverId);
+  // Stable across renders, so a store update here does not re-render the GPU
+  // scene through fresh callbacks; each reads the panels as last rendered.
+  const readPanels = useLatestReader(panels);
+  const at = (index: number) => {
+    const current = readPanels();
+    return current[wrapStageIndex(index, current.length)]?.serverId;
   };
+  const select = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onSelectServer(serverId);
+  });
+  const open = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenServer(serverId);
+  });
+  const openAgent = useStableHandler((index: number, paneId?: string, sessionId?: string) => {
+    const serverId = at(index);
+    if (serverId) onOpenServer(serverId, paneId, sessionId);
+  });
+  const openTasks = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenTasks(serverId);
+  });
+  const openDetails = useStableHandler((index: number) => {
+    const serverId = at(index);
+    if (serverId) onOpenDetails(serverId);
+  });
   return (
     <HomeStageLayout
       {...layout}
@@ -196,14 +234,11 @@ export function HomeStage({
       selectedIndex={selectedIndex}
       sessions={sessions}
       burst={burst}
-      onSelect={run(onSelectServer)}
-      onOpen={run(onOpenServer)}
-      onOpenAgent={(index, paneId) => {
-        const serverId = at(index);
-        if (serverId) onOpenServer(serverId, paneId);
-      }}
-      onOpenTasks={run(onOpenTasks)}
-      onOpenDetails={run(onOpenDetails)}
+      onSelect={select}
+      onOpen={open}
+      onOpenAgent={openAgent}
+      onOpenTasks={openTasks}
+      onOpenDetails={openDetails}
     />
   );
 }
@@ -243,6 +278,8 @@ export function HomeStageLayout({
   onOpenAgent,
   onOpenTasks,
   onOpenDetails,
+  onOpenRequest,
+  onOpenWaitingTask,
   onNewTask,
   onViewport,
 }: HomeStageLayoutProps) {
@@ -250,7 +287,7 @@ export function HomeStageLayout({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, fontScale } = useWindowDimensions();
   const wallpaper = useStageWallpaper();
   const composition = useStageComposition({ coverHeader, artwork, wallpaper });
   // A cover's authored sky stays open: a short, soft scrim, and the HUD's text
@@ -272,24 +309,72 @@ export function HomeStageLayout({
   const [footStack, setFootStack] = useState(0);
   const foot = footStack > 0 ? dockHeight + 6 + footStack : 0;
   const openComputer = useStableHandler(() => opener.open(() => onOpen(selectedIndex)));
+  // Where the needs-you card and the progress subtitle stand, as the Stage measured it.
+  const [band, setBand] = useState<StageOverlayBand | null>(null);
+  // A waiting request takes the art; only without one does the subtitle show.
+  const [waiting, setWaiting] = useState(false);
+  const openRequest = useStableHandler((target: HomeTarget) =>
+    opener.open(() => onOpenRequest(target))
+  );
+  const openWaitingTask = useStableHandler((row: HomeTaskRow) =>
+    opener.open(() => onOpenWaitingTask(row))
+  );
+  const openPane = useStableHandler((paneId?: string, sessionId?: string) =>
+    opener.open(() => onOpenAgent(selectedIndex, paneId, sessionId))
+  );
+  // Resolve against all sessions, not only the six cards in the strip.
+  // A gateway-reported terminal association opens its conversation first.
+  const stripSessions = useMemo(() => sessions.slice(0, STAGE_STRIP_LIMIT), [sessions]);
+  const openProgress = useStableHandler((line: StageProgress) => {
+    if (!selected) return;
+    const serverId = selected.serverId;
+    const entry = stageProgressSession({
+      line,
+      serverId,
+      entries: sessions,
+      sessions: useHomeAgentSessions.getState().byServer[serverId],
+      sessionsSeenAtMs: useHomeAgentSessions.getState().seenAtMs[serverId],
+      panes: useServerAgents.getState().byServer[serverId],
+      nowMs: Date.now(),
+    });
+    if (entry) opener.open(() => onOpenSession(entry));
+    else if (line.key.startsWith('pane:'))
+      openPane(line.key.slice('pane:'.length), line.terminal?.sessionId);
+  });
   const actionsPanel = panels.find((panel) => panel.serverId === actionsFor);
   const actionsIndex = actionsPanel ? panels.indexOf(actionsPanel) : -1;
 
-  // The HUD's foot rides the dock: when the dock grows (Home's conversation
-  // strip arriving) or shrinks, the session strip moves with it rather than
-  // jumping a frame later.
-  const dockLift = useSharedValue(dockHeight);
-  useEffect(() => {
-    dockLift.set(withTiming(dockHeight, timing('short')));
-  }, [dockHeight, dockLift]);
-  const footStyle = useAnimatedStyle(() => ({ bottom: dockLift.get() + 6 }));
-  const footScrimStyle = useAnimatedStyle(() => ({ height: dockLift.get() + 230 }));
+  // The dock lays out at its measured height immediately. Its neighbours must
+  // use that same height, without a second animation trailing a new reply header.
+  // While typing, the strip rides up with the composer on the keyboard's own
+  // motion and sits right above it; the rows over it step aside.
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const keyboardHeight = useKeyboardState((state) => state.height);
+  const typing = keyboardHeight > 0;
+  // The art's free height above the foot: subtitles stack upward into it.
+  const subtitleRoom = Math.max(0, windowHeight - keyboardHeight - dockHeight - topInset - 240);
+  const subtitleRows = Math.min(5, Math.floor(subtitleRoom / Math.max(48, 36 * fontScale + 16)));
+  const footStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: keyboardOffset.get() }],
+  }));
+  const footScrimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: keyboardOffset.get() }],
+  }));
 
   const sheet = useSharedValue(0);
   const openList = useStableHandler((open: boolean) => {
     setListOpen(open);
     sheet.set(withSpring(open ? 1 : 0, SETTLE));
   });
+  const overlayActions = useMemo(
+    () => ({
+      onOpenRequest: openRequest,
+      onOpenTask: openWaitingTask,
+      onOpenPane: openPane,
+      onOpenList: () => openList(true),
+    }),
+    [openRequest, openWaitingTask, openPane, openList]
+  );
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - sheet.get()) * windowHeight }],
   }));
@@ -352,6 +437,7 @@ export function HomeStageLayout({
         burst={burst}
         opener={opener}
         onSelect={onSelect}
+        onOverlayBand={setBand}
         onNewTask={onNewTask}
       />
 
@@ -427,42 +513,68 @@ export function HomeStageLayout({
       ) : null}
 
       {/* Bottom: a scrim, the handle and the selected computer's sessions, above the composer. */}
-      <Animated.View pointerEvents="none" style={[styles.bottomScrim, footScrimStyle]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.bottomScrim, { height: dockHeight + 230 }, footScrimStyle]}>
         <EdgeFade edge="bottom" color={theme.colors.background} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View
         pointerEvents="box-none"
-        style={[styles.bottom, footStyle]}
-        onLayout={(event) => setFootStack(Math.round(event.nativeEvent.layout.height))}>
+        style={[styles.bottom, { bottom: dockHeight + 6 }, footStyle]}
+        onLayout={(event) => {
+          // The art stands on the resting foot, not on the subtitles' room
+          // above it: the rows stepping aside while typing do not move it.
+          if (!typing)
+            setFootStack(
+              Math.round(event.nativeEvent.layout.height - (panels.length > 0 ? subtitleRoom : 0))
+            );
+        }}>
         {emptyState ? <View style={styles.empty}>{emptyState}</View> : null}
         {panels.length > 0 ? (
-          <StageAgentRow
-            panel={selected}
-            paused={paused || listOpen}
-            onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-          />
+          <Animated.View
+            pointerEvents="box-none"
+            entering={fadeIn('short')}
+            exiting={fadeOut('short')}>
+            <StageFootLine
+              serverId={selected?.serverId}
+              compact={typing}
+              maxRows={subtitleRows}
+              room={subtitleRoom}
+              subtitle={!paused && !listOpen && !waiting}
+              onOpen={openProgress}>
+              <StageAgentRow
+                panel={selected}
+                paused={paused || listOpen}
+                onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+              />
+            </StageFootLine>
+          </Animated.View>
         ) : null}
         {panels.length > 0 ? (
           <GestureDetector gesture={pull}>
             <View>
-              <PressableScale
-                testID="home-stage-pull"
-                accessibilityRole="button"
-                accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
-                onPress={() => openList(true)}
-                style={styles.handleRow}>
-                <HomeSheetGrabber />
-                {hasAttention ? (
-                  <Text variant="caption" weight="semibold" color={theme.colors.warning}>
-                    {t`Needs you`}
-                  </Text>
-                ) : null}
-              </PressableScale>
+              {typing ? null : (
+                <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
+                  <PressableScale
+                    testID="home-stage-pull"
+                    accessibilityRole="button"
+                    accessibilityLabel={hasAttention ? t`All sessions, needs you` : t`All sessions`}
+                    onPress={() => openList(true)}
+                    style={styles.handleRow}>
+                    <HomeSheetGrabber />
+                    {hasAttention ? (
+                      <Text variant="caption" weight="semibold" color={theme.colors.warning}>
+                        {t`Needs you`}
+                      </Text>
+                    ) : null}
+                  </PressableScale>
+                </Animated.View>
+              )}
               <StageSessionStrip
                 serverId={selected?.serverId}
                 selectedIndex={selectedIndex}
                 panelCount={panels.length}
-                sessions={sessions}
+                sessions={stripSessions}
                 threadKey={threadKey}
                 onClearThread={onClearThread}
                 onOpenSession={onOpenSession}
@@ -473,6 +585,16 @@ export function HomeStageLayout({
           </GestureDetector>
         ) : null}
       </Animated.View>
+
+      {/* Over the art, on the foot rows: what needs the reader, else what an agent reports. */}
+      {selected && band && !paused && !listOpen && !typing ? (
+        <StageOverlay
+          serverId={selected.serverId}
+          band={band}
+          actions={overlayActions}
+          onWaitingChange={setWaiting}
+        />
+      ) : null}
 
       {/* The full list, pulled up over the stage: the existing list UI. */}
       <Animated.View
@@ -533,20 +655,6 @@ function useStageWallpaper() {
 }
 
 /**
- * A soft glow in the background colour behind the HUD's text, so it reads on
- * a bright sky by day and a dark one by night without a plate.
- */
-function useStageTextHalo() {
-  const theme = useThemeTokens();
-  const { resolvedMode } = useThemeMode();
-  return {
-    textShadowColor: withAlpha(theme.colors.background, resolvedMode === 'light' ? 0.9 : 0.75),
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  };
-}
-
-/**
  * The computer's name and status as one control: a tap opens the computer, a
  * long press offers its actions. The screen reader hears its name, status,
  * sessions and place among the computers, and adjusts it to move between
@@ -604,13 +712,7 @@ function StageHeaderButton({
  * when, an agent working, or how many things need the reader, in the warning
  * colour. Its sessions are the strip's to show.
  */
-function StageStatusLine({
-  panel,
-  halo,
-}: {
-  panel: StagePanel;
-  halo: ReturnType<typeof useStageTextHalo>;
-}) {
+function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHalo }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
@@ -653,6 +755,79 @@ function StageStatusLine({
   );
 }
 
+/**
+ * The agent chips' row, or over it what working agents report. The row keeps
+ * the chips' height whether or not subtitles show, so the foot the art stands
+ * on never moves: the subtitles float, anchored to the row's bottom, the first
+ * in the chips' place and more growing upward over the art, while the chips
+ * fade out under them and back when they go. While typing the row folds away
+ * so the strip sits on the composer, and up to two one-line subtitles float
+ * above the strip.
+ */
+function StageFootLine({
+  serverId,
+  subtitle,
+  compact,
+  maxRows,
+  room,
+  onOpen,
+  children,
+}: {
+  serverId: string | undefined;
+  subtitle: boolean;
+  compact: boolean;
+  maxRows: number;
+  /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
+  room: number;
+  onOpen: (line: StageProgress) => void;
+  children: ReactNode;
+}) {
+  const [shown, setShown] = useState(false);
+  const covered = subtitle && shown;
+  // Two fades on one row: the chips go under a subtitle, and the whole row
+  // folds to nothing while typing, its height easing so the strip glides up
+  // with the keyboard instead of jumping a row in one frame.
+  const chips = useSharedValue(covered ? 0 : 1);
+  const fold = useSharedValue(compact ? 0 : 1);
+  useEffect(() => {
+    chips.set(withTiming(covered ? 0 : 1, timing('short')));
+  }, [chips, covered]);
+  useEffect(() => {
+    fold.set(withTiming(compact ? 0 : 1, timing('short')));
+  }, [fold, compact]);
+  const rowStyle = useAnimatedStyle(() => ({
+    height: STAGE_AGENT_ROW_HEIGHT * fold.get(),
+    opacity: chips.get() * fold.get(),
+  }));
+  const hidden = covered || compact;
+  // The row's box spans the room above it: Android drops views drawn outside
+  // their parent's bounds from accessibility and hit testing, so the floating
+  // lines must stay inside it.
+  return (
+    <View pointerEvents="box-none" style={{ paddingTop: room }}>
+      <Animated.View
+        pointerEvents={hidden ? 'none' : 'box-none'}
+        accessibilityElementsHidden={hidden}
+        importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+        style={[styles.footRow, rowStyle]}>
+        {children}
+      </Animated.View>
+      {serverId && subtitle && maxRows > 0 ? (
+        <View pointerEvents="box-none" style={styles.footLine}>
+          <StageSubtitle
+            key={serverId}
+            serverId={serverId}
+            compact={compact}
+            maxRows={maxRows}
+            onShownChange={setShown}
+            onOpen={onOpen}
+          />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   topScrim: { position: 'absolute', left: 0, right: 0, top: 0 },
@@ -681,6 +856,15 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', left: 16, right: 16 },
   bottomScrim: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottom: { position: 'absolute', left: 0, right: 0, gap: 8 },
+  footRow: { overflow: 'hidden' },
+  footLine: {
+    position: 'absolute',
+    left: HOME_DOCK_OUTER_INSET,
+    right: HOME_DOCK_OUTER_INSET,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
   empty: { paddingHorizontal: 16 },
   handleRow: {
     alignSelf: 'center',

@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import { View, StyleSheet, type ViewInstance } from 'react-native';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import {
   NoticeIcon,

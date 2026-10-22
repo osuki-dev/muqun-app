@@ -96,6 +96,11 @@ msgstr "{0, plural, other {#줄 더 있음}}"
 msgid "{0, plural, one {# operation} other {# operations}}"
 msgstr "{0, plural, other {작업 #개}}"
 
+#. placeholder {0}: need.count
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{0, plural, one {# request waiting} other {# requests waiting}}"
+msgstr "{0, plural, other {요청 #개 대기 중}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -131,6 +136,11 @@ msgstr "{0} (이 기기)"
 #: src/lib/attachments.ts
 msgid "{0} did not upload. Retry it or remove it to send."
 msgstr "{0}을(를) 업로드하지 못했습니다. 다시 시도하거나 제거한 뒤 보내세요"
+
+#. placeholder {0}: events.length
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{0} events, newest first"
+msgstr "이벤트 {0}개, 최신순"
 
 #. placeholder {0}: failed.name
 #. placeholder {1}: uploadLimitMb(attachmentLimitBytes(failed))
@@ -326,6 +336,10 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{dpr} of the device's {device}"
+msgstr "{dpr} (기기 {device})"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
@@ -370,6 +384,10 @@ msgstr "{minutes, plural, other {#분}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} 조합을 쓰려면 이 터미널의 프로그램이 확장 키를 켜야 합니다"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "{more, plural, one {# more needs you} other {# more need you}}"
+msgstr "{more, plural, other {확인이 필요한 항목 #개 더}}"
+
 #: src/components/home-agent-sheet.tsx
 msgid "{name} (terminal)"
 msgstr "{name}(터미널)"
@@ -406,6 +424,10 @@ msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
 msgid "{providerName} (terminal)"
 msgstr "{providerName}(터미널)"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{quality}, trying one rung up"
+msgstr "{quality}, 한 단계 위를 시험 중"
+
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-sleep-tool-body.tsx
 msgid "{remaining} remaining"
@@ -419,6 +441,14 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0}개 중 {running}개 실행 중"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: {size}, capped at {cap} px"
+msgstr "{slot}: {size}, 최대 {cap}px"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "{slot}: not loaded, capped at {cap} px"
+msgstr "{slot}: 로드 안 됨, 최대 {cap}px"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -441,6 +471,10 @@ msgstr "{waiting, plural, other {# 확인 필요}}"
 #: src/components/task-row.tsx
 msgid "→ {name}"
 msgstr "→ {name}"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "+{more} more"
+msgstr "+{more}개"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -718,6 +752,10 @@ msgstr "한 번 허용"
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Allow: {subject}"
+msgstr "허용: {subject}"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Already on"
 msgstr "사용 중"
@@ -763,6 +801,7 @@ msgstr "외 {rest}개"
 msgid "another computer"
 msgstr "다른 컴퓨터"
 
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "답변"
@@ -784,6 +823,14 @@ msgstr "API 키 (선택 사항)"
 msgid "API URL"
 msgstr "API URL"
 
+#: src/components/settings-storage.tsx
+msgid "App code"
+msgstr "앱 코드"
+
+#: src/components/settings-storage.tsx
+msgid "App data"
+msgstr "앱 데이터"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "앱 아이콘"
@@ -804,6 +851,10 @@ msgstr "앱 잠금 사용 불가"
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
 msgstr "앱 이름과 슬로건"
+
+#: src/components/settings-storage.tsx
+msgid "App updates"
+msgstr "앱 업데이트"
 
 #: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
@@ -827,7 +878,6 @@ msgid "Apply theme"
 msgstr "테마 적용"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "적용 중…"
 
@@ -1085,6 +1135,10 @@ msgstr "빌드 (Build)"
 msgid "Built-in"
 msgstr "기본 제공"
 
+#: src/components/settings-storage.tsx
+msgid "Cache"
+msgstr "캐시"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Cache read"
 msgstr "캐시 읽기"
@@ -1321,6 +1375,7 @@ msgstr "작업 트리 선택"
 msgid "Classic"
 msgstr "클래식"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/settings-storage.tsx
 msgid "Clear"
 msgstr "비우기"
@@ -1853,7 +1908,6 @@ msgstr "컨트롤 Z, 일시 중단"
 msgid "Controls"
 msgstr "제어"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
 msgid "Conversation"
 msgstr "대화"
@@ -1862,6 +1916,7 @@ msgstr "대화"
 msgid "Conversational help and open-ended project questions."
 msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/agent-compaction-pill.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1887,6 +1942,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
 #: src/app/diagram-viewer.tsx
+#: src/app/settings-stage-diagnostics.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
@@ -2228,7 +2284,7 @@ msgid "Could not rename"
 msgstr "이름을 바꿀 수 없습니다"
 
 #: src/components/agent-workbench.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-session-replies.ts
 msgid "Could not reply"
 msgstr "응답할 수 없습니다"
 
@@ -2387,6 +2443,7 @@ msgid "Cropped preview · Open full image"
 msgstr "일부 미리보기 · 전체 이미지 보기"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/home-target-sheet.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Current"
@@ -2661,6 +2718,7 @@ msgid "Downloading theme"
 msgstr "테마 다운로드 중"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "다운로드 중…"
 
@@ -2830,7 +2888,6 @@ msgid "Export theme"
 msgstr "테마 내보내기"
 
 #: src/components/agent-sleep-tool-body.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Failed"
@@ -3008,14 +3065,6 @@ msgstr "목표를 보내고, 일을 시작하세요"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "전체 패키지 크기: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "전체 패키지 크기입니다. 파일 재사용으로 실제 다운로드 크기가 줄어들 수 있습니다"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3248,7 +3297,6 @@ msgid "How to use Muqun"
 msgstr "Muqun 사용법"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -3296,8 +3344,8 @@ msgid "Images download from"
 msgstr "이미지 다운로드 출처"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "파일에서 가져오기…"
+msgid "Import a file"
+msgstr "파일에서 가져오기"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -3384,6 +3432,7 @@ msgid "Installing images"
 msgstr "이미지 설치 중"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "설치 중…"
 
@@ -3958,7 +4007,6 @@ msgstr "설정 필요"
 msgid "Needs update"
 msgstr "업데이트 필요"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -3975,6 +4023,7 @@ msgid "Needs your attention"
 msgstr "확인이 필요함"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/server-agent-rows.tsx
 #: src/lib/notifications.ts
@@ -3991,13 +4040,12 @@ msgid "Never seen"
 msgstr "확인된 적 없음"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 msgid "New conversation"
 msgstr "새 대화"
 
 #: src/components/home-composer-dock.tsx
-msgid "New conversation with {agentLabel}…"
-msgstr "{agentLabel}와(과) 새 대화…"
+msgid "New conversation with {agentLabel}"
+msgstr "{agentLabel}와(과) 새 대화"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -4047,8 +4095,8 @@ msgid "New workspace"
 msgstr "새 워크스페이스"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "새 워크트리…"
+msgid "New worktree"
+msgstr "새 워크트리"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4260,6 +4308,10 @@ msgstr "저장된 SSH 호스트가 아직 없습니다"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "No Stage art events recorded yet."
+msgstr "아직 기록된 스테이지 아트 이벤트가 없습니다"
+
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "정지 화면 없음"
@@ -4434,7 +4486,6 @@ msgid "Off"
 msgstr "꺼짐"
 
 #: src/components/home-composer-options.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
@@ -4444,9 +4495,11 @@ msgstr "오프라인"
 msgid "OFFLINE"
 msgstr "오프라인"
 
+#. placeholder {0}: age(row.lastSeenMs, nowMs)
 #. placeholder {0}: age(seen, nowMs)
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Offline · last seen {0}"
 msgstr "오프라인 · 마지막 확인 {0}"
 
@@ -4489,8 +4542,8 @@ msgid "Only this Home row is hidden. The task and its history remain available. 
 msgstr "홈의 이 항목만 숨깁니다. 작업과 해당 기록은 계속 사용할 수 있습니다. 실행 중인 작업은 중지되지 않습니다"
 
 #: src/components/home-connections.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/home-stage/home-stage-layout.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/task-row.tsx
@@ -4724,6 +4777,10 @@ msgstr "이 컴퓨터를 엽니다"
 msgid "Options for {0}"
 msgstr "{0} 옵션"
 
+#: src/components/settings-storage.tsx
+msgid "Other cache"
+msgstr "기타 캐시"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Other computers"
 msgstr "다른 컴퓨터"
@@ -4855,8 +4912,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "URL 붙여넣기…"
+msgid "Paste a URL"
+msgstr "URL 붙여넣기"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."
@@ -4893,6 +4950,7 @@ msgid "Permission"
 msgstr "권한"
 
 #: src/components/agent-permission-card.tsx
+#: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
 msgstr "권한 필요"
 
@@ -4903,6 +4961,10 @@ msgstr "사진 보관함"
 #: src/components/theme-link-import.tsx
 msgid "Pinned commit"
 msgstr "고정된 커밋"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Pixel ratio"
+msgstr "픽셀 비율"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-mode-sheet.tsx
@@ -5056,6 +5118,10 @@ msgstr "공개 키를 복사했습니다"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "풀"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Quality rung"
+msgstr "품질 단계"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
@@ -5385,13 +5451,10 @@ msgstr "오디오 다시 재생"
 msgid "Reply from Home"
 msgstr "홈에서 답장"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/home-composer-options.tsx
 msgid "Reply to"
 msgstr "답장 대상"
-
-#: src/components/home-composer-dock.tsx
-msgid "Reply to {threadAgentName}…"
-msgstr "{threadAgentName}에게 답장…"
 
 #: src/components/home-composer-options.tsx
 msgid "Replying to {replyTitle}"
@@ -5459,10 +5522,6 @@ msgstr "초기화: {0}"
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "업데이트를 완료하려면 Muqun을 다시 시작하세요"
-
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Muqun을 다시 시작하는 중…"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
@@ -5852,17 +5911,14 @@ msgstr "보내기"
 msgid "Send {spoken}"
 msgstr "{spoken} 보내기"
 
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "메시지 보내기"
 
 #: src/components/agent-composer.tsx
-msgid "Send a message, type / for commands, $ for skills, @ for files…"
-msgstr "메시지 보내기, / 명령어, $ 스킬, @ 파일…"
-
-#: src/components/agent-composer.tsx
-msgid "Send a message…"
-msgstr "메시지 보내기…"
+msgid "Send a message, type / for commands, $ for skills, @ for files"
+msgstr "메시지 보내기, / 명령어, $ 스킬, @ 파일"
 
 #: src/components/agent-composer.tsx
 msgid "Send message"
@@ -6260,6 +6316,14 @@ msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 msgid "Stage"
 msgstr "스테이지"
 
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage diagnostics"
+msgstr "스테이지 진단"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Stage log copied"
+msgstr "스테이지 로그를 복사했습니다"
+
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "스테이징됨"
@@ -6368,7 +6432,6 @@ msgstr "{name} 시작 중"
 msgid "Starting the camera"
 msgstr "카메라를 시작하는 중"
 
-#: src/components/home-reply-drawer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
@@ -6430,10 +6493,6 @@ msgstr "중지하고 텍스트로 변환"
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
 msgstr "작업 할당 중지"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Stop following this conversation"
-msgstr "이 대화 따라가기 중지"
 
 #: src/components/home-stage/stage-session-strip.tsx
 msgid "Stop replying to {title}"
@@ -6566,10 +6625,6 @@ msgstr "탭"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "사진 찍기"
-
-#: src/components/home-stage/stage-view.tsx
-msgid "Tap · start a new task"
-msgstr "탭 · 새 작업 시작"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Tap again to clear"
@@ -6723,6 +6778,10 @@ msgstr "텍스트 크기"
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
 msgstr "시뮬레이터에 입력할 텍스트"
+
+#: src/app/settings-stage-diagnostics.tsx
+msgid "Textures"
+msgstr "텍스처"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
@@ -6885,6 +6944,10 @@ msgstr "이전 전송 상태를 확인하지 못했습니다"
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "원본 패널 그대로, 문자 격자와 고유 색상을 유지합니다"
+
+#: src/components/settings-storage.tsx
+msgid "The rest of the cache is removed the next time Muqun opens."
+msgstr "나머지 캐시는 다음에 Muqun을 열 때 삭제됩니다"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your computers stay paired."
@@ -7319,6 +7382,10 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 msgid "Tool call"
 msgstr "도구 호출"
 
+#: src/components/settings-storage.tsx
+msgid "Total"
+msgstr "합계"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "{upstream} 추적"
@@ -7402,8 +7469,8 @@ msgid "Type changed"
 msgstr "형식 변경됨"
 
 #: src/components/agent-form-card.tsx
-msgid "Type here…"
-msgstr "여기에 입력…"
+msgid "Type here"
+msgstr "여기에 입력"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -7543,13 +7610,8 @@ msgid "Up arrow"
 msgstr "위쪽 화살표"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "업데이트"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "업데이트가 있습니다"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7575,6 +7637,10 @@ msgstr "{agentName}을(를) 사용하려면 이 호스트의 Muqun Gateway를 �
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "지금 업데이트"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "업데이트 준비 완료"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7603,10 +7669,6 @@ msgstr "동영상 출력을 미리 보려면 Gateway를 업데이트하세요"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "다시 열면 업데이트됩니다"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "Muqun 업데이트 중…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
@@ -7687,6 +7749,10 @@ msgstr "가변 · {0}"
 msgid "Version {version}{0}"
 msgstr "버전 {version}{0}"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "View"
+msgstr "보기"
+
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "파일 변경 사항 보기"
@@ -7755,9 +7821,17 @@ msgstr "이 컴퓨터의 모델 목록을 기다리는 중입니다. 잠시 후 
 msgid "Waiting for uploads to finish…"
 msgstr "업로드가 끝나기를 기다리는 중…"
 
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for you in the terminal"
+msgstr "터미널에서 입력을 기다리는 중"
+
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
 msgstr "답변을 기다리는 중"
+
+#: src/components/home-stage/stage-needs-card.tsx
+msgid "Waiting for your input"
+msgstr "입력을 기다리는 중"
 
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
@@ -7785,7 +7859,7 @@ msgid "While you were away"
 msgstr "자리를 비운 사이"
 
 #: src/components/collaboration-notice.tsx
-#: src/components/home-reply-drawer.tsx
+#: src/components/home-stage/stage-subtitle.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "작업 중"

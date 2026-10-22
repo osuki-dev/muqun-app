@@ -1,5 +1,9 @@
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
-import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import {
+  ThemeArtwork,
+  useHasThemeArtwork,
+  SHELL_WALLPAPER_FALLBACK,
+} from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
@@ -946,7 +950,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     return (
       // Opacity audit: floor -- the screen's opaque base.
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-        <ThemeArtwork slot="shell.wallpaper" />
+        <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
         <ScreenHeader title={t`SSH`} />
         <View style={styles.missing}>
           {loading ? (
@@ -1126,7 +1130,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // Opacity audit: floor -- the screen's opaque base.
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />
 
       <View
         style={styles.terminal}
@@ -1321,7 +1325,7 @@ function StatusLine({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const hasShell = useHasThemeArtwork('shell.wallpaper');
+  const hasShell = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
   // Cancelled is the reader's doing and is lit in no colour at all; the
   // others are the connection's state.
   const light =

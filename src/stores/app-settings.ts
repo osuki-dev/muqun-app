@@ -104,7 +104,9 @@ const defaults: PersistedSettings = {
   // read them, so it waits to be asked for, exactly like the Lock Screen card.
   androidWidgetEnabled: false,
   appLockEnabled: false,
-  cacheCleanupIntervalDays: 0,
+  // On for new installs. A stored value -- including the 0 every earlier build
+  // saved -- always wins, so an existing choice is never flipped.
+  cacheCleanupIntervalDays: 10,
   cacheCleanupEnabledAt: 0,
   cacheCleanupLastSuccessAt: 0,
   hapticsEnabled: true,
@@ -174,11 +176,14 @@ export const useAppSettings = create<AppSettingsState>((set, get) => ({
       const pending = pendingHydrationPatch;
       pendingHydrationPatch = {};
       set({ ...defaults, ...stored, ...pending, hydrated: true });
+      // The default interval starts counting from the first launch that has it.
+      const startsCleanup = get().cacheCleanupIntervalDays > 0 && get().cacheCleanupEnabledAt === 0;
+      if (startsCleanup) set({ cacheCleanupEnabledAt: Date.now() });
 
       // An update that arrived while the read was in flight must be written
       // after the stored blob has been merged, or it could erase unrelated
       // preferences from that blob.
-      if (Object.keys(pending).length > 0) {
+      if (Object.keys(pending).length > 0 || startsCleanup) {
         await enqueueSave(pickPersisted(get()));
       }
     })().finally(() => {

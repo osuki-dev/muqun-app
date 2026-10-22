@@ -21,6 +21,8 @@
 export type CacheHandle<T> = {
   /** Resolves to the value, or null when it could not be loaded. */
   promise: Promise<T | null>;
+  /** Read only while this lease still owns the loaded resource. */
+  current: () => T | null;
   /** Give the value back. Idempotent. */
   release: () => void;
 };
@@ -108,6 +110,7 @@ export function createRefCountedCache<T>({
     let released = false;
     return {
       promise: held.promise,
+      current: () => (released || held.dead ? null : held.value),
       release: () => {
         if (released) return;
         released = true;
