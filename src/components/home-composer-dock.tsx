@@ -416,11 +416,16 @@ export function HomeComposerDock({
   const visibleUnsure = unsure && unsure.key === threadKey ? unsure : null;
   // The conversation's drawer, rising from behind the field: only for a
   // session or a pane (a task that has not said where it runs has nothing to
-  // show yet), and only while Home is in front with the computer it is on.
+  // show yet), and only while Home is the focused screen with the computer it
+  // is on. The app leaving the
+  // foreground does not close it: Android reports a system dialog over the
+  // app, such as the microphone permission prompt voice input raises, as the
+  // app going to the background, and the drawer's own streams already pause
+  // there by themselves.
   const [dockClip, setDockClip] = useState(0);
   const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
   const conversation = thread && thread.kind !== 'task' ? thread : undefined;
-  const drawerAllowed = Boolean(conversation) && focused && appActive;
+  const drawerAllowed = Boolean(conversation) && focused;
   const closeDrawer = drawer.close;
   const drawerOpen = drawer.open;
   const liveThreadTitle = useHomeThreadLive((state) =>
