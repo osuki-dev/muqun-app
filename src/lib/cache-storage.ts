@@ -3,25 +3,22 @@
  * and -- the reason this file exists at all -- which of it Muqun is allowed to
  * delete.
  *
- * The cache walk measures three buckets; Storage shows the two reclaimable ones.
- * The dangerous half of that sentence is the emptying, so the rule is stated
- * here as an *allow-list of names* rather than as "everything under the cache
- * except the ones we know about". The two readings differ the moment a
- * dependency starts writing somewhere new: an allow-list quietly reports the
- * unknown directory under `other` and leaves it alone, a deny-list quietly
- * deletes it. Only the first of those is a safe thing to get wrong.
+ * The rule is stated as an *allow-list of names* rather than as "everything
+ * under the cache except the ones we know about". The two readings differ the
+ * moment a dependency starts writing somewhere new: an allow-list reports the
+ * unknown directory under `other` and leaves it alone, a deny-list deletes it.
+ * Only the first of those is a safe thing to get wrong.
  *
- * Nothing here is allowed to name a path outside the cache root. The app's real
- * data -- the MMKV stores, `theme-assets-v1`, the updates bundle -- lives under
- * `Paths.document`, and the pairing tokens and SSH keys live in the keychain;
- * none of it is reachable from a list of cache-root child names, and
- * `planCacheDeletions` re-checks that for every entry anyway rather than
+ * Nothing here may name a path outside the cache root. The app's real data --
+ * the MMKV stores, `theme-assets-v1`, Hot Updater's bundle store -- lives under
+ * `Paths.document`, and the pairing tokens and SSH keys live in the keychain.
+ * `planStorageCleanup` re-checks every entry's URI against the root rather than
  * trusting the names it was handed.
  *
  * There are no `expo-file-system` imports below. The walk is the caller's, so
  * the classification, the totals and the deletion plan are testable without a
- * device -- which is the only way to hold a rule whose failure mode is losing
- * somebody's servers.
+ * device -- the only way to hold a rule whose failure mode is losing somebody's
+ * servers.
  */
 
 import { formatAssetSize } from './asset-display';
@@ -30,19 +27,19 @@ import { formatAssetSize } from './asset-display';
 export type CacheBucket = 'images' | 'temporary' | 'other';
 
 /**
- * One entry directly beneath the cache root.
+ * One entry under the cache root.
  *
- * `bytes` is the whole subtree for a directory, which is what the reader is
- * being shown: "Images" is a number about pictures, not about the one journal
- * file at the top of Glide's cache.
+ * `name` is the path relative to the root: a top-level child, or
+ * `<container>/<child>` for the few folders the walk opens (see
+ * `EXPANDED_CACHE_DIRECTORIES`). `bytes` is the whole subtree for a directory.
  */
-export type CacheRootEntry = {
-  /** The entry's own name, with no path in front of it. */
+export type CacheEntry = {
   name: string;
   /** Its absolute `file://` URI, as the filesystem reported it. */
   uri: string;
-  /** Bytes it occupies, contents included. */
   bytes: number;
+  /** Last modification, in milliseconds since the epoch. */
+  modifiedAtMs: number;
 };
 
 /** The three buckets, plus the sum, in bytes. */
@@ -53,53 +50,23 @@ export type CacheTotals = {
   total: number;
 };
 
-/**
- * Decoded and downloaded pictures, which the image libraries own.
- *
- * Verified against the sources rather than guessed, because the names are
- * theirs and change with their versions:
- *
- * - `image_manager_disk_cache` is Glide's own default directory name.
- *   `ExpoImageAppGlideModule.kt` hands the disk cache to
- *   `InternalCacheDiskCacheFactory`, which puts it under `context.cacheDir`
- *   using Glide's `DiskCache.Factory.DEFAULT_DISK_CACHE_DIR`.
- * - `com.hackemist.SDImageCache` is SDWebImage's default cache directory on
- *   iOS. `ImageModule.swift` uses `SDImageCache.shared`, which takes the
- *   default location under `Library/Caches` -- the same directory
- *   `Paths.cache` points at.
- *
- * - `image-originals` is Muqun's own folder of verified full-size originals,
- *   capped and trimmed by `original-image-cache.ts`.
- *
- * A name that turns out to be wrong costs a row's accuracy and nothing else:
- * the bytes are reported under `other`, and neither this list nor any other
- * is what deletes the two image-library directories. See
- * `DELETABLE_CACHE_DIRECTORIES`.
- */
+/** Muqun's own folder of verified full-size originals; see `original-image-cache.ts`. */
 export const ORIGINAL_IMAGE_CACHE_DIRECTORY = 'image-originals';
 
-export const IMAGE_CACHE_DIRECTORIES = [
+/**
+ * Decoded and downloaded pictures the image libraries own, emptied only
+ * through `Image.clearDiskCache()`: Glide and SDWebImage keep an open journal,
+ * and a directory pulled out from under either mid-write is how a cache turns
+ * into a crash.
+ *
+ * - `image_manager_disk_cache` is Glide's default directory, which
+ *   `ExpoImageAppGlideModule.kt` puts under `context.cacheDir`.
+ * - `com.hackemist.SDImageCache` is SDWebImage's default directory on iOS,
+ *   under `Library/Caches` -- the directory `Paths.cache` points at.
+ */
+export const NATIVE_IMAGE_CACHE_DIRECTORIES = [
   'image_manager_disk_cache',
   'com.hackemist.SDImageCache',
-  ORIGINAL_IMAGE_CACHE_DIRECTORY,
-] as const;
-
-/**
- * Copies the app made to hand a file to something else, and never the only
- * copy of anything.
- *
- * `ImagePicker`, `ImageManipulator` and `DocumentPicker` are the three Expo
- * modules' output directories, spelled the same on both platforms:
- * `ImagePickerConstants.kt` / `MediaHandler.swift`, `FileUtils.kt` /
- * `ImageManipulatorUtils.swift`, and `DocumentPickerModule.kt` /
- * `DocumentPickerModule.swift`. Every one of them holds a fresh copy the module
- * made of something the reader already has in their photo library or their
- * files app.
- */
-export const TEMPORARY_CACHE_DIRECTORIES = [
-  'ImagePicker',
-  'ImageManipulator',
-  'DocumentPicker',
 ] as const;
 
 /**
@@ -119,28 +86,69 @@ export const LAUNCH_PURGE_MARKER = 'muqun-purge-at-launch';
 export const TRASH_PREFIX = 'muqun-trash-';
 
 /**
- * Temporary directories whose names carry a random suffix, matched by prefix.
- *
- * `theme-stage-<random>` is where `theme/assets.native.ts` unpacks a theme's
- * images before installing them into `Paths.document/theme-assets-v1`. The
- * installed copy is the theme; the stage is scaffolding, and an import that
- * was interrupted leaves one behind. `muqun-trash-<time>-<name>` is a library
- * cache a launch purge has already moved aside.
+ * Output folders of Expo modules, spelled the same on both platforms
+ * (`ImagePicker`, `ImageManipulator`, `DocumentPicker`). Each holds a fresh
+ * copy of something the reader already has. Producers hold a lease while they
+ * use one (`protectCacheDirectory`), so an unleased one is free to go.
  */
-export const TEMPORARY_CACHE_PREFIXES = ['theme-stage-', TRASH_PREFIX] as const;
+export const LEASED_CACHE_DIRECTORIES = [
+  'ImagePicker',
+  'ImageManipulator',
+  'DocumentPicker',
+] as const;
 
 /**
- * The only names the clear action may remove by path, and the whole of the
- * answer to "what can this button destroy".
- *
- * The two image-library directories are deliberately absent. Glide and
- * SDWebImage keep an open journal beside their entries and are perfectly
- * capable of rebuilding one; a directory pulled out from under either of them
- * mid-write is how a cache turns into a crash. They are emptied through
- * `Image.clearDiskCache()`, which is their own API asking them to do it, so
- * the Images bucket is still cleared -- just not by this list.
+ * `theme-stage-<random>` is where `theme/assets.native.ts` unpacks a theme
+ * before installing it into `Paths.document/theme-assets-v1`; it is leased
+ * while in use, and an interrupted import leaves one behind.
  */
-export const DELETABLE_CACHE_DIRECTORIES = [...TEMPORARY_CACHE_DIRECTORIES] as const;
+export const LEASED_CACHE_PREFIXES = ['theme-stage-'] as const;
+
+/**
+ * Copies nobody leases, safe once the process that made them has gone:
+ *
+ * - `pdf-preview-<time>-<n>.pdf`, `components/pdf-asset-preview.tsx`;
+ * - `theme-export-<hex>`, `theme/local-files.ts`;
+ * - `message-image-*`, written by a reader that no longer exists;
+ * - `nanoicon_*.ttf`, a temporary font file `react-native-nano-icons` writes
+ *   on every launch and never deletes.
+ */
+export const ORPHAN_CACHE_PREFIXES = [
+  'pdf-preview-',
+  'theme-export-',
+  'message-image-',
+  'nanoicon_',
+] as const;
+
+/**
+ * Folders the walk opens, so their children are planned one by one: the
+ * originals are trimmed oldest first, and the PDF folders hold one file per
+ * rendered page or export, never the documents themselves.
+ */
+export const EXPANDED_CACHE_DIRECTORIES = [
+  ORIGINAL_IMAGE_CACHE_DIRECTORY,
+  'BetterPdf/renders',
+  'BetterPdfExports',
+] as const;
+
+/**
+ * Never deleted, whatever another rule says. Live engines' caches (RN's
+ * OkHttp `http-cache`, Cronet's, WebView's), the PDF library's open and
+ * partial downloads, and any Hot Updater name should one ever appear here.
+ */
+export const NEVER_DELETE_CACHE_ENTRIES = [
+  'http-cache',
+  'nitro_cronet_cache',
+  'nitrofetch_cronet_cache',
+  'WebView',
+  'BetterPdf',
+  'BetterPdf/session',
+  'BetterPdf/partial',
+  'BetterPdf/open',
+  'bundle-store',
+  'bundle-manifest-temp',
+  LAUNCH_PURGE_MARKER,
+] as const;
 
 /** Timestamped copies owned by Muqun, never the original attachment or export. */
 export function temporaryMediaCreatedAt(name: string): number | null {
@@ -153,68 +161,55 @@ export function temporaryMediaCreatedAt(name: string): number | null {
   return Number.isSafeInteger(timestamp) && timestamp > 0 ? timestamp : null;
 }
 
-/** Which bucket one cache-root entry belongs to, by name alone. */
-export function classifyCacheEntry(name: string): CacheBucket {
-  if ((IMAGE_CACHE_DIRECTORIES as readonly string[]).includes(name)) return 'images';
-  if ((TEMPORARY_CACHE_DIRECTORIES as readonly string[]).includes(name)) return 'temporary';
-  if (TEMPORARY_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))) return 'temporary';
-  if (temporaryMediaCreatedAt(name) !== null) return 'temporary';
+type EntryKind =
+  | 'native-images'
+  | 'original'
+  | 'launch-purge'
+  | 'leased'
+  | 'orphan'
+  | 'trash'
+  | 'kept';
+
+const includes = (list: readonly string[], name: string) => list.includes(name);
+
+/** A single path segment, or `<expanded container>/<segment>`. */
+function isWellFormedName(name: string): boolean {
+  if (name.includes('\\')) return false;
+  const segments = name.split('/');
+  if (segments.some((segment) => segment === '' || segment === '.' || segment === '..')) {
+    return false;
+  }
+  if (segments.length === 1) return true;
+  return includes(EXPANDED_CACHE_DIRECTORIES, segments.slice(0, -1).join('/'));
+}
+
+function kindOf(name: string): EntryKind {
+  if (!isWellFormedName(name) || includes(NEVER_DELETE_CACHE_ENTRIES, name)) return 'kept';
+  // An expanded folder reported whole is measured, not deleted.
+  if (includes(EXPANDED_CACHE_DIRECTORIES, name)) return 'kept';
+  const slash = name.lastIndexOf('/');
+  if (slash >= 0) {
+    return name.slice(0, slash) === ORIGINAL_IMAGE_CACHE_DIRECTORY ? 'original' : 'orphan';
+  }
+  if (includes(NATIVE_IMAGE_CACHE_DIRECTORIES, name)) return 'native-images';
+  if (includes(LAUNCH_PURGE_DIRECTORIES, name)) return 'launch-purge';
+  if (name.startsWith(TRASH_PREFIX)) return 'trash';
+  if (includes(LEASED_CACHE_DIRECTORIES, name)) return 'leased';
+  if (LEASED_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))) return 'leased';
+  if (temporaryMediaCreatedAt(name) !== null) return 'leased';
+  if (ORPHAN_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))) return 'orphan';
+  return 'kept';
+}
+
+function bucketOf(kind: EntryKind): CacheBucket {
+  if (kind === 'native-images' || kind === 'original') return 'images';
+  if (kind === 'leased' || kind === 'orphan' || kind === 'trash') return 'temporary';
   return 'other';
 }
 
-/**
- * Whether the clear action may delete this entry by path.
- *
- * Name-shaped only: a `..` segment or a slash is not a cache-root child's name,
- * whatever the filesystem said, and an entry carrying one is refused here
- * rather than reasoned about later.
- */
-export function isDeletableCacheEntry(name: string): boolean {
-  if (name === '' || name === '.' || name === '..') return false;
-  if (name.includes('/') || name.includes('\\')) return false;
-  if ((DELETABLE_CACHE_DIRECTORIES as readonly string[]).includes(name)) return true;
-  return TEMPORARY_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix));
-}
-
-/** The three buckets and their sum, from one walk of the cache root. */
-export function measureCache(entries: readonly CacheRootEntry[]): CacheTotals {
-  const totals: CacheTotals = { images: 0, temporary: 0, other: 0, total: 0 };
-  for (const entry of entries) {
-    // A negative or non-finite size is the filesystem declining to answer, not
-    // a directory that gives space back.
-    const bytes = Number.isFinite(entry.bytes) && entry.bytes > 0 ? entry.bytes : 0;
-    totals[classifyCacheEntry(entry.name)] += bytes;
-    totals.total += bytes;
-  }
-  return totals;
-}
-
-/**
- * What the button is offering to reclaim: the two buckets it empties, and never
- * `other`.
- */
-export function clearableCacheBytes(
-  entries: readonly CacheRootEntry[],
-  rootUri: string,
-  isProtected: (name: string) => boolean
-): number {
-  const deletable = new Set(
-    planCacheDeletions(entries, rootUri, Number.MAX_SAFE_INTEGER).map((entry) => entry.uri)
-  );
-  return entries.reduce((bytes, entry) => {
-    // Emptied through their owners' clear calls rather than by path.
-    const nativeImageCache =
-      entry.name === 'image_manager_disk_cache' ||
-      entry.name === 'com.hackemist.SDImageCache' ||
-      entry.name === ORIGINAL_IMAGE_CACHE_DIRECTORY;
-    return isInsideCacheRoot(entry.uri, rootUri) &&
-      !isProtected(entry.name) &&
-      (nativeImageCache || deletable.has(entry.uri)) &&
-      Number.isFinite(entry.bytes) &&
-      entry.bytes > 0
-      ? bytes + entry.bytes
-      : bytes;
-  }, 0);
+/** Which bucket one cache entry belongs to, by name alone. */
+export function classifyCacheEntry(name: string): CacheBucket {
+  return bucketOf(kindOf(name));
 }
 
 /**
@@ -233,28 +228,123 @@ export function isInsideCacheRoot(uri: string, rootUri: string): boolean {
   return uri.slice(root.length).replace(/\/+$/, '') !== '';
 }
 
+/** The entry's URI must be exactly the root plus its name: no aliasing. */
+function isFenced(entry: CacheEntry, rootUri: string): boolean {
+  if (!isInsideCacheRoot(entry.uri, rootUri)) return false;
+  const root = rootUri.replace(/\/+$/, '') + '/';
+  return entry.uri.replace(/\/+$/, '') === root + entry.name;
+}
+
+const sizeOf = (bytes: number) => (Number.isFinite(bytes) && bytes > 0 ? bytes : 0);
+
+export type StorageCleanupOptions = {
+  /** The cache root every planned path must sit strictly inside. */
+  rootUri: string;
+  nowMs: number;
+  /** Unleased copies made before this belong to a process that has gone. */
+  processStartedAtMs: number;
+  /** Names a producer holds right now; never planned. */
+  protectedNames: ReadonlySet<string> | ((name: string) => boolean);
+  /**
+   * Evict caches, least recently modified first, until the total fits. Zero
+   * evicts everything evictable (Clear cache); omitted evicts nothing.
+   */
+  budgetBytes?: number;
+};
+
+export type StorageCleanupPlan = {
+  /** Delete these by path, now. */
+  deletions: CacheEntry[];
+  /** Ask expo-image to empty Glide / SDWebImage. */
+  clearNativeImages: boolean;
+  /** Library caches only the next launch may remove. */
+  purgeAtNextLaunch: string[];
+  /** Bytes the deletions and the native clear give back now. */
+  reclaimableBytes: number;
+  /** Bytes the next launch gives back. */
+  deferredBytes: number;
+  buckets: CacheTotals;
+};
+
 /**
- * Everything the clear action will delete, and nothing else.
+ * What a cleanup may remove, decided from one walk of the cache.
  *
- * Two independent conditions, both required: the name is on the allow-list, and
- * the URI the walk reported for it really is inside the cache root. The second
- * is not redundant. The names come from a filesystem listing, and a walker that
- * reported `Paths.document` entries -- a broken caller, a symlink, a future
- * refactor that passes the wrong root -- would otherwise hand this function a
- * plausible-looking `ImagePicker` sitting next to the MMKV stores.
+ * Unconditionally: unleased copies (`leased` kinds no producer holds), orphans
+ * older than this process, and library caches already moved aside. Then, when
+ * a budget is given and the cache is still over it, whole caches in the order
+ * they were last written: each original image, the image libraries' caches,
+ * the Markdown cache. Every planned path is fenced inside `rootUri`.
  */
-export function planCacheDeletions(
-  entries: readonly CacheRootEntry[],
-  rootUri: string,
-  mediaCreatedBefore = 0
-): CacheRootEntry[] {
-  return entries.filter((entry) => {
-    const createdAt = temporaryMediaCreatedAt(entry.name);
-    const staleMedia = createdAt !== null && createdAt < mediaCreatedBefore;
-    return (
-      (isDeletableCacheEntry(entry.name) || staleMedia) && isInsideCacheRoot(entry.uri, rootUri)
-    );
-  });
+export function planStorageCleanup(
+  entries: readonly CacheEntry[],
+  options: StorageCleanupOptions
+): StorageCleanupPlan {
+  const { protectedNames, processStartedAtMs, budgetBytes } = options;
+  const isProtected =
+    typeof protectedNames === 'function'
+      ? protectedNames
+      : (name: string) => protectedNames.has(name);
+  const buckets: CacheTotals = { images: 0, temporary: 0, other: 0, total: 0 };
+  const deletions: CacheEntry[] = [];
+  const evictable: { entry: CacheEntry; kind: EntryKind }[] = [];
+  let reclaimableBytes = 0;
+  let remaining = 0;
+
+  for (const entry of entries) {
+    const bytes = sizeOf(entry.bytes);
+    const kind = kindOf(entry.name);
+    buckets[bucketOf(kind)] += bytes;
+    buckets.total += bytes;
+    remaining += bytes;
+    const topLevel = entry.name.split('/')[0];
+    if (kind === 'kept' || !isFenced(entry, options.rootUri)) continue;
+    if (isProtected(entry.name) || isProtected(topLevel)) continue;
+    const createdAt = temporaryMediaCreatedAt(entry.name) ?? entry.modifiedAtMs;
+    const unconditional =
+      kind === 'trash' ||
+      kind === 'leased' ||
+      (kind === 'orphan' && Number.isFinite(createdAt) && createdAt < processStartedAtMs);
+    if (unconditional) {
+      deletions.push(entry);
+      reclaimableBytes += bytes;
+      remaining -= bytes;
+    } else if (kind === 'original' || kind === 'native-images' || kind === 'launch-purge') {
+      evictable.push({ entry, kind });
+    }
+  }
+
+  let clearNativeImages = false;
+  const purgeAtNextLaunch: string[] = [];
+  let deferredBytes = 0;
+  if (budgetBytes !== undefined) {
+    const oldestFirst = [...evictable].sort((a, b) => {
+      const age = (entry: CacheEntry) =>
+        Number.isFinite(entry.modifiedAtMs) ? Math.min(entry.modifiedAtMs, options.nowMs) : 0;
+      return age(a.entry) - age(b.entry);
+    });
+    for (const { entry, kind } of oldestFirst) {
+      if (remaining <= budgetBytes) break;
+      const bytes = sizeOf(entry.bytes);
+      remaining -= bytes;
+      if (kind === 'launch-purge') {
+        purgeAtNextLaunch.push(entry.name);
+        deferredBytes += bytes;
+        continue;
+      }
+      if (kind === 'native-images') clearNativeImages = true;
+      else deletions.push(entry);
+      reclaimableBytes += bytes;
+    }
+  }
+
+  return {
+    deletions,
+    clearNativeImages,
+    purgeAtNextLaunch,
+    reclaimableBytes,
+    deferredBytes,
+    buckets,
+  };
 }
 
 /**
@@ -265,13 +355,12 @@ export function planLruTrim(
   files: readonly { name: string; bytes: number; modifiedAtMs: number }[],
   capBytes: number
 ): string[] {
-  const size = (bytes: number) => (Number.isFinite(bytes) && bytes > 0 ? bytes : 0);
-  let total = files.reduce((sum, file) => sum + size(file.bytes), 0);
+  let total = files.reduce((sum, file) => sum + sizeOf(file.bytes), 0);
   const doomed: string[] = [];
   for (const file of [...files].sort((a, b) => a.modifiedAtMs - b.modifiedAtMs)) {
     if (total <= capBytes) break;
     doomed.push(file.name);
-    total -= size(file.bytes);
+    total -= sizeOf(file.bytes);
   }
   return doomed;
 }

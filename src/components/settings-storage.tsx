@@ -1,8 +1,4 @@
-import {
-  clearCache,
-  isCacheEntryProtected,
-  scheduleAutomaticCacheCleanup,
-} from '@/lib/cache-cleanup';
+import { clearCache, inspectCache, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
@@ -29,14 +25,13 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  * through.
  *
  * Both walks run off the first frame. A Glide cache at its 100 MB ceiling is
- * thousands of files, and `Directory.size` recurses in native code, so the
- * measurement is deferred past the push and yields between top-level entries
- * rather than asking for all of it on one tick.
+ * thousands of files; the cache walk (`inspectCache`) measures them through the
+ * legacy async API, so the recursion happens off the JavaScript thread.
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Directory, Paths } from 'expo-file-system';
+import { Directory } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
 import { NextIcon, FileHistoryIcon, PhotosIcon, AppearanceIcon, DeleteIcon } from '@/icons';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -51,13 +46,7 @@ import {
   SettingsCard,
 } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import {
-  type CacheRootEntry,
-  type CacheTotals,
-  clearableCacheBytes,
-  formatCacheSize,
-  measureCache,
-} from '@/lib/cache-storage';
+import { type CacheTotals, formatCacheSize } from '@/lib/cache-storage';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { useAppSettings } from '@/stores/app-settings';
 import { isCacheCleanupIntervalDays } from '@/lib/cache-cleanup-policy';
@@ -83,41 +72,13 @@ function whenIdle(timeout: number): Promise<void> {
 }
 
 /**
- * One pass over the top level of the cache directory.
- *
- * Top level only: `size` on a `Directory` already recurses natively, which is
- * one cheap call per entry instead of thousands of round trips through the
- * bridge for a Glide cache. The yield sits between entries, so the longest the
- * UI ever waits on this is one directory's own walk.
- */
-async function readCacheRoot(): Promise<{ root: string; entries: CacheRootEntry[] }> {
-  const root = Paths.cache;
-  const entries: CacheRootEntry[] = [];
-  for (const item of root.list()) {
-    await whenIdle(100);
-    let bytes = 0;
-    try {
-      // `Directory.size` is `number | null` and `File.size` is `number`; both
-      // are readable off the union without narrowing, and both can throw when
-      // the OS refuses the read.
-      bytes = item.size ?? 0;
-    } catch {
-      // An unreadable entry is worth nothing to the total rather than worth
-      // abandoning the whole measurement for.
-    }
-    entries.push({ name: item.name, uri: item.uri, bytes });
-  }
-  return { root: root.uri, entries };
-}
-
-/**
  * One pass over the theme asset directory, which is flat by construction.
  *
  * `theme/assets.native.ts` writes content-addressed files side by side with
  * nothing between them, so every entry here is one `size` on a file -- a stat,
  * not the recursive walk a cache entry costs. That is why the yield sits in
  * front of the listing rather than between its entries: the whole of this walk
- * is cheaper than one step of `readCacheRoot`'s, and a theme library is fifty
+ * is cheaper than one step of the cache walk, and a theme library is fifty
  * entries at its ceiling rather than thousands.
  */
 async function readThemeAssets(): Promise<ThemeAssetFile[]> {
@@ -139,6 +100,8 @@ async function readThemeAssets(): Promise<ThemeAssetFile[]> {
   }
   return files;
 }
+
+const EMPTY_TOTALS: CacheTotals = { images: 0, temporary: 0, other: 0, total: 0 };
 
 // Only the action slot moves; the capacity rows and sheet ground stay mounted.
 const actionFade = fadeIn('short').withInitialValues({ opacity: 0.65 });
@@ -197,21 +160,13 @@ export function SettingsStorage() {
   }, []);
 
   const measure = useCallback(async () => {
-    try {
-      const { root, entries } = await readCacheRoot();
-      if (mounted.current) {
-        setTotals(measureCache(entries));
-        setReclaimableBytes(clearableCacheBytes(entries, root, isCacheEntryProtected));
-      }
-    } catch {
-      // A platform with no readable cache directory -- web, or an OS that has
-      // taken the whole thing away under us -- reports an empty cache rather
-      // than a permanently spinning row.
-      if (mounted.current) {
-        setTotals(measureCache([]));
-        setReclaimableBytes(0);
-      }
-    }
+    // No readable cache directory -- web, or an OS that has taken the whole
+    // thing away under us -- reports an empty cache rather than a permanently
+    // spinning row.
+    const plan = await inspectCache();
+    if (!mounted.current) return;
+    setTotals(plan ? plan.buckets : EMPTY_TOTALS);
+    setReclaimableBytes(plan ? plan.reclaimableBytes : 0);
   }, []);
 
   const measureThemes = useCallback(async () => {
