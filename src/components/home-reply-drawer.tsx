@@ -44,6 +44,8 @@ import { ComposerMenuButton } from '@/components/composer-attachment-button';
 import { OpenExternalIcon, SessionIcon } from '@/icons';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { AgentTranscriptReader } from '@/components/agent-transcript-reader';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import { useHomeSessionReplies } from '@/components/home-session-replies';
 import { useAppSettings } from '@/stores/app-settings';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
@@ -82,7 +84,14 @@ import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 import {
+  AGENT_TRANSCRIPTS_CAPABILITY,
+  agentSessionOf,
+  transcriptAvailability,
+  type AgentSessionRef,
+} from '@/lib/agent-transcripts';
+import {
   INITIAL_PANE_OUTPUT_LINES,
+  loadAgents,
   loadPanes,
   readPaneOutput,
   type HerdrEntity,
@@ -90,6 +99,7 @@ import {
 } from '@/lib/gateway-client';
 import { field, numberField, optionalNumberField } from '@/lib/herdr-entity';
 import { isFullScreenTuiPane } from '@/lib/terminal-keys';
+import type { PaneViewMode } from '@/lib/pane-view-mode';
 import { sameComputer } from '@/lib/home-composer';
 import {
   REPLY_DRAWER_MIN_HEIGHT,
@@ -114,6 +124,8 @@ import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { paneViewKey, usePaneViewChoices } from '@/stores/pane-view-mode';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useHomeThreadLive } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
 
@@ -955,9 +967,7 @@ export function HomeReplyDrawer({
                       </View>
                     </GestureDetector>
                   ) : target.kind === 'pane' ? (
-                    // The terminal's own gestures own its bounds: no drawer gesture
-                    // wraps it, so its scrollback pans and pinches win there.
-                    <DrawerPane target={target} />
+                    <DrawerPane target={target} controller={controller} />
                   ) : null}
                 </View>
               </Animated.View>
@@ -991,6 +1001,35 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
 }
 
 /**
+ * A drawer list's scroll plumbing: the list holds still while the finger
+ * drags the drawer from its top, opens at its end (so it is not at its top
+ * until it says so), and scrolls through the drawer's own native gesture.
+ */
+function useDrawerListScroll(
+  scrollGesture: ReturnType<typeof Gesture.Native>,
+  atTop: SharedValue<boolean>,
+  dragging: SharedValue<boolean>
+) {
+  const [locked, setLocked] = useState(false);
+  useAnimatedReaction(
+    () => dragging.get(),
+    (next, previous) => {
+      if (next !== previous) scheduleOnRN(setLocked, next);
+    }
+  );
+  useEffect(() => atTop.set(false), [atTop]);
+  const renderScroll = useMemo(
+    () => (props: ScrollViewProps) => (
+      <GestureDetector gesture={scrollGesture}>
+        <NativeAnimated.ScrollView {...props} />
+      </GestureDetector>
+    ),
+    [scrollGesture]
+  );
+  return { locked, renderScroll };
+}
+
+/**
  * A session's transcript, with the session screen's own list and rows, read
  * only: the snapshot it opens on, then its stream, live. The reader is kept
  * where they are when output lands under them, with the session screen's
@@ -1021,24 +1060,7 @@ function DrawerSession({
   const { serverId, sessionId, asid } = target;
   const key = homeThreadKey(target);
   const readRuntime = useLatestReader(runtime);
-  // The list holds still while the finger drags the drawer from its top.
-  const [locked, setLocked] = useState(false);
-  useAnimatedReaction(
-    () => dragging.get(),
-    (next, previous) => {
-      if (next !== previous) scheduleOnRN(setLocked, next);
-    }
-  );
-  // It opens at its end, so it is not at its top until it says so.
-  useEffect(() => atTop.set(false), [atTop]);
-  const renderScroll = useMemo(
-    () => (props: ScrollViewProps) => (
-      <GestureDetector gesture={scrollGesture}>
-        <NativeAnimated.ScrollView {...props} />
-      </GestureDetector>
-    ),
-    [scrollGesture]
-  );
+  const { locked, renderScroll } = useDrawerListScroll(scrollGesture, atTop, dragging);
 
   useEffect(() => {
     let windowStart = 0;
@@ -1255,6 +1277,121 @@ function sameDrawnPane(a: HerdrEntity | undefined, b: HerdrEntity | undefined): 
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
 /**
+ * A pane in the drawer: its terminal, or -- for an agent whose transcript the
+ * Gateway reads (`agent_transcripts_v1` and a reader for that agent) -- its
+ * conversation, with a switch between the two. The choice is the pane's own,
+ * shared with its full screen (`usePaneViewChoices`); the conversation is the
+ * drawer's default where it exists, since that is what the drawer is for.
+ * Replies still go to the pane: the transcript only reads.
+ *
+ * An older Gateway shows the terminal as it did, with one line saying what
+ * is missing where the conversation would be; no switch is drawn for it.
+ */
+function DrawerPane({
+  target,
+  controller,
+}: {
+  target: Extract<HomeThreadTarget, { kind: 'pane' }>;
+  controller: HomeReplyDrawerController;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { serverId, paneId } = target;
+  const sessionId =
+    useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
+  const readsTranscripts = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes(AGENT_TRANSCRIPTS_CAPABILITY) === true
+  );
+  /** `undefined` until the pane's agent has been asked for; `null` without one. */
+  const [agent, setAgent] = useState<{ session: AgentSessionRef; cwd?: string } | null | undefined>(
+    undefined
+  );
+  useEffect(() => {
+    if (!sessionId || !readsTranscripts) return;
+    let alive = true;
+    void loadAgents(sessionId).then(
+      (agents) => {
+        if (!alive) return;
+        const entity = agents.find((item) => field(item, 'pane_id') === paneId);
+        const session = agentSessionOf(entity?.raw);
+        setAgent(session ? { session, cwd: entity?.cwd } : null);
+      },
+      () => {
+        if (alive) setAgent(null);
+      }
+    );
+    return () => {
+      alive = false;
+    };
+  }, [sessionId, paneId, readsTranscripts]);
+  const availability = useServerCapabilities((state) =>
+    agent ? transcriptAvailability(state.byServer[serverId], agent.session.agent) : null
+  );
+  const key = paneViewKey(serverId, paneId);
+  const chosen = usePaneViewChoices((state) => state.choices[key]?.mode);
+  const choose = usePaneViewChoices((state) => state.choose);
+  const mode: PaneViewMode = availability === 'available' ? (chosen ?? 'chat') : 'terminal';
+  const { locked, renderScroll } = useDrawerListScroll(
+    controller.gestures.scroll,
+    controller.contentAtTop,
+    controller.contentDragging
+  );
+  const options = useMemo(
+    () => [
+      { label: t`Conversation`, value: 'chat' },
+      { label: t`Terminal`, value: 'terminal' },
+    ],
+    [t]
+  );
+
+  // A Gateway that reads transcripts is asked which agent is here before the
+  // pane is drawn, so the drawer opens on the conversation rather than
+  // swapping the terminal out from under the reader a moment later. An older
+  // Gateway has nothing to ask and draws the terminal at once.
+  if (readsTranscripts && agent === undefined)
+    return (
+      <View testID="home-reply-loading" style={styles.center}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
+  return (
+    <View style={styles.fill}>
+      {availability === 'available' ? (
+        <View style={styles.viewSwitch}>
+          <SettingsSegmented
+            testID="home-reply-pane-view"
+            options={options}
+            value={mode}
+            onChange={(value) => choose(key, { mode: value as PaneViewMode })}
+          />
+        </View>
+      ) : null}
+      {mode === 'chat' && agent ? (
+        <GestureDetector gesture={controller.gestures.content}>
+          <View collapsable={false} style={styles.fill}>
+            <AgentTranscriptReader
+              serverId={serverId}
+              agent={agent.session.agent}
+              sessionId={agent.session.sessionId}
+              cwd={agent.cwd}
+              nestedScrollEnabled
+              renderScrollComponent={renderScroll}
+              scrollEnabled={!locked}
+              atTop={controller.contentAtTop}
+              testID="home-reply-transcript-reader"
+            />
+          </View>
+        </GestureDetector>
+      ) : (
+        // The terminal's own gestures own its bounds: no drawer gesture
+        // wraps it, so its scrollback pans and pinches win there.
+        <DrawerTerminal target={target} note={availability === 'gateway-upgrade'} />
+      )}
+    </View>
+  );
+}
+
+/**
  * A terminal agent's pane, drawn by the terminal screen's own renderer
  * (`SkiaTerminal`): the same grid, theme, face, text size and "Latest" as the
  * pane has when opened, read only (no touch input, no pane zoom). It is fed
@@ -1265,7 +1402,14 @@ const MAINTAIN_POSITION = { data: true, size: true } as const;
  * stream is down. The stream is opened when the drawer mounts and closed
  * when it unmounts or the app goes to the background.
  */
-function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pane' }> }) {
+function DrawerTerminal({
+  target,
+  note,
+}: {
+  target: Extract<HomeThreadTarget, { kind: 'pane' }>;
+  /** The Gateway predates transcript reading: say so, once, over the terminal. */
+  note: boolean;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const terminal = useTerminalTheme();
@@ -1435,6 +1579,16 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     );
   return (
     <Animated.View testID="home-reply-pane" entering={fadeIn('short')} style={styles.pane}>
+      {note ? (
+        <Text
+          testID="home-reply-transcript-note"
+          variant="caption"
+          color={theme.colors.textMuted}
+          numberOfLines={2}
+          style={styles.note}>
+          {t`Update Muqun Gateway on the computer, then restart it, to read this conversation here.`}
+        </Text>
+      ) : null}
       <TerminalBoundary
         resetKey={paneId}
         background={terminal.background}
@@ -1472,6 +1626,8 @@ const styles = StyleSheet.create({
   transcriptContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
   requests: { gap: 10, paddingTop: 8 },
   pane: { flex: 1, overflow: 'hidden' },
+  viewSwitch: { paddingHorizontal: 16, paddingBottom: 8 },
+  note: { paddingHorizontal: 16, paddingBottom: 8 },
 });
 
 export { PAD_MAX_WIDTH as HOME_REPLY_PAD_MAX_WIDTH };
