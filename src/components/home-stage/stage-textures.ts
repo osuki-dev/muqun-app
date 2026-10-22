@@ -10,7 +10,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 
 import { hasTransparentArtworkUpperEdges } from '@/lib/artwork-edge-alpha';
 import { stageClearFraction } from '@/lib/home-stage-layers';
-import { createRefCountedCache } from '@/lib/ref-counted-cache';
+import { createRefCountedCache, type CacheHandle } from '@/lib/ref-counted-cache';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import {
   currentStageArtEpoch,
@@ -288,7 +288,10 @@ export function useStageTexture(
     if (active) retry.fail({ uri: active, slot, step: 'decode', error });
   });
   const key = active ? `${edge}|${active}` : null;
-  const [loaded, setLoaded] = useState<{ key: string; source: StageTextureSource } | null>(null);
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    handle: CacheHandle<StageTextureSource>;
+  } | null>(null);
   const loadFailed = useEffectEvent((failedUri: string, failedKey: string) =>
     retry.fail({
       uri: failedUri,
@@ -321,7 +324,7 @@ export function useStageTexture(
           height: image.height(),
           maxEdge: edge,
         });
-      setLoaded({ key, source });
+      setLoaded({ key, handle });
     });
     return () => {
       live = false;
@@ -330,6 +333,7 @@ export function useStageTexture(
   }, [image, key, active, slot, edge]);
   if (!uri) return { status: 'none' };
   if (retry.failed) return { status: 'failed' };
-  if (loaded?.key === key) return { status: 'ready', source: loaded.source };
+  const source = loaded?.key === key ? loaded.handle.current() : null;
+  if (source) return { status: 'ready', source };
   return { status: 'loading' };
 }

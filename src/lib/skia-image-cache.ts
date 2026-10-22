@@ -1,7 +1,7 @@
 import { Skia, type SkImage } from 'react-native-skia';
 import { useEffect, useEffectEvent, useState } from 'react';
 
-import { createRefCountedCache } from '@/lib/ref-counted-cache';
+import { createRefCountedCache, type CacheHandle } from '@/lib/ref-counted-cache';
 
 /**
  * Decoded theme pictures, shared by every Skia canvas that draws them.
@@ -70,7 +70,7 @@ export function useSharedSkiaImage(
   uri: string | null | undefined,
   onError?: (error: string | undefined) => void
 ): SkImage | null {
-  const [loaded, setLoaded] = useState<{ uri: string; image: SkImage } | null>(null);
+  const [loaded, setLoaded] = useState<{ uri: string; handle: CacheHandle<SkImage> } | null>(null);
   const fail = useEffectEvent((failed: string) => onError?.(failures.get(failed)));
   useEffect(() => {
     if (!uri) return;
@@ -78,7 +78,7 @@ export function useSharedSkiaImage(
     let live = true;
     void handle.promise.then((image) => {
       if (!live) return;
-      if (image) setLoaded({ uri, image });
+      if (image) setLoaded({ uri, handle });
       else fail(uri);
     });
     return () => {
@@ -87,9 +87,9 @@ export function useSharedSkiaImage(
     };
   }, [uri]);
   if (!uri) return null;
-  if (loaded?.uri === uri) return loaded.image;
-  // Already decoded for somebody else: draw it on the first frame.
-  return cache.peek(uri);
+  // A URI can return after its previous lease was released and disposed.
+  // Never reuse that render state or borrow another owner's unleased image.
+  return loaded?.uri === uri ? loaded.handle.current() : null;
 }
 
 /** Hold decoded images until the newly mounted artwork has acquired its own lease. */

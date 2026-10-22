@@ -16,7 +16,7 @@ import {
   useCanvasRef,
   type SkImage,
 } from 'react-native-skia';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
@@ -171,11 +171,25 @@ export function StageView({
     if (noteStageGpuFailure(error)) setGpuLost(true);
     setFailed(true);
   });
-  useEffect(() => {
-    if (paused || !failed || gpuLost || attempt >= STAGE_GPU_RETRIES) return;
+  const retryIdentity = JSON.stringify([
+    themeTag,
+    resolvedMode,
+    artworkUri,
+    wallpaperUri,
+    theme.colors.background,
+    theme.colors.surface,
+    theme.colors.primary,
+  ]);
+  const retryGpu = useEffectEvent(() => {
+    if (!failed || gpuLost || attempt >= STAGE_GPU_RETRIES) return;
     setFailed(false);
     setAttempt((tries) => tries + 1);
-  }, [paused, failed, gpuLost, attempt]);
+  });
+  // A failure alone must not launch another expensive renderer immediately.
+  // Retry only on a new Home visit or a genuinely different theme.
+  useEffect(() => {
+    if (!paused) retryGpu();
+  }, [paused, retryIdentity]);
   // Home is back: a lost device is noticed before a canvas is made on it,
   // and pictures that failed get their next try.
   useEffect(() => {

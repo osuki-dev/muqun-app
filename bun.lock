@@ -118,6 +118,7 @@
   "patchedDependencies": {
     "@osuki-dev/ui@2.0.0-beta.5": "patches/@osuki-dev%2Fui@2.0.0-beta.5.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
+    "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
   },
   "overrides": {

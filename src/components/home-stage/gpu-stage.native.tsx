@@ -8,6 +8,7 @@ import { PCFShadowMap, WebGPURenderer } from 'three/webgpu';
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { createSceneLifetimes } from '@/lib/scene-lifetime';
+import { createStageCompilation } from '@/lib/stage-compilation';
 import { STAGE_CAMERA_FOV } from '@/lib/home-stage-geometry';
 import { stageEffects } from '@/lib/home-stage-motion';
 import { recordStageArtEvent } from '@/lib/stage-art-diagnostics';
@@ -27,6 +28,8 @@ const startScene = createSceneLifetimes();
 export default function GpuStage(props: StageSceneProps) {
   const canvas = useRef<CanvasRef>(null);
   const root = useRef<FiberRoot | null>(null);
+  const compilation = useRef<ReturnType<typeof createStageCompilation> | null>(null);
+  const sceneChanged = useCallback(() => compilation.current?.changed(), []);
   const pendingPresentation = useRef<(() => void) | undefined>(undefined);
   const acknowledgePresentation = useEffectEvent(() => {
     const presented = pendingPresentation.current;
@@ -45,7 +48,7 @@ export default function GpuStage(props: StageSceneProps) {
   const renderLatest = useEffectEvent(() =>
     root.current?.render(
       <MapErrorBoundary onError={props.onError}>
-        <StageRuntime {...props} onSceneReady={sceneReady} />
+        <StageRuntime {...props} onSceneReady={sceneReady} onSceneChanged={sceneChanged} />
       </MapErrorBoundary>
     )
   );
@@ -63,11 +66,17 @@ export default function GpuStage(props: StageSceneProps) {
         if (!context) throw new Error('WebGPU canvas unavailable');
         const surface = context.canvas as HTMLCanvasElement;
         const next = createRoot(surface);
-        const dispose = () =>
-          new Promise<void>((resolve) => {
+        const preparation = createStageCompilation();
+        compilation.current = preparation;
+        let wake = () => {};
+        const dispose = async () => {
+          await preparation.close();
+          if (compilation.current === preparation) compilation.current = null;
+          return new Promise<void>((resolve) => {
             if (root.current === next) root.current = null;
             unmountComponentAtNode(surface, () => resolve());
           });
+        };
         try {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
@@ -128,6 +137,16 @@ export default function GpuStage(props: StageSceneProps) {
                 // surface may be gone, and a frame presented then leaves the
                 // canvas blank for good. Home wakes the scene when it returns.
                 if (!isLive() || isPaused()) return;
+                if (
+                  !preparation.ready(
+                    () => renderer.compileAsync(scene, camera),
+                    () => {
+                      if (isLive() && !isPaused()) wake();
+                    },
+                    fail
+                  )
+                )
+                  return;
                 try {
                   draw(scene, camera);
                   context.present();
@@ -141,7 +160,8 @@ export default function GpuStage(props: StageSceneProps) {
           });
           if (isLive()) {
             root.current = next;
-            renderLatest();
+            const store = renderLatest();
+            if (store) wake = store.getState().invalidate;
           }
         } catch (error) {
           await dispose();
