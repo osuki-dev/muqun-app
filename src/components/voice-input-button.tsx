@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';

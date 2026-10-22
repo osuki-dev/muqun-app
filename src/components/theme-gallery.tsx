@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Button, PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button, Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 

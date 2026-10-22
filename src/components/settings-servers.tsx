@@ -1,5 +1,6 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { Input, Spinner, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';

@@ -9,6 +9,7 @@ import {
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { SheetDragGuard } from '@/components/sheet-drag-guard';
 import { SheetFullscreenProvider, SheetRouteFrame } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
@@ -443,15 +444,18 @@ function RootContent() {
             <ThemeFileOpener />
             <AppLockGate>
               <Stack
-                screenLayout={({ children, options, route }) =>
+                screenLayout={({ children, options, route, navigation }) =>
                   options.presentation === 'formSheet' ? (
-                    isCenteredSettingsSheetRoute(route.name, isPad) ? (
-                      <SheetRouteFrame detents={options.sheetAllowedDetents}>
-                        {children}
-                      </SheetRouteFrame>
-                    ) : (
-                      <>{children}</>
-                    )
+                    // Presses on a sheet cancel while it is dragged; see `sheet-drag-guard.tsx`.
+                    <SheetDragGuard navigation={navigation}>
+                      {isCenteredSettingsSheetRoute(route.name, isPad) ? (
+                        <SheetRouteFrame detents={options.sheetAllowedDetents}>
+                          {children}
+                        </SheetRouteFrame>
+                      ) : (
+                        children
+                      )}
+                    </SheetDragGuard>
                   ) : (
                     <RouteScene modal={options.presentation === 'fullScreenModal'}>
                       {/* Native full-screen modals have no sheet grabber. Scenes

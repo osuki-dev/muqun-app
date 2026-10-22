@@ -3,7 +3,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
-import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';

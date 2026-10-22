@@ -14,7 +14,8 @@
  * what lets the list place them without measuring (`getFixedItemSize`).
  */
 import { useLingui } from '@lingui/react/macro';
-import { PressableScale, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { StyleSheet, View, type AccessibilityActionEvent } from 'react-native';

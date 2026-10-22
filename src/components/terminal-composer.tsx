@@ -3,13 +3,8 @@ import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import {
-  Spinner,
-  useThemeTokens,
-  PressableScale,
-  TextField,
-  type TextFieldProps,
-} from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, TextField, type TextFieldProps } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { MicrophoneIcon, MessageSendIcon } from '@/icons';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';

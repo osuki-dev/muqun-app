@@ -1,5 +1,6 @@
 import { AttachmentIcon } from '@/icons';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import type { ReactNode } from 'react';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeIcon } from '@/components/theme-icon';

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { DisclosureDownIcon, DisclosureUpIcon, RefreshIcon } from '@/icons';
 import { SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
 

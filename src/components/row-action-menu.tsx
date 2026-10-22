@@ -1,6 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { EditIcon, DeleteIcon, CloseIcon } from '@/icons';
 import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';

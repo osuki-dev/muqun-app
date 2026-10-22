@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { DisclosureDownIcon, DisclosureUpIcon, RefreshIcon } from '@/icons';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';

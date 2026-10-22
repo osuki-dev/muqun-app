@@ -26,7 +26,8 @@
  */
 import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Button, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
