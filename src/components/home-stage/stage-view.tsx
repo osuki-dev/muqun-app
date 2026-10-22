@@ -58,12 +58,19 @@ import {
 } from '@/lib/stage-art-diagnostics';
 import { useAppSettings } from '@/stores/app-settings';
 import {
-  lowestStageQuality,
+  dropStageLadder,
+  holdStageLadder,
+  leaveStageLadder,
+  returnStageLadder,
   stageEffects,
+  stageLadderQuality,
+  startStageLadder,
   STAGE_TILT_DEADBAND,
   STAGE_TILT_WAKE,
+  type StageLadder,
   type StageQuality,
 } from '@/lib/home-stage-motion';
+import { loadStageLadder, saveStageLadder } from '@/lib/home-stage-ladder-store';
 import type { StagePicture } from './stage-scene';
 import { useStageTexture, type StageTextureState } from './stage-textures';
 import { createStageBridge, type StageInputs, type StageOpener } from './types';
@@ -89,14 +96,18 @@ const MAX_TEXTURE_SHRINK = 2;
 const DIVE_MS = 520;
 
 /**
- * The lowest quality rung the stage has stepped down to this session; never
- * raised. `textureShrink` counts the GPU's out-of-memory errors: each halves
- * every texture for the rest of the session.
+ * The quality ladder across visits to Home (`StageLadder`), started from the
+ * saved one on the first Stage of a launch. `textureShrink` counts the GPU's
+ * out-of-memory errors: each halves every texture for the rest of the session.
  */
-const session: { quality: StageQuality; textureShrink: number } = {
-  quality: 'full',
+const session: { ladder: StageLadder | null; textureShrink: number } = {
+  ladder: null,
   textureShrink: 0,
 };
+function sessionLadder(): StageLadder {
+  session.ladder ??= startStageLadder(loadStageLadder(), Date.now());
+  return session.ladder;
+}
 
 export type StageViewProps = {
   /** How many computers there are; a sideways swipe moves between them. */
@@ -163,8 +174,11 @@ export function StageView({
   const reducedMotion = useReducedMotion();
   const window = useWindowDimensions();
   const [size, setSize] = useState({ width: 0, height: 0 });
-  // A rung the stage stepped down to holds for the rest of the session.
-  const [quality, setQuality] = useState<StageQuality>(() => session.quality);
+  // A rung the stage stepped down to holds for the visit; a return after a
+  // while away, or a launch, may try one rung up (`StageLadder`). Under Reduce
+  // Motion no frames are judged, so no rung is tried.
+  const [ladder, setLadder] = useState(sessionLadder);
+  const quality = reducedMotion ? ladder.settled : stageLadderQuality(ladder);
   const { theme: customTheme } = useEffectiveCustomTheme();
   // What the Stage diagnostics stamp each event with.
   const themeTag = customTheme
@@ -173,10 +187,27 @@ export function StageView({
   useEffect(() => {
     setStageArtContext({ theme: themeTag, quality });
   }, [themeTag, quality]);
-  const lowered = useStableHandler((next: StageQuality) => {
-    session.quality = lowestStageQuality(session.quality, next);
-    setQuality(session.quality);
+  const moveLadder = (next: StageLadder, save: boolean) => {
+    session.ladder = next;
+    setLadder(next);
+    if (save) saveStageLadder(next);
+  };
+  const lowered = useStableHandler((next: StageQuality) =>
+    moveLadder(dropStageLadder(sessionLadder(), next, Date.now()), true)
+  );
+  const held = useStableHandler((rung: StageQuality) => {
+    const current = sessionLadder();
+    const next = holdStageLadder(current, rung);
+    if (next !== current) moveLadder(next, true);
   });
+  const visited = useEffectEvent((isPaused: boolean) => {
+    const current = sessionLadder();
+    const next = isPaused
+      ? leaveStageLadder(current, Date.now())
+      : returnStageLadder(current, Date.now());
+    if (next !== current) moveLadder(next, false);
+  });
+  useEffect(() => visited(paused), [paused]);
   const [failed, setFailed] = useState(false);
   // A GPU failure (a surface the system took back while the app was away, an
   // out-of-memory upload) falls back to the static stage, but only until Home
@@ -504,6 +535,7 @@ export function StageView({
                 inputs={inputs}
                 bridge={bridge}
                 onQualityDrop={lowered}
+                onQualityHeld={held}
                 onError={fail}
                 onPresented={onPresented}
                 onSurfaceReset={onSurfaceReset}
