@@ -862,7 +862,6 @@ msgid "Apply theme"
 msgstr "テーマを適用"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "適用中…"
 
@@ -2703,6 +2702,7 @@ msgid "Downloading theme"
 msgstr "テーマをダウンロード中"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "ダウンロードしています…"
 
@@ -3049,14 +3049,6 @@ msgstr "目標から、動き出す仕事へ"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "フロントカメラです。QR コードを画面に向けてください"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "完全パッケージのサイズ：{fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "完全なパッケージのサイズです。ファイルの再利用によりダウンロード量が減る場合があります"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3424,6 +3416,7 @@ msgid "Installing images"
 msgstr "画像をインストールしています"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "インストール中…"
 
@@ -5505,10 +5498,6 @@ msgstr "リセット日時：{0}"
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "更新を完了するには Muqun を再起動してください"
-
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Muqun を再起動しています…"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
@@ -7593,13 +7582,8 @@ msgid "Up arrow"
 msgstr "上矢印"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "更新"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "更新があります"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7625,6 +7609,10 @@ msgstr "{agentName} を使うには、このホストの Muqun Gateway をアッ
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "今すぐ更新"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "アップデート準備完了"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7653,10 +7641,6 @@ msgstr "動画出力をプレビューするには Gateway を更新してくだ
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "開き直すと更新されます"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "牧群（ぼくぐん）を更新中…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"

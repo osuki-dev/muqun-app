@@ -255,7 +255,11 @@ type ReskinContextValue = {
   /** The cover's own opacity: 1 for a photograph, 0 -> 1 for a veil. */
   veil: SharedValue<number>;
   register: (id: string, entry: SurfaceEntry) => () => void;
+  /** A picture of one registered surface, at its laid-out size. */
+  photograph: (id: string) => Promise<SurfacePhotograph | null>;
 };
+
+export type SurfacePhotograph = { image: SkImage; width: number; height: number };
 
 /**
  * A sheet of the old theme's paper, the size of one surface.
@@ -997,9 +1001,17 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
     [progress, veil]
   );
 
+  const photographSurface = useCallback(async (id: string) => {
+    const entry = surfaces.current.get(id);
+    if (!entry) return null;
+    const { width, height } = entry.size.current;
+    const image = await photograph(entry);
+    return image ? { image, width, height } : null;
+  }, []);
+
   const value = useMemo<ReskinContextValue>(
-    () => ({ run, active, progress, veil, register }),
-    [run, active, progress, veil, register]
+    () => ({ run, active, progress, veil, register, photograph: photographSurface }),
+    [run, active, progress, veil, register, photographSurface]
   );
 
   return <ReskinContext.Provider value={value}>{children}</ReskinContext.Provider>;
@@ -1030,6 +1042,18 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
   }, []);
   return { run: context?.run ?? fallback };
 }
+
+/**
+ * Photograph a registered surface outside a re-skin, such as the screen an
+ * update is about to replace. Null without a provider or a laid-out surface;
+ * release the image with `disposeViewPhotograph`.
+ */
+export function useSurfacePhotograph(): (id: string) => Promise<SurfacePhotograph | null> {
+  const context = useContext(ReskinContext);
+  return context?.photograph ?? noPhotograph;
+}
+
+const noPhotograph = async () => null;
 
 /**
  * A window that can be photographed and erased.

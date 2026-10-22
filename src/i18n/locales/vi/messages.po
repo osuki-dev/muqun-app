@@ -862,7 +862,6 @@ msgid "Apply theme"
 msgstr "Áp dụng giao diện"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "Đang áp dụng…"
 
@@ -2703,6 +2702,7 @@ msgid "Downloading theme"
 msgstr "Đang tải chủ đề"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "Đang tải xuống…"
 
@@ -3049,14 +3049,6 @@ msgstr "Từ mục tiêu đến công việc đang chạy"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Kích thước gói đầy đủ: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "Dung lượng gói đầy đủ. Việc dùng lại tệp có thể giảm dung lượng tải xuống"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3424,6 +3416,7 @@ msgid "Installing images"
 msgstr "Đang cài đặt hình ảnh"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "Đang cài đặt…"
 
@@ -5505,10 +5498,6 @@ msgstr "Đặt lại lúc {0}"
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
-
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Đang khởi động lại Muqun…"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
@@ -7593,13 +7582,8 @@ msgid "Up arrow"
 msgstr "Mũi tên lên"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Cập nhật"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "Có bản cập nhật"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7625,6 +7609,10 @@ msgstr "Cập nhật Muqun Gateway trên máy chủ này để dùng {agentName}
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "Cập nhật ngay"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "Bản cập nhật đã sẵn sàng"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7653,10 +7641,6 @@ msgstr "Cập nhật Gateway để xem trước video"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "Cập nhật khi bạn mở lại"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "Đang cập nhật Muqun…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"

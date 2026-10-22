@@ -862,7 +862,6 @@ msgid "Apply theme"
 msgstr "Design anwenden"
 
 #: src/components/terminal-theme-drop.tsx
-#: src/components/update-status-banner.tsx
 msgid "Applying…"
 msgstr "Wird angewendet …"
 
@@ -2703,6 +2702,7 @@ msgid "Downloading theme"
 msgstr "Theme wird geladen"
 
 #: src/components/theme-gallery.tsx
+#: src/components/update-status-banner.tsx
 msgid "Downloading…"
 msgstr "Wird heruntergeladen …"
 
@@ -3049,14 +3049,6 @@ msgstr "Vom Ziel zur laufenden Arbeit"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size: {fullPackage}"
-msgstr "Vollständige Paketgröße: {fullPackage}"
-
-#: src/components/update-status-banner.tsx
-msgid "Full package size. File reuse may reduce the download."
-msgstr "Größe des vollständigen Pakets. Wiederverwendete Dateien können den Download verkleinern"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3424,6 +3416,7 @@ msgid "Installing images"
 msgstr "Bilder werden installiert"
 
 #: src/components/settings-font-sheet.tsx
+#: src/components/update-status-banner.tsx
 msgid "Installing…"
 msgstr "Wird installiert…"
 
@@ -5505,10 +5498,6 @@ msgstr "Wird zurückgesetzt am {0}"
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Muqun neu starten, um das Update abzuschließen"
-
-#: src/components/update-status-banner.tsx
-msgid "Restarting Muqun…"
-msgstr "Muqun wird neu gestartet…"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Restore default"
@@ -7593,13 +7582,8 @@ msgid "Up arrow"
 msgstr "Pfeil nach oben"
 
 #: src/components/theme-gallery.tsx
-#: src/components/update-status-banner.tsx
 msgid "Update"
 msgstr "Aktualisieren"
-
-#: src/components/update-status-banner.tsx
-msgid "Update available"
-msgstr "Update verfügbar"
 
 #: src/components/update-status-banner.tsx
 msgid "Update download failed. Try again."
@@ -7625,6 +7609,10 @@ msgstr "Aktualisiere Muqun Gateway auf diesem Host, um {agentName} zu nutzen"
 #: src/components/update-status-banner.tsx
 msgid "Update now"
 msgstr "Jetzt aktualisieren"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready"
+msgstr "Update bereit"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
@@ -7653,10 +7641,6 @@ msgstr "Aktualisiere das Gateway, um Videoausgaben anzusehen"
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
 msgstr "Aktualisiert beim erneuten Öffnen"
-
-#: src/components/update-status-banner.tsx
-msgid "Updating Muqun…"
-msgstr "Muqun wird aktualisiert…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
