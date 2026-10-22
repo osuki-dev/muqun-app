@@ -31,7 +31,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
-import { useStableHandler } from '@/hooks/use-render-refs';
+import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useSkiaDrawReady, useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import {
   stageDefaultFloor,
@@ -273,9 +273,14 @@ export function StageView({
   ]);
   const [presented, setPresented] = useState<string | null>(null);
   const onSurfaceReset = useCallback(() => setPresented(null), []);
+  // Its identity changes only with the presentation it acknowledges: the
+  // runtime re-registers for a present on each new one, and nothing else
+  // (a pause, textures settling) may make it ask the scene for a frame.
+  const readSettled = useLatestReader(settled);
+  const readPaused = useLatestReader(paused);
   const onPresented = useCallback(() => {
-    if (settled && !paused) setPresented(presentation);
-  }, [presentation, settled, paused]);
+    if (readSettled() && !readPaused()) setPresented(presentation);
+  }, [presentation, readSettled, readPaused]);
   const gpuReady = presented === presentation;
   const revealing = useLaunchHandoff((state) => state.revealing);
   const revealDriver = useLaunchHandoff((state) => state.driver);
@@ -477,9 +482,9 @@ export function StageView({
         ) : (
           <StaticStage composition={composition} art={art} skia={!gpuLost} />
         )}
-        {renderGpu && !gpuReady ? (
-          <StaticStage composition={composition} art={art} skia={!gpuLost} />
-        ) : null}
+        {/* Nothing is drawn over the scene while it readies a frame: the launch
+            scene and a reskin's cover already wait for `gpuReady`, and a frame
+            that goes missing after that is a bug to fix, not to paper over. */}
         {renderGpu && effects.tilt && !paused ? (
           <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
         ) : null}

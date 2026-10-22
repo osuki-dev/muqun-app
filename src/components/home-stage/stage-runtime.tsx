@@ -248,24 +248,20 @@ export function StageRuntime(
 
   // Register only after the effects above have installed this render's layers.
   // The native renderer acknowledges it after present(), once per scene change.
+  // Only what can need new pipelines or uploads asks for a compile: the
+  // pictures, the ambient effect itself and the role. The theme's colours,
+  // the effect's colours and aspect, and the quality rung are uniforms and the
+  // pixel ratio; drawing them as they are costs nothing, while a compile holds
+  // every frame until it is done.
   const resourcesReady = props.resourcesReady ?? true;
+  const ambientEffectKey = JSON.stringify(ambientEffects);
   const changed = useEffectEvent(() => {
     props.onSceneChanged?.(resourcesReady);
     wake();
   });
   useEffect(
     () => changed(),
-    [
-      themeKey,
-      backdropKey,
-      paintingKey,
-      heroKey,
-      frameKey,
-      role,
-      ambientKey,
-      quality,
-      resourcesReady,
-    ]
+    [backdropKey, paintingKey, heroKey, frameKey, role, ambientEffectKey, resourcesReady]
   );
   const { onSceneReady } = props;
   useEffect(() => {
