@@ -88,6 +88,8 @@ half4 main(float2 pos) {
   float start = depth * 0.54 + billow * 0.14;
   float q = clamp((progress * 1.10 - start) / 0.42, 0.0, 1.0);
   if (q <= 0.0) return image.eval(pos);
+  // Both intact and life are zero here: no remaining fragment can contribute.
+  if (q >= 1.0) return half4(0.0);
 
   float loosen = smoothstep(0.0, 0.72, q);
   // Ash picks up speed as it leaves: a slow lift-off, then carried away.

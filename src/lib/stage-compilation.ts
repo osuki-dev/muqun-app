@@ -1,16 +1,18 @@
 /** Serializes scene preparation; only a completed current generation may draw. */
-export function createStageCompilation() {
+export function createStageCompilation(initialReady = true) {
+  let resourcesReady = initialReady;
   let revision = 0;
   let compiled = -1;
   let pending: Promise<void> | null = null;
   let closed = false;
   let failed = false;
   return {
-    changed() {
+    changed(ready = true) {
+      resourcesReady = ready;
       revision += 1;
     },
     ready(compile: () => Promise<void>, wake: () => void, fail: (error: unknown) => void) {
-      if (closed || failed) return false;
+      if (closed || failed || !resourcesReady) return false;
       if (compiled === revision) return true;
       if (pending) return false;
       const preparing = revision;

@@ -29,7 +29,7 @@ export default function GpuStage(props: StageSceneProps) {
   const canvas = useRef<CanvasRef>(null);
   const root = useRef<FiberRoot | null>(null);
   const compilation = useRef<ReturnType<typeof createStageCompilation> | null>(null);
-  const sceneChanged = useCallback(() => compilation.current?.changed(), []);
+  const sceneChanged = useCallback((ready: boolean) => compilation.current?.changed(ready), []);
   const pendingPresentation = useRef<(() => void) | undefined>(undefined);
   const acknowledgePresentation = useEffectEvent(() => {
     const presented = pendingPresentation.current;
@@ -66,7 +66,7 @@ export default function GpuStage(props: StageSceneProps) {
         if (!context) throw new Error('WebGPU canvas unavailable');
         const surface = context.canvas as HTMLCanvasElement;
         const next = createRoot(surface);
-        const preparation = createStageCompilation();
+        const preparation = createStageCompilation(false);
         compilation.current = preparation;
         let wake = () => {};
         const dispose = async () => {

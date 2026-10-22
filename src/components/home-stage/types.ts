@@ -58,6 +58,8 @@ export function createStageOpener(): StageOpener {
 }
 
 export type StageSceneProps = {
+  /** Chosen composition and texture conversions are ready for scene compilation. */
+  resourcesReady?: boolean;
   /** How many computers there are, and the selected one: the camera pans between them. */
   count: number;
   selected: number;

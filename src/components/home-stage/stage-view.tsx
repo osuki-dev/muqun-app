@@ -46,6 +46,7 @@ import {
 import { heroFeatherGeometry } from '@/lib/hero-feather';
 import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
   checkStageGpuLost,
   isStageGpuLost,
@@ -276,6 +277,39 @@ export function StageView({
     if (settled && !paused) setPresented(presentation);
   }, [presentation, settled, paused]);
   const gpuReady = presented === presentation;
+  const revealing = useLaunchHandoff((state) => state.revealing);
+  const revealDriver = useLaunchHandoff((state) => state.driver);
+  const launchReady = useLaunchHandoff((state) => state.ready);
+  const launchSettled = useLaunchHandoff((state) => state.settled);
+  const markRevealReady = useLaunchHandoff((state) => state.markReady);
+  useEffect(() => {
+    // A laid-out Stage acknowledges the launch snap only once its chosen
+    // scene is ready. GPU readiness comes from the actual presented frame.
+    if (
+      revealing &&
+      revealDriver &&
+      !launchReady &&
+      !launchSettled &&
+      !paused &&
+      size.width > 0 &&
+      size.height > 0 &&
+      settled &&
+      (!renderGpu || gpuReady)
+    )
+      markRevealReady();
+  }, [
+    revealing,
+    revealDriver,
+    launchReady,
+    launchSettled,
+    paused,
+    size.width,
+    size.height,
+    settled,
+    renderGpu,
+    gpuReady,
+    markRevealReady,
+  ]);
   useThemeRenderReady(artworkUri, settled && (!renderGpu || gpuReady));
   useThemeRenderReady(wallpaperUri, settled && (!renderGpu || gpuReady));
 
@@ -412,6 +446,7 @@ export function StageView({
           <MapErrorBoundary key={attempt} onError={fail}>
             <Suspense fallback={null}>
               <GpuStage
+                resourcesReady={settled}
                 count={count}
                 selected={selectedIndex}
                 colors={colors}
@@ -636,7 +671,6 @@ function StaticArt({ art, skia }: { art: NonNullable<StageArt>; skia: boolean })
   useThemeRenderReady(art.layer.uri, !drawsSkia || drawnImage === image);
   useSkiaDrawReady(canvas, image, drawsSkia, (ready) => {
     if (ready) setDrawnImage(image);
-    else setUndecodable(art.layer.uri);
   });
   if (plane.width <= 0 || plane.height <= 0) return null;
   if (!viaSkia) return <StaticArtImage art={art} />;

@@ -12,6 +12,26 @@ function deferred() {
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 describe('stage compilation', () => {
+  test('waits for committed resources and compiles only the complete scene', async () => {
+    const gate = createStageCompilation(false);
+    let calls = 0;
+    const compile = async () => {
+      calls += 1;
+    };
+    const noop = () => {};
+    expect(gate.ready(compile, noop, noop)).toBe(false);
+    gate.changed(false);
+    expect(gate.ready(compile, noop, noop)).toBe(false);
+    gate.changed(false);
+    await flush();
+    expect(calls).toBe(0);
+    gate.changed(true);
+    expect(gate.ready(compile, noop, noop)).toBe(false);
+    await flush();
+    expect(calls).toBe(1);
+    expect(gate.ready(compile, noop, noop)).toBe(true);
+  });
+
   test('compiles once and draws only after completion', async () => {
     const gate = createStageCompilation();
     const work = deferred();

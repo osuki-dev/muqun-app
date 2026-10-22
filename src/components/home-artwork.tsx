@@ -245,9 +245,7 @@ function HomeArtworkImage({
     );
   }, [cover, box, intrinsic, coverForeground, resolved.image]);
   const imageRect = coverRect ?? geometry?.image;
-  useSkiaDrawReady(canvas, imageRect, Boolean(image && geometry && imageRect && box), () =>
-    setDrawn(true)
-  );
+  useSkiaDrawReady(canvas, imageRect, Boolean(image && geometry && imageRect && box), setDrawn);
   useLaunchHomeArtwork({
     view,
     source,

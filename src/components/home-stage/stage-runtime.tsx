@@ -87,7 +87,7 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
  * ladder (`recordStageFrame`).
  */
 export function StageRuntime(
-  props: StageSceneProps & { onSceneReady?: () => void; onSceneChanged?: () => void }
+  props: StageSceneProps & { onSceneReady?: () => void; onSceneChanged?: (ready: boolean) => void }
 ) {
   const invalidate = useThree((state) => state.invalidate);
   const camera = useThree((state) => state.camera);
@@ -248,10 +248,24 @@ export function StageRuntime(
 
   // Register only after the effects above have installed this render's layers.
   // The native renderer acknowledges it after present(), once per scene change.
-  const changed = useEffectEvent(() => props.onSceneChanged?.());
+  const resourcesReady = props.resourcesReady ?? true;
+  const changed = useEffectEvent(() => {
+    props.onSceneChanged?.(resourcesReady);
+    wake();
+  });
   useEffect(
     () => changed(),
-    [themeKey, backdropKey, paintingKey, heroKey, frameKey, role, ambientKey, quality]
+    [
+      themeKey,
+      backdropKey,
+      paintingKey,
+      heroKey,
+      frameKey,
+      role,
+      ambientKey,
+      quality,
+      resourcesReady,
+    ]
   );
   const { onSceneReady } = props;
   useEffect(() => {
