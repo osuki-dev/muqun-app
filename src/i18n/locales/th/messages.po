@@ -3321,8 +3321,8 @@ msgid "Images download from"
 msgstr "ดาวน์โหลดรูปภาพจาก"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "นำเข้าจากไฟล์…"
+msgid "Import a file"
+msgstr "นำเข้าจากไฟล์"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -4071,8 +4071,8 @@ msgid "New workspace"
 msgstr "พื้นที่ทำงานใหม่"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "เวิร์กทรีใหม่…"
+msgid "New worktree"
+msgstr "เวิร์กทรีใหม่"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4884,8 +4884,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "วางลิงก์ธีมสาธารณะหรือที่เก็บโค้ด GitHub"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "วางลิงก์…"
+msgid "Paste a URL"
+msgstr "วางลิงก์"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."

@@ -3321,8 +3321,8 @@ msgid "Images download from"
 msgstr "画像のダウンロード元"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "ファイルからインポート…"
+msgid "Import a file"
+msgstr "ファイルからインポート"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -4071,8 +4071,8 @@ msgid "New workspace"
 msgstr "新規ワークスペース"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "新しいワークツリー…"
+msgid "New worktree"
+msgstr "新しいワークツリー"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4884,8 +4884,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を貼り付けてください"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "URL を貼り付け…"
+msgid "Paste a URL"
+msgstr "URL を貼り付け"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."

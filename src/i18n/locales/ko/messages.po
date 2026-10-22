@@ -3321,8 +3321,8 @@ msgid "Images download from"
 msgstr "이미지 다운로드 출처"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "파일에서 가져오기…"
+msgid "Import a file"
+msgstr "파일에서 가져오기"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -4071,8 +4071,8 @@ msgid "New workspace"
 msgstr "새 워크스페이스"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "새 워크트리…"
+msgid "New worktree"
+msgstr "새 워크트리"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4884,8 +4884,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "URL 붙여넣기…"
+msgid "Paste a URL"
+msgstr "URL 붙여넣기"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."

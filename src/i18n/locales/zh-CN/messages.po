@@ -3321,8 +3321,8 @@ msgid "Images download from"
 msgstr "图片下载来源"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Import a file…"
-msgstr "从文件导入…"
+msgid "Import a file"
+msgstr "从文件导入"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Import file"
@@ -4071,8 +4071,8 @@ msgid "New workspace"
 msgstr "新建工作区"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "New worktree…"
-msgstr "新建工作树…"
+msgid "New worktree"
+msgstr "新建工作树"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Newer"
@@ -4884,8 +4884,8 @@ msgid "Paste a public theme link or GitHub repository"
 msgstr "粘贴公开的主题链接或 GitHub 仓库链接"
 
 #: src/components/settings-font-sheet.tsx
-msgid "Paste a URL…"
-msgstr "粘贴链接…"
+msgid "Paste a URL"
+msgstr "粘贴链接"
 
 #: src/components/change-tree-rows.tsx
 msgid "Patch too long; showing the start of it."

@@ -495,7 +495,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
           <SheetSceneGroupRule />
           <SheetSceneRow
             testID="agent-worktree-new-btn"
-            title={t`New worktree…`}
+            title={t`New worktree`}
             caption={creating ? undefined : t`A second checkout of this repository`}
             leading={<CreateIcon size={17} color={theme.colors.primary} />}
             onPress={() => {
