@@ -70,7 +70,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         styles.container,
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: allCompleted ? withAlpha(theme.colors.primary, 0.27) : theme.colors.border,
+          borderColor: 'transparent',
           borderRadius: expanded ? profile.chrome.transcriptPlate : profile.chrome.control,
         },
       ]}>

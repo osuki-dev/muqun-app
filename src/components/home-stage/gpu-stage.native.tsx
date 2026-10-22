@@ -1,5 +1,5 @@
 import { createRoot, unmountComponentAtNode } from '@react-three/fiber';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 import { Canvas, importDevice, type CanvasRef } from 'react-native-webgpu';
 import { Skia } from 'react-native-skia';
@@ -27,11 +27,20 @@ const startScene = createSceneLifetimes();
 export default function GpuStage(props: StageSceneProps) {
   const canvas = useRef<CanvasRef>(null);
   const root = useRef<FiberRoot | null>(null);
+  const pendingPresentation = useRef<(() => void) | undefined>(undefined);
+  const acknowledgePresentation = useEffectEvent(() => {
+    const presented = pendingPresentation.current;
+    pendingPresentation.current = undefined;
+    presented?.();
+  });
+  const sceneReady = useCallback(() => {
+    pendingPresentation.current = props.onPresented;
+  }, [props.onPresented]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const renderLatest = useEffectEvent(() =>
     root.current?.render(
       <MapErrorBoundary onError={props.onError}>
-        <StageRuntime {...props} />
+        <StageRuntime {...props} onSceneReady={sceneReady} />
       </MapErrorBoundary>
     )
   );
@@ -117,6 +126,7 @@ export default function GpuStage(props: StageSceneProps) {
                 try {
                   draw(scene, camera);
                   context.present();
+                  acknowledgePresentation();
                 } catch (error) {
                   fail(error);
                 }

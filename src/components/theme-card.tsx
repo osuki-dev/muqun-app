@@ -7,9 +7,8 @@
  * The card is a content surface on the sheet's frosted ground, so its fill goes
  * through the reader's interface opacity (`useSurfaceBackground`) and its
  * corner is the profile's `card` radius. The picture is artwork and keeps its
- * own colours. The current theme is marked twice and quietly: a 2pt rule in
- * the primary colour around the card and a check in the picture's corner, so
- * the mark survives a reader who cannot tell the outline from the artwork.
+ * own colours. A filled check in the picture's corner marks the current theme
+ * without adding an outline around the whole card.
  *
  * Every card in a grid is exactly as tall as `themeGridLayout` says, which is
  * what lets the list place them without measuring (`getFixedItemSize`).
@@ -243,16 +242,6 @@ export function ThemeCard({
               </Text>
             </Animated.View>
           </View>
-          {/* Drawn over the card rather than as its border, so marking the
-              current theme never moves anything inside it. */}
-          {current ? (
-            <Animated.View
-              pointerEvents="none"
-              entering={fadeIn('short')}
-              exiting={fadeOut('micro')}
-              style={[styles.outline, { borderRadius: radius, borderColor: theme.colors.primary }]}
-            />
-          ) : null}
         </PressableScale>
       </Animated.View>
     </Animated.View>
@@ -282,6 +271,7 @@ export function ThemeImportCard({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const entering = useCardRise(rise);
+  const surfaceBackground = useSurfaceBackground();
   return (
     <Animated.View entering={entering} style={{ height: layout.cardHeight }}>
       <PressableScale
@@ -294,7 +284,11 @@ export function ThemeImportCard({
         style={[
           styles.card,
           styles.importCard,
-          { borderRadius: profile.chrome.card, borderColor: theme.colors.border },
+          {
+            borderRadius: profile.chrome.card,
+            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            borderColor: 'transparent',
+          },
         ]}>
         <AddItemIcon size={22} color={theme.colors.textMuted} />
         <Text variant="bodySmall" weight="semibold" color={theme.colors.textMuted}>
@@ -495,7 +489,6 @@ const styles = StyleSheet.create({
   card: { flex: 1, overflow: 'hidden', borderCurve: 'continuous' },
   preview: { width: '100%', overflow: 'hidden' },
   copy: { paddingHorizontal: 10, paddingTop: 8, paddingBottom: 10, gap: 2 },
-  outline: { ...StyleSheet.absoluteFill, borderWidth: 2, borderCurve: 'continuous' },
   check: {
     position: 'absolute',
     top: 8,
@@ -535,7 +528,6 @@ const styles = StyleSheet.create({
   placeholderSwatch: { width: 34, height: 22, borderRadius: 6, borderCurve: 'continuous' },
   importCard: {
     borderWidth: 1.5,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,

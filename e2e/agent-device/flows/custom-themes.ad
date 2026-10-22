@@ -181,11 +181,14 @@ gesture pan 1000 600 0 700 600
 wait stable 300 5000
 
 # section apply-builtin
-# Applying from the picker is a confirmation: the sheet closes and Settings is
-# underneath it again, with the pack's name in the Theme row. The wait is for
-# that, not for the paint.
+# Applying is final: close the whole picker stack and reveal Home.
 press "${TARGET}"
 wait stable 400 5000
+
+# section applied-home
+wait absent "id=settings-theme-sheet" 10000
+wait "text=\"Settings\"" 10000
+is visible "text=\"Settings\""
 
 # section selected-builtin
 # Successful selection must close, and reopening must show the actual active

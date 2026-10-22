@@ -229,7 +229,7 @@ function WaitingTaskRow({
           styles.row,
           {
             backgroundColor: background(theme.colors.surface),
-            borderColor: theme.colors.borderStrong,
+            borderColor: 'transparent',
             borderRadius: profile.chrome.noticeCard,
           },
         ]}>
@@ -295,7 +295,7 @@ function AttentionRow({
         styles.row,
         {
           backgroundColor: background(theme.colors.surface),
-          borderColor: theme.colors.borderStrong,
+          borderColor: 'transparent',
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>

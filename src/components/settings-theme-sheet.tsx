@@ -232,6 +232,14 @@ export function SettingsThemeSheet({
   const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
   const [busy, setBusy] = useState(false);
+  const applying = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [listWidth, setListWidth] = useState(0);
   const listRef = useRef<LegendListRef>(null);
   // Where the grid starts: the list header's height, as the list measured it.
@@ -258,19 +266,18 @@ export function SettingsThemeSheet({
   }
 
   /**
-   * Apply under the reskin cover, then leave once the new theme has painted.
-   *
-   * Closing in the same turn as the write made the sheet dismissal and the
-   * ripple reveal fight, and Home showed through while it was still painting.
-   * The write stays in `apply`; the sheet leaves in `settle`, one frame before
-   * the cover lifts. The new theme's primary is what the wash's front is lit
-   * in: the one moment that tells the reader in colour what they just chose.
+   * Save the choice, then hand the cover to the root and return Home.
+   * The picker cannot unmount its cover
+   * midway through the reveal or expose the intermediate Settings screens.
    */
   function wear(options: {
     pack: Pick<ThemeAppearance, 'light' | 'dark'>;
     prepare?: () => ReturnType<typeof prepareThemeArtwork>;
     apply: () => void;
   }) {
+    if (busy || applying.current) return;
+    applying.current = true;
+    setBusy(true);
     setError(null);
     setMenu(null);
     void reskin
@@ -278,12 +285,17 @@ export function SettingsThemeSheet({
         kind: 'theme',
         accent: themeVariant(options.pack, resolvedMode).colors.primary,
         prepare: options.prepare,
+        isCurrent: () => mounted.current,
         apply: options.apply,
-        settle: onClose,
+        handoff: onClose,
       })
       .catch(() => {
-        // A rejected apply skips settle; say so once the cover is gone.
-        setError(t`Could not save theme`);
+        // Failed writes leave the picker open so the choice can be retried.
+        if (mounted.current) setError(t`Could not save theme`);
+      })
+      .finally(() => {
+        applying.current = false;
+        if (mounted.current) setBusy(false);
       });
   }
 

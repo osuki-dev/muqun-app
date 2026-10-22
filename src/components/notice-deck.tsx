@@ -43,7 +43,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
               {
                 width: front ? widths[front] : undefined,
                 backgroundColor: plate,
-                borderColor: colors.border,
+                borderColor: 'transparent',
                 transform: [
                   { translateY: depth * 6 },
                   { scaleX: 1 - depth * 0.035 },

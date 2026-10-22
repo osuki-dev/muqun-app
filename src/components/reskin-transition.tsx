@@ -178,8 +178,8 @@ export type ReskinRunOptions = {
    */
   settle?: () => void | Promise<void>;
   /**
-   * Leave the screen the run started on for good, under the cover, before the
-   * theme is applied. Used in place of `settle` when the change lands on
+   * Leave the screen the run started on for good, under the cover, after the
+   * theme has been saved successfully. Used in place of `settle` when the change lands on
    * another screen (an apply from the theme editor or the file viewer goes
    * home), and resolves once that screen has arrived, bounded by
    * `SETTLE_CAP_MS`.
@@ -606,9 +606,9 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           prepare: options.prepare,
           cover: async () => {},
           apply: async () => {
-            await settled(options.handoff?.());
             await apply();
-            options.settle?.();
+            await settled(options.handoff?.());
+            await settled(options.settle?.());
           },
           painted: async () => {},
           reveal: () => {},
@@ -647,9 +647,9 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           prepare: options.prepare,
           cover: async () => {},
           apply: async () => {
-            await settled(options.handoff?.());
             await apply();
-            options.settle?.();
+            await settled(options.handoff?.());
+            await settled(options.settle?.());
           },
           painted: async () => {},
           reveal: () => {},
@@ -807,7 +807,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                       entries.slice(-1),
                       strikes,
                       stillWanted,
-                      3000,
+                      budget ?? 260,
                       true
                     );
                     if (taken.shots && stillWanted()) {
@@ -837,13 +837,13 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     } else if (taken.shots) release(taken.shots.values());
                   },
                   apply: async () => {
-                    if (options.handoff) await handOff(options.handoff);
                     if (!stillWanted()) return;
+                    await apply();
                     applied = true;
                     updateActive((current) =>
                       current?.id === id ? { ...current, preparing: false } : current
                     );
-                    await apply();
+                    if (options.handoff) await handOff(options.handoff);
                   },
                   painted: async () => {
                     await painted();
@@ -1019,9 +1019,9 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
       prepare: options.prepare,
       cover: async () => {},
       apply: async () => {
-        await settled(options.handoff?.());
         await options.apply();
-        options.settle?.();
+        await settled(options.handoff?.());
+        await settled(options.settle?.());
       },
       painted: async () => {},
       reveal: () => {},

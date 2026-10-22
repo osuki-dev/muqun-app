@@ -766,6 +766,16 @@
         "mode": "press",
         "run": "flows/custom-themes.ad#apply-builtin"
       },
+      { "run": "flows/custom-themes.ad#applied-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": { "SETTINGS_GROUP": "appearance" }
+      },
       {
         "target": {
           "text": "Theme, Osuki"

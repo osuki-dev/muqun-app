@@ -2078,11 +2078,10 @@ export const AgentComposer = memo(function AgentComposer({
                         style={[
                           styles.actionBtnWithLabel,
                           { borderRadius: profile.chrome.roundControl },
-                          // Always one point of border, coloured only while open, so
-                          // opening the menu never widens the chip and moves the next.
+                          // Keep chip geometry stable; the material and label carry its state.
                           {
                             borderWidth: 1,
-                            borderColor: modeMenuOpen ? theme.colors.primary : 'transparent',
+                            borderColor: 'transparent',
                           },
                           { backgroundColor: surfaceBackground(chromeGlass) },
                         ]}>
@@ -2227,10 +2226,7 @@ export const AgentComposer = memo(function AgentComposer({
                                 ? withAlpha(theme.colors.warning, 0.2)
                                 : withAlpha(theme.colors.primary, 0.2)
                             ),
-                            borderColor:
-                              deliveryMode === 'steer'
-                                ? withAlpha(theme.colors.warning, 0.5)
-                                : withAlpha(theme.colors.primary, 0.5),
+                            borderColor: 'transparent',
                             borderWidth: 1,
                           },
                         ]}>

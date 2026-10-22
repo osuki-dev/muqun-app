@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
 import type { HomeLayout } from '@/lib/home-layout';
-import { resolveAppearanceProfile } from '@/lib/appearance-profile';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -131,7 +130,6 @@ function HomeLayoutOption({
 // Opacity audit: decorative -- a schematic of the layout, not surfaces that carry content.
 function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   const { colors } = useThemeTokens();
-  const profile = resolveAppearanceProfile(layout);
   return (
     <View
       accessible={false}
@@ -140,12 +138,9 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
         {
           backgroundColor: colors.background,
           borderColor: colors.border,
-          borderRadius: profile.chrome.surface,
         },
       ]}>
-      {layout === 'stage' ? null : (
-        <View style={[styles.previewHeader, { backgroundColor: colors.surfaceRaised }]} />
-      )}
+      <View style={[styles.previewHeader, { backgroundColor: colors.surfaceRaised }]} />
       {layout === 'classic' ? (
         <View style={styles.classicPreview}>
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
@@ -167,59 +162,45 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   );
 }
 
-/**
- * A still of the Stage: the theme's art as layered depth with the HUD header
- * over it, the agent status chips beneath, and the composer at the bottom.
- */
+/** Layered artwork and status chips, using the same neutral surfaces as the other layouts. */
 function StageLayoutPreview() {
   const { colors } = useThemeTokens();
   return (
     <View style={styles.stagePreview}>
-      <View style={[styles.stageArt, { backgroundColor: colors.primarySubtle }]}>
-        <View style={[styles.stageMid, { backgroundColor: colors.primary }]} />
-        <View style={[styles.stageFigure, { backgroundColor: colors.primary }]} />
-        <View style={[styles.stageHud, { backgroundColor: colors.surfaceRaised }]} />
+      <View style={styles.stageArt}>
+        <View style={[styles.stageBack, { backgroundColor: colors.surface }]} />
+        <View style={[styles.stageFront, { backgroundColor: colors.surfaceRaised }]} />
       </View>
       <View style={styles.stageChips}>
         <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
         <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
         <View style={[styles.stageChip, { backgroundColor: colors.surfaceRaised }]} />
       </View>
-      <View
-        style={[
-          styles.stageComposer,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   stagePreview: { flex: 1, gap: 4 },
-  stageArt: { flex: 1, borderRadius: 4, overflow: 'hidden' },
-  stageMid: {
+  stageArt: { flex: 1 },
+  stageBack: {
     position: 'absolute',
-    left: '-10%',
-    right: '38%',
-    top: '42%',
-    bottom: '-30%',
-    borderRadius: 14,
-    opacity: 0.22,
+    left: 0,
+    right: 8,
+    top: 0,
+    bottom: 6,
+    borderRadius: 4,
   },
-  stageFigure: {
+  stageFront: {
     position: 'absolute',
-    left: '50%',
-    width: '18%',
-    top: '30%',
-    bottom: '-12%',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    left: 8,
+    right: 0,
+    top: 6,
+    bottom: 0,
+    borderRadius: 4,
   },
-  stageHud: { position: 'absolute', left: 4, top: 4, width: '38%', height: 5, borderRadius: 2.5 },
   stageChips: { flexDirection: 'row', gap: 3 },
   stageChip: { width: 16, height: 4, borderRadius: 2 },
-  stageComposer: { height: 9, borderWidth: StyleSheet.hairlineWidth, borderRadius: 4.5 },
   option: {
     minHeight: 108,
     paddingVertical: 10,

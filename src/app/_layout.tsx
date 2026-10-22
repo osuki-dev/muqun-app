@@ -424,7 +424,10 @@ function RootContent() {
       <ToastProvider
         maxWidth={480}
         defaultDurationMs={2000}
-        toastStyle={[notificationSurfaceStyle, { borderWidth: StyleSheet.hairlineWidth }]}>
+        toastStyle={[
+          notificationSurfaceStyle,
+          { borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
+        ]}>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font

@@ -5768,7 +5768,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   styles.screenNotice,
                   {
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                    borderColor: theme.colors.border,
+                    borderColor: 'transparent',
                     borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
@@ -5810,7 +5810,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   styles.screenNotice,
                   {
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                    borderColor: theme.colors.border,
+                    borderColor: 'transparent',
                     borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>

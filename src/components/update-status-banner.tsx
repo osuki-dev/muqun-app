@@ -184,7 +184,7 @@ export function UpdateStatusBanner() {
                     styles.notesBox,
                     {
                       maxHeight: Math.max(120, Math.round(height * 0.32)),
-                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surfaceRaised,
                     },
                   ]}
                   contentContainerStyle={styles.notes}>
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingRight: 10,
   },
-  notesBox: { flexGrow: 0, borderWidth: StyleSheet.hairlineWidth, borderRadius: 12 },
+  notesBox: { flexGrow: 0, borderRadius: 12 },
   notes: { paddingHorizontal: 10, paddingVertical: 8 },
   progressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   transfer: { flex: 1 },

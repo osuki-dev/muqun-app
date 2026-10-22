@@ -12,6 +12,7 @@ import {
   releaseHomeWorkspaceHost,
 } from '@/lib/home-workspace-owner';
 import { announceHomeArrival } from '@/lib/home-arrival';
+import { useReskinActivity } from '@/components/reskin-transition';
 import { HomeOverview } from '@/components/home-overview';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 
@@ -41,6 +42,15 @@ type TransitionNavigation = {
 /** Home has finished appearing; a theme change landing here waits for this. */
 function useAnnounceHomeArrival() {
   const navigation = useNavigation() as unknown as TransitionNavigation;
+  const focused = useIsFocused();
+  const quiet = useReskinActivity((state) => state.quiet);
+  // Covered navigation disables native transitions, so transitionEnd may not
+  // fire. A focused Home commit is sufficient; reskin still waits for its art.
+  useEffect(() => {
+    if (!focused || !quiet) return;
+    const frame = requestAnimationFrame(announceHomeArrival);
+    return () => cancelAnimationFrame(frame);
+  }, [focused, quiet]);
   useEffect(
     () =>
       navigation.addListener('transitionEnd', (event) => {

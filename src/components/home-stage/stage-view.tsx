@@ -13,8 +13,10 @@ import {
   Image as SkiaImage,
   rect,
   vec,
+  useCanvasRef,
+  type SkImage,
 } from 'react-native-skia';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
@@ -30,7 +32,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { MapErrorBoundary } from '@/components/computer-map/error-boundary';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useStableHandler } from '@/hooks/use-render-refs';
-import { useThemeRenderReady } from '@/hooks/use-theme-render-ready';
+import { useSkiaDrawReady, useThemeRenderReady } from '@/hooks/use-theme-render-ready';
 import {
   stageDefaultFloor,
   stageHeroPlacement,
@@ -214,6 +216,13 @@ export function StageView({
   const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge, 'painting');
   const heroTexture = useStageTexture(gpuUri(composition.hero), heroEdge, 'hero');
   const frameTexture = useStageTexture(gpuUri(composition.frame), coverEdge, 'frame');
+  // A failed conversion must leave the original static picture visible.
+  // Keep texture hooks subscribed so Home's existing retry epoch can recover,
+  // but unmount the GPU scene (and sensor) instead of animating behind it.
+  const textureFailed = [backdropTexture, paintingTexture, heroTexture, frameTexture].some(
+    (state) => state.status === 'failed'
+  );
+  const renderGpu = effects.gpu && !textureFailed;
   // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
   const settled =
     composition.ready &&
@@ -221,8 +230,6 @@ export function StageView({
       [backdropTexture, paintingTexture, heroTexture, frameTexture].every(
         (state) => state.status !== 'loading'
       ));
-  useThemeRenderReady(artworkUri, settled);
-  useThemeRenderReady(wallpaperUri, settled);
   const backdrop = usePicture(backdropTexture, composition.backdrop);
   const painting = usePicture(paintingTexture, composition.painting);
   const hero = usePicture(heroTexture, composition.hero);
@@ -235,6 +242,31 @@ export function StageView({
     }),
     [theme.colors]
   );
+
+  // Texture decode is not a presented frame. Keep the static stage over the
+  // canvas until this exact scene has drawn; waking after blur needs a new frame.
+  const presentation = useMemo(
+    () => ({
+      backdrop,
+      painting,
+      hero,
+      frame,
+      colors,
+      resolvedMode,
+      role,
+      attempt,
+      paused,
+      settled,
+    }),
+    [backdrop, painting, hero, frame, colors, resolvedMode, role, attempt, paused, settled]
+  );
+  const [presented, setPresented] = useState<object | null>(null);
+  const onPresented = useCallback(() => {
+    if (settled && !paused) setPresented(presentation);
+  }, [presentation, settled, paused]);
+  const gpuReady = presented === presentation;
+  useThemeRenderReady(artworkUri, settled && (!renderGpu || gpuReady));
+  useThemeRenderReady(wallpaperUri, settled && (!renderGpu || gpuReady));
 
   // The theme's ambient effect for this variant, resolved as the 2D layer
   // resolves it (`theme-artwork.tsx`): the variant's own, else the theme's.
@@ -262,7 +294,7 @@ export function StageView({
   }, [paused]);
   /** Push into the art, then run `open`; straight away without the scene or its motion. */
   const diveThen = useStableHandler((open: () => void) => {
-    if (!effects.gpu || reducedMotion) {
+    if (!renderGpu || reducedMotion) {
       open();
       return;
     }
@@ -365,7 +397,7 @@ export function StageView({
             previous.width === width && previous.height === height ? previous : { width, height }
           );
         }}>
-        {effects.gpu ? (
+        {renderGpu ? (
           <MapErrorBoundary key={attempt} onError={fail}>
             <Suspense fallback={null}>
               <GpuStage
@@ -391,13 +423,17 @@ export function StageView({
                 bridge={bridge}
                 onQualityDrop={lowered}
                 onError={fail}
+                onPresented={onPresented}
               />
             </Suspense>
           </MapErrorBoundary>
         ) : (
           <StaticStage composition={composition} art={art} skia={!gpuLost} />
         )}
-        {effects.gpu && effects.tilt && !paused ? (
+        {renderGpu && !gpuReady ? (
+          <StaticStage composition={composition} art={art} skia={!gpuLost} />
+        ) : null}
+        {renderGpu && effects.tilt && !paused ? (
           <StageTilt tiltX={tiltX} tiltY={tiltY} onMoved={bridge.wake} />
         ) : null}
       </View>
@@ -550,9 +586,13 @@ function StaticStage({
 
 /** A wallpaper as the 2D Home draws it: its fit, focal point (CSS object-position) and opacity. */
 function StaticWallpaper({ layer }: { layer: StageLayer }) {
+  const [displayed, setDisplayed] = useState<string | null>(null);
+  useThemeRenderReady(layer.uri, displayed === layer.uri);
   return (
     <Image
       source={{ uri: layer.uri }}
+      onDisplay={() => setDisplayed(layer.uri)}
+      onError={() => setDisplayed(layer.uri)}
       contentFit={layer.fit === 'contain' ? 'contain' : 'cover'}
       contentPosition={{ left: `${layer.focal.x * 100}%`, top: `${layer.focal.y * 100}%` }}
       cachePolicy="memory"
@@ -578,14 +618,22 @@ function StaticArt({ art, skia }: { art: NonNullable<StageArt>; skia: boolean })
     setUndecodable(art.layer.uri);
   });
   const { plane, drawn, fade } = art.placement;
+  const canvas = useCanvasRef();
+  const [drawnImage, setDrawnImage] = useState<SkImage | null>(null);
+  const drawsSkia = viaSkia && image !== null && plane.width > 0 && plane.height > 0;
+  useThemeRenderReady(art.layer.uri, !drawsSkia || drawnImage === image);
+  useSkiaDrawReady(canvas, image, drawsSkia, (ready) => {
+    if (ready) setDrawnImage(image);
+    else setUndecodable(art.layer.uri);
+  });
   if (plane.width <= 0 || plane.height <= 0) return null;
   if (!viaSkia) return <StaticArtImage art={art} />;
-  if (!image) return null;
+  if (!image) return <StaticArtImage art={art} />;
   const feather = art.framed
     ? heroFeatherGeometry({ container: { width: plane.width, height: plane.height } })
     : null;
   return (
-    <Canvas style={StyleSheet.absoluteFill}>
+    <Canvas ref={canvas} style={StyleSheet.absoluteFill}>
       <Group clip={rect(plane.x, plane.y, plane.width, plane.height)}>
         <Mask
           mode="alpha"
@@ -628,6 +676,8 @@ function StaticArt({ art, skia }: { art: NonNullable<StageArt>; skia: boolean })
 
 /** The art as a plain image in its box, for when Skia cannot draw it: no fades. */
 function StaticArtImage({ art }: { art: NonNullable<StageArt> }) {
+  const [displayed, setDisplayed] = useState<string | null>(null);
+  useThemeRenderReady(art.layer.uri, displayed === art.layer.uri);
   const { plane, drawn } = art.placement;
   return (
     <View
@@ -637,6 +687,8 @@ function StaticArtImage({ art }: { art: NonNullable<StageArt> }) {
       ]}>
       <Image
         source={{ uri: art.layer.uri }}
+        onDisplay={() => setDisplayed(art.layer.uri)}
+        onError={() => setDisplayed(art.layer.uri)}
         contentFit="fill"
         cachePolicy="memory"
         accessible={false}

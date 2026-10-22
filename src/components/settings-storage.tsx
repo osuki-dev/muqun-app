@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LADDER.gutter,
   },
   action: {
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: LADDER.snug,
     borderCurve: 'continuous',
     flexDirection: 'row',

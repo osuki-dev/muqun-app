@@ -86,7 +86,7 @@ const DIVE_SPRING = { stiffness: 90, damping: 17 };
  * time it: a device that runs over its frame budget steps down the quality
  * ladder (`recordStageFrame`).
  */
-export function StageRuntime(props: StageSceneProps) {
+export function StageRuntime(props: StageSceneProps & { onSceneReady?: () => void }) {
   const invalidate = useThree((state) => state.invalidate);
   const camera = useThree((state) => state.camera);
   const scene = useThree((state) => state.scene);
@@ -243,6 +243,14 @@ export function StageRuntime(props: StageSceneProps) {
   });
   useEffect(() => wakeFor(paused), [paused]);
   useEffect(() => wakeFor(false), [dive]);
+
+  // Register only after the effects above have installed this render's layers.
+  // The native renderer acknowledges it after present(), once per scene change.
+  const { onSceneReady } = props;
+  useEffect(() => {
+    onSceneReady?.();
+    wake();
+  }, [onSceneReady]);
 
   const qualityDropped = useStableHandler((next: StageQuality) => props.onQualityDrop(next));
 

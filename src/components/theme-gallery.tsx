@@ -203,7 +203,7 @@ function TagChip({
           ? { backgroundColor: theme.colors.primary }
           : {
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-              borderColor: theme.colors.border,
+              borderColor: 'transparent',
             },
       ]}>
       <Text

@@ -145,7 +145,7 @@ export const HOME_COMPOSER_TRANSITION_MS = DURATION.long + DURATION.micro;
  */
 export const RESKIN_MOTION = {
   /** The theme wash, from the near edge to past the far corner. */
-  washMs: 700,
+  washMs: 360,
   /**
    * How far the snapshot is carried away as the wash takes it, as a scale.
    *
@@ -161,10 +161,10 @@ export const RESKIN_MOTION = {
   /** The font halftone, from the tapped row out past the last corner. */
   halftoneMs: 600,
   /**
-   * The theme ripple, drop to flat water: the front crosses in the first 720
+   * The theme ripple, drop to flat water: the front crosses in the first 336
    * ms (`RIPPLE_FRONT_SHARE` of this) and the rings settle in the rest.
    */
-  rippleMs: 900,
+  rippleMs: 420,
   /** The font scan, both bands from the tapped row out past the screen's ends. */
   scanMs: 640,
   /**
