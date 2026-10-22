@@ -1140,6 +1140,9 @@ export function ServerTerminalWorkspace({
   const [data, setData] = useState<ServerData>(() => warmWorkspace(serverId) ?? initialData);
   const [snapshotGeneration, setSnapshotGeneration] = useState(0);
   const snapshotGenerationRef = useRef(0);
+  // For the refresh deciding whether anyone waits on a new generation.
+  const dataRef = useLatestRef(data);
+  const strictTargetRef = useLatestRef(activeStrictTarget);
   const [missingRequestedTarget, setMissingRequestedTarget] = useState<MissingHomeTarget | null>(
     null
   );
@@ -1922,6 +1925,10 @@ export function ServerTerminalWorkspace({
                 JSON.stringify(current) === JSON.stringify(allSessions) ? current : allSessions
               );
               const { sessionId } = next;
+              const sessionConfirmedAgain =
+                previous?.serverId !== serverId ||
+                previous.preference !== preferredSessionId ||
+                previous.sessionId !== sessionId;
               resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
               healthRef.current = next.health;
               rememberWarmWorkspace(serverId, next);
@@ -1935,9 +1942,25 @@ export function ServerTerminalWorkspace({
                   agents: mirroredServerPanes(next.panes, next.agents, next.health?.capabilities),
                 });
               }
-              const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
-              snapshotGenerationRef.current = nextSnapshotGeneration;
-              setSnapshotGeneration(nextSnapshotGeneration);
+              // A new generation only when something waits on one: a changed
+              // workspace, a strict target or a gone pane waiting for a
+              // snapshot taken after it, or a session confirmed again (the
+              // Home visit). The 12 s poll that finds nothing new used to bump
+              // it anyway, re-rendering this whole screen to learn nothing.
+              const waitingFor = strictTargetRef.current?.afterGeneration;
+              const strictTargetWaiting =
+                waitingFor !== undefined && snapshotGenerationRef.current < waitingFor;
+              const dataChanged = !sameServerData(dataRef.current, next);
+              if (
+                dataChanged ||
+                strictTargetWaiting ||
+                gonePanesRef.current.size > 0 ||
+                sessionConfirmedAgain
+              ) {
+                const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
+                snapshotGenerationRef.current = nextSnapshotGeneration;
+                setSnapshotGeneration(nextSnapshotGeneration);
+              }
               setData((current) => (sameServerData(current, next) ? current : next));
               const strictTargetAtRequest = activeStrictTarget;
               setSelection((current) => {
@@ -2003,6 +2026,8 @@ export function ServerTerminalWorkspace({
       setBackendUnreachable,
       setSnapshotGeneration,
       setData,
+      dataRef,
+      strictTargetRef,
     ]
   );
 
