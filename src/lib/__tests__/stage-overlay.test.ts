@@ -522,6 +522,81 @@ describe('stageProgressLines', () => {
       text: 'newer session progress',
     });
   });
+  test('one conversation prefers its native activity over newer linked terminal reports', () => {
+    const native = {
+      key: stageSessionKey('a1', 'claude'),
+      asid: 'a1',
+      agentId: 'claude',
+      sessionId: 'herdr',
+      text: 'Native session progress',
+      atMs: NOW - 100,
+    };
+    const terminal = { key: 'pane:p1', paneId: 'p1', text: 'Newer terminal screen', atMs: NOW };
+    for (const activities of [
+      [native, terminal],
+      [terminal, native],
+    ]) {
+      const lines = stageProgressLines({
+        serverId: SERVER,
+        panes,
+        sessions,
+        tasks: [{ ...paneTask, updatedMs: NOW, progress: 'Terminal ledger' }],
+        activities,
+        nowMs: NOW,
+      });
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toMatchObject({
+        asid: 'a1',
+        agentId: 'claude',
+        text: 'Native session progress',
+        sessionId: 'herdr',
+      });
+    }
+  });
+  test('same-name independent sessions and unassociated terminals stay separate before the five-row limit', () => {
+    const listed = {
+      ...sessions,
+      sessions: Array.from({ length: 5 }, (_, index) => ({
+        ...sessions.sessions[0]!,
+        asid: `a${index + 1}`,
+        terminal: index === 0 ? sessions.sessions[0]!.terminal : undefined,
+      })),
+    };
+    const otherPane = agent('independent', { agentLabel: 'claude' });
+    const currentPanes = { ...panes, agents: [...panes.agents, otherPane] };
+    const activities = [
+      ...listed.sessions.map((session) => ({
+        key: stageSessionKey(session.asid, session.agentId),
+        asid: session.asid,
+        agentId: session.agentId,
+        sessionId: 'herdr',
+        text: 'Same displayed text',
+        atMs: NOW,
+      })),
+      { key: 'pane:p1', paneId: 'p1', text: 'Linked terminal', atMs: NOW },
+      { key: 'pane:independent', paneId: 'independent', text: 'Independent terminal', atMs: NOW },
+    ];
+    const lines = stageProgressLines({
+      serverId: SERVER,
+      panes: currentPanes,
+      sessions: listed,
+      tasks: [],
+      activities,
+      nowMs: NOW,
+    });
+    expect(lines).toHaveLength(6);
+    expect(lines.filter((line) => line.asid === 'a1')).toHaveLength(1);
+    expect(lines.some((line) => line.key === 'pane:independent')).toBe(true);
+    expect(
+      stageActivitySubjects({
+        serverId: SERVER,
+        panes: currentPanes,
+        sessions: listed,
+        activeAtMs: {},
+        nowMs: NOW,
+      })
+    ).toHaveLength(5);
+  });
   test('a reused shell, another workspace, and a removed pane cannot revive a ledger subtitle', () => {
     expect(
       stageProgressLines({

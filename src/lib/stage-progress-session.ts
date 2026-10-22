@@ -12,6 +12,7 @@ export function stageProgressSession({
   serverId,
   entries,
   sessions,
+  sessionsSeenAtMs,
   panes,
   nowMs,
 }: {
@@ -19,6 +20,7 @@ export function stageProgressSession({
   serverId: string;
   entries: readonly HomeContinueEntry[];
   sessions?: GatewayAgentSessionsSnapshot;
+  sessionsSeenAtMs?: number;
   panes?: ServerAgentsSnapshot;
   nowMs: number;
 }): HomeContinueEntry | null {
@@ -27,6 +29,10 @@ export function stageProgressSession({
   if (!isSession && !isPane) return null;
   const id = line.key.slice(line.key.indexOf(':') + 1);
   const listed = sessions?.serverId === serverId ? sessions : undefined;
+  const observedAtMs = Math.max(
+    listed?.observedAtMs ?? 0,
+    sessionsSeenAtMs ?? listed?.observedAtMs ?? 0
+  );
   let asid = isSession ? (line.asid ?? id) : undefined;
   let agentId = line.agentId;
   if (isPane) {
@@ -39,7 +45,7 @@ export function stageProgressSession({
       panes?.serverId !== serverId ||
       panes.sessionId !== terminal.sessionId ||
       nowMs - panes.checkedAtMs > SERVER_AGENTS_STALE_AFTER_MS ||
-      nowMs - listed.observedAtMs > SERVER_AGENTS_STALE_AFTER_MS ||
+      nowMs - observedAtMs > SERVER_AGENTS_STALE_AFTER_MS ||
       (terminal.instanceId && pane.instanceId !== terminal.instanceId) ||
       (terminal.shellPid && pane.shellPid !== terminal.shellPid)
     )
@@ -58,9 +64,30 @@ export function stageProgressSession({
   const reported = listed?.sessions.filter(
     (session) => session.asid === asid && (!agentId || session.agentId === agentId)
   );
+  // A followed conversation already supplied its routing identity. Listing churn
+  // must not redirect its subtitle to another workspace or to a terminal.
+  if (isSession && line.asid && line.sessionId && line.agentId) {
+    const session = reported?.length === 1 ? reported[0] : undefined;
+    return {
+      key: goneSessionKey(serverId, line.asid, line.agentId),
+      title: session?.title ?? line.asid,
+      atMs: line.atMs,
+      destination: {
+        type: 'agent-session',
+        target: {
+          kind: 'agent-session',
+          serverId,
+          sessionId: line.sessionId,
+          asid: line.asid,
+          ...(line.agentId ? { agentId: line.agentId } : {}),
+          directory: session?.directory ?? '',
+        },
+      },
+    };
+  }
   // A current explicit report outranks a recent's old routing workspace.
   const currentSessionId =
-    listed && reported?.length === 1 && nowMs - listed.observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
+    listed && reported?.length === 1 && nowMs - observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
       ? listed.sessionId
       : undefined;
   const matches = entries.filter(({ destination }) => {

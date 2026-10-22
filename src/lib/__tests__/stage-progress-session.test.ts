@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import type { GatewayAgentSessionsSnapshot, HomeContinueEntry } from '../home-continue';
 import { SERVER_AGENTS_STALE_AFTER_MS, type ServerAgentsSnapshot } from '../server-agents';
-import { stageProgress } from '../stage-overlay';
+import { stageActivitySubjects, stageProgress } from '../stage-overlay';
+import { useHomeAgentSessions } from '../../stores/home-agent-sessions';
 import { stageProgressSession } from '../stage-progress-session';
 
 const nowMs = 100_000;
@@ -192,5 +193,103 @@ describe('stageProgressSession', () => {
         sessions: { ...sessions, observedAtMs: nowMs - SERVER_AGENTS_STALE_AFTER_MS - 1 },
       })
     ).toBe(recent);
+  });
+});
+
+describe('Stage subtitle origin routing', () => {
+  test('unchanged successful refresh keeps the conversation association beyond five minutes', () => {
+    useHomeAgentSessions.setState({ byServer: {}, seenAtMs: {} });
+    useHomeAgentSessions.getState().record(sessions);
+    const later = nowMs + SERVER_AGENTS_STALE_AFTER_MS + 1;
+    useHomeAgentSessions.getState().record({ ...sessions, observedAtMs: later });
+    const state = useHomeAgentSessions.getState();
+    expect(state.byServer.computer).toBe(sessions);
+    const fresh = {
+      ...input,
+      sessions: state.byServer.computer,
+      sessionsSeenAtMs: state.seenAtMs.computer,
+      panes: { ...panes, checkedAtMs: later },
+      nowMs: later,
+    };
+    expect(stageProgressSession(fresh)?.destination).toMatchObject({
+      type: 'agent-session',
+      target: { sessionId: 'herdr', asid: 'opaque-conversation' },
+    });
+    expect(
+      stageActivitySubjects({ ...fresh, activeAtMs: {} }).map((subject) => subject.kind)
+    ).toEqual(['session']);
+    expect(
+      stageProgress({
+        ...fresh,
+        tasks: [],
+        activity: { key: 'pane:p1', paneId: 'p1', text: 'Working', atMs: later },
+      })?.asid
+    ).toBe('opaque-conversation');
+    useHomeAgentSessions.setState({ byServer: {}, seenAtMs: {} });
+  });
+
+  test('a followed session retains its origin when listings and recents disappear', () => {
+    const origin = stageProgress({
+      serverId: 'computer',
+      tasks: [],
+      nowMs,
+      activity: {
+        key: 'session:opaque',
+        asid: 'opaque-conversation',
+        agentId: 'codex',
+        sessionId: 'origin-workspace',
+        text: 'Working',
+        atMs: nowMs,
+      },
+    })!;
+    expect(
+      stageProgressSession({ line: origin, serverId: 'computer', entries: [], nowMs })?.destination
+    ).toMatchObject({
+      type: 'agent-session',
+      target: { sessionId: 'origin-workspace', asid: 'opaque-conversation', agentId: 'codex' },
+    });
+    expect(stageProgressSession({ ...input, line: origin })?.destination).toMatchObject({
+      target: { sessionId: 'origin-workspace', agentId: 'codex' },
+    });
+    expect(
+      stageProgressSession({
+        line: { ...origin, agentId: undefined },
+        serverId: 'computer',
+        entries: [],
+        nowMs,
+      })
+    ).toBeNull();
+  });
+});
+
+test('newer task text retains the same conversation stream routing identity', () => {
+  const progress = stageProgress({
+    serverId: 'computer',
+    nowMs,
+    tasks: [
+      {
+        taskId: 'synthetic-task',
+        kind: 'delegation',
+        state: 'working',
+        goal: 'Synthetic work',
+        binding: { kind: 'agent_session', agentId: 'codex', asid: 'opaque-conversation' },
+        progress: 'Newer ledger progress',
+        updatedMs: nowMs,
+      },
+    ],
+    activity: {
+      key: 'session:synthetic',
+      asid: 'opaque-conversation',
+      agentId: 'codex',
+      sessionId: 'origin-workspace',
+      text: 'Earlier stream activity',
+      atMs: nowMs - 100,
+    },
+  })!;
+  expect(progress.text).toBe('Newer ledger progress');
+  expect(
+    stageProgressSession({ line: progress, serverId: 'computer', entries: [], nowMs })?.destination
+  ).toMatchObject({
+    target: { asid: 'opaque-conversation', agentId: 'codex', sessionId: 'origin-workspace' },
   });
 });

@@ -310,6 +310,7 @@ export function HomeStageLayout({
       serverId,
       entries: sessions,
       sessions: useHomeAgentSessions.getState().byServer[serverId],
+      sessionsSeenAtMs: useHomeAgentSessions.getState().seenAtMs[serverId],
       panes: useServerAgents.getState().byServer[serverId],
       nowMs: Date.now(),
     });

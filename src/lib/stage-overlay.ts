@@ -247,6 +247,8 @@ export function stageSingleChoice(form: FormRequest): StageChoice | null {
 export type StageProgress = Asker & {
   /** Opaque conversation ID, kept separate from the provider-scoped display key. */
   asid?: string;
+  /** Routing workspace captured with the originating conversation. */
+  sessionId?: string;
   /** The pane incarnation that produced this line, never inferred from its name. */
   terminal?: { sessionId: string; instanceId?: string; shellPid?: number };
   /** Which agent is speaking: a change of speaker is a new line. */
@@ -261,6 +263,8 @@ export type StageProgress = Asker & {
  */
 export type StageActivityInput = Asker & {
   asid?: string;
+  /** Routing workspace captured with the originating conversation. */
+  sessionId?: string;
   key: string;
   text: string;
   atMs: number;
@@ -287,6 +291,7 @@ type StageProgressInput = {
   activity?: StageActivityInput;
   activities?: readonly StageActivityInput[];
   sessions?: GatewayAgentSessionsSnapshot;
+  sessionsSeenAtMs?: number;
   nowMs: number;
 };
 
@@ -298,15 +303,30 @@ export function stageProgressLines(input: StageProgressInput): StageProgress[] {
   const sessions =
     input.sessions &&
     input.sessions.serverId === serverId &&
-    input.nowMs - input.sessions.observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
+    input.nowMs -
+      Math.max(
+        input.sessions.observedAtMs,
+        input.sessionsSeenAtMs ?? input.sessions.observedAtMs
+      ) <=
+      SERVER_AGENTS_STALE_AFTER_MS
       ? input.sessions
       : undefined;
   const lines = new Map<string, StageProgress>();
+  const nativeSessions = new Set<string>();
   const consider = (line: StageProgress) => {
+    const nativeSession = line.key.startsWith('session:') && !!line.asid;
     // Use the same scoped, incarnation-checked mapping as a subtitle tap.
     const entry =
       line.terminal && serverId
-        ? stageProgressSession({ line, serverId, entries: [], sessions, panes, nowMs: input.nowMs })
+        ? stageProgressSession({
+            line,
+            serverId,
+            entries: [],
+            sessions,
+            sessionsSeenAtMs: input.sessionsSeenAtMs,
+            panes,
+            nowMs: input.nowMs,
+          })
         : null;
     if (entry?.destination.type === 'agent-session') {
       const target = entry.destination.target;
@@ -314,11 +334,27 @@ export function stageProgressLines(input: StageProgressInput): StageProgress[] {
         ...line,
         key: stageSessionKey(target.asid, target.agentId),
         asid: target.asid,
+        sessionId: target.sessionId,
         agentId: target.agentId,
       };
     }
     const previous = lines.get(line.key);
-    if (!previous || line.atMs > previous.atMs) lines.set(line.key, line);
+    // Native conversation output wins over its explicitly linked terminal,
+    // even when the terminal screen or pane ledger was sampled more recently.
+    const previousNative = nativeSessions.has(line.key);
+    const latest =
+      !previous || (nativeSession && !previousNative)
+        ? line
+        : previousNative && !nativeSession
+          ? previous
+          : line.atMs > previous.atMs
+            ? line
+            : previous;
+    if (nativeSession) nativeSessions.add(line.key);
+    // Ledger text can be newer than the stream without carrying its workspace.
+    // The provider-scoped key keeps this identity within the same conversation.
+    const sessionId = latest.sessionId ?? line.sessionId ?? previous?.sessionId;
+    lines.set(line.key, sessionId ? { ...latest, sessionId } : latest);
   };
   for (const task of input.tasks) {
     if (task.state !== 'working') continue;
@@ -417,7 +453,12 @@ export function stageProgressLines(input: StageProgressInput): StageProgress[] {
               },
             }
           : {}),
-        ...(activity.asid ? { asid: activity.asid } : {}),
+        ...(activity.asid
+          ? {
+              asid: activity.asid,
+              ...(activity.sessionId ? { sessionId: activity.sessionId } : {}),
+            }
+          : {}),
         key: activity.asid ? stageSessionKey(activity.asid, activity.agentId) : activity.key,
         text: activityText,
         atMs: activity.atMs,
@@ -481,6 +522,7 @@ type StageActivitySubjectsInput = {
   serverId: string;
   panes?: ServerAgentsSnapshot;
   sessions?: GatewayAgentSessionsSnapshot;
+  sessionsSeenAtMs?: number;
   dock?: StageDockInput;
   current?: string;
   activeAtMs: Readonly<Record<string, number>>;
@@ -492,7 +534,12 @@ function rankedStageActivitySubjects(input: StageActivitySubjectsInput) {
   const ranked: { subject: StageActivitySubject; atMs: number; dock: boolean }[] = [];
   const sessions =
     input.sessions?.serverId === serverId &&
-    nowMs - input.sessions.observedAtMs <= SERVER_AGENTS_STALE_AFTER_MS
+    nowMs -
+      Math.max(
+        input.sessions.observedAtMs,
+        input.sessionsSeenAtMs ?? input.sessions.observedAtMs
+      ) <=
+      SERVER_AGENTS_STALE_AFTER_MS
       ? input.sessions
       : undefined;
   const sessionPanes = new Set<string>();
@@ -539,7 +586,8 @@ function rankedStageActivitySubjects(input: StageActivitySubjectsInput) {
       session.terminal &&
       input.panes?.serverId === serverId &&
       session.terminal.sessionId === input.panes.sessionId &&
-      sessions!.observedAtMs >= input.panes.checkedAtMs
+      Math.max(sessions!.observedAtMs, input.sessionsSeenAtMs ?? sessions!.observedAtMs) >=
+        input.panes.checkedAtMs
     )
       sessionPanes.add(session.terminal.paneId);
     if (

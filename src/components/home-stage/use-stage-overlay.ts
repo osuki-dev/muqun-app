@@ -125,6 +125,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
   const tasks = useServerTasksStore((state) => state.index[serverId]?.tasks ?? NO_TASKS);
   const panes = useServerAgents((state) => state.byServer[serverId]);
   const sessions = useHomeAgentSessions((state) => state.byServer[serverId]);
+  const sessionsSeenAtMs = useHomeAgentSessions((state) => state.seenAtMs[serverId]);
   const thread = useHomeThreads((state) => state.byServer[serverId]);
   const threadKey = thread ? homeThreadKey(thread) : null;
   const dockStatus = useHomeThreadLive((state) =>
@@ -175,6 +176,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
     serverId,
     ...(panes ? { panes } : {}),
     ...(liveSessions ? { sessions: liveSessions } : {}),
+    sessionsSeenAtMs,
     ...(dock ? { dock } : {}),
     activeAtMs: {},
     nowMs,
@@ -344,7 +346,11 @@ export function useStageProgress(serverId: string): StageProgress[] {
             paneId: subject.paneId,
             ...(subject.agentLabel ? { agentLabel: subject.agentLabel } : {}),
           }
-        : { asid: subject.asid, ...(subject.agentId ? { agentId: subject.agentId } : {}) }),
+        : {
+            asid: subject.asid,
+            sessionId: subject.sessionId,
+            ...(subject.agentId ? { agentId: subject.agentId } : {}),
+          }),
       text: line.text,
       atMs: line.atMs,
     });
@@ -354,6 +360,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
     tasks,
     panes,
     sessions: liveSessions,
+    sessionsSeenAtMs,
     activities,
     nowMs,
   })
