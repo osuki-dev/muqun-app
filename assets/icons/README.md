@@ -25,6 +25,11 @@ backgrounds. The script skips the two full-bleed entries and preserves their
 prepared assets rather than reconstructing them from an alpha-mask template.
 The shared Classic monochrome artwork remains the Android themed-icon identity.
 
+Each style's `brand-mark.png` is the in-app mark (Settings footer, launch loader,
+lock screen, Home), chosen from the launcher icon in effect. The script cuts it from
+`mark.png` on a transparent 512px canvas; full-bleed styles become a rounded tile.
+Classic keeps its original hand-drawn mark. These ship with the JavaScript bundle.
+
 Launcher artwork is compiled into native builds. Updating picker previews through
 JavaScript alone does not replace the installed launcher resources; rebuild the
 native app to deliver these replacements.

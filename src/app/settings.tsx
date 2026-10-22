@@ -5,7 +5,7 @@ import {
   ThemeArtwork,
   useHasThemeArtwork,
 } from '@/components/theme-artwork';
-import { brandMark } from '@/components/brand-mark';
+import { useBrandMark } from '@/components/brand-mark';
 import { useThemeMode, useThemeTokens, Text } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
@@ -116,6 +116,7 @@ export default function SettingsScreen() {
   } satisfies Record<(typeof ROWS)[number]['route'], string>;
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
+  const brandMark = useBrandMark();
   const insets = useSafeAreaInsets();
   // The hugging plate `SettingsSection` already gives its instrument labels,
   // for the two bare strings at the end of the page that have no card of their
@@ -203,13 +204,10 @@ export default function SettingsScreen() {
                 {/* Keep version information easy to find without a second navigation row. */}
                 <View style={styles.brand}>
                   <Image
-                    // The rendered mascot with a real alpha channel, not the
-                    // launcher icon: that one carries an opaque plate, which on a
-                    // themed page reads as a square nobody asked for. Two cuts,
-                    // because the dark master is lit for a dark ground and its
-                    // rim would fringe on a light one. `resolvedMode` rather than
-                    // the system scheme, so a theme chosen in Appearance counts.
-                    source={brandMark(resolvedMode)}
+                    // The selected launcher icon's in-app cut, with a real alpha
+                    // channel rather than the launcher's opaque plate, which on a
+                    // themed page reads as a square nobody asked for.
+                    source={brandMark}
                     style={styles.brandMark}
                     contentFit="contain"
                     // Decorative: the version alongside it already names the app,

@@ -1,20 +1,29 @@
-import { useThemeMode } from '@osuki-dev/ui';
+import { useActiveAppIcon } from '@/hooks/use-app-icon';
+import { type AppIconId, appIconDirectory } from '@/lib/app-icon';
 
-/** The original Classic mark is the default on both light and dark surfaces.
- * The launcher choice remains independent of in-app theme customisation.
+/**
+ * The in-app brand mark follows the launcher icon in effect, so the app does
+ * not introduce itself with a different face than the home screen shows.
+ * Keyed by the catalog's artwork folder (`assets/icons/<directory>`), because
+ * Metro needs a static `require` for each file. Every mark is a 512px canvas
+ * with a real alpha channel and the same margin, so each site's size and
+ * `contentFit` hold whichever icon is chosen; full-bleed icons are cut as a
+ * rounded tile rather than an opaque square.
  */
-export type BrandMarkMode = 'light' | 'dark';
+const BRAND_MARKS: Record<string, number> = {
+  classic: require('@/assets/icons/classic/brand-mark.png'),
+  mascot: require('@/assets/icons/mascot/brand-mark.png'),
+  cyber: require('@/assets/icons/cyber/brand-mark.png'),
+  anime: require('@/assets/icons/anime/brand-mark.png'),
+  arcade: require('@/assets/icons/arcade/brand-mark.png'),
+  mint: require('@/assets/icons/mint/brand-mark.png'),
+  sakura: require('@/assets/icons/sakura/brand-mark.png'),
+};
 
-const BRAND_MARK = {
-  light: require('@/assets/icons/classic/brand-mark.png'),
-  dark: require('@/assets/icons/classic/brand-mark.png'),
-} as const;
-
-export function brandMark(mode: BrandMarkMode) {
-  return mode === 'dark' ? BRAND_MARK.dark : BRAND_MARK.light;
+export function brandMarkFor(icon: AppIconId): number {
+  return BRAND_MARKS[appIconDirectory(icon)] ?? BRAND_MARKS[appIconDirectory('default')];
 }
 
-export function useBrandMark() {
-  const { resolvedMode } = useThemeMode();
-  return brandMark(resolvedMode);
+export function useBrandMark(): number {
+  return brandMarkFor(useActiveAppIcon());
 }

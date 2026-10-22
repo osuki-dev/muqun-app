@@ -7,7 +7,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { ThemeManifest } from '@/theme/schema';
 import { resolveHomeIdentity } from '@/theme/resolve';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
-import { brandMark } from '@/components/brand-mark';
+import { useBrandMark } from '@/components/brand-mark';
 import { resolveArtworkOpacity, safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { terminalBackgroundFill } from '@/terminal/background';
 import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface-background';
@@ -48,11 +48,10 @@ export function CustomThemePreview({
   const profile = useAppearanceProfile();
   const manifest = preferencesApplied ? authoredManifest : clampThemeOpacity(authoredManifest);
   const identity = resolveHomeIdentity(manifest);
-  // Per previewed mode, because the two tiles sit side by side and the
-  // mascot has a cut for each ground.
-  const logoFor = (mode: 'light' | 'dark') =>
+  const brandMark = useBrandMark();
+  const logo =
     identity.logo?.mode === 'default'
-      ? brandMark(mode)
+      ? brandMark
       : identity.logo?.mode === 'custom' && isRenderableThemeAsset(assets[identity.logo.asset])
         ? { uri: assets[identity.logo.asset] }
         : null;
@@ -116,9 +115,9 @@ export function CustomThemePreview({
                   mode={mode}
                   opacityLimit={jointArtworkOpacity(resolveArtworkOpacity(colors), opacity)}
                 />
-                {logoFor(mode) ? (
+                {logo ? (
                   <Image
-                    source={logoFor(mode) ?? undefined}
+                    source={logo}
                     contentFit="contain"
                     accessible={false}
                     style={{ width: 28, height: 28 }}
