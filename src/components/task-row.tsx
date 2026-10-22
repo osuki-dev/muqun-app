@@ -58,6 +58,8 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerAgents } from '@/stores/server-agents';
 import { taskAttentionView } from '@/lib/task-attention';
 import { useHomeAttention } from '@/stores/home-attention';
+import type { HomeAttentionSnapshot } from '@/lib/home-attention';
+import { useShallow } from 'zustand/react/shallow';
 import { plural } from '@lingui/core/macro';
 
 /** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
@@ -412,16 +414,23 @@ export function useTaskAttentionView(
   nowMs: number,
   statusCurrent = true
 ) {
-  const panes = useServerAgents((state) => state.byServer[serverId]);
   const requests = useHomeAttention((state) => state.byTarget);
-  return taskAttentionView({
-    task,
-    serverId,
-    panes: statusCurrent ? panes : undefined,
-    requests: statusCurrent ? requests : {},
-    nowMs,
-  });
+  // The view, not the computer's snapshot: every pane pass re-confirms the
+  // snapshot with a new age, and a row whose view did not move stays still.
+  return useServerAgents(
+    useShallow((state) =>
+      taskAttentionView({
+        task,
+        serverId,
+        panes: statusCurrent ? state.byServer[serverId] : undefined,
+        requests: statusCurrent ? requests : NO_REQUESTS,
+        nowMs,
+      })
+    )
+  );
 }
+
+const NO_REQUESTS: Readonly<Record<string, HomeAttentionSnapshot>> = {};
 
 /** Shared row state, work navigation and the existing long-press actions. */
 function useTaskRowModel({
