@@ -94,10 +94,12 @@ export const TERMINAL_MAX_SCALE = 2.4;
  * width and keeping the pane readable are two different requests, and the one
  * the reader made was to read the pane.
  */
-// 2.0 (owner's call, 2026-10-06): a 40-column pane fills a tablet's width instead
-// of stopping at 1.6 with an empty strip on the right; rows get larger in return,
-// which is what a reader opening a narrow pane on a big screen is asking for.
-export const TERMINAL_MAX_FIT_SCALE = 2.0;
+// 1.5 (owner's call, 2026-10-22, down from the 2.0 of 2026-10-06): panes of
+// about 34 columns and up still fill a phone's width, with the text at most
+// half again its size; a pane narrower than that stops here and keeps a strip
+// of empty width rather than growing to twice the size, which read as the whole
+// terminal having blown up.
+export const TERMINAL_MAX_FIT_SCALE = 1.5;
 
 /**
  * The smallest glyph the fit may draw, in points.
