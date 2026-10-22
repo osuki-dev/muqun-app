@@ -1,6 +1,7 @@
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { ConnectionGraphIcon } from '@/icons';
 import { StyleSheet, View } from 'react-native';
 

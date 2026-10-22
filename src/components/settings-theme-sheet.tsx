@@ -26,10 +26,23 @@
  */
 import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Button, PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Button, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import {
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -75,7 +88,7 @@ import { AppearanceIcon, DeleteIcon, UploadFileIcon } from '@/icons';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { carryBox, carryForward } from '@/lib/carry-forward';
 import { withAlpha } from '@/lib/color';
-import { fadeIn, fadeInDown, fadeOut, fadeOutDown, STAGGER } from '@/lib/motion';
+import { fadeIn, fadeInDown, fadeOut, fadeOutDown, STAGGER, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { chunkCardRows, type CardRow } from '@/lib/theme-grid-rows';
@@ -136,6 +149,26 @@ const MINE_EMPTY: Row = { kind: 'mine-empty', key: 'mine-empty' };
 const STICKY_BAR = [0];
 
 type CardMenu = { title: string; actions: readonly ThemeCardAction[] };
+
+/**
+ * The gallery's search bar's height, as the list measured it, by font scale
+ * and whether it carries a row of tags -- the two things its height follows.
+ *
+ * The bar is the only row the list cannot size by arithmetic: the field and
+ * the chips are text. Unsized, the list either held the rows back until it had
+ * measured the bar -- a blank sheet under the tags -- or placed the first card
+ * row at its estimate, a card row's height, about twice the bar's, and moved
+ * the grid up when the measure landed. Known, it is the bar's fixed size and
+ * the grid lands in its
+ * place on the first frame; kept for the session, so only the first gallery
+ * of a launch ever waits for the measure.
+ */
+const barHeights = new Map<string, number>();
+
+/** A copy for a sheet's state: a module value read in render would be memoised. */
+function readBarHeights(): ReadonlyMap<string, number> {
+  return new Map(barHeights);
+}
 
 /** A theme's own published picture, when the files are on this device. */
 function coverOf(manifest: ThemeManifest, assets?: Record<string, string>): string | null {
@@ -439,6 +472,17 @@ export function SettingsThemeSheet({
     [cells, layout.columns, layout.itemHeight, previousCardRows]
   );
   const hasSearch = tab === 'gallery' && (gallery.entries?.length ?? 0) > 0;
+  const barKey = `${window.fontScale}:${gallery.tags.length > 0 ? 'tags' : 'plain'}`;
+  const [knownBars, setKnownBars] = useState(readBarHeights);
+  const barHeight = hasSearch ? knownBars.get(barKey) : 0;
+  // Until the bar's height is known the rows under it would paint at the
+  // estimate, so they are laid out but unseen, and fade in where they belong.
+  const gridHidden = barHeight === undefined;
+  function measureBar(height: number) {
+    if (knownBars.get(barKey) === height) return;
+    barHeights.set(barKey, height);
+    setKnownBars(readBarHeights());
+  }
   const bar = useMemo(
     (): BarRow =>
       hasSearch
@@ -494,6 +538,7 @@ export function SettingsThemeSheet({
     gallery.brokenCount,
     themes.map((theme) => `${theme.id}:${theme.manifest.version}`).join(','),
     layout.itemHeight,
+    gridHidden ? 1 : 0,
   ].join('|');
 
   function riseFor(cell: Cell, index: number) {
@@ -632,7 +677,9 @@ export function SettingsThemeSheet({
         // through it. The frost's alpha let the reader's opacity thin it until
         // the captions of the cards beneath read between the chips.
         return (
-          <View style={{ backgroundColor: withAlpha(colors.surface, 1) }}>
+          <View
+            style={{ backgroundColor: withAlpha(colors.surface, 1) }}
+            onLayout={(event) => measureBar(event.nativeEvent.layout.height)}>
             <View style={column}>
               <GallerySearch gallery={gallery} />
             </View>
@@ -640,7 +687,9 @@ export function SettingsThemeSheet({
         );
       case 'cards':
         return (
-          <View style={[column, styles.cardRow, { height: layout.itemHeight }]}>
+          <GridReveal
+            hidden={gridHidden}
+            style={[column, styles.cardRow, { height: layout.itemHeight }]}>
             {Array.from({ length: layout.columns }, (_, slot) => {
               const cell = row.cells[slot];
               return (
@@ -649,7 +698,7 @@ export function SettingsThemeSheet({
                 </View>
               );
             })}
-          </View>
+          </GridReveal>
         );
       case 'mine-empty':
         return (
@@ -666,9 +715,9 @@ export function SettingsThemeSheet({
         );
       case 'gallery-note':
         return (
-          <View style={column}>
+          <GridReveal hidden={gridHidden} style={column}>
             <GalleryNote kind={row.note} gallery={gallery} />
-          </View>
+          </GridReveal>
         );
     }
   }
@@ -822,8 +871,10 @@ export function SettingsThemeSheet({
           getFixedItemSize={(row: Row) =>
             row.kind === 'cards'
               ? layout.itemHeight
-              : row.kind === 'bar' && !row.search
-                ? 0
+              : row.kind === 'bar'
+                ? row.search
+                  ? barHeight
+                  : 0
                 : undefined
           }
           estimatedItemSize={layout.itemHeight}
@@ -847,6 +898,38 @@ export function SettingsThemeSheet({
         {menu ? <CardMenuOverlay menu={menu} onClose={() => setMenu(null)} /> : null}
       </View>
     </SheetFrame>
+  );
+}
+
+/**
+ * A row under the gallery's bar: unseen while `hidden`, then faded in.
+ *
+ * The fade is the row's own, seeded from `hidden` when the row mounts: a row
+ * mounted while hidden starts at zero, one mounted after the reveal -- a row
+ * scrolled into view -- at one. A value shared by the whole grid was read by a
+ * newly mounted row before it reached zero, and painted the row fully opaque
+ * for two frames before the fade began. The outer view's static opacity hides
+ * a row in the very render that hides it, ahead of the effect that zeroes the
+ * fade.
+ */
+function GridReveal({
+  hidden,
+  style,
+  children,
+}: {
+  hidden: boolean;
+  style: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
+  const opacity = useSharedValue(hidden ? 0 : 1);
+  useEffect(() => {
+    opacity.set(hidden ? 0 : withTiming(1, timing('short', { reduceMotion: ReduceMotion.Never })));
+  }, [hidden, opacity]);
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  return (
+    <View style={hidden ? styles.hidden : undefined}>
+      <Animated.View style={[style, fade]}>{children}</Animated.View>
+    </View>
   );
 }
 
@@ -1085,6 +1168,7 @@ function CardMenuOverlay({ menu, onClose }: { menu: CardMenu; onClose: () => voi
 
 const styles = StyleSheet.create({
   sheet: { flex: 1, minHeight: 0 },
+  hidden: { opacity: 0 },
   header: { gap: SHEET_LADDER.gap, paddingBottom: SHEET_LADDER.gap },
   // The gap under a row is part of it, so the fixed height the list is told is
   // the whole of what the row occupies.

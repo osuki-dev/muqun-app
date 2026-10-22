@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

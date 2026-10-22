@@ -33,8 +33,9 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
-import { Directory } from 'expo-file-system';
+import { Spinner, useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
+import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
 import {
   NextIcon,

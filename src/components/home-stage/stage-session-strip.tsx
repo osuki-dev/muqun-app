@@ -61,8 +61,10 @@ const STRIP_GAP = 8;
 const STRIP_PADDING = HOME_DOCK_OUTER_INSET;
 const HALF_TURN = Math.PI / 2;
 /** A card's height and vertical padding, resting and while typing (compact). */
-const CARD_HEIGHT = [40, 34] as const;
-const CARD_PADDING = [9, 6] as const;
+export const STAGE_STRIP_CARD_HEIGHT = [40, 34] as const;
+export const STAGE_STRIP_CARD_PADDING = [9, 6] as const;
+const CARD_HEIGHT = STAGE_STRIP_CARD_HEIGHT;
+const CARD_PADDING = STAGE_STRIP_CARD_PADDING;
 
 /** A card's size, compact as far as the keyboard is up: on the keyboard's own motion. */
 function useCompactCardStyle(keyboard: SharedValue<number>) {

@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { Image, type ImageSource } from 'expo-image';

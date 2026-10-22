@@ -15,7 +15,8 @@
  * Theme and colour mode stay together, followed by font, app icon, and language.
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeMode, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Appearance, ScrollView, StyleSheet, View } from 'react-native';

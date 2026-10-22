@@ -1,7 +1,8 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { DoneIcon, TrustWarningIcon, TrustedIcon, DismissIcon } from '@/icons';

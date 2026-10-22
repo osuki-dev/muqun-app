@@ -1,13 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
 import {
   useThemeTokens,
-  PressableScale,
   resolveFontStyle,
   type ResolvedFontStyle,
   Text,
   type TextProps,
   TextField,
 } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useRouter } from 'expo-router';
 import { SearchIcon, CloseIcon } from '@/icons';
 import { useEffect, useRef, type ReactNode } from 'react';

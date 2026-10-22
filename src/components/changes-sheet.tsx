@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { Dialog, useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { DoneIcon, DisclosureDownIcon, DisclosureUpIcon, BranchIcon, RefreshIcon } from '@/icons';
