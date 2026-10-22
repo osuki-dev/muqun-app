@@ -21,8 +21,6 @@
  * servers.
  */
 
-import { formatAssetSize } from './asset-display';
-
 /** The three buckets the Storage section reports, in the order it shows them. */
 export type CacheBucket = 'images' | 'temporary' | 'other';
 
@@ -111,13 +109,15 @@ export const LEASED_CACHE_PREFIXES = ['theme-stage-'] as const;
  * - `theme-export-<hex>`, `theme/local-files.ts`;
  * - `message-image-*`, written by a reader that no longer exists;
  * - `nanoicon_*.ttf`, a temporary font file `react-native-nano-icons` writes
- *   on every launch and never deletes.
+ *   on every launch and never deletes;
+ * - `sampling-profiler-trace*.cpuprofile`, written by the release profiler.
  */
 export const ORPHAN_CACHE_PREFIXES = [
   'pdf-preview-',
   'theme-export-',
   'message-image-',
   'nanoicon_',
+  'sampling-profiler-trace',
 ] as const;
 
 /**
@@ -293,17 +293,25 @@ export function planStorageCleanup(
   for (const entry of entries) {
     const bytes = sizeOf(entry.bytes);
     const kind = kindOf(entry.name);
-    buckets[bucketOf(kind)] += bytes;
     buckets.total += bytes;
     remaining += bytes;
     const topLevel = entry.name.split('/')[0];
-    if (kind === 'kept' || !isFenced(entry, options.rootUri)) continue;
-    if (isProtected(entry.name) || isProtected(topLevel)) continue;
     const createdAt = temporaryMediaCreatedAt(entry.name) ?? entry.modifiedAtMs;
+    const removable =
+      kind !== 'kept' &&
+      isFenced(entry, options.rootUri) &&
+      !isProtected(entry.name) &&
+      !isProtected(topLevel);
     const unconditional =
-      kind === 'trash' ||
-      kind === 'leased' ||
-      (kind === 'orphan' && Number.isFinite(createdAt) && createdAt < processStartedAtMs);
+      removable &&
+      (kind === 'trash' ||
+        kind === 'leased' ||
+        (kind === 'orphan' && Number.isFinite(createdAt) && createdAt < processStartedAtMs));
+    // "Temporary" is what Clear removes now. A copy in use or written by this
+    // launch is kept, so it is counted with the rest of the kept cache.
+    const bucket = bucketOf(kind);
+    buckets[bucket === 'temporary' && !unconditional ? 'other' : bucket] += bytes;
+    if (!removable) continue;
     if (unconditional) {
       deletions.push(entry);
       reclaimableBytes += bytes;
@@ -366,12 +374,22 @@ export function planLruTrim(
 }
 
 /**
- * A byte count the way the Artifacts list already writes one, plus the zero
- * that list has no use for and this row does: an empty cache is a fact worth
- * stating, and a blank detail line reads as a row that has not finished
- * loading.
+ * A byte count in decimal units (1 MB = 1,000,000 bytes), the way Android's
+ * Settings writes app storage, so the two screens show the same numbers. Zero
+ * is stated rather than left blank: a blank detail reads as still loading.
  */
 export function formatCacheSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-  return formatAssetSize(bytes);
+  if (bytes < 1000) return `${Math.round(bytes)} B`;
+  for (const [unit, scale] of [
+    ['KB', 1e3],
+    ['MB', 1e6],
+    ['GB', 1e9],
+  ] as const) {
+    // Round first, so 999.95 KB reads as 1.0 MB rather than 1000.0 KB.
+    if (Number((bytes / scale).toFixed(1)) < 1000 || unit === 'GB') {
+      return `${(bytes / scale).toFixed(1)} ${unit}`;
+    }
+  }
+  return `${bytes} B`;
 }

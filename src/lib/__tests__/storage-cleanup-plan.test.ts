@@ -27,6 +27,7 @@ describe('planStorageCleanup allow-list', () => {
         entry('pdf-preview-4000-0.pdf', MB, 4_000),
         entry('theme-export-0a1b', MB, 4_000),
         entry('nanoicon_123.ttf', MB, 4_000),
+        entry('sampling-profiler-trace42.cpuprofile', MB, 4_000),
         entry('BetterPdf/renders/page.png', MB, 4_000),
         entry('BetterPdfExports/x', MB, 4_000),
         entry('muqun-trash-1-enrm_image_cache', MB, 9_000),
@@ -45,18 +46,19 @@ describe('planStorageCleanup allow-list', () => {
       'muqun-trash-1-enrm_image_cache',
       'nanoicon_123.ttf',
       'pdf-preview-4000-0.pdf',
+      'sampling-profiler-trace42.cpuprofile',
       'theme-export-0a1b',
       'theme-stage-abc',
     ]);
     // No budget: caches are measured, not evicted.
     expect(plan.clearNativeImages).toBe(false);
     expect(plan.purgeAtNextLaunch).toEqual([]);
-    expect(plan.reclaimableBytes).toBe(9 * MB);
+    expect(plan.reclaimableBytes).toBe(10 * MB);
     expect(plan.buckets).toEqual({
       images: 2 * MB,
-      temporary: 9 * MB,
+      temporary: 10 * MB,
       other: 2 * MB,
-      total: 13 * MB,
+      total: 14 * MB,
     });
   });
 
@@ -64,6 +66,8 @@ describe('planStorageCleanup allow-list', () => {
     const plan = planStorageCleanup(
       [
         entry('pdf-preview-6000-0.pdf', MB, 6_000),
+        entry('nanoicon_9.ttf', MB, 6_000),
+        entry('sampling-profiler-trace7.cpuprofile', MB, 6_000),
         entry('theme-export-ff', MB, 6_000),
         entry('BetterPdf/renders/live.png', MB, 6_000),
         entry('DocumentPicker'),
@@ -73,6 +77,8 @@ describe('planStorageCleanup allow-list', () => {
     );
     expect(plan.deletions).toEqual([]);
     expect(plan.reclaimableBytes).toBe(0);
+    // Temporary is what Clear removes now; kept copies count as other cache.
+    expect(plan.buckets).toEqual({ images: 0, temporary: 0, other: 7 * MB, total: 7 * MB });
   });
 
   test('Clear (zero budget) empties every cache, deferring the Markdown cache to launch', () => {
