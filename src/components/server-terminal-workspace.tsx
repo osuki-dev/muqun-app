@@ -42,6 +42,7 @@ import {
 } from '@/icons';
 import {
   type ComponentProps,
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -5371,16 +5372,20 @@ export function ServerTerminalWorkspace({
   // inside the keyboard panel when that is up. Opening the keyboard used to
   // take this row away, which on an editor meant losing `esc`, `:w` and the
   // Ctrl chords at the moment the reader started typing.
+  //
+  // Every prop is a primitive or a stable handler, so the row is rebuilt only
+  // when a key, its state or the theme changes -- not on every render of this
+  // screen, which a refreshed pane record alone would otherwise cause.
+  const terminalKeysDisabled =
+    !targetReady || connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey);
   const renderTerminalKeyButtons = (keys: TerminalKey[]) =>
     keys.map((item) => (
       <TerminalKeyButton
         key={item.key}
         item={item}
         sending={sendingKey === item.key}
-        disabled={
-          !targetReady || connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
-        }
-        onPress={() => pressTerminalKey(item)}
+        disabled={terminalKeysDisabled}
+        onPressKey={pressTerminalKey}
         textColor={chromeText}
         background={chromeGlass}
         activeBackground={theme.colors.primary}
@@ -6822,11 +6827,16 @@ function nvimModeOf(output: string, columns: number | undefined): NvimMode {
 
 type NvimMode = ReturnType<typeof parseNvimMode>;
 
-function TerminalKeyButton({
+/**
+ * Memoised: its props are a key, two flags, a stable handler and colours, so
+ * a render of the screen that changed none of them -- which is most of them --
+ * leaves the whole row alone.
+ */
+const TerminalKeyButton = memo(function TerminalKeyButton({
   item,
   sending,
   disabled,
-  onPress,
+  onPressKey,
   textColor,
   background,
   activeBackground,
@@ -6835,7 +6845,7 @@ function TerminalKeyButton({
   item: TerminalKey;
   sending: boolean;
   disabled: boolean;
-  onPress: () => void;
+  onPressKey: (item: TerminalKey) => void;
   textColor: string;
   background: string;
   activeBackground: string;
@@ -6921,7 +6931,7 @@ function TerminalKeyButton({
       disabled={disabled}
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
-      onPress={onPress}
+      onPress={() => onPressKey(item)}
       onPressIn={() => {
         if (!disabled) pressed.set(1);
       }}
@@ -6984,7 +6994,7 @@ function TerminalKeyButton({
       </Animated.View>
     </PressableScale>
   );
-}
+});
 
 /**
  * The terminal plane is up at the gateway but no backend behind it is running.
