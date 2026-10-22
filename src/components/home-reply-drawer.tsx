@@ -48,6 +48,7 @@ import {
   type PaneReadOrigin,
   type PaneReadWindow,
 } from '@/terminal/history';
+import { createStreamReadFence } from '@/terminal/stream-read-fence';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeIcon } from '@/theme/icon-direction';
@@ -1032,7 +1033,11 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     const timer = setTimeout(loadPane, PANE_GEOMETRY_REFRESH_MS);
     return () => clearTimeout(timer);
   }, [paneRetry, appActive, loadPane]);
+  // A read that lands after a newer streamed frame is not applied: see
+  // `createStreamReadFence`.
+  const [streamReadFence] = useState(createStreamReadFence);
   const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
+    if (origin === 'frame') streamReadFence.noteFrame();
     const shape = readShape();
     setHeld((current) =>
       foldPaneWindow(
@@ -1053,11 +1058,13 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     const owner = useGatewayConnectionStore.getState().record;
     if (owner?.serverId !== serverId) return;
     reading.current = true;
+    const notOvertaken = streamReadFence.begin();
     void readPaneOutput(sessionId, paneId, 'ansi', INITIAL_PANE_OUTPUT_LINES, readShape().source)
       .then(
         (output) => {
           const now = useGatewayConnectionStore.getState().record;
-          if (sameComputer(now, owner) && now?.deviceId === owner.deviceId) fold(output, 'refresh');
+          if (sameComputer(now, owner) && now?.deviceId === owner.deviceId && notOvertaken())
+            fold(output, 'refresh');
         },
         () => {
           setFailed(true);
