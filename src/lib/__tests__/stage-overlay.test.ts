@@ -5,8 +5,10 @@ import type { HomeAttentionSnapshot } from '../home-attention';
 import type { ServerAgent, ServerAgentsSnapshot } from '../server-agents';
 import type { GatewayAgentSessionsSnapshot } from '../home-continue';
 import {
+  keepStageLines,
   sessionActivity,
   STAGE_ACTIVITY_HOLD_MS,
+  stageActivityRecency,
   stageActivitySubject,
   stageNeeds,
   stageProgress,
@@ -16,6 +18,7 @@ import {
   stageSingleChoice,
   stageSubtitleStep,
   STAGE_SUBTITLE_MIN_MS,
+  type StageProgress,
 } from '../stage-overlay';
 import type { TaskView } from '../task-ledger';
 
@@ -417,6 +420,68 @@ describe('stageActivitySubject', () => {
         activeAtMs: { 'pane:p1': NOW - STAGE_ACTIVITY_HOLD_MS - 1 },
       })
     ).toMatchObject({ asid: 's1' });
+  });
+
+  test('recency orders working agents newest first, the dock leading between equals', () => {
+    const sessions = listing([
+      { asid: 's1', status: 'busy', updatedMs: NOW - 9_000 },
+      { asid: 's2', status: 'busy', updatedMs: NOW - 1_000 },
+      { asid: 's3', status: 'idle', updatedMs: NOW },
+      { asid: 's4', status: 'busy', updatedMs: NOW - 5_000 },
+    ]);
+    const key = (asid: string) => stageSessionKey(asid, 'opencode');
+    expect(
+      stageActivityRecency({ serverId: SERVER, sessions, activeAtMs: {}, nowMs: NOW })
+    ).toEqual([key('s2'), key('s4'), key('s1')]);
+    expect(
+      stageActivityRecency({
+        serverId: SERVER,
+        panes: mirror([agent('p1'), agent('p2')], NOW - 1_000),
+        dock: { kind: 'pane', paneId: 'p2' },
+        activeAtMs: { [key('s1')]: NOW },
+        sessions,
+        nowMs: NOW,
+      })
+    ).toEqual([key('s1'), 'pane:p2', key('s2'), 'pane:p1', key('s4')]);
+  });
+});
+
+describe('keepStageLines', () => {
+  const line = (key: string, text: string, atMs = NOW): StageProgress => ({
+    key,
+    text,
+    atMs,
+    asid: key,
+    agentId: 'opencode',
+  });
+
+  test('the same words read again later keep the previous lines', () => {
+    const previous = [line('a', 'Bash: bun test'), line('b', 'Reading files')];
+    const next = [line('a', 'Bash: bun test', NOW + 500), line('b', 'Reading files', NOW + 900)];
+    expect(keepStageLines(previous, next)).toBe(previous);
+  });
+
+  test('a change in one speaker leaves the other lines as they were', () => {
+    const previous = [line('a', 'Bash: bun test'), line('b', 'Reading files')];
+    const kept = keepStageLines(previous, [
+      line('a', 'Edit: src/app.ts'),
+      line('b', 'Reading files'),
+    ]);
+    expect(kept).not.toBe(previous);
+    expect(kept[0]!.text).toBe('Edit: src/app.ts');
+    expect(kept[1]).toBe(previous[1]);
+  });
+
+  test('a speaker arriving, leaving, moving or rerouting is a change', () => {
+    const previous = [line('a', 'x'), line('b', 'y')];
+    expect(keepStageLines(previous, [previous[0]!])).toEqual([previous[0]!]);
+    const arrived = keepStageLines(previous, [line('0', 'w'), ...previous]);
+    expect(arrived).toHaveLength(3);
+    expect(arrived[1]).toBe(previous[0]);
+    expect(keepStageLines(previous, [previous[1]!, previous[0]!])).not.toBe(previous);
+    expect(
+      keepStageLines(previous, [{ ...previous[0]!, sessionId: 'other' }, previous[1]!])
+    ).not.toBe(previous);
   });
 });
 

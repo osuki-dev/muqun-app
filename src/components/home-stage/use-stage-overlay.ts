@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { followHomeSession } from '@/components/home-thread';
 import {
@@ -15,7 +15,9 @@ import { homeWaitingTasks } from '@/lib/home-in-progress';
 import { homeThreadKey } from '@/lib/home-thread';
 import { paneAgentActivity } from '@/lib/pane-agent-line';
 import {
+  keepStageLines,
   sessionActivity,
+  stageActivityRecency,
   stageActivitySubjects,
   stageNeeds,
   stageProgressLines,
@@ -63,39 +65,51 @@ export function useStageNeeds(serverId: string): StageNeeds & {
   const tasks = useServerTasksStore((state) => state.index[serverId]);
   const panes = useServerAgents((state) => state.byServer[serverId]);
   const nowMs = useMinuteNow();
-  const pending = Object.values(observations)
-    .filter((snapshot) => snapshot.requestIds.length > 0)
-    .map((snapshot) => snapshot.target);
-  const waitingTasks = tasks
-    ? homeWaitingTasks({ [serverId]: tasks }, [serverId], pending, {
-        ...(panes ? { panesByServer: { [serverId]: panes } } : {}),
-        requests: observations,
+  const pending = useMemo(
+    () =>
+      Object.values(observations)
+        .filter((snapshot) => snapshot.requestIds.length > 0)
+        .map((snapshot) => snapshot.target),
+    [observations]
+  );
+  const waitingTasks = useMemo(
+    () =>
+      tasks
+        ? homeWaitingTasks({ [serverId]: tasks }, [serverId], pending, {
+            ...(panes ? { panesByServer: { [serverId]: panes } } : {}),
+            requests: observations,
+            nowMs,
+          }).map((row) => row.task)
+        : NO_TASKS,
+    [serverId, tasks, pending, panes, observations, nowMs]
+  );
+  const needs = useMemo(
+    () =>
+      stageNeeds({
+        serverId,
+        ...(session
+          ? {
+              thread: {
+                target: {
+                  kind: 'agent-session',
+                  serverId,
+                  sessionId: session.sessionId,
+                  directory: session.directory ?? '',
+                  asid: session.asid,
+                  ...(session.agentId ? { agentId: session.agentId } : {}),
+                },
+                permissions,
+                forms,
+              },
+            }
+          : {}),
+        observations,
+        waitingTasks,
+        ...(panes ? { panes } : {}),
         nowMs,
-      }).map((row) => row.task)
-    : NO_TASKS;
-  const needs = stageNeeds({
-    serverId,
-    ...(session
-      ? {
-          thread: {
-            target: {
-              kind: 'agent-session',
-              serverId,
-              sessionId: session.sessionId,
-              directory: session.directory ?? '',
-              asid: session.asid,
-              ...(session.agentId ? { agentId: session.agentId } : {}),
-            },
-            permissions,
-            forms,
-          },
-        }
-      : {}),
-    observations,
-    waitingTasks,
-    ...(panes ? { panes } : {}),
-    nowMs,
-  });
+      }),
+    [serverId, session, permissions, forms, observations, waitingTasks, panes, nowMs]
+  );
   return { ...needs, terminal };
 }
 
@@ -109,6 +123,20 @@ type SeenActivity = {
   lines: Readonly<Record<string, { source: string; text: string; atMs: number }>>;
   statuses: Readonly<Record<string, { sessionId: string; status: AgentRunStatus; atMs: number }>>;
 };
+
+const NO_LINES: SeenActivity['lines'] = {};
+const NO_STATUSES: SeenActivity['statuses'] = {};
+
+/**
+ * Session streams opened besides the dock's own. Each is a gateway stream
+ * kept open while the Stage shows; the rest still speak through the ledger
+ * and their last heard line.
+ */
+const STREAMED_SESSIONS_MAX = 2;
+
+function seenStatusKey(agentId: string | undefined, asid: string): string {
+  return JSON.stringify([agentId ?? null, asid]);
+}
 
 /** Whether the gateway connection is still this computer's, as it was when a read began. */
 function ownsComputer(serverId: string): (() => boolean) | null {
@@ -136,75 +164,98 @@ export function useStageProgress(serverId: string): StageProgress[] {
   );
   const nowMs = useMinuteNow();
   const [seen, setSeen] = useState<SeenActivity>({ serverId, lines: {}, statuses: {} });
-  const liveSessions = sessions
-    ? {
-        ...sessions,
-        sessions: sessions.sessions.map((session) => {
-          if (
-            thread?.kind === 'session' &&
-            thread.asid === session.asid &&
-            (!thread.agentId || !session.agentId || thread.agentId === session.agentId) &&
-            thread.sessionId === sessions.sessionId &&
-            dockStatus
-          ) {
-            return { ...session, status: dockStatus };
+  const seenLines = seen.serverId === serverId ? seen.lines : NO_LINES;
+  const seenStatuses = seen.serverId === serverId ? seen.statuses : NO_STATUSES;
+  const liveSessions = useMemo(
+    () =>
+      sessions
+        ? {
+            ...sessions,
+            sessions: sessions.sessions.map((session) => {
+              if (
+                thread?.kind === 'session' &&
+                thread.asid === session.asid &&
+                (!thread.agentId || !session.agentId || thread.agentId === session.agentId) &&
+                thread.sessionId === sessions.sessionId &&
+                dockStatus
+              ) {
+                return { ...session, status: dockStatus };
+              }
+              const observed = seenStatuses[seenStatusKey(session.agentId, session.asid)];
+              return observed?.sessionId === sessions.sessionId &&
+                observed.atMs >= sessions.observedAtMs
+                ? { ...session, status: observed.status }
+                : session;
+            }),
           }
-          const observed =
-            seen.serverId === serverId
-              ? seen.statuses[JSON.stringify([session.agentId ?? null, session.asid])]
-              : undefined;
-          return observed?.sessionId === sessions.sessionId &&
-            observed.atMs >= sessions.observedAtMs
-            ? { ...session, status: observed.status }
-            : session;
-        }),
-      }
-    : undefined;
-  const dock: StageDockInput | undefined =
-    thread?.kind === 'session'
-      ? {
-          kind: 'session',
-          sessionId: thread.sessionId,
-          asid: thread.asid,
-          ...(thread.agentId ? { agentId: thread.agentId } : {}),
-          ...(dockStatus ? { status: dockStatus } : {}),
-        }
-      : thread?.kind === 'pane'
-        ? { kind: 'pane', paneId: thread.paneId }
-        : undefined;
-  const subjects = stageActivitySubjects({
-    serverId,
-    ...(panes ? { panes } : {}),
-    ...(liveSessions ? { sessions: liveSessions } : {}),
-    sessionsSeenAtMs,
-    ...(dock ? { dock } : {}),
-    activeAtMs: {},
-    nowMs,
-  });
-  // Include terminal incarnation in the subscription identity, not its mutable label.
-  const sources = subjects.map((subject) => {
-    const pane =
-      subject.kind === 'pane'
-        ? panes?.agents.find((agent) => agent.paneId === subject.paneId)
-        : undefined;
-    return {
-      subject,
-      ambiguous:
-        subject.kind === 'session' &&
-        (sessions?.sessions.filter((session) => session.asid === subject.asid).length ?? 0) > 1,
-      source:
-        subject.kind === 'pane'
-          ? JSON.stringify([panes?.sessionId, subject.paneId, pane?.instanceId, pane?.shellPid])
-          : JSON.stringify([subject.sessionId, subject.agentId, subject.asid]),
-    };
-  });
-  const sessionSubscriptions = JSON.stringify(
-    sources.filter(
-      ({ subject, ambiguous }) => subject.kind === 'session' && !subject.dock && !ambiguous
-    )
+        : undefined,
+    [sessions, thread, dockStatus, seenStatuses]
   );
-  const paneSubscriptions = JSON.stringify(
-    sources.filter(({ subject }) => subject.kind === 'pane')
+  const dock = useMemo<StageDockInput | undefined>(
+    () =>
+      thread?.kind === 'session'
+        ? {
+            kind: 'session',
+            sessionId: thread.sessionId,
+            asid: thread.asid,
+            ...(thread.agentId ? { agentId: thread.agentId } : {}),
+            ...(dockStatus ? { status: dockStatus } : {}),
+          }
+        : thread?.kind === 'pane'
+          ? { kind: 'pane', paneId: thread.paneId }
+          : undefined,
+    [thread, dockStatus]
+  );
+  const { subjects, recency } = useMemo(() => {
+    const input = {
+      serverId,
+      ...(panes ? { panes } : {}),
+      ...(liveSessions ? { sessions: liveSessions } : {}),
+      sessionsSeenAtMs,
+      ...(dock ? { dock } : {}),
+      activeAtMs: {},
+      nowMs,
+    };
+    return { subjects: stageActivitySubjects(input), recency: stageActivityRecency(input) };
+  }, [serverId, panes, liveSessions, sessionsSeenAtMs, dock, nowMs]);
+  // Include terminal incarnation in the subscription identity, not its mutable label.
+  const sources = useMemo(
+    () =>
+      subjects.map((subject) => {
+        const pane =
+          subject.kind === 'pane'
+            ? panes?.agents.find((agent) => agent.paneId === subject.paneId)
+            : undefined;
+        return {
+          subject,
+          ambiguous:
+            subject.kind === 'session' &&
+            (sessions?.sessions.filter((session) => session.asid === subject.asid).length ?? 0) > 1,
+          source:
+            subject.kind === 'pane'
+              ? JSON.stringify([panes?.sessionId, subject.paneId, pane?.instanceId, pane?.shellPid])
+              : JSON.stringify([subject.sessionId, subject.agentId, subject.asid]),
+        };
+      }),
+    [subjects, panes, sessions]
+  );
+  // The dock's stream is already open; of the rest only the most recently
+  // active few get one, in display order so a swap in rank alone changes nothing.
+  const sessionSubscriptions = useMemo(() => {
+    const followable = sources.filter(
+      ({ subject, ambiguous }) => subject.kind === 'session' && !subject.dock && !ambiguous
+    );
+    const streamed = new Set(
+      followable
+        .map(({ subject }) => subject.key)
+        .sort((a, b) => recency.indexOf(a) - recency.indexOf(b))
+        .slice(0, STREAMED_SESSIONS_MAX)
+    );
+    return JSON.stringify(followable.filter(({ subject }) => streamed.has(subject.key)));
+  }, [sources, recency]);
+  const paneSubscriptions = useMemo(
+    () => JSON.stringify(sources.filter(({ subject }) => subject.kind === 'pane')),
+    [sources]
   );
   const connectionRecord = useGatewayConnectionStore((state) => state.record);
   const sessionFollowers = useRef(new Map<string, { owns: () => boolean; close: () => void }>());
@@ -253,7 +304,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
       if (followers.has(key)) continue;
       let active = true;
       let verified = false;
-      const statusKey = JSON.stringify([subject.agentId ?? null, subject.asid]);
+      const statusKey = seenStatusKey(subject.agentId, subject.asid);
       const heard = (activity: ReturnType<typeof sessionActivity>) => {
         if (active && owns() && verified && activity)
           note(subject.key, source, activity.text, activity.atMs);
@@ -330,65 +381,89 @@ export function useStageProgress(serverId: string): StageProgress[] {
     };
   }, [serverId, connectionRecord, paneSessionId, paneSubscriptions, note]);
 
-  const activities: StageActivityInput[] = [];
-  for (const { subject, source } of sources) {
-    const line =
-      subject.kind === 'session' && subject.dock
-        ? dockActivity
-        : seen.serverId === serverId && seen.lines[subject.key]?.source === source
-          ? seen.lines[subject.key]
-          : undefined;
-    if (!line) continue;
-    activities.push({
-      key: subject.key,
-      ...(subject.kind === 'pane'
-        ? {
-            paneId: subject.paneId,
-            ...(subject.agentLabel ? { agentLabel: subject.agentLabel } : {}),
+  // The dock's activity is the one input that moves several times a second:
+  // it rebuilds these few rows, and `keepStageLines` keeps every unchanged one.
+  const activities = useMemo(() => {
+    const rows: StageActivityInput[] = [];
+    for (const { subject, source } of sources) {
+      const line =
+        subject.kind === 'session' && subject.dock
+          ? dockActivity
+          : seenLines[subject.key]?.source === source
+            ? seenLines[subject.key]
+            : undefined;
+      if (!line) continue;
+      rows.push({
+        key: subject.key,
+        ...(subject.kind === 'pane'
+          ? {
+              paneId: subject.paneId,
+              ...(subject.agentLabel ? { agentLabel: subject.agentLabel } : {}),
+            }
+          : {
+              asid: subject.asid,
+              sessionId: subject.sessionId,
+              ...(subject.agentId ? { agentId: subject.agentId } : {}),
+            }),
+        text: line.text,
+        atMs: line.atMs,
+      });
+    }
+    return rows;
+  }, [sources, dockActivity, seenLines]);
+  const lines = useMemo(
+    () =>
+      stageProgressLines({
+        serverId,
+        tasks,
+        panes,
+        sessions: liveSessions,
+        sessionsSeenAtMs,
+        activities,
+        nowMs,
+      })
+        .filter((line) => {
+          // A report with no navigable conversation is not a tappable subtitle.
+          if (!line.asid) return line.key.startsWith('pane:');
+          // Stream state is newer than the listing timestamp. In particular, an idle
+          // event must retire a leftover ledger report even if the list predates it.
+          if (
+            thread?.kind === 'session' &&
+            thread.asid === line.asid &&
+            (!thread.agentId || !line.agentId || thread.agentId === line.agentId) &&
+            dockStatus
+          ) {
+            return isBusyStatus(dockStatus);
           }
-        : {
-            asid: subject.asid,
-            sessionId: subject.sessionId,
-            ...(subject.agentId ? { agentId: subject.agentId } : {}),
-          }),
-      text: line.text,
-      atMs: line.atMs,
-    });
-  }
-  return stageProgressLines({
-    serverId,
-    tasks,
-    panes,
-    sessions: liveSessions,
-    sessionsSeenAtMs,
-    activities,
-    nowMs,
-  })
-    .filter((line) => {
-      // A report with no navigable conversation is not a tappable subtitle.
-      if (!line.asid) return line.key.startsWith('pane:');
-      // Stream state is newer than the listing timestamp. In particular, an idle
-      // event must retire a leftover ledger report even if the list predates it.
-      if (
-        thread?.kind === 'session' &&
-        thread.asid === line.asid &&
-        (!thread.agentId || !line.agentId || thread.agentId === line.agentId) &&
-        dockStatus
-      ) {
-        return isBusyStatus(dockStatus);
-      }
-      const observed =
-        seen.serverId === serverId
-          ? seen.statuses[JSON.stringify([line.agentId ?? null, line.asid])]
-          : undefined;
-      if (
-        observed &&
-        observed.sessionId === sessions?.sessionId &&
-        observed.atMs >= Math.max(line.atMs, sessions.observedAtMs)
-      ) {
-        return isBusyStatus(observed.status);
-      }
-      return true;
-    })
-    .slice(0, 5);
+          const observed = seenStatuses[seenStatusKey(line.agentId, line.asid)];
+          if (
+            observed &&
+            observed.sessionId === sessions?.sessionId &&
+            observed.atMs >= Math.max(line.atMs, sessions.observedAtMs)
+          ) {
+            return isBusyStatus(observed.status);
+          }
+          return true;
+        })
+        .slice(0, 5),
+    [
+      serverId,
+      tasks,
+      panes,
+      liveSessions,
+      sessions,
+      sessionsSeenAtMs,
+      activities,
+      nowMs,
+      thread,
+      dockStatus,
+      seenStatuses,
+    ]
+  );
+  // The subtitle re-renders only when a line's words or routing change, not
+  // when the same words are read again later.
+  const [kept, setKept] = useState(lines);
+  const shown = keepStageLines(kept, lines);
+  if (shown !== kept) setKept(shown);
+  return shown;
 }

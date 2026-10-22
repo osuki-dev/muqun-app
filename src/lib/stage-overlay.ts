@@ -467,6 +467,38 @@ export function stageProgressLines(input: StageProgressInput): StageProgress[] {
   return [...lines.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
+/** The same subtitle line: what it shows and routes by, whenever it was read. */
+function sameStageLine(a: StageProgress, b: StageProgress): boolean {
+  return (
+    a.key === b.key &&
+    a.text === b.text &&
+    a.asid === b.asid &&
+    a.sessionId === b.sessionId &&
+    a.agentId === b.agentId &&
+    a.agentLabel === b.agentLabel &&
+    a.terminal?.sessionId === b.terminal?.sessionId &&
+    a.terminal?.instanceId === b.terminal?.instanceId &&
+    a.terminal?.shellPid === b.terminal?.shellPid
+  );
+}
+
+/**
+ * `next`, reusing `previous` and its lines wherever they are the same line, so
+ * a newer read time with the same words changes nothing, and a change in one
+ * speaker leaves the others' lines as they were. `previous` itself when no
+ * line changed, was added, left or moved.
+ */
+export function keepStageLines(previous: StageProgress[], next: StageProgress[]): StageProgress[] {
+  let changed = previous.length !== next.length;
+  const kept = next.map((line, index) => {
+    const before = previous[index];
+    if (before && sameStageLine(before, line)) return before;
+    changed = true;
+    return line;
+  });
+  return changed ? kept : previous;
+}
+
 /** Compatibility for surfaces that need only the newest reported line. */
 export function stageProgress(input: StageProgressInput): StageProgress | null {
   let best: StageProgress | null = null;
@@ -651,6 +683,17 @@ export function stageActivitySubject(
     if (!best || row.atMs > best.atMs || (row.atMs === best.atMs && row.dock && !best.dock))
       best = row;
   return best?.subject ?? null;
+}
+
+/**
+ * Working agents' keys, most recently active first; between equals the
+ * dock's own leads, then the gateway's order. For choosing which few
+ * speakers get a live stream of their own.
+ */
+export function stageActivityRecency(input: StageActivitySubjectsInput): string[] {
+  return rankedStageActivitySubjects(input)
+    .sort((a, b) => b.atMs - a.atMs || Number(b.dock) - Number(a.dock))
+    .map((row) => row.subject.key);
 }
 
 // -- A session's activity, from its timeline ---------------------------------
