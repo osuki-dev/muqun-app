@@ -32,17 +32,20 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -85,7 +88,7 @@ import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useThemeGallery } from '@/hooks/use-theme-gallery';
 import { useThemePack } from '@/hooks/use-theme-pack';
-import { AppearanceIcon, DeleteIcon, UploadFileIcon } from '@/icons';
+import { AppearanceIcon, DeleteIcon, LinkIcon, UploadFileIcon } from '@/icons';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { carryBox, carryForward } from '@/lib/carry-forward';
 import { withAlpha } from '@/lib/color';
@@ -263,9 +266,18 @@ export function SettingsThemeSheet({
   const [revealed] = useState(() => new Set<string>());
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<CardMenu | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
   const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
+  // The import dock's height, which the list's footer makes room for. A shared
+  // value: the room goes with the dock's own fade when it closes, so the grid
+  // under it eases down rather than dropping by the dock's height.
+  const dockRoom = useSharedValue(0);
+  const dockRoomStyle = useAnimatedStyle(() => ({ height: dockRoom.get() }));
+  // The footer's size as the list last reported it, and the size it had when
+  // the link entry was asked for: once the footer has grown past that, the
+  // grid is brought to its end, out from under the dock.
+  const footerSize = useRef(0);
+  const revealDockFrom = useRef<number | null>(null);
   const [busy, setBusy] = useState(false);
   const applying = useRef(false);
   const mounted = useRef(true);
@@ -276,6 +288,7 @@ export function SettingsThemeSheet({
     };
   }, []);
   const [listWidth, setListWidth] = useState(0);
+  const [sheetHeight, setSheetHeight] = useState(0);
   const listRef = useRef<LegendListRef>(null);
   // Where the grid starts: the list header's height, as the list measured it.
   const gridStart = useRef(0);
@@ -304,6 +317,7 @@ export function SettingsThemeSheet({
   function chooseTab(next: ThemeTab) {
     if (next === tab) return;
     setMenu(null);
+    setLinkImportOpen(false);
     setSwitchedAt(Date.now());
     setTab(next);
     saveThemeTab(next);
@@ -450,9 +464,39 @@ export function SettingsThemeSheet({
     perform(async () => {
       const value = await pickThemeManifest(setReadStage).finally(() => setReadStage(null));
       if (value === null) return;
-      setImportOpen(false);
       openEditor(value);
     });
+  }
+
+  /**
+   * The two ways a theme the reader already has comes in, offered where the
+   * Import card was pressed: in the card menu the long-press actions use, so
+   * the answer to the tap is at the finger rather than up in the header. The
+   * file route starts its picker at once; the link route opens the dock.
+   */
+  function openImportMenu() {
+    openMenu(t`Import theme`, [
+      {
+        name: 'import-link',
+        label: t`Import link`,
+        Icon: LinkIcon,
+        testID: 'theme-import-link',
+        run: () => {
+          revealDockFrom.current = footerSize.current;
+          setLinkImportOpen(true);
+        },
+      },
+      {
+        name: 'import-file',
+        label: t`Import file`,
+        Icon: UploadFileIcon,
+        testID: 'theme-import-file',
+        run: () => {
+          setLinkImportOpen(false);
+          importFile();
+        },
+      },
+    ]);
   }
 
   const currentKey = currentCustomId
@@ -551,7 +595,6 @@ export function SettingsThemeSheet({
     defaultActive ? 1 : 0,
     themePack.id,
     busy ? 1 : 0,
-    importOpen ? 1 : 0,
     gallery.pending ?? '',
     gallery.progress?.phase ?? '',
     gallery.progress && gallery.progress.phase !== 'downloading'
@@ -594,12 +637,8 @@ export function SettingsThemeSheet({
           <ThemeImportCard
             layout={cardLayout}
             rise={rise}
-            expanded={importOpen}
             disabled={busy}
-            onPress={() => {
-              setLinkImportOpen(false);
-              setImportOpen(!importOpen);
-            }}
+            onPress={openImportMenu}
           />
         );
       case 'installed': {
@@ -820,38 +859,35 @@ export function SettingsThemeSheet({
           { label: t`Gallery`, value: 'gallery' },
         ]}
       />
-      {tab === 'mine' && importOpen ? (
-        <Animated.View entering={fadeInDown('dropdown')} exiting={fadeOutDown('micro')}>
-          {linkImportOpen ? (
-            <ThemeLinkImport
-              onClose={() => setLinkImportOpen(false)}
-              onReady={(value) => {
-                setLinkImportOpen(false);
-                setImportOpen(false);
-                openEditor(value);
-              }}
-            />
-          ) : (
-            <ImportChoices busy={busy} onLink={() => setLinkImportOpen(true)} onFile={importFile} />
-          )}
-        </Animated.View>
-      ) : null}
-      {readStage ? (
-        <ThemeImportProgress
-          testID="theme-read-progress"
-          label={
-            readStage.phase === 'staging'
-              ? t`Installing images`
-              : readStage.phase === 'unpacking'
-                ? t`Reading the theme`
-                : t`Opening that file`
-          }
-          completed={readStage.phase === 'staging' ? readStage.completed : undefined}
-          total={readStage.phase === 'staging' ? readStage.total : undefined}
-        />
-      ) : null}
     </View>
   );
+
+  // What the import dock holds: the link entry, or the read of a picked file.
+  // Docked at the foot of the sheet rather than in the header, because the
+  // Import card that asks for it is the last card, and a link is typed with
+  // the keyboard up: the dock rides the keys, the header would be behind them.
+  const dockContent = linkImportOpen ? (
+    <ThemeLinkImport
+      onClose={() => setLinkImportOpen(false)}
+      onReady={(value) => {
+        setLinkImportOpen(false);
+        openEditor(value);
+      }}
+    />
+  ) : readStage ? (
+    <ThemeImportProgress
+      testID="theme-read-progress"
+      label={
+        readStage.phase === 'staging'
+          ? t`Installing images`
+          : readStage.phase === 'unpacking'
+            ? t`Reading the theme`
+            : t`Opening that file`
+      }
+      completed={readStage.phase === 'staging' ? readStage.completed : undefined}
+      total={readStage.phase === 'staging' ? readStage.total : undefined}
+    />
+  ) : null;
 
   const showGalleryFooter = tab === 'gallery' && gallery.entries !== null && gallery.total > 0;
 
@@ -866,6 +902,7 @@ export function SettingsThemeSheet({
         onLayout={(event) => {
           side.onLayout(event);
           setListWidth(event.nativeEvent.layout.width);
+          setSheetHeight(event.nativeEvent.layout.height);
         }}>
         {/* The tag row runs back out under the status bar to the sheet's edge. */}
         <SideBleedProvider value={sideBleed}>
@@ -873,6 +910,16 @@ export function SettingsThemeSheet({
             ref={listRef}
             onMetricsChange={(metrics) => {
               gridStart.current = metrics.headerSize;
+              // The footer has just grown by the dock's room: the end of the
+              // grid, the Import card that was pressed, is brought out from
+              // under the dock. Here rather than on the dock's layout, because
+              // the list's end is where the footer is, and this is when the
+              // list knows it.
+              if (revealDockFrom.current !== null && metrics.footerSize > revealDockFrom.current) {
+                revealDockFrom.current = null;
+                void listRef.current?.scrollToEnd({ animated: true });
+              }
+              footerSize.current = metrics.footerSize;
             }}
             testID={
               tab === 'gallery'
@@ -917,12 +964,18 @@ export function SettingsThemeSheet({
                     <GalleryFooter gallery={gallery} />
                   </View>
                 ) : null}
+                <Animated.View style={dockRoomStyle} />
                 <SheetSceneFooter bottomInset={insets.bottom} />
               </>
             }
             style={styles.sheet}
           />
         </SideBleedProvider>
+        {dockContent ? (
+          <ImportDock side={sideBleed} sheetHeight={sheetHeight} room={dockRoom}>
+            {dockContent}
+          </ImportDock>
+        ) : null}
         {menu ? (
           <CardMenuOverlay menu={menu} side={sideBleed} onClose={() => setMenu(null)} />
         ) : null}
@@ -1084,26 +1137,104 @@ function CurrentThemeBar({
   );
 }
 
-/** The two ways a theme the reader already has comes in. */
-function ImportChoices({
-  busy,
-  onLink,
-  onFile,
+/**
+ * What the dock leaves of the sheet above it, at the least: the heading. Also
+ * the least the dock keeps for itself when the keyboard leaves less than that,
+ * the field and its buttons; the rest of its content scrolls.
+ */
+const DOCK_HEADROOM = 160;
+
+/**
+ * The import entry, docked at the foot of the sheet over the grid.
+ *
+ * Where the card menu sits, and on the same plate, so it reads as the answer
+ * to the Import card's tap. It rides the keyboard the way the composer dock
+ * does, from the shared value the keyboard controller drives, so the link
+ * field is above the keys the whole way up; the list behind it grows by its
+ * height (`room`) so the last cards can still be scrolled out from under it.
+ * Its content scrolls within what the keyboard leaves, so a long review on a
+ * short phone never runs under the heading.
+ */
+function ImportDock({
+  side,
+  sheetHeight,
+  room,
+  children,
 }: {
-  busy: boolean;
-  onLink: () => void;
-  onFile: () => void;
+  /** The sheet's overlap with the side safe areas, which the dock keeps clear of. */
+  side: SideInsets;
+  /** The sheet's height, which bounds the dock once the keyboard has its share. */
+  sheetHeight: number;
+  /**
+   * The room the list makes under itself for the dock: its height, landed at
+   * once when the dock arrives so the grid can be brought to its end in one
+   * move, eased while it is open and as it leaves.
+   */
+  room: SharedValue<number>;
+  children: ReactNode;
 }) {
-  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const opacity = useSurfaceBackgroundOpacity();
+  const insets = useSafeAreaInsets();
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const keyboard = useKeyboardState((state) => state.height);
+  const bottom = insets.bottom;
+  // The keyboard covers the bottom inset first; the dock moves up by the rest,
+  // and stays put while the keys are still below its own clearance.
+  const rise = useAnimatedStyle(() => ({
+    transform: [{ translateY: Math.min(0, keyboardOffset.get() + bottom) }],
+  }));
+  const maxHeight = Math.max(
+    DOCK_HEADROOM,
+    sheetHeight - Math.max(keyboard, bottom) - SHEET_LADDER.section - DOCK_HEADROOM
+  );
+  const measured = useRef(false);
+  useEffect(
+    () => () => {
+      room.set(withTiming(0, timing('micro')));
+    },
+    [room]
+  );
   return (
-    <View style={styles.importChoices}>
-      <Button variant="secondary" disabled={busy} testID="theme-import-link" onPress={onLink}>
-        {t`Import link`}
-      </Button>
-      <Button variant="secondary" disabled={busy} testID="theme-import-file" onPress={onFile}>
-        {t`Import file`}
-      </Button>
-    </View>
+    <Animated.View
+      pointerEvents="box-none"
+      style={[
+        styles.menuDock,
+        {
+          bottom: SHEET_LADDER.section + bottom,
+          left: SHEET_LADDER.gutter + side.left,
+          right: SHEET_LADDER.gutter + side.right,
+        },
+        rise,
+      ]}>
+      <Animated.View
+        testID="theme-import-dock"
+        entering={fadeInDown('dropdown')}
+        exiting={fadeOutDown('micro')}
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          room.set(measured.current ? withTiming(height, timing('micro')) : height);
+          measured.current = true;
+        }}
+        style={[
+          styles.menu,
+          styles.dock,
+          {
+            borderRadius: profile.chrome.popover,
+            backgroundColor: surfaceBackgroundFill(theme.colors.surface, sheetFrostAlpha(opacity)),
+          },
+        ]}>
+        <ScrollView
+          style={{ maxHeight }}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          bounces={false}
+          contentContainerStyle={styles.dockContent}>
+          {children}
+        </ScrollView>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -1137,7 +1268,7 @@ function CardMenuOverlay({
     Icon: action.Icon,
     tone: action.tone,
     confirm: action.confirm,
-    testID: `theme-menu-${action.name}`,
+    testID: action.testID ?? `theme-menu-${action.name}`,
     onPress: () => {
       onClose();
       action.run();
@@ -1244,7 +1375,6 @@ const styles = StyleSheet.create({
   },
   currentCopy: { flex: 1, minWidth: 0, gap: 2 },
   currentActions: { flexDirection: 'row', gap: 8 },
-  importChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   emptyMine: { gap: SHEET_LADDER.gap, paddingTop: SHEET_LADDER.tight, alignItems: 'flex-start' },
   menuDock: {
     position: 'absolute',
@@ -1260,6 +1390,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     boxShadow: appChrome.shadow.popover,
   },
+  // The dock's padding is its content's: the plate itself clips the scroller.
+  dock: { paddingVertical: 0 },
+  dockContent: { padding: 14 },
   menuTitle: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 2 },
   menuRule: { height: StyleSheet.hairlineWidth, marginHorizontal: 14, marginVertical: 4 },
   menuCancel: { minHeight: 42, justifyContent: 'center', paddingHorizontal: 14 },
