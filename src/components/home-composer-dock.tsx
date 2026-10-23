@@ -424,6 +424,30 @@ export function HomeComposerDock({
   const threadKey = thread ? homeThreadKey(thread) : undefined;
   const threadAgentId = thread?.kind === 'session' ? thread.agentId : undefined;
   const threadFeatures = useAgentFeatures(targetId, threadAgentId ?? null);
+  // What the field offers on `/`, `$` and `@` follows the conversation the
+  // next message goes to. A session offers its own agent's commands, skills
+  // and files, read for that session; a pane or a task that has not said
+  // where it runs offers none of an agent's catalog, since its agent reads
+  // the line itself. The dock's own agent is asked only when nothing is
+  // targeted.
+  const threadSession = thread?.kind === 'session' ? thread : undefined;
+  const threadSessionId = threadSession?.sessionId;
+  const threadAsid = threadSession?.asid;
+  const threadDirectory = threadSession?.directory;
+  const threadCatalogAgentId = threadAgentId ? normalizeAgentId(threadAgentId) : undefined;
+  const threadCatalogKey = threadSession
+    ? [
+        targetId ?? '',
+        threadSessionId,
+        threadAsid,
+        threadDirectory ?? '',
+        threadCatalogAgentId ?? '',
+      ].join('\u0000')
+    : null;
+  const [threadCatalogRead, setThreadCatalogRead] = useState<{
+    key: string;
+    catalog: AgentCatalog;
+  } | null>(null);
   const discoveredAgents = discovery?.agents?.agents;
   const threadAgentName = !thread
     ? agentLabel
@@ -525,6 +549,30 @@ export function HomeComposerDock({
       current = false;
     };
   }, [ready, selected, agentId, catalogKey, terminalAgent, catalogAttempt]);
+  useEffect(() => {
+    if (!ready || !selected || threadCatalogKey === null || !threadSessionId) return;
+    let current = true;
+    const scope = {
+      ...(threadDirectory ? { directory: threadDirectory } : {}),
+      ...(threadCatalogAgentId ? { agentId: threadCatalogAgentId } : {}),
+    };
+    const peeked = peekAgentCatalog(threadSessionId, scope);
+    if (peeked) setThreadCatalogRead({ key: threadCatalogKey, catalog: peeked });
+    getAgentCatalog(threadSessionId, undefined, scope)
+      .then((read) => {
+        if (current) setThreadCatalogRead({ key: threadCatalogKey, catalog: read });
+      })
+      .catch((failure: unknown) => {
+        console.warn('Failed to load the targeted conversation catalog for Home:', failure);
+      });
+    return () => {
+      current = false;
+    };
+  }, [ready, selected, threadCatalogKey, threadSessionId, threadDirectory, threadCatalogAgentId]);
+  const threadCatalog =
+    threadCatalogRead && threadCatalogRead.key === threadCatalogKey
+      ? threadCatalogRead.catalog
+      : undefined;
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
@@ -1534,17 +1582,26 @@ export function HomeComposerDock({
   // that did not run puts its line back.
   function runCommand(name: string, args: string) {
     const command = { name, ...(args ? { arguments: args } : {}) };
+    // A targeted conversation takes the command or nothing does: a pane's
+    // line is put back rather than starting a session on the dock's agent.
+    const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
     void threadAct((_sessionId, asid) => sendAgentCommand(asid, command))
-      .then((inThread) => inThread ?? startSession((asid) => sendAgentCommand(asid, command)))
+      .then(
+        (inThread) =>
+          inThread ?? (targeted ? false : startSession((asid) => sendAgentCommand(asid, command)))
+      )
       .then((accepted) => {
         if (!accepted)
           injectDraftRef.current?.(`/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`);
       });
   }
   async function invokeSkill(skill: string, args: string) {
+    const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
     const accepted =
       (await threadAct((sessionId, asid) => invokeAgentSkill(sessionId, asid, { skill }))) ??
-      (await startSession((asid) => invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill })));
+      (targeted
+        ? false
+        : await startSession((asid) => invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill })));
     // A skill takes no arguments on the wire; what was typed after it is said
     // out loud rather than dropped in silence.
     if (accepted && args)
@@ -1985,13 +2042,39 @@ export function HomeComposerDock({
           </Text>
         ) : undefined
       }
-      sessionId={HOME_AGENT_SESSION_ID}
-      availableAgents={modes}
-      skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
-      commands={
-        features.slashCommands && !terminalAgent ? (catalog?.commands ?? NO_COMMANDS) : NO_COMMANDS
+      sessionId={threadSessionId ?? HOME_AGENT_SESSION_ID}
+      {...(threadAsid ? { activeAsid: threadAsid } : {})}
+      canMentionFiles={
+        thread
+          ? threadSession !== undefined && threadFeatures.extra.fileMentions !== false
+          : !terminalAgent
       }
-      hiddenClientCommands={homeHiddenClientCommands(features)}
+      availableAgents={modes}
+      skills={
+        thread
+          ? threadSession && threadFeatures.skills
+            ? (threadCatalog?.skills ?? NO_SKILLS)
+            : NO_SKILLS
+          : features.skills && !terminalAgent
+            ? (catalog?.skills ?? NO_SKILLS)
+            : NO_SKILLS
+      }
+      commands={
+        thread
+          ? threadSession && threadFeatures.slashCommands
+            ? (threadCatalog?.commands ?? NO_COMMANDS)
+            : NO_COMMANDS
+          : features.slashCommands && !terminalAgent
+            ? (catalog?.commands ?? NO_COMMANDS)
+            : NO_COMMANDS
+      }
+      // `/models` opens the dock's own model sheet, which is the targeted
+      // session's only when that session runs the dock's agent.
+      hiddenClientCommands={homeHiddenClientCommands(
+        thread && !(threadSession && threadCatalogAgentId === agentId)
+          ? { modelSelection: false }
+          : features
+      )}
       selectedAgent={shown.mode}
       selectedModel={selectedModel}
       modelName={modelName}
