@@ -91,6 +91,11 @@ import {
 } from '@/lib/gateway-client';
 import { field, numberField, optionalNumberField } from '@/lib/herdr-entity';
 import { isFullScreenTuiPane } from '@/lib/terminal-keys';
+import {
+  mirroredPaneWindow,
+  paneWindowShape,
+  rememberMirroredPaneWindow,
+} from '@/lib/pane-window-mirror';
 import { sameComputer } from '@/lib/home-composer';
 import {
   REPLY_DRAWER_MIN_HEIGHT,
@@ -1301,8 +1306,19 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
     useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
   const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
   const [paneRetry, setPaneRetry] = useState(0);
-  const [held, setHeld] = useState<PaneReadWindow>({ output: '', capturedRows: 0 });
-  const [loaded, setLoaded] = useState(false);
+  // The pane as the last screen to show it left it -- this drawer's own window
+  // from an earlier open, or the terminal screen's -- painted at once and
+  // confirmed by the read below (`lib/pane-window-mirror`). Read as a pane
+  // whose program does not own the screen; an editor's window is declined on
+  // its shape and the drawer starts from its loader as before.
+  const [remembered] = useState(() => {
+    const window = sessionId ? mirroredPaneWindow(serverId, sessionId, paneId) : null;
+    return window && window.shape === paneWindowShape('ansi', 'recent-unwrapped', false)
+      ? window.output
+      : '';
+  });
+  const [held, setHeld] = useState<PaneReadWindow>({ output: remembered, capturedRows: 0 });
+  const [loaded, setLoaded] = useState(remembered !== '');
   const [failed, setFailed] = useState(false);
   const [streamUp, setStreamUp] = useState(false);
 
@@ -1362,16 +1378,24 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const fold = useStableHandler((text: string, origin: PaneReadOrigin) => {
     if (origin === 'frame') streamReadFence.noteFrame();
     const shape = readShape();
-    setHeld((current) =>
-      foldPaneWindow(
+    setHeld((current) => {
+      const next = foldPaneWindow(
         current,
         text,
         origin,
         INITIAL_PANE_OUTPUT_LINES,
         shape.ownsScreen,
         shape.screenRows
-      )
-    );
+      );
+      rememberMirroredPaneWindow(
+        serverId,
+        sessionId,
+        paneId,
+        paneWindowShape('ansi', shape.source, shape.ownsScreen),
+        next.output
+      );
+      return next;
+    });
     setLoaded(true);
     setFailed(false);
   });

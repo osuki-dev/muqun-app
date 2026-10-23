@@ -1,4 +1,5 @@
 import type { HealthResponse, HerdrEntity } from '@/lib/gateway-client';
+import { forgetMirroredPaneWindows } from '@/lib/pane-window-mirror';
 import { REACHABILITY_FRESH_MS } from '@/lib/server-reachability';
 
 /**
@@ -102,6 +103,10 @@ export function warmWorkspace(serverId: string, nowMs = Date.now()): WarmWorkspa
 export function forgetWarmWorkspace(serverId?: string): void {
   if (serverId === undefined) entries.clear();
   else entries.delete(serverId);
+  // The remembered pane windows are first frames read from the same gateway,
+  // and every reason to forget this -- unpairing, a restart -- is a reason to
+  // forget them too.
+  forgetMirroredPaneWindows(serverId);
 }
 
 /** Test seam: the cache is process-wide, so suites must be able to reset it. */
