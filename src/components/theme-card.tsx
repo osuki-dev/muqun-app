@@ -78,6 +78,8 @@ export type ThemeCardAction = {
    * reached through the menu, which asks.
    */
   confirm?: { label: string; detail?: string };
+  /** The menu row's test ID, when it is not `theme-menu-<name>`. */
+  testID?: string;
 };
 
 /**
@@ -257,13 +259,11 @@ export function ThemeCard({
  */
 export function ThemeImportCard({
   layout,
-  expanded,
   disabled,
   rise,
   onPress,
 }: {
   layout: ThemeGridLayout;
-  expanded: boolean;
   disabled?: boolean;
   rise?: CardRise;
   onPress: () => void;
@@ -279,7 +279,7 @@ export function ThemeImportCard({
         testID="theme-import"
         accessibilityRole="button"
         accessibilityLabel={t`Import theme`}
-        accessibilityState={{ expanded, disabled }}
+        accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
         style={[
