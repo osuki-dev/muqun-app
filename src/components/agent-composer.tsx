@@ -126,7 +126,6 @@ import {
   formatModelName,
   hasRealSessionTitle,
   isSessionUnread,
-  isSlashSkill,
   listAgentFiles,
   inboxItemAttachments,
   inboxItemText,
@@ -375,6 +374,12 @@ export interface AgentComposerProps {
   /** Queue support is independent of steering into the current turn. */
   canQueueWhileRunning?: boolean;
   canMentionFiles?: boolean;
+  /**
+   * Where `@` looks for files, when not this session's project: Home's dock
+   * replying to a terminal pane searches that pane's folder. A new function
+   * means a new place, and the hits on screen are dropped with the old one.
+   */
+  searchFiles?: (query: string) => Promise<FileMentionHit[]>;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
   /**
@@ -649,6 +654,7 @@ export const AgentComposer = memo(function AgentComposer({
   canSendWhileRunning = true,
   canQueueWhileRunning = true,
   canMentionFiles = true,
+  searchFiles,
   interactionBlockedReason,
   blockedReasonInField = false,
   sessionStrip = EMPTY_STRIP,
@@ -969,38 +975,21 @@ export const AgentComposer = memo(function AgentComposer({
   );
 
   /**
-   * The host's skills, as the lines the reader may actually type.
-   *
-   * Only the ones the catalog marks `slash`: the rest are the agent's own to
-   * reach for, and listing every skill on the host under "/" buried the few
-   * that are meant to be asked for. Named like a host command -- its own name
-   * first, then what it does -- because that is what the row beside it does.
+   * `/` is the commands: the screen's own and the host's. Skills are `$`, for
+   * every agent, so a skill the host also lets be typed as `/name` is not
+   * listed here a second time; typing it by hand still runs it.
    */
-  const skillCommands: PaneSlashCommand[] = useMemo(
-    () =>
-      (skills ?? []).filter(isSlashSkill).map((skill) => ({
-        name: `/${skill.id}`,
-        description:
-          skill.name && skill.description && skill.name.toLowerCase() !== skill.id.toLowerCase()
-            ? `${skill.name} · ${skill.description}`
-            : skill.description || skill.name,
-        argsHint: '',
-        source: 'workspace' as const,
-      })),
-    [skills]
-  );
-
   const slashCatalog = useMemo(() => {
     const seen = new Set<string>();
     const rows = [];
-    for (const command of [...builtinCommands, ...serverCommands, ...skillCommands]) {
+    for (const command of [...builtinCommands, ...serverCommands]) {
       const key = command.name.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       rows.push(command);
     }
     return rows;
-  }, [builtinCommands, serverCommands, skillCommands]);
+  }, [builtinCommands, serverCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -1073,7 +1062,10 @@ export const AgentComposer = memo(function AgentComposer({
       return;
     }
     let active = true;
-    listAgentFiles(sessionId, activeAsid, mentionQuery, FILE_MENTION_LIMIT)
+    (searchFiles
+      ? searchFiles(mentionQuery)
+      : listAgentFiles(sessionId, activeAsid, mentionQuery, FILE_MENTION_LIMIT)
+    )
       .then((hits) => {
         if (active) setMentionHits(hits);
       })
@@ -1083,7 +1075,12 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       active = false;
     };
-  }, [mentionQuery, sessionId, activeAsid, canMentionFiles]);
+  }, [mentionQuery, sessionId, activeAsid, canMentionFiles, searchFiles]);
+  // Another session or pane searches another workspace: its file hits never
+  // stay on screen while this one's are read.
+  useEffect(() => {
+    setMentionHits([]);
+  }, [sessionId, activeAsid, searchFiles]);
 
   // Which words of the draft are mentions: every computer this composer
   // offers (typed by hand or picked) and the file paths picked in this draft.

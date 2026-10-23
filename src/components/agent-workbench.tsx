@@ -1381,8 +1381,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ...(scope.directory ? { directory: scope.directory } : {}),
       ...(scope.agentId ? { agentId: scope.agentId } : {}),
     });
-    if (peeked?.skills.length) setSkills(peeked.skills);
-    if (peeked?.commands.length) setCommands(peeked.commands);
+    // Another scope is another list: what was on screen belonged to the last
+    // session, agent or project and must not be offered here even for a
+    // moment. This scope's cached answer, or nothing until it answers.
+    setSkills(peeked?.skills ?? []);
+    setCommands(peeked?.commands ?? []);
     const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
     if (agentChanged && !activeAsidRef.current) {
       // A new session on another agent: what was picked or applied for the
@@ -1401,10 +1404,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (!mounted) return;
         setAvailableAgents(catalog?.modes ?? []);
         setCatalogAnsweredFor(scope.agentId ?? '');
-        if (agentChanged) setSkills(catalog?.skills ?? []);
-        else if (catalog?.skills && catalog.skills.length > 0) {
-          setSkills(catalog.skills);
-        }
+        // An empty list from a project OpenCode has not loaded yet keeps this
+        // scope's cached one; it never brings back another scope's.
+        if (catalog?.skills && catalog.skills.length > 0) setSkills(catalog.skills);
         setCommands(catalog?.commands ?? []);
         setCatalogModels(catalog?.models ?? []);
         setCatalogDefaults(catalog?.defaults ?? NO_CATALOG_DEFAULTS);

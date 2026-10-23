@@ -1,4 +1,5 @@
 import { protectTemporaryCacheEntry } from './cache-cleanup';
+import { paneComposerExtrasFromAnswer, type PaneSkill } from './pane-composer';
 import { decodeBase64Url, encodeBase64Url } from './base64url';
 import { originalImageCache, ORIGINAL_IMAGE_SEED_LIMIT } from './original-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
@@ -959,6 +960,13 @@ export interface PaneShortcuts {
    * cannot reach it. Older Gateways omit this, which narrows nothing.
    */
   keyboard?: { extended: boolean };
+  /**
+   * The skills the app offers under `$` for this pane, run by name through the
+   * Gateway (`invokePaneSkill`). Absent from an older Gateway.
+   */
+  skills?: PaneSkill[];
+  /** Whether `@` file mentions mean anything to the pane's agent. */
+  fileMentions?: boolean;
 }
 
 export interface PaneOutputResponse {
@@ -2155,6 +2163,7 @@ export async function readAssetBytes(
 export {
   paneComposerFromResponse,
   type PaneComposer,
+  type PaneSkill,
   type PaneSlashCommand,
 } from './pane-composer';
 
@@ -3901,6 +3910,11 @@ export async function loadPaneShortcuts(sessionId: string, paneId: string): Prom
     sessionId,
     paneId,
   })) as Partial<PaneShortcuts>;
+  return paneShortcutsFromAnswer(value);
+}
+
+/** The shortcuts answer as the app uses it; unknown or malformed fields are dropped. */
+export function paneShortcutsFromAnswer(value: Partial<PaneShortcuts> | undefined): PaneShortcuts {
   return {
     version: typeof value?.version === 'number' ? value.version : 0,
     profile: typeof value?.profile === 'string' ? value.profile : 'shell',
@@ -3912,6 +3926,7 @@ export async function loadPaneShortcuts(sessionId: string, paneId: string): Prom
     ...(typeof value?.keyboard?.extended === 'boolean'
       ? { keyboard: { extended: value.keyboard.extended } }
       : {}),
+    ...paneComposerExtrasFromAnswer(value),
   };
 }
 
