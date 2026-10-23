@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
 import { ControlsIcon } from '@/icons';
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 
 import {
@@ -44,6 +44,7 @@ import {
   peekAgentCatalog,
   listAgentSessions,
   invokeAgentSkill,
+  invokePaneSkill,
   normalizeAgentId,
   readAgentSessionAt,
   sendAgentCommand,
@@ -81,7 +82,7 @@ import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
-import { loadSessions, sendAgentText, spawnAgent } from '@/lib/gateway-client';
+import { listPaneFiles, loadSessions, sendAgentText, spawnAgent } from '@/lib/gateway-client';
 import {
   homeAgentNeedsTerminalLabel,
   homeAgentOptions,
@@ -136,6 +137,7 @@ import {
 } from '@/lib/home-thread';
 import { useHomeThreadLive, useHomeThreads } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
+import { usePaneShortcuts } from '@/hooks/use-pane-shortcuts';
 import { HomeReplyKeyRow } from '@/components/home-reply-key-row';
 
 const NO_COMMANDS: AgentCatalog['commands'] = [];
@@ -573,6 +575,52 @@ export function HomeComposerDock({
     threadCatalogRead && threadCatalogRead.key === threadCatalogKey
       ? threadCatalogRead.catalog
       : undefined;
+  // A targeted pane offers the commands its agent accepts: the gateway's
+  // table for that pane, the same list the terminal screen's `/` shows. They
+  // go to the pane as the typed line.
+  const threadPane = thread?.kind === 'pane' ? thread : undefined;
+  const paneSessionId =
+    useServerAgents((state) =>
+      threadPane
+        ? (threadPane.sessionId ?? state.byServer[threadPane.serverId]?.sessionId)
+        : undefined
+    ) ?? '';
+  const paneShortcuts = usePaneShortcuts({
+    sessionId: paneSessionId,
+    paneId: threadPane?.paneId ?? '',
+    enabled: Boolean(threadPane) && ready && selected,
+  });
+  const paneCommands = useMemo<AgentCatalog['commands']>(
+    () =>
+      (paneShortcuts?.commands ?? [])
+        .filter((entry) => entry.command.startsWith('/'))
+        .map((entry) => ({
+          name: entry.command.slice(1),
+          ...(entry.description ? { description: entry.description } : {}),
+        })),
+    [paneShortcuts]
+  );
+  // `$` is the app's skills entry here as everywhere: the pane's skills, run by
+  // name through the Gateway, which decides how that pane's agent runs one.
+  const paneSkills = useMemo<AgentCatalog['skills']>(
+    () =>
+      (paneShortcuts?.skills ?? []).map((skill) => ({
+        id: skill.name,
+        name: skill.name,
+        description: skill.description,
+      })),
+    [paneShortcuts]
+  );
+  // `@` files for a pane are the pane's own folder, the search the terminal
+  // screen uses, when its agent takes file mentions.
+  const panePaneId = threadPane?.paneId;
+  const searchPaneFiles = useCallback(
+    (query: string) =>
+      paneSessionId && panePaneId
+        ? listPaneFiles(paneSessionId, panePaneId, query)
+        : Promise.resolve([]),
+    [paneSessionId, panePaneId]
+  );
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
@@ -1585,18 +1633,45 @@ export function HomeComposerDock({
     // A targeted conversation takes the command or nothing does: a pane's
     // line is put back rather than starting a session on the dock's agent.
     const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    const line = `/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`;
+    if (targeted?.kind === 'pane') {
+      // A pane's agent reads its own commands: the line is typed into it.
+      void followUp(targeted, line, []).then((accepted) => {
+        if (!accepted) injectDraftRef.current?.(line);
+      });
+      return;
+    }
     void threadAct((_sessionId, asid) => sendAgentCommand(asid, command))
       .then(
         (inThread) =>
           inThread ?? (targeted ? false : startSession((asid) => sendAgentCommand(asid, command)))
       )
       .then((accepted) => {
-        if (!accepted)
-          injectDraftRef.current?.(`/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`);
+        if (!accepted) injectDraftRef.current?.(line);
       });
   }
   async function invokeSkill(skill: string, args: string) {
     const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (targeted?.kind === 'pane') {
+      // By name, as a session's skill is: the Gateway checks the pane offers it
+      // and runs it the way that agent does. The draft stays until it has.
+      if (!paneSessionId) return false;
+      return recoverWith(
+        async () => {
+          setError(null);
+          await invokePaneSkill(paneSessionId, targeted.paneId, {
+            skill,
+            ...(args ? { args } : {}),
+          });
+          return true;
+        },
+        (failure) => {
+          console.warn('Home could not run the skill in its pane:', failure);
+          setError(describeFailure(failure));
+          return false;
+        }
+      );
+    }
     const accepted =
       (await threadAct((sessionId, asid) => invokeAgentSkill(sessionId, asid, { skill }))) ??
       (targeted
@@ -1738,6 +1813,16 @@ export function HomeComposerDock({
     return () => setRowActions(null);
   }, [retryRow, openRow, checkRow]);
   function clientCommand(name: AgentClientCommandId) {
+    // A pane's agent has its own `/clear`, `/export` and the rest: the app's
+    // client commands are not what it was asked for there.
+    const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (targeted?.kind === 'pane') {
+      const line = `/${name}`;
+      void followUp(targeted, line, []).then((accepted) => {
+        if (!accepted) injectDraftRef.current?.(line);
+      });
+      return;
+    }
     if (name === 'models') openModelSheet();
   }
 
@@ -2046,15 +2131,20 @@ export function HomeComposerDock({
       {...(threadAsid ? { activeAsid: threadAsid } : {})}
       canMentionFiles={
         thread
-          ? threadSession !== undefined && threadFeatures.extra.fileMentions !== false
+          ? threadSession
+            ? threadFeatures.extra.fileMentions !== false
+            : threadPane !== undefined && paneShortcuts?.fileMentions === true
           : !terminalAgent
       }
+      {...(threadPane ? { searchFiles: searchPaneFiles } : {})}
       availableAgents={modes}
       skills={
         thread
           ? threadSession && threadFeatures.skills
             ? (threadCatalog?.skills ?? NO_SKILLS)
-            : NO_SKILLS
+            : threadPane
+              ? paneSkills
+              : NO_SKILLS
           : features.skills && !terminalAgent
             ? (catalog?.skills ?? NO_SKILLS)
             : NO_SKILLS
@@ -2063,7 +2153,9 @@ export function HomeComposerDock({
         thread
           ? threadSession && threadFeatures.slashCommands
             ? (threadCatalog?.commands ?? NO_COMMANDS)
-            : NO_COMMANDS
+            : threadPane
+              ? paneCommands
+              : NO_COMMANDS
           : features.slashCommands && !terminalAgent
             ? (catalog?.commands ?? NO_COMMANDS)
             : NO_COMMANDS

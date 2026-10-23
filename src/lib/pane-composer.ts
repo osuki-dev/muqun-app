@@ -138,3 +138,51 @@ function normalizeSlashCommands(value: unknown): PaneSlashCommand[] {
   }
   return commands;
 }
+
+/** A skill a pane's agent can use, as the Gateway's shortcuts answer lists it. */
+export interface PaneSkill {
+  name: string;
+  description: string;
+  /** From the user's own skill directories, or the pane's workspace. */
+  source: 'user' | 'workspace';
+}
+
+/**
+ * The composer part of a pane's shortcuts answer: the skills the app offers
+ * under `$` for that pane, and whether `@` file mentions mean anything to its
+ * agent.
+ *
+ * `$` is the app's skills entry for every agent: a picked skill goes to the
+ * Gateway by name, and the Gateway decides how that pane's agent runs it. An
+ * older Gateway sends neither field, which offers no skills and no files. A
+ * name that is not one plain token (`SKILL_NAME`) is dropped with the other
+ * malformed entries.
+ */
+export function paneComposerExtrasFromAnswer(value: unknown): {
+  skills?: PaneSkill[];
+  fileMentions?: boolean;
+} {
+  if (!value || typeof value !== 'object') return {};
+  const raw = value as Record<string, unknown>;
+  return {
+    ...(Array.isArray(raw.skills) ? { skills: raw.skills.filter(isPaneSkill) } : {}),
+    ...(typeof raw.file_mentions === 'boolean' ? { fileMentions: raw.file_mentions } : {}),
+  };
+}
+
+/**
+ * A name that is typed into a terminal as one token: no whitespace, and no
+ * control or escape characters that the pane would read as keystrokes.
+ */
+const SKILL_NAME = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
+
+function isPaneSkill(value: unknown): value is PaneSkill {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.name === 'string' &&
+    SKILL_NAME.test(entry.name) &&
+    typeof entry.description === 'string' &&
+    (entry.source === 'user' || entry.source === 'workspace')
+  );
+}
