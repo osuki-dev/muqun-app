@@ -18,9 +18,6 @@
  * Nothing secret travels here: capability names are a fixed, public vocabulary.
  */
 
-import { transcriptReaderTokens } from './agent-transcripts';
-import { asRecord } from './record';
-
 /** Every server's latest capability list, keyed by local record id. */
 export type ServerCapabilitiesIndex = Record<string, string[]>;
 
@@ -55,20 +52,6 @@ export function normalizeCapabilities(value: unknown): string[] {
     if (names.length >= MAX_CAPABILITIES) break;
   }
   return names;
-}
-
-/**
- * One `/health` or `/api/discovery` answer as the names the mirror keeps: its
- * capability list, then one token per transcript reader it names
- * (`agent_transcripts:claude`). Every writer of the mirror goes through this,
- * so a reader token never depends on which screen answered last.
- */
-export function healthCapabilityNames(answer: unknown): string[] {
-  const body = asRecord(answer);
-  return normalizeCapabilities([
-    ...(Array.isArray(body?.capabilities) ? body.capabilities : []),
-    ...transcriptReaderTokens(answer),
-  ]);
 }
 
 /** Whether a fresh list says anything the stored one did not, or vice versa. */
