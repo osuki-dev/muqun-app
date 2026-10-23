@@ -1,7 +1,7 @@
 import { Skia, type SkImage } from 'react-native-skia';
 import { useEffect, useEffectEvent, useState } from 'react';
 
-import { createRefCountedCache, type CacheHandle } from '@/lib/ref-counted-cache';
+import { createRefCountedCache } from '@/lib/ref-counted-cache';
 
 /**
  * Decoded theme pictures, shared by every Skia canvas that draws them.
@@ -70,7 +70,13 @@ export function useSharedSkiaImage(
   uri: string | null | undefined,
   onError?: (error: string | undefined) => void
 ): SkImage | null {
-  const [loaded, setLoaded] = useState<{ uri: string; handle: CacheHandle<SkImage> } | null>(null);
+  // The image is state, set when its lease resolves and cleared when the
+  // lease is released: a URI that comes back after its lease was released
+  // and disposed gets its image from a new lease. Reading the lease in
+  // render (`handle.current()`) is not an option: React Compiler keeps that
+  // call's result while `loaded` and `uri` are unchanged, which on a theme
+  // switched away and back handed the Stage the disposed picture.
+  const [loaded, setLoaded] = useState<{ uri: string; image: SkImage } | null>(null);
   const fail = useEffectEvent((failed: string) => onError?.(failures.get(failed)));
   useEffect(() => {
     if (!uri) return;
@@ -78,18 +84,16 @@ export function useSharedSkiaImage(
     let live = true;
     void handle.promise.then((image) => {
       if (!live) return;
-      if (image) setLoaded({ uri, handle });
+      if (image) setLoaded({ uri, image });
       else fail(uri);
     });
     return () => {
       live = false;
       handle.release();
+      setLoaded((current) => (current?.uri === uri ? null : current));
     };
   }, [uri]);
-  if (!uri) return null;
-  // A URI can return after its previous lease was released and disposed.
-  // Never reuse that render state or borrow another owner's unleased image.
-  return loaded?.uri === uri ? loaded.handle.current() : null;
+  return loaded !== null && loaded.uri === uri ? loaded.image : null;
 }
 
 /** Hold decoded images until the newly mounted artwork has acquired its own lease. */
