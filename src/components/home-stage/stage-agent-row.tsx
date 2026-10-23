@@ -31,18 +31,26 @@ const ROW_HEIGHT = STAGE_AGENT_ROW_HEIGHT;
  * The selected computer's agents, one chip each under the art: a dot in the
  * agent's state colour, its name, and what it is doing only when that is
  * not idle. A working dot breathes slowly and a waiting one pulses gently,
- * on the UI thread, only while Home is on screen (held still under Reduce
- * Motion). An offline computer's row is one muted "last seen" line. A tap
- * opens that agent.
+ * on the UI thread, only while Home is on screen and the row can be seen
+ * (held still under Reduce Motion). An offline computer's row is one muted
+ * "last seen" line. A tap opens that agent.
+ *
+ * The breath runs only while the dots show. On Android every frame of a
+ * Reanimated animation, even an opacity alone, is a shadow-tree commit on the
+ * UI thread; a dot breathing under the subtitle plates that cover the row
+ * cost the main thread about a fifth of a core for nothing visible.
  */
 export function StageAgentRow({
   panel,
   paused,
+  hidden = false,
   onOpenAgent,
 }: {
   panel: StagePanel | undefined;
   /** Home is off screen or covered: nothing breathes. */
   paused: boolean;
+  /** The row is faded under a subtitle or folded away while typing: nothing breathes either. */
+  hidden?: boolean;
   onOpenAgent: (chip: StageAgentChip) => void;
 }) {
   const { t } = useLingui();
@@ -53,13 +61,14 @@ export function StageAgentRow({
   const reducedMotion = useReducedMotion();
   const row = panel ? stageAgentRow(panel) : null;
   const chips = row?.kind === 'agents' ? row.chips : [];
+  const still = paused || hidden || reducedMotion;
   const breath = useBeat(
-    !paused && !reducedMotion && chips.some((chip) => chip.mark === 'working'),
+    !still && chips.some((chip) => chip.mark === 'working'),
     PULSE_PERIOD,
     0.35
   );
   const beat = useBeat(
-    !paused && !reducedMotion && chips.some((chip) => chip.mark === 'needs-you'),
+    !still && chips.some((chip) => chip.mark === 'needs-you'),
     PULSE_PERIOD / 2,
     0.5
   );
