@@ -58,6 +58,7 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
 import { STAGE_AGENT_ROW_HEIGHT, StageAgentRow } from './stage-agent-row';
+import { StageEntryRise, useStageEntry } from './stage-entry';
 import { StageOverlay } from './stage-overlay';
 import { StageSubtitle } from './stage-subtitle';
 import { useStageComposition, type StageImageInput } from './stage-composition';
@@ -75,6 +76,8 @@ export type HomeStageLayoutProps = {
   coverHeader: boolean;
   /** Home is not on screen or the app is in the background. */
   paused: boolean;
+  /** Home's first entry of the launch: the foot rows rise in once the launch cover leaves. */
+  entering?: boolean;
   /** Bumped when a task completes: the motes flare. */
   burst: number;
   topInset: number;
@@ -126,6 +129,9 @@ export type HomeStageLayoutProps = {
 
 /** The HUD's margin from the safe edges. */
 const HUD_GUTTER = 20;
+
+/** The foot's entrance, in order: the agent row, the sessions handle, the strip. */
+const FOOT_ENTRY = { agents: 0, handle: 1, strip: 2, count: 3 } as const;
 
 /** Sessions shown in the strip before "All sessions". */
 export const STAGE_STRIP_LIMIT = 6;
@@ -277,6 +283,7 @@ export function HomeStageLayout({
   artwork,
   coverHeader,
   paused,
+  entering = false,
   burst,
   topInset,
   sideInsets = NO_SIDE_INSETS,
@@ -315,6 +322,7 @@ export function HomeStageLayout({
   // A cover's authored sky stays open: a short, soft scrim, and the HUD's text
   // reads on the art itself through a halo in the background colour.
   const openSky = composition.role === 'sky' || composition.role === 'figure';
+  const footEntry = useStageEntry(entering, FOOT_ENTRY.count);
   const halo = useStageTextHalo();
   const [actionsFor, setActionsFor] = useState<string | null>(null);
   // A long-press on a Stage card makes it the dock's conversation directly:
@@ -574,25 +582,27 @@ export function HomeStageLayout({
               pointerEvents="box-none"
               entering={fadeIn('short')}
               exiting={fadeOut('short')}>
-              <StageFootLine
-                serverId={selected?.serverId}
-                compact={typing}
-                maxRows={subtitleRows}
-                room={subtitleRoom}
-                subtitle={!listOpen && !waiting}
-                paused={paused}
-                onOpen={openProgress}>
-                {(hidden) => (
-                  <StageAgentRow
-                    panel={selected}
-                    paused={paused || listOpen}
-                    hidden={hidden}
-                    onOpenAgent={(chip) =>
-                      opener.open(() => onOpenAgent(selectedIndex, chip.paneId))
-                    }
-                  />
-                )}
-              </StageFootLine>
+              <StageEntryRise entry={footEntry} slot={FOOT_ENTRY.agents} pointerEvents="box-none">
+                <StageFootLine
+                  serverId={selected?.serverId}
+                  compact={typing}
+                  maxRows={subtitleRows}
+                  room={subtitleRoom}
+                  subtitle={!listOpen && !waiting}
+                  paused={paused}
+                  onOpen={openProgress}>
+                  {(hidden) => (
+                    <StageAgentRow
+                      panel={selected}
+                      paused={paused || listOpen}
+                      hidden={hidden}
+                      onOpenAgent={(chip) =>
+                        opener.open(() => onOpenAgent(selectedIndex, chip.paneId))
+                      }
+                    />
+                  )}
+                </StageFootLine>
+              </StageEntryRise>
             </Animated.View>
           ) : null}
           {panels.length > 0 ? (
@@ -600,34 +610,38 @@ export function HomeStageLayout({
               <View>
                 {typing ? null : (
                   <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
-                    <PressableScale
-                      testID="home-stage-pull"
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        hasAttention ? t`All sessions, needs you` : t`All sessions`
-                      }
-                      onPress={() => openList(true)}
-                      style={styles.handleRow}>
-                      <HomeSheetGrabber />
-                      {hasAttention ? (
-                        <Text variant="caption" weight="semibold" color={theme.colors.warning}>
-                          {t`Needs you`}
-                        </Text>
-                      ) : null}
-                    </PressableScale>
+                    <StageEntryRise entry={footEntry} slot={FOOT_ENTRY.handle}>
+                      <PressableScale
+                        testID="home-stage-pull"
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          hasAttention ? t`All sessions, needs you` : t`All sessions`
+                        }
+                        onPress={() => openList(true)}
+                        style={styles.handleRow}>
+                        <HomeSheetGrabber />
+                        {hasAttention ? (
+                          <Text variant="caption" weight="semibold" color={theme.colors.warning}>
+                            {t`Needs you`}
+                          </Text>
+                        ) : null}
+                      </PressableScale>
+                    </StageEntryRise>
                   </Animated.View>
                 )}
-                <StageSessionStrip
-                  serverId={selected?.serverId}
-                  selectedIndex={selectedIndex}
-                  panelCount={panels.length}
-                  sessions={stripSessions}
-                  threadKey={threadKey}
-                  onClearThread={onClearThread}
-                  onOpenSession={onOpenSession}
-                  onSessionActions={onReplySession ? replyToCard : undefined}
-                  onOpenAll={() => openList(true)}
-                />
+                <StageEntryRise entry={footEntry} slot={FOOT_ENTRY.strip}>
+                  <StageSessionStrip
+                    serverId={selected?.serverId}
+                    selectedIndex={selectedIndex}
+                    panelCount={panels.length}
+                    sessions={stripSessions}
+                    threadKey={threadKey}
+                    onClearThread={onClearThread}
+                    onOpenSession={onOpenSession}
+                    onSessionActions={onReplySession ? replyToCard : undefined}
+                    onOpenAll={() => openList(true)}
+                  />
+                </StageEntryRise>
               </View>
             </GestureDetector>
           ) : null}
