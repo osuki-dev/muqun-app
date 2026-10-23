@@ -1329,9 +1329,13 @@ export function HomeOverview({
             }
             coverHeader={coverHeader}
             paused={!isFocused || !appActive}
+            entering={entering}
             topInset={insets.top}
             sideInsets={sideInsets}
-            dockHeight={dock && composerRevealed ? dockHeight : insets.bottom}
+            // The dock's measured height before it is revealed too: the foot
+            // rows rise in where they rest and the composer rises in under
+            // them, rather than the rows jumping up a dock's height later.
+            dockHeight={dock && dockHeight > 0 ? dockHeight : insets.bottom}
             headerAction={phoneToolbarFor(true)}
             hasAttention={!loading && !hydrationError && hasAttention}
             attention={attentionSection}
