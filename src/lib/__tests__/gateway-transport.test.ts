@@ -10,6 +10,24 @@ import type * as Transport from '../gateway-transport';
 const source = readFileSync('src/lib/gateway-transport.ts', 'utf8')
   .replace(/^import .*;\n/gm, '')
   .replace(/\bexport /g, '');
+// The base64url helper is production code too, run against node's codec in
+// place of the native one so its canonical-form check is what these tests hit.
+const base64Source = readFileSync('src/lib/base64url.ts', 'utf8')
+  .replace(/^import .*;\n/gm, '')
+  .replace(/\bexport /g, '');
+const base64 = runInNewContext(
+  transpile(`${base64Source}\n({decodeBase64Url, encodeBase64Url, isCanonicalBase64Url})`),
+  {
+    toByteArray: (value: string) => new Uint8Array(Buffer.from(value, 'base64')),
+    fromByteArray: (bytes: Uint8Array, urlSafe: boolean) =>
+      Buffer.from(bytes).toString(urlSafe ? 'base64url' : 'base64'),
+    Math,
+  }
+) as {
+  decodeBase64Url: (value: string) => Uint8Array;
+  encodeBase64Url: (bytes: Uint8Array) => string;
+  isCanonicalBase64Url: (value: string, decoded: Uint8Array) => boolean;
+};
 const codec = runInNewContext(
   transpile(
     `${source}\n({encryptBytes, decryptBytes, encryptJson, decryptJson, transportKeyMaterial})`
@@ -18,6 +36,8 @@ const codec = runInNewContext(
     QuickCrypto: { ...crypto, Buffer },
     Date,
     Uint8Array,
+    TextDecoder,
+    ...base64,
   }
 ) as Pick<
   typeof Transport,
@@ -100,6 +120,8 @@ function requestHarness(responseVersion: 1 | 2 = 2) {
     transpile(`${functions}\n({sendEncryptedGatewayRequest, encryptedEventStreamRequest})`),
     {
       ...codec,
+      ...base64,
+      TextDecoder,
       URL,
       Date,
       Response,
@@ -228,6 +250,8 @@ test('the shared Gateway v2 interoperability fixture decrypts byte for byte', ()
     QuickCrypto: { ...crypto, Buffer },
     Date: { now: () => 1_700_000_000_000 },
     Uint8Array,
+    TextDecoder,
+    ...base64,
   }) as Pick<typeof Transport, 'decryptJson'>;
   const material = Buffer.from('AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8', 'base64url');
   expect(

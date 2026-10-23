@@ -28,9 +28,22 @@ import {
 const codecSource = readFileSync('src/lib/gateway-transport.ts', 'utf8')
   .replace(/^import .*;\n/gm, '')
   .replace(/\bexport /g, '');
+// The base64url helper is production code; node's codec stands in for the native one.
+const base64Source = readFileSync('src/lib/base64url.ts', 'utf8')
+  .replace(/^import .*;\n/gm, '')
+  .replace(/\bexport /g, '');
+const base64 = runInNewContext(
+  transpile(`${base64Source}\n({decodeBase64Url, encodeBase64Url, isCanonicalBase64Url})`),
+  {
+    toByteArray: (value: string) => new Uint8Array(Buffer.from(value, 'base64')),
+    fromByteArray: (bytes: Uint8Array, urlSafe: boolean) =>
+      Buffer.from(bytes).toString(urlSafe ? 'base64url' : 'base64'),
+    Math,
+  }
+) as Record<string, unknown>;
 const codec = runInNewContext(
   transpile(`${codecSource}\n({encryptJson, decryptJson, pairingKeyMaterial})`),
-  { QuickCrypto: { ...crypto, Buffer }, Date, Uint8Array }
+  { QuickCrypto: { ...crypto, Buffer }, Date, Uint8Array, TextDecoder, ...base64 }
 ) as Pick<typeof Transport, 'encryptJson' | 'decryptJson' | 'pairingKeyMaterial'>;
 const key = Buffer.alloc(32, 7);
 const bootstrapKey = key.toString('base64url');
@@ -84,6 +97,8 @@ function harness(answer: (call: NetworkCall) => Response | Promise<Response>, ti
       ({requestPairing, claimPairing, beginPairingTransaction, claimPairingTransaction})`),
     {
       ...codec,
+      ...base64,
+      TextDecoder,
       URL,
       Date,
       REQUEST_TIMEOUT_MS: timeoutMs,

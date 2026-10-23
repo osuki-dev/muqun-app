@@ -1,5 +1,7 @@
+import { TextDecoder } from 'react-native-nitro-text-decoder';
 import QuickCrypto from 'react-native-quick-crypto';
 
+import { decodeBase64Url, encodeBase64Url, isCanonicalBase64Url } from './base64url';
 import type { SseRecordCrypto } from './sse-record';
 
 export const GATEWAY_TRANSPORT = 'muqun-aes-256-gcm-v1' as const;
@@ -30,15 +32,21 @@ export interface EncryptedEnvelope {
   ciphertext: string;
 }
 
+/**
+ * The bytes of a nonce or ciphertext, which must be spelled canonically: a
+ * second spelling of the same bytes would be a second valid envelope for one
+ * signature. Decoded natively; the canonical check looks only at the final
+ * quantum (`isCanonicalBase64Url`) instead of re-encoding the whole payload.
+ */
 function fromBase64Url(value: string) {
-  return QuickCrypto.Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+  return QuickCrypto.Buffer.from(decodeBase64Url(value));
 }
 
 function canonicalBase64Url(value: string) {
   if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error('Invalid encrypted encoding.');
-  const decoded = fromBase64Url(value);
-  if (toBase64Url(decoded) !== value) throw new Error('Invalid encrypted encoding.');
-  return decoded;
+  const decoded = decodeBase64Url(value);
+  if (!isCanonicalBase64Url(value, decoded)) throw new Error('Invalid encrypted encoding.');
+  return QuickCrypto.Buffer.from(decoded);
 }
 
 function envelopeAad(aad: string, version: GatewayTransportVersion, timestampMs: number): string {
@@ -46,7 +54,7 @@ function envelopeAad(aad: string, version: GatewayTransportVersion, timestampMs:
 }
 
 function toBase64Url(value: Uint8Array): string {
-  return QuickCrypto.Buffer.from(value).toString('base64url');
+  return encodeBase64Url(value);
 }
 
 function directionKey(material: Uint8Array, direction: TransportDirection) {
@@ -157,8 +165,10 @@ export function decryptJson<T>(
   envelope: EncryptedEnvelope,
   expectedVersion: GatewayTransportVersion = 1
 ): T {
+  // Decoded natively: the polyfill's UTF-8 decoder walked a 1.8 MB payload
+  // one code point at a time on the JS thread.
   return JSON.parse(
-    decryptBytes(material, direction, aad, envelope, expectedVersion).toString('utf8')
+    new TextDecoder().decode(decryptBytes(material, direction, aad, envelope, expectedVersion))
   ) as T;
 }
 
