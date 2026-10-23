@@ -65,6 +65,7 @@ import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
 import { useLatestReader } from '@/hooks/use-render-refs';
+import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { composerChipIds } from '@/lib/agent-composer-chips';
 import { canSendAgentPrompt } from '@/lib/agent-runtime-controls';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
@@ -357,6 +358,9 @@ const SessionChip = memo(function SessionChip({
   );
 });
 
+/** See `AgentComposerProps.draftMemory`. */
+export type ComposerDraftMemory = { read: () => string; write: (text: string) => void };
+
 /** See `AgentComposerProps.injectDraftRef`. */
 export type DraftInjector = (
   text: string,
@@ -523,6 +527,12 @@ export interface AgentComposerProps {
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
   draftOwnerKey?: string;
   /**
+   * Keeps the typed text across a remount of this composer: read once when it
+   * mounts, written as it changes. Home passes one, because unfolding iPhone
+   * Duo swaps the phone page for the Pad one and with it the dock.
+   */
+  draftMemory?: ComposerDraftMemory;
+  /**
    * Empties the field, files included, if it still holds `text` -- what a
    * send from elsewhere (Home's failed row) just delivered.
    */
@@ -586,6 +596,16 @@ export interface AgentComposerProps {
   flushField?: boolean;
   /** Space outside Home's surface, in addition to the current bottom safe area. */
   outerInsets?: { horizontal: number; bottom: number };
+  /**
+   * The safe area's left and right, for the dock's controls to clear (iPhone
+   * Duo keeps its status icons down the right edge). Opt-in and zero when
+   * absent, so a caller that already clears the edges -- for example through
+   * `outerInsets` -- is not inset twice. Added to `outerInsets.horizontal`.
+   * Popups, notices and the field stand inside the insets; a session or bar
+   * dock's material and its fade still reach the glass, with its rows padded
+   * in. A `flushField` dock has no material of its own, so it moves in whole.
+   */
+  sideInsets?: SideInsets;
   /** Cancels inline dictation when the dispatch destination changes. */
   voiceContext?: string;
   /**
@@ -694,6 +714,7 @@ export const AgentComposer = memo(function AgentComposer({
   onPressTokens,
   injectDraftRef,
   draftOwnerKey,
+  draftMemory,
   clearDraftRef,
   holdStagedAttachments,
   onDockHeight,
@@ -713,6 +734,7 @@ export const AgentComposer = memo(function AgentComposer({
   hideParameterRow = false,
   flushField = false,
   outerInsets,
+  sideInsets,
   voiceContext,
   bar,
   compact = false,
@@ -752,7 +774,13 @@ export const AgentComposer = memo(function AgentComposer({
    * out would let the mono family underneath stand.
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
-  const { text, setText, appendAnswer } = useQuestionComposerDraft(draftOwnerKey ?? 'shared');
+  const { text, setText, appendAnswer } = useQuestionComposerDraft(
+    draftOwnerKey ?? 'shared',
+    draftMemory?.read
+  );
+  useEffect(() => {
+    draftMemory?.write(text);
+  }, [draftMemory, text]);
   /**
    * One answer to "what is this agent called", for the chip strip and the
    * action row alike. The catalogue's name when the host publishes one, the id
@@ -1624,6 +1652,15 @@ export const AgentComposer = memo(function AgentComposer({
       : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
   const dockBottomPadding = innerBottomPadding + dockFoot;
+  // The dock's padding keeps its popups and notices inside the safe edges. A
+  // material dock then reaches back out to the glass and pads its rows in.
+  const sideLeft = sideInsets?.left ?? 0;
+  const sideRight = sideInsets?.right ?? 0;
+  const materialBleed = !flushField && (sideLeft > 0 || sideRight > 0);
+  const innerGutter = bar ? bar.inset : COMPOSER_INNER_GUTTER;
+  // The session strip and the action row run under the side status bar to the
+  // material's edge and rest clear of it.
+  const rowBleed = materialBleed ? { left: sideLeft, right: sideRight } : NO_SIDE_INSETS;
 
   return (
     <>
@@ -1636,6 +1673,7 @@ export const AgentComposer = memo(function AgentComposer({
             styles.dockUnderlay,
             underlayStyle,
             outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+            { paddingLeft: sideLeft, paddingRight: sideRight },
           ]}>
           {dockUnderlay}
         </Animated.View>
@@ -1648,7 +1686,7 @@ export const AgentComposer = memo(function AgentComposer({
           styles.dockOuter,
           composerKeyboardStyle,
           outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
-          { paddingBottom: dockFoot },
+          { paddingBottom: dockFoot, paddingLeft: sideLeft, paddingRight: sideRight },
         ]}>
         {bar ? null : (
           <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
@@ -1936,14 +1974,15 @@ export const AgentComposer = memo(function AgentComposer({
           }}
           // Enclosing bars cast their shadow outside the clipped material.
           // Home's field owns its plate; leave the ornament above it transparent.
-          style={
+          style={[
             bar &&
-            !flushField && {
-              borderTopLeftRadius: profile.chrome.surface,
-              borderTopRightRadius: profile.chrome.surface,
-              boxShadow: appChrome.shadow.composerDock,
-            }
-          }>
+              !flushField && {
+                borderTopLeftRadius: profile.chrome.surface,
+                borderTopRightRadius: profile.chrome.surface,
+                boxShadow: appChrome.shadow.composerDock,
+              },
+            materialBleed && { marginLeft: -sideLeft, marginRight: -sideRight },
+          ]}>
           <ComposerSurface
             flushField={flushField}
             surface="composer"
@@ -1965,6 +2004,10 @@ export const AgentComposer = memo(function AgentComposer({
                 // Above row 1, the same step as under the field.
                 compact && { paddingTop: theme.spacing.sm },
                 bar && { paddingHorizontal: bar.inset },
+                materialBleed && {
+                  paddingLeft: innerGutter + sideLeft,
+                  paddingRight: innerGutter + sideRight,
+                },
                 flushField && { paddingHorizontal: 0, paddingTop: 0 },
               ]}>
               {accessory}
@@ -1974,8 +2017,14 @@ export const AgentComposer = memo(function AgentComposer({
                   ref={sessionStripRef}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.sessionStripContent}
-                  style={styles.sessionStripViewport}>
+                  contentContainerStyle={[
+                    styles.sessionStripContent,
+                    { paddingLeft: rowBleed.left, paddingRight: rowBleed.right },
+                  ]}
+                  style={[
+                    styles.sessionStripViewport,
+                    { marginLeft: -rowBleed.left, marginRight: -rowBleed.right },
+                  ]}>
                   {/* Keep the direct way back out of the selected subagent. */}
                   {parentSession ? (
                     <PressableScale
@@ -2062,11 +2111,21 @@ export const AgentComposer = memo(function AgentComposer({
                   ) : null}
                 </View>
               ) : (
-                <View style={styles.actionRowViewport}>
+                <View
+                  style={[
+                    styles.actionRowViewport,
+                    { marginLeft: -rowBleed.left, marginRight: -rowBleed.right },
+                  ]}>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.actionRowContent}
+                    contentContainerStyle={[
+                      styles.actionRowContent,
+                      {
+                        paddingLeft: rowBleed.left,
+                        paddingRight: styles.actionRowContent.paddingRight + rowBleed.right,
+                      },
+                    ]}
                     style={styles.actionRowScroll}>
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (
@@ -2642,6 +2701,9 @@ const CARET_SETTLE_MS = 50;
 /** A chevron at the caption line's size: about its cap height, as 12 is to body text. */
 const QUIET_CHEVRON = AGENT_TYPE.meta.size - 2;
 
+/** The session dock's rows, from the material's edges (or the safe ones). */
+const COMPOSER_INNER_GUTTER = 12;
+
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
@@ -2682,7 +2744,7 @@ const styles = StyleSheet.create({
   },
   segmentRow: { minWidth: 0, flexDirection: 'row', alignItems: 'center' },
   composerInner: {
-    paddingHorizontal: 12,
+    paddingHorizontal: COMPOSER_INNER_GUTTER,
     paddingTop: 8,
   },
   backdrop: {

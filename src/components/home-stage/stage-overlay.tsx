@@ -2,6 +2,7 @@ import { memo, useEffect, useEffectEvent } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 
+import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import type { StageOverlayBand } from '@/lib/home-stage-geometry';
 import { calmFadeIn, calmFadeOut, riseIn } from '@/lib/motion';
@@ -18,11 +19,14 @@ import { useStageNeeds } from './use-stage-overlay';
 export const StageOverlay = memo(function StageOverlay({
   serverId,
   band,
+  sideInsets = NO_SIDE_INSETS,
   actions,
   onWaitingChange,
 }: {
   serverId: string;
   band: StageOverlayBand;
+  /** The side safe areas the card keeps clear of, like the chips under it. */
+  sideInsets?: SideInsets;
   actions: StageNeedActions;
   /** Whether a request is up, which keeps the progress subtitle down. */
   onWaitingChange: (waiting: boolean) => void;
@@ -38,7 +42,15 @@ export const StageOverlay = memo(function StageOverlay({
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.band, { top: band.top, height: Math.max(0, band.bottom - band.top) }]}>
+      style={[
+        styles.band,
+        {
+          top: band.top,
+          height: Math.max(0, band.bottom - band.top),
+          left: HOME_DOCK_OUTER_INSET + sideInsets.left,
+          right: HOME_DOCK_OUTER_INSET + sideInsets.right,
+        },
+      ]}>
       {top ? (
         // Keyed by the request: the next one rises in as the answered one fades.
         <Animated.View
@@ -60,7 +72,8 @@ export const StageOverlay = memo(function StageOverlay({
 });
 
 const styles = StyleSheet.create({
-  // The dock's gutter, so the card lines up with the agent chips under it.
-  band: { position: 'absolute', left: HOME_DOCK_OUTER_INSET, right: HOME_DOCK_OUTER_INSET },
+  // The dock's gutter from the safe edges, set at render, so the card lines
+  // up with the agent chips under it.
+  band: { position: 'absolute' },
   foot: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '100%' },
 });

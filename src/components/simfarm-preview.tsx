@@ -299,7 +299,15 @@ function PreviewNotice({
           screen exists to show. These states have room, and a full screen with
           no name on it is the part of this that read as broken. */}
       {onClose && !embedded ? (
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              paddingTop: insets.top + 10,
+              paddingLeft: 16 + insets.left,
+              paddingRight: 16 + insets.right,
+            },
+          ]}>
           <View style={styles.headerRow}>
             <Text variant="bodySmall" style={styles.headerTitle}>
               <Trans>Simulator</Trans>

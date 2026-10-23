@@ -19,6 +19,7 @@ import {
 } from '@/lib/agent-runtime-controls';
 import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
+import { sideInsetPadding, useSideInsets } from '@/hooks/use-side-insets';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { GuideCommand } from '@/components/guide-command';
@@ -458,6 +459,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       visible: workspaceVisible,
     }) !== 'release';
   const { width } = useWindowDimensions();
+  /*
+    Read once here and handed down, like `topInset` and `bottomInset`: the
+    rows, the floating controls and the composer all clear the same edges.
+    Zero on every portrait iPhone; iPhone Duo keeps its status icons down the
+    right edge. Only content is inset -- the screen behind it stays full-bleed.
+  */
+  const { left: leftInset, right: rightInset } = useSideInsets();
+  const sideInsets = useMemo(
+    () => ({ left: leftInset, right: rightInset }),
+    [leftInset, rightInset]
+  );
+  const emptySidePadding = sideInsetPadding(sideInsets, EMPTY_GUTTER);
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
   const isGlobalOwner = useCallback(
@@ -4825,14 +4838,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       styles.timelineContent,
       {
         paddingTop: topInset + 10,
-        paddingHorizontal: width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14,
+        ...sideInsetPadding(sideInsets, width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14),
         // The composer is an absolute dock and grows with session chips,
         // controls, approvals and the input row. A fixed 185pt reserve left
         // the last tool/image row underneath it on a tall dock.
         paddingBottom: Math.max(bottomInset + 185, dockHeight + 16) + 16,
       },
     ],
-    [topInset, bottomInset, dockHeight, width]
+    [topInset, bottomInset, dockHeight, width, sideInsets]
   );
 
   // Keep floating actions above the measured dock rather than above a guessed
@@ -5481,7 +5494,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       {/* Main Content Stream, standing clear of whatever notice is up. */}
       <Animated.View style={[styles.transcriptArea, transcriptAreaStyle]}>
         {creatingSession ? (
-          <View style={[styles.emptyScrollWrapper, { paddingTop: topInset }]}>
+          <View style={[styles.emptyScrollWrapper, emptySidePadding, { paddingTop: topInset }]}>
             <ActivityIndicator color={theme.colors.primary} />
             <Text style={styles.emptySubtitle} color={theme.colors.textMuted}>
               <Trans>Creating session…</Trans>
@@ -5508,6 +5521,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           <Animated.View
             style={[
               styles.emptyScrollWrapper,
+              emptySidePadding,
               emptyReserveStyle,
               { paddingBottom: emptyBottomReserve },
             ]}>
@@ -5748,6 +5762,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       </Animated.View>
 
       {/*
+        Everything that floats over the transcript, in a layer that stops at
+        the safe edges so each keeps its own 14pt from the glass it can use.
+      */}
+      <View
+        pointerEvents="box-none"
+        style={[styles.edgeOverlay, { left: leftInset, right: rightInset }]}>
+        {/*
         The screen's own notices: under the header, never over it.
 
         Two of them, in one column and measured as one, because the room the
@@ -5755,141 +5776,146 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         first: a folder that is gone outlives whatever the transient one has to
         say about a single action.
       */}
-      {screenNotice || workspaceMissing ? (
-        <View
-          pointerEvents="box-none"
-          onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
-          style={[styles.screenNoticeWrap, { top: topInset + SCREEN_NOTICE_HEADER_GAP }]}>
-          {workspaceMissing ? (
-            <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
-              <View
-                testID="agent-workspace-missing-notice"
-                style={[
-                  styles.screenNotice,
-                  {
-                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                    borderColor: 'transparent',
-                    borderRadius: profile.chrome.noticeBanner,
-                  },
-                ]}>
-                <StatusDot color={theme.colors.warning} filled size={7} />
-                <View style={styles.screenNoticeText}>
-                  <Text variant="caption" weight="bold" color={theme.colors.text} numberOfLines={2}>
-                    {t`Project folder is missing: ${workspaceMissing.directory}`}
-                  </Text>
-                </View>
-                {/*
+        {screenNotice || workspaceMissing ? (
+          <View
+            pointerEvents="box-none"
+            onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
+            style={[styles.screenNoticeWrap, { top: topInset + SCREEN_NOTICE_HEADER_GAP }]}>
+            {workspaceMissing ? (
+              <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+                <View
+                  testID="agent-workspace-missing-notice"
+                  style={[
+                    styles.screenNotice,
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderColor: 'transparent',
+                      borderRadius: profile.chrome.noticeBanner,
+                    },
+                  ]}>
+                  <StatusDot color={theme.colors.warning} filled size={7} />
+                  <View style={styles.screenNoticeText}>
+                    <Text
+                      variant="caption"
+                      weight="bold"
+                      color={theme.colors.text}
+                      numberOfLines={2}>
+                      {t`Project folder is missing: ${workspaceMissing.directory}`}
+                    </Text>
+                  </View>
+                  {/*
                   The one action that changes the fact. Not a dismiss: there is
                   nothing to dismiss -- the folder is still gone afterwards --
                   and not a retry either, because nothing failed.
                 */}
-                <PressableScale
-                  testID="agent-workspace-missing-choose"
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Choose project`}
-                  onPress={openWorkspaceSheet}
-                  style={styles.screenNoticeAction}>
-                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
-                    {t`Choose project`}
-                  </Text>
-                </PressableScale>
-              </View>
-            </Animated.View>
-          ) : null}
-          {screenNotice ? (
-            <Animated.View
-              key={screenNotice.id}
-              entering={fadeInDown('short')}
-              exiting={fadeOutUp('short')}>
-              <PressableScale
-                testID="agent-screen-notice"
-                accessibilityRole="button"
-                accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
-                onPress={() => setScreenNotice(null)}
-                style={[
-                  styles.screenNotice,
-                  {
-                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                    borderColor: 'transparent',
-                    borderRadius: profile.chrome.noticeBanner,
-                  },
-                ]}>
-                <StatusDot color={theme.colors.primary} filled size={7} />
-                <View style={styles.screenNoticeText}>
-                  <Text variant="caption" weight="bold" color={theme.colors.text}>
-                    {screenNotice.title}
-                  </Text>
-                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-                    {screenNotice.body}
-                  </Text>
+                  <PressableScale
+                    testID="agent-workspace-missing-choose"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Choose project`}
+                    onPress={openWorkspaceSheet}
+                    style={styles.screenNoticeAction}>
+                    <Text variant="caption" weight="bold" color={theme.colors.primary}>
+                      {t`Choose project`}
+                    </Text>
+                  </PressableScale>
                 </View>
-                <CloseIcon size={14} color={theme.colors.textMuted} />
-              </PressableScale>
-            </Animated.View>
-          ) : null}
-        </View>
-      ) : null}
+              </Animated.View>
+            ) : null}
+            {screenNotice ? (
+              <Animated.View
+                key={screenNotice.id}
+                entering={fadeInDown('short')}
+                exiting={fadeOutUp('short')}>
+                <PressableScale
+                  testID="agent-screen-notice"
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
+                  onPress={() => setScreenNotice(null)}
+                  style={[
+                    styles.screenNotice,
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderColor: 'transparent',
+                      borderRadius: profile.chrome.noticeBanner,
+                    },
+                  ]}>
+                  <StatusDot color={theme.colors.primary} filled size={7} />
+                  <View style={styles.screenNoticeText}>
+                    <Text variant="caption" weight="bold" color={theme.colors.text}>
+                      {screenNotice.title}
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                      {screenNotice.body}
+                    </Text>
+                  </View>
+                  <CloseIcon size={14} color={theme.colors.textMuted} />
+                </PressableScale>
+              </Animated.View>
+            ) : null}
+          </View>
+        ) : null}
 
-      {/*
+        {/*
         Offer the way back whenever the reader browses history, even when no
         new output has arrived. The button disappears when they reach the
         latest message; only their explicit tap requests a scroll.
       */}
-      <JumpToLatestPill
-        follow={follow}
-        enabled={!loading}
-        bottom={latestBottom}
-        onPress={handleJumpToLatest}
-      />
+        <JumpToLatestPill
+          follow={follow}
+          enabled={!loading}
+          bottom={latestBottom}
+          onPress={handleJumpToLatest}
+        />
 
-      {/* YOLO mode indicator — fixed directly above the Latest action. */}
-      {!loading && yoloMode ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
-          pointerEvents="box-none">
-          <PressableScale
-            testID="agent-yolo-indicator"
-            accessibilityRole="button"
-            accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
-            onPress={() => setYoloMode(false)}
-            style={[
-              styles.yoloBanner,
-              {
-                backgroundColor: surfaceBackground(withAlpha(theme.colors.danger, 0.16)),
-                borderColor: withAlpha(theme.colors.danger, 0.45),
-              },
-            ]}>
-            <TrustWarningIcon size={13} color={theme.colors.danger} />
-            <Text
-              variant="caption"
-              weight="bold"
-              color={theme.colors.danger}
-              numberOfLines={1}
-              style={styles.yoloBannerHint}>
-              <Trans>YOLO mode</Trans>
-            </Text>
-          </PressableScale>
-        </Animated.View>
-      ) : null}
+        {/* YOLO mode indicator — fixed directly above the Latest action. */}
+        {!loading && yoloMode ? (
+          <Animated.View
+            entering={fadeIn('micro')}
+            exiting={fadeOut('micro')}
+            style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
+            pointerEvents="box-none">
+            <PressableScale
+              testID="agent-yolo-indicator"
+              accessibilityRole="button"
+              accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
+              onPress={() => setYoloMode(false)}
+              style={[
+                styles.yoloBanner,
+                {
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.danger, 0.16)),
+                  borderColor: withAlpha(theme.colors.danger, 0.45),
+                },
+              ]}>
+              <TrustWarningIcon size={13} color={theme.colors.danger} />
+              <Text
+                variant="caption"
+                weight="bold"
+                color={theme.colors.danger}
+                numberOfLines={1}
+                style={styles.yoloBannerHint}>
+                <Trans>YOLO mode</Trans>
+              </Text>
+            </PressableScale>
+          </Animated.View>
+        ) : null}
 
-      {/*
+        {/*
         Which agent the new session goes to, asked only when the gateway has
         more than one ready. One row per agent, in the gateway's order, and
         the pick is remembered for this server. Drawn with the row menu the
         rest of the surface already uses; the launch surfaces get their own
         treatment in the next phase.
       */}
-      {agentPickerOpen ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          style={[styles.agentPickerWrap, { top: topInset + 4 }]}
-          pointerEvents="box-none">
-          <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
-        </Animated.View>
-      ) : null}
+        {agentPickerOpen ? (
+          <Animated.View
+            entering={fadeIn('micro')}
+            exiting={fadeOut('micro')}
+            style={[styles.agentPickerWrap, { top: topInset + 4 }]}
+            pointerEvents="box-none">
+            <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
+          </Animated.View>
+        ) : null}
+      </View>
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
@@ -5924,6 +5950,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
         topInset={topInset}
+        sideInsets={sideInsets}
         onDockHeight={setDockHeight}
         tasks={activeTodos}
         tokens={activeTokens}
@@ -6093,6 +6120,9 @@ const EMPTY_REVERT_FILES: readonly FileDiffItem[] = Object.freeze([]);
 /** Anchor on a change of data, not only on rows changing size. */
 const MAINTAIN_TIMELINE_POSITION = { data: true, size: true } as const;
 
+/** The empty and creating states' gutter, measured from the safe edges. */
+const EMPTY_GUTTER = 14;
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -6172,9 +6202,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderCurve: 'continuous',
   },
+  // Horizontal padding is `EMPTY_GUTTER` from the safe edges, set at render.
   emptyScrollWrapper: {
     flex: 1,
-    paddingHorizontal: 14,
     justifyContent: 'center',
   },
   workspacePill: {
@@ -6232,6 +6262,13 @@ const styles = StyleSheet.create({
   footerContainer: {
     gap: 10,
     marginTop: 4,
+  },
+  // Left and right are the side insets, set at render time.
+  edgeOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    zIndex: 6,
   },
   screenNoticeWrap: {
     position: 'absolute',

@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
 import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -286,6 +287,8 @@ export function HomeLaunchActions({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  // The rows run under a side status bar to the glass, resting clear of it.
+  const bleed = useSideBleed();
   const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
 
@@ -517,7 +520,8 @@ export function HomeLaunchActions({
               directionalLockEnabled
               showsHorizontalScrollIndicator={false}
               testID="home-launch-actions-scroll"
-              contentContainerStyle={[styles.scrollRow, { gap: LAUNCH_MOSAIC_GAP }]}>
+              style={bleed.frame}
+              contentContainerStyle={[styles.scrollRow, { gap: LAUNCH_MOSAIC_GAP }, bleed.content]}>
               {layout.agentRows[0]?.map((cell) => (
                 <View
                   key={agentEntries[cell.indices[0]!]!.key}
@@ -544,7 +548,8 @@ export function HomeLaunchActions({
                   directionalLockEnabled
                   showsHorizontalScrollIndicator={false}
                   testID="home-launch-agents-scroll"
-                  contentContainerStyle={styles.scrollRow}>
+                  style={bleed.frame}
+                  contentContainerStyle={[styles.scrollRow, bleed.content]}>
                   {layout.agentRows.flat().map((cell) => (
                     <View key={agentEntries[cell.indices[0]!]!.key} style={{ width: cell.width }}>
                       {cell.indices.map((index) =>

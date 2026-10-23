@@ -611,21 +611,27 @@ function PreviewSurface({
             that has to stay reachable no matter what the pager is doing or
             failing to do underneath it. */}
       {fileActions.menu && (
-        <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 24, right: 24 }}>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + 24,
+            left: 24 + insets.left,
+            right: 24 + insets.right,
+          }}>
           {fileActions.menu}
         </View>
       )}
       <PressableScale
         accessibilityLabel={t`Close preview`}
         onPress={onClose}
-        style={[styles.close, { top: insets.top + 10 }]}>
+        style={[styles.close, { top: insets.top + 10, right: 14 + insets.right }]}>
         <CloseIcon size={20} color="#FFFFFF" />
       </PressableScale>
       {canViewOriginal ? (
         <PressableScale
           accessibilityLabel={t`View original`}
           onPress={viewOriginal}
-          style={[styles.original, { top: insets.top + 10 }]}>
+          style={[styles.original, { top: insets.top + 10, left: 14 + insets.left }]}>
           <Text variant="caption" style={{ color: '#FFFFFF' }}>{t`View original`}</Text>
         </PressableScale>
       ) : null}

@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { Button, Text, useThemeTokens } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -134,6 +135,8 @@ export function GalleryCard({
 export function GallerySearch({ gallery }: { gallery: ThemeGallery }) {
   const { t } = useLingui();
   const { query, needle, tags, setQuery } = gallery;
+  // Past the sheet's gutter, and under a side status bar to the sheet's edge.
+  const bleed = useSideBleed(SHEET_LADDER.gutter);
   return (
     <View style={styles.search}>
       <SheetSceneSearch
@@ -149,8 +152,14 @@ export function GallerySearch({ gallery }: { gallery: ThemeGallery }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.tagsContent}
-          style={styles.tags}>
+          contentContainerStyle={[styles.tagsContent, bleed.content]}
+          style={[
+            styles.tags,
+            {
+              marginLeft: bleed.frame.marginLeft - SHEET_LADDER.gutter,
+              marginRight: bleed.frame.marginRight - SHEET_LADDER.gutter,
+            },
+          ]}>
           <TagChip
             label={t`All`}
             testID="theme-browse-tag-all"

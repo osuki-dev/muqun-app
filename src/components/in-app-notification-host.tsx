@@ -431,7 +431,15 @@ export function InAppNotificationHost() {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.overlay, { paddingTop: insets.top + NOTICE_TOP_GAP }]}>
+      style={[
+        styles.overlay,
+        {
+          paddingTop: insets.top + NOTICE_TOP_GAP,
+          // Clear of a side status bar (iPhone Duo) as well as the top one.
+          paddingLeft: NOTICE_SIDE_MARGIN + insets.left,
+          paddingRight: NOTICE_SIDE_MARGIN + insets.right,
+        },
+      ]}>
       <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
           items.length > depth ? (

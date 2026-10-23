@@ -46,7 +46,10 @@ export function DetailHeader({
   const color = fadeColor ?? theme.colors.background;
   return (
     <SafeAreaView
-      edges={['top']}
+      // The sides as well as the top: iPhone Duo keeps its status bar and
+      // camera down the right edge, and the pills must not sit under them.
+      // The fade and ground are absolute, so they still span the glass.
+      edges={['top', 'left', 'right']}
       pointerEvents="box-none"
       style={[styles.overlay, navHeaderBarStyle]}>
       {/*
