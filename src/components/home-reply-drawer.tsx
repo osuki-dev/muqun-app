@@ -22,6 +22,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   cancelAnimation,
+  Easing,
   Extrapolation,
   interpolate,
   makeMutable,
@@ -162,8 +163,16 @@ const SCRIM_OPACITY = 0.28;
 const HISTORY_PAGE_SIZE = 40;
 /** A Pad's drawer is a card, never wider than a comfortable transcript. */
 const PAD_MAX_WIDTH = 760;
-/** The ash settling into an opening sheet, and a closing one falling into the dock. */
-const DUST_DURATION = 'medium';
+/**
+ * The ash gathering into an opening sheet, and a closing one falling into the
+ * dock. Linear, as the deck's commit is: the shader shapes the motion itself,
+ * and the system ease-out had the ash over in the first third and the sheet
+ * simply fading in for the rest. Longer than a modal's beat because the
+ * grains cross a sheet several times a card's height, and a reform read at a
+ * glance is the whole point of it.
+ */
+const DUST_OPEN_MS = 420;
+const DUST_CLOSE_MS = 340;
 /**
  * How long an opening sheet, unseen, waits for its photograph before it
  * slides in instead: its mount and layout, a frame for the native view to
@@ -289,7 +298,11 @@ export function useHomeReplyDrawer({
           cell.arm(() => {
             if (dustStore.getState().dust?.token === token) emit({ type: 'reset' });
           }, DUST_STALL_MS);
-          const config = timing(DUST_DURATION, { reduceMotion: ReduceMotion.Never });
+          const config = {
+            duration: effect.way === 'open' ? DUST_OPEN_MS : DUST_CLOSE_MS,
+            easing: Easing.linear,
+            reduceMotion: ReduceMotion.Never,
+          };
           if (effect.way === 'open') {
             // At 0 the canvas shows the photograph whole: the live sheet
             // appears under it unseen, and the canvas goes a commit later.
