@@ -138,3 +138,42 @@ function normalizeSlashCommands(value: unknown): PaneSlashCommand[] {
   }
   return commands;
 }
+
+/** A skill a pane's agent can use, as the Gateway's shortcuts answer lists it. */
+export interface PaneSkill {
+  name: string;
+  description: string;
+  /** From the user's own skill directories, or the pane's workspace. */
+  source: 'user' | 'workspace';
+}
+
+/**
+ * The skills part of a pane's shortcuts answer: the skills and the literal the
+ * agent's TUI invokes one with (`/` for Claude Code, `$` for Codex).
+ *
+ * Both or neither. A skill is only worth offering when there is a way to type
+ * it into the pane, so an answer without a known prefix yields nothing, as
+ * does an older Gateway that sends neither. A name with whitespace could not
+ * be typed as one token and is dropped with the other malformed entries.
+ */
+export function paneSkillsFromAnswer(
+  value: unknown
+): { skills: PaneSkill[]; skillPrefix: '/' | '$' } | Record<string, never> {
+  if (!value || typeof value !== 'object') return {};
+  const raw = value as Record<string, unknown>;
+  const prefix = raw.skill_prefix;
+  if ((prefix !== '/' && prefix !== '$') || !Array.isArray(raw.skills)) return {};
+  return { skillPrefix: prefix, skills: raw.skills.filter(isPaneSkill) };
+}
+
+function isPaneSkill(value: unknown): value is PaneSkill {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.name === 'string' &&
+    entry.name.length > 0 &&
+    !/\s/.test(entry.name) &&
+    typeof entry.description === 'string' &&
+    (entry.source === 'user' || entry.source === 'workspace')
+  );
+}
