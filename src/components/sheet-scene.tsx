@@ -40,7 +40,6 @@ import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
-import { EXPANDABLE_DETENT } from '@/lib/route-presentation';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -265,15 +264,19 @@ export function SheetScene({
 }
 
 /**
- * A `fitsContent` scene's column: no taller than the expandable detent of the
- * room the keyboard leaves, so a long group scrolls inside a sheet that still
- * fits on screen while the native sheet rides the keyboard up.
+ * A `fitsContent` scene's column: as tall as its content, up to the room the
+ * keyboard and the status bar leave. A short group is a short sheet; a group
+ * longer than the screen takes the whole of it and scrolls inside, the way a
+ * `full` sheet does. It used to stop at the expandable detent, which left the
+ * Storage sheet's last rows cut off under a band of page for no reason the
+ * reader could see.
  */
 function SheetSceneFitColumn({ children }: { children: ReactNode }) {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const keyboard = useKeyboardState((state) => state.height);
   return (
-    <View collapsable={false} style={{ maxHeight: (height - keyboard) * EXPANDABLE_DETENT }}>
+    <View collapsable={false} style={{ maxHeight: height - keyboard - insets.top }}>
       {children}
     </View>
   );
