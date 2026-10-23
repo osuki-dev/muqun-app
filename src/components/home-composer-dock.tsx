@@ -136,6 +136,7 @@ import {
 } from '@/lib/home-thread';
 import { useHomeThreadLive, useHomeThreads } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
+import { HomeReplyKeyRow } from '@/components/home-reply-key-row';
 
 const NO_COMMANDS: AgentCatalog['commands'] = [];
 const NO_SKILLS: AgentCatalog['skills'] = [];
@@ -1743,6 +1744,10 @@ export function HomeComposerDock({
           enabled={appActive && ready && selected}
           inFront={focused}
         />
+      ) : null}
+      {/* A terminal pane's keys, above the field while its drawer is up. */}
+      {conversation?.kind === 'pane' && drawer.mounted ? (
+        <HomeReplyKeyRow target={conversation} open={drawer.open} />
       ) : null}
       {visibleUnsure ? (
         <View
