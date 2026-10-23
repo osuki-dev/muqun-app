@@ -507,6 +507,25 @@ export const entryRise = (index: number, count: number, after = 0) =>
     ENTRY_BUDGET_MS - DURATION.short
   );
 
+/** `EASE_OUT` as a plain curve, for a worklet that works its own progress out. */
+const easeOutCurve = Easing.bezierFn(
+  tokens.easeOut[0],
+  tokens.easeOut[1],
+  tokens.easeOut[2],
+  tokens.easeOut[3]
+);
+
+/**
+ * How far one block of an `entryRise` sequence has arrived, `clockMs` into the
+ * sequence: 0 still waiting out its `delayMs`, 1 landed. For a sequence that
+ * one shared clock drives on the UI thread rather than an entering animation
+ * per block -- see `src/components/home-stage/stage-entry.tsx`.
+ */
+export function entryRiseProgress(clockMs: number, delayMs: number): number {
+  'worklet';
+  return easeOutCurve(Math.min(1, Math.max(0, (clockMs - delayMs) / DURATION.short)));
+}
+
 /** How long {@link pulseOnce} runs; the overlay it drives unmounts after it. */
 export const PULSE_ONCE_MS = DURATION.short * 3;
 
