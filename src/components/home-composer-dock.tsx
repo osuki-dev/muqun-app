@@ -44,6 +44,7 @@ import {
   peekAgentCatalog,
   listAgentSessions,
   invokeAgentSkill,
+  invokePaneSkill,
   normalizeAgentId,
   readAgentSessionAt,
   sendAgentCommand,
@@ -81,7 +82,7 @@ import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest, terminalPromptWithAttachments } from '@/lib/agent-spawn';
-import { loadSessions, sendAgentText, spawnAgent } from '@/lib/gateway-client';
+import { listPaneFiles, loadSessions, sendAgentText, spawnAgent } from '@/lib/gateway-client';
 import {
   homeAgentNeedsTerminalLabel,
   homeAgentOptions,
@@ -599,19 +600,26 @@ export function HomeComposerDock({
         })),
     [paneShortcuts]
   );
-  // Its skills, when its agent has a typed way to ask for one: `$` lists them
-  // and a pick is typed into the pane with the agent's own prefix.
-  const paneSkillPrefix = paneShortcuts?.skillPrefix;
+  // `$` is the app's skills entry here as everywhere: the pane's skills, run by
+  // name through the Gateway, which decides how that pane's agent runs one.
   const paneSkills = useMemo<AgentCatalog['skills']>(
     () =>
-      paneSkillPrefix
-        ? (paneShortcuts?.skills ?? []).map((skill) => ({
-            id: skill.name,
-            name: skill.name,
-            description: skill.description,
-          }))
-        : NO_SKILLS,
-    [paneShortcuts, paneSkillPrefix]
+      (paneShortcuts?.skills ?? []).map((skill) => ({
+        id: skill.name,
+        name: skill.name,
+        description: skill.description,
+      })),
+    [paneShortcuts]
+  );
+  // `@` files for a pane are the pane's own folder, the search the terminal
+  // screen uses, when its agent takes file mentions.
+  const panePaneId = threadPane?.paneId;
+  const searchPaneFiles = useCallback(
+    (query: string) =>
+      paneSessionId && panePaneId
+        ? listPaneFiles(paneSessionId, panePaneId, query)
+        : Promise.resolve([]),
+    [paneSessionId, panePaneId]
   );
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
@@ -1645,10 +1653,24 @@ export function HomeComposerDock({
   async function invokeSkill(skill: string, args: string) {
     const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
     if (targeted?.kind === 'pane') {
-      // Typed into the pane the way its agent asks for a skill; the composer
-      // keeps the draft until the pane has taken it.
-      if (!paneSkillPrefix) return false;
-      return followUp(targeted, `${paneSkillPrefix}${skill}${args ? ` ${args}` : ''}`, []);
+      // By name, as a session's skill is: the Gateway checks the pane offers it
+      // and runs it the way that agent does. The draft stays until it has.
+      if (!paneSessionId) return false;
+      return recoverWith(
+        async () => {
+          setError(null);
+          await invokePaneSkill(paneSessionId, targeted.paneId, {
+            skill,
+            ...(args ? { args } : {}),
+          });
+          return true;
+        },
+        (failure) => {
+          console.warn('Home could not run the skill in its pane:', failure);
+          setError(describeFailure(failure));
+          return false;
+        }
+      );
     }
     const accepted =
       (await threadAct((sessionId, asid) => invokeAgentSkill(sessionId, asid, { skill }))) ??
@@ -2109,9 +2131,12 @@ export function HomeComposerDock({
       {...(threadAsid ? { activeAsid: threadAsid } : {})}
       canMentionFiles={
         thread
-          ? threadSession !== undefined && threadFeatures.extra.fileMentions !== false
+          ? threadSession
+            ? threadFeatures.extra.fileMentions !== false
+            : threadPane !== undefined && paneShortcuts?.fileMentions === true
           : !terminalAgent
       }
+      {...(threadPane ? { searchFiles: searchPaneFiles } : {})}
       availableAgents={modes}
       skills={
         thread
