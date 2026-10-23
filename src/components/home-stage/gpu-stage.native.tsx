@@ -80,12 +80,10 @@ export default function GpuStage(props: StageSceneProps) {
         try {
           await next.configure({
             size: { ...size, top: 0, left: 0 },
-            // The device's own ratio, at most 2 at the full rung: a 3x phone
-            // shades about 44% of its native pixels, and 2x is where the
-            // art's detail stops being visibly softer, though it shades about
-            // 1.8x the pixels of a 1.5 cap every frame. Nothing in the
-            // scene is text or a hard edge, so a lower rung's 1.5 or 1.0
-            // softens the art rather than breaking it (`StageRuntime`).
+            // At most 1.5 rather than 2: about 44% fewer pixels to shade every
+            // frame. Nothing in the scene is text or a hard edge: the pictures
+            // are soft-edged layers and the particles are shaded glows.
+            // A lower quality rung lowers it further (`StageRuntime`).
             dpr: Math.min(
               PixelRatio.get(),
               stageEffects(currentQuality(), { gpuAvailable: true, reducedMotion: false }).maxDpr

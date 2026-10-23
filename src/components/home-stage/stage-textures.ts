@@ -193,13 +193,8 @@ export function useStagePictureFacts(
 /**
  * Theme pictures as Stage textures. The picture is decoded by the same shared
  * Skia cache Classic and Editorial draw from, then drawn once at the stage's
- * texture cap (<= 2560 px cover layers, <= 2048 px art, never more than the
- * screen's height in pixels; `stage-view.tsx`) and read back as RGBA. The
- * decoded picture stays at its own size in that cache; only the texture
- * follows the cap. A conversion too large for memory (a raster surface or
- * readback that comes back empty, an allocation that throws) fails the
- * picture, which falls back to the static stage and is retried at half the
- * cap. Converted textures are shared and ref-counted per picture and size, so
+ * texture cap (<= 2048 px backdrop, <= 1536 px art, §11.7) and read back as
+ * RGBA. Converted textures are shared and ref-counted per picture and size, so
  * a theme's light and dark pictures are cached separately and both go within a
  * second of nobody showing them (leaving the layout, or a new theme).
  *

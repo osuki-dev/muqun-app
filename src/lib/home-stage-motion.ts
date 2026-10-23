@@ -47,11 +47,11 @@ export function stageSpringAtRest(spring: StageSpring, target: number): boolean 
 
 /**
  * The ladder the stage steps down when it cannot hold its frame budget:
- * `full` renders at the device's pixel ratio up to 2; `reduced` halves the
- * particles and renders at 1.5 at most; `low` drops the particles, renders
- * at 1x and caps every frame at 30 fps; `static` is the same layout drawn
- * flat, without parallax (§5, §11.7). Within a visit to Home it only steps
- * down; a later visit or launch may try one rung up (`StageLadder`).
+ * `reduced` halves the particles and renders at a lower pixel ratio; `low`
+ * drops the particles, renders at 1x and caps every frame at 30 fps;
+ * `static` is the same layout drawn flat, without parallax
+ * (§5, §11.7). It never climbs back within a session: a device that ran hot
+ * once will again, and flapping costs more than it saves.
  */
 export type StageQuality = 'full' | 'reduced' | 'low' | 'static';
 const LADDER: readonly StageQuality[] = ['full', 'reduced', 'low', 'static'];
@@ -94,29 +94,10 @@ export type StageFrameBudget = {
   /** When the current window started, or null between windows. */
   windowStartMs: number | null;
   lastMs: number;
-  /** How long this rung's judged windows have met the budget. */
-  passedMs: number;
-  /** Whether `passedMs` has reached `STAGE_RUNG_HELD_MS`: the rung holds. */
-  held: boolean;
 };
 
-/**
- * Judged frames a rung must meet the budget for before it holds: two
- * windows, about the first five seconds of the ambient motion that a return
- * to Home starts.
- */
-export const STAGE_RUNG_HELD_MS = 2 * STAGE_BUDGET_WINDOW_MS;
-
 export function createStageFrameBudget(quality: StageQuality = 'full'): StageFrameBudget {
-  return {
-    quality,
-    samples: new Float32Array(CAPACITY),
-    count: 0,
-    windowStartMs: null,
-    lastMs: 0,
-    passedMs: 0,
-    held: false,
-  };
+  return { quality, samples: new Float32Array(CAPACITY), count: 0, windowStartMs: null, lastMs: 0 };
 }
 
 /** The 90th percentile of the first `count` values; sorts them in place. */
@@ -132,8 +113,7 @@ export function stageP90(values: Float32Array, count: number): number {
  * between frames drawn back to back at full rate. Idle frames run slowly on
  * purpose and say nothing. When a window of `STAGE_BUDGET_WINDOW_MS` closes
  * with its 90th percentile over `STAGE_FRAME_BUDGET_MS`, the stage drops one
- * rung and starts measuring the new rung afresh; one within it counts
- * towards the rung holding (`held`).
+ * rung and starts measuring the new rung afresh.
  */
 export function recordStageFrame(
   budget: StageFrameBudget,
@@ -151,130 +131,11 @@ export function recordStageFrame(
     budget.count += 1;
   }
   if (frame.nowMs - budget.windowStartMs < STAGE_BUDGET_WINDOW_MS) return budget.quality;
-  if (budget.count >= MIN_SAMPLES) {
-    if (stageP90(budget.samples, budget.count) > STAGE_FRAME_BUDGET_MS)
-      budget.quality = lowerStageQuality(budget.quality);
-    else {
-      budget.passedMs += frame.nowMs - budget.windowStartMs;
-      if (budget.passedMs >= STAGE_RUNG_HELD_MS) budget.held = true;
-    }
-  }
+  if (budget.count >= MIN_SAMPLES && stageP90(budget.samples, budget.count) > STAGE_FRAME_BUDGET_MS)
+    budget.quality = lowerStageQuality(budget.quality);
   budget.windowStartMs = null;
   budget.count = 0;
   return budget.quality;
-}
-
-// -- Recovery ---------------------------------------------------------------
-
-/** Away from Home at least this long, a return may try one rung up. */
-export const STAGE_CLIMB_AWAY_MS = 60_000;
-/** After the first step down; each later one doubles it, up to the cap. */
-const CLIMB_WAIT_MS = 60_000;
-const MAX_CLIMB_WAIT_MS = 30 * 60_000;
-/** A day without stepping down forgets the earlier ones. */
-const STRIKES_FORGOTTEN_MS = 24 * 60 * 60_000;
-const MAX_STRIKES = 16;
-
-/**
- * Where the stage stands on the ladder across visits and launches. It steps
- * down as `recordStageFrame` decides, and holds that rung for the visit.
- * On a return to Home after `STAGE_CLIMB_AWAY_MS` away, or on the next
- * launch, it tries one rung up (`trial`): if the trial rung meets the budget
- * for `STAGE_RUNG_HELD_MS` it holds, if it does not the stage steps back.
- *
- * Hysteresis: each step down is a strike, and a climb waits a minute after
- * the last one, doubling per strike up to half an hour. A rung that held
- * does not clear the strikes; only a day without stepping down does. A
- * device that cannot hold a rung tries it less and less often rather than on
- * every visit.
- */
-export type StageLadder = {
-  /** The rung the stage holds. */
-  settled: StageQuality;
-  /** One rung above `settled` being tried, or null. */
-  trial: StageQuality | null;
-  strikes: number;
-  /** When the stage last stepped down (epoch ms), or null. */
-  lastDropAt: number | null;
-  /** When Home was left (epoch ms), or null while it is shown. */
-  awayAt: number | null;
-};
-
-/** What a ladder keeps across launches. */
-export type SavedStageLadder = Pick<StageLadder, 'settled' | 'strikes' | 'lastDropAt'>;
-
-/** The rung to draw at. */
-export function stageLadderQuality(ladder: StageLadder): StageQuality {
-  return ladder.trial ?? ladder.settled;
-}
-
-/** How long after the last step down a climb waits. */
-export function stageClimbWaitMs(strikes: number): number {
-  return Math.min(MAX_CLIMB_WAIT_MS, CLIMB_WAIT_MS * 2 ** Math.max(0, strikes - 1));
-}
-
-function climb(ladder: StageLadder, nowMs: number): StageLadder {
-  const at = LADDER.indexOf(ladder.settled);
-  if (ladder.trial !== null || at <= 0 || ladder.settled === 'static') return ladder;
-  if (ladder.lastDropAt !== null && nowMs - ladder.lastDropAt < stageClimbWaitMs(ladder.strikes))
-    return ladder;
-  return { ...ladder, trial: LADDER[at - 1]! };
-}
-
-/**
- * A launch: the saved ladder (anything unreadable starts at `full`), trying
- * one rung up when it stands below `full`.
- */
-export function startStageLadder(saved: unknown, nowMs: number): StageLadder {
-  const value = (typeof saved === 'object' && saved !== null ? saved : {}) as Record<
-    string,
-    unknown
-  >;
-  const settled =
-    value.settled === 'reduced' || value.settled === 'low' ? value.settled : ('full' as const);
-  const strikes =
-    typeof value.strikes === 'number' && Number.isInteger(value.strikes)
-      ? Math.max(0, Math.min(MAX_STRIKES, value.strikes))
-      : 0;
-  const lastDropAt =
-    typeof value.lastDropAt === 'number' && Number.isFinite(value.lastDropAt)
-      ? value.lastDropAt
-      : null;
-  return climb({ settled, trial: null, strikes, lastDropAt, awayAt: null }, nowMs);
-}
-
-/** Home left: a trial not yet judged is dropped without a strike. */
-export function leaveStageLadder(ladder: StageLadder, nowMs: number): StageLadder {
-  return { ...ladder, trial: null, awayAt: ladder.awayAt ?? nowMs };
-}
-
-/** Home shown again: after long enough away, try one rung up. */
-export function returnStageLadder(ladder: StageLadder, nowMs: number): StageLadder {
-  if (ladder.awayAt === null) return ladder;
-  const back = { ...ladder, awayAt: null };
-  return nowMs - ladder.awayAt >= STAGE_CLIMB_AWAY_MS ? climb(back, nowMs) : back;
-}
-
-/** The frame budget stepped down to `next`: a trial falls back to the rung below it. */
-export function dropStageLadder(
-  ladder: StageLadder,
-  next: StageQuality,
-  nowMs: number
-): StageLadder {
-  const forgotten = ladder.lastDropAt !== null && nowMs - ladder.lastDropAt >= STRIKES_FORGOTTEN_MS;
-  return {
-    ...ladder,
-    settled: lowestStageQuality(ladder.settled, next),
-    trial: null,
-    strikes: forgotten ? 1 : Math.min(MAX_STRIKES, ladder.strikes + 1),
-    lastDropAt: nowMs,
-  };
-}
-
-/** `quality` met the budget long enough: a trial of it becomes the rung held. */
-export function holdStageLadder(ladder: StageLadder, quality: StageQuality): StageLadder {
-  if (ladder.trial !== quality) return ladder;
-  return { ...ladder, settled: quality, trial: null };
 }
 
 export type StageEffects = {
@@ -287,11 +148,7 @@ export type StageEffects = {
   /** The idle drift, the hero's bob and the motes' drift. Off under Reduce Motion. */
   pulse: boolean;
   tilt: boolean;
-  /**
-   * The highest pixel ratio the scene renders at; the device's own ratio
-   * below it. Shading cost grows with its square: 2.0 on a 3x phone shades
-   * about 44% of the native pixels, 1.5 a quarter, 1.0 a ninth.
-   */
+  /** The highest pixel ratio the scene renders at. */
   maxDpr: number;
   /** Minimum milliseconds between frames while a finger, the cover-flow or a dive moves it. */
   frameIntervalMs: number;
@@ -315,7 +172,7 @@ export function stageEffects(
     particleShare: quality === 'full' ? 1 : 0.5,
     pulse: !calm,
     tilt: !calm,
-    maxDpr: quality === 'full' ? 2 : quality === 'reduced' ? 1.5 : 1,
+    maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
     frameIntervalMs: low ? 1000 / 30 : 0,
     glideIntervalMs: 1000 / 30,
     idleIntervalMs: gpu && !calm ? 50 : null,

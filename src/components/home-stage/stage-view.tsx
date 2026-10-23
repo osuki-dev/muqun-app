@@ -53,7 +53,6 @@ import {
 import { heroFeatherGeometry } from '@/lib/hero-feather';
 import type { StageComposition, StageLayer } from '@/lib/home-stage-layers';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
-import { stageArtRetryEdge } from '@/lib/stage-art-log';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
   checkStageGpuLost,
@@ -66,19 +65,12 @@ import {
 } from '@/lib/stage-art-diagnostics';
 import { useAppSettings } from '@/stores/app-settings';
 import {
-  dropStageLadder,
-  holdStageLadder,
-  leaveStageLadder,
-  returnStageLadder,
+  lowestStageQuality,
   stageEffects,
-  stageLadderQuality,
-  startStageLadder,
   STAGE_TILT_DEADBAND,
   STAGE_TILT_WAKE,
-  type StageLadder,
   type StageQuality,
 } from '@/lib/home-stage-motion';
-import { loadStageLadder, saveStageLadder } from '@/lib/home-stage-ladder-store';
 import type { StagePicture } from './stage-scene';
 import { useStageTexture, type StageTextureState } from './stage-textures';
 import { createStageBridge, type StageInputs, type StageOpener } from './types';
@@ -86,36 +78,16 @@ import { createStageBridge, type StageInputs, type StageOpener } from './types';
 // An older binary, or web, keeps the static stage without evaluating the native module.
 const GpuStage = lazy(() => import('./gpu-stage'));
 
-/**
- * Texture caps: the cover layers fill the screen; the art stands most of its
- * height. Each texture is RGBA, 4 bytes a pixel, held once in GPU memory and
- * once as its upload buffer: a square 2560 cover is about 26 MB each side, so
- * a theme's four layers stay under about 100 MB of GPU memory even with
- * square pictures. The screen's own height in pixels caps them first, so a
- * phone never uploads more than it can show.
- */
-const COVER_MAX_EDGE = 2560;
-const HERO_MAX_EDGE = 2048;
+/** Texture caps: the cover layers fill the screen; the art stands most of its height. */
+const COVER_MAX_EDGE = 2048;
+const HERO_MAX_EDGE = 1536;
 /** Under a sky painting the wallpaper is only a faint base: a smaller texture does. */
-const BASE_MAX_EDGE = 1536;
-/** How many times an out-of-memory error may halve every texture this session. */
-const MAX_TEXTURE_SHRINK = 2;
+const BASE_MAX_EDGE = 1024;
 /** The camera's push into the art before a computer or an agent opens. */
 const DIVE_MS = 520;
 
-/**
- * The quality ladder across visits to Home (`StageLadder`), started from the
- * saved one on the first Stage of a launch. `textureShrink` counts the GPU's
- * out-of-memory errors: each halves every texture for the rest of the session.
- */
-const session: { ladder: StageLadder | null; textureShrink: number } = {
-  ladder: null,
-  textureShrink: 0,
-};
-function sessionLadder(): StageLadder {
-  session.ladder ??= startStageLadder(loadStageLadder(), Date.now());
-  return session.ladder;
-}
+/** The lowest quality rung the stage has stepped down to this session; never raised. */
+const session: { quality: StageQuality } = { quality: 'full' };
 
 export type StageViewProps = {
   /** How many computers there are; a sideways swipe moves between them. */
@@ -182,11 +154,8 @@ export function StageView({
   const reducedMotion = useReducedMotion();
   const window = useWindowDimensions();
   const [size, setSize] = useState({ width: 0, height: 0 });
-  // A rung the stage stepped down to holds for the visit; a return after a
-  // while away, or a launch, may try one rung up (`StageLadder`). Under Reduce
-  // Motion no frames are judged, so no rung is tried.
-  const [ladder, setLadder] = useState(sessionLadder);
-  const quality = reducedMotion ? ladder.settled : stageLadderQuality(ladder);
+  // A rung the stage stepped down to holds for the rest of the session.
+  const [quality, setQuality] = useState<StageQuality>(() => session.quality);
   const { theme: customTheme } = useEffectiveCustomTheme();
   // What the Stage diagnostics stamp each event with.
   const themeTag = customTheme
@@ -195,27 +164,10 @@ export function StageView({
   useEffect(() => {
     setStageArtContext({ theme: themeTag, quality });
   }, [themeTag, quality]);
-  const moveLadder = (next: StageLadder, save: boolean) => {
-    session.ladder = next;
-    setLadder(next);
-    if (save) saveStageLadder(next);
-  };
-  const lowered = useStableHandler((next: StageQuality) =>
-    moveLadder(dropStageLadder(sessionLadder(), next, Date.now()), true)
-  );
-  const held = useStableHandler((rung: StageQuality) => {
-    const current = sessionLadder();
-    const next = holdStageLadder(current, rung);
-    if (next !== current) moveLadder(next, true);
+  const lowered = useStableHandler((next: StageQuality) => {
+    session.quality = lowestStageQuality(session.quality, next);
+    setQuality(session.quality);
   });
-  const visited = useEffectEvent((isPaused: boolean) => {
-    const current = sessionLadder();
-    const next = isPaused
-      ? leaveStageLadder(current, Date.now())
-      : returnStageLadder(current, Date.now());
-    if (next !== current) moveLadder(next, false);
-  });
-  useEffect(() => visited(paused), [paused]);
   const [failed, setFailed] = useState(false);
   // A GPU failure (a surface the system took back while the app was away, an
   // out-of-memory upload) falls back to the static stage, but only until Home
@@ -224,16 +176,8 @@ export function StageView({
   // restart, so the stage stays static and no canvas is tried again.
   const [attempt, setAttempt] = useState(0);
   const [gpuLost, setGpuLost] = useState(isStageGpuLost);
-  // An upload the GPU had no memory for falls back to the static stage like
-  // any GPU failure; the next canvas also gets textures half the size, or the
-  // same upload would fail the same way on every retry.
-  const [textureShrink, setTextureShrink] = useState(() => session.textureShrink);
   const fail = useStableHandler((error?: unknown) => {
     if (noteStageGpuFailure(error)) setGpuLost(true);
-    if (error instanceof Error && error.message.startsWith('GPUOutOfMemoryError')) {
-      session.textureShrink = Math.min(MAX_TEXTURE_SHRINK, session.textureShrink + 1);
-      setTextureShrink(session.textureShrink);
-    }
     setFailed(true);
   });
   const retryIdentity = JSON.stringify([
@@ -284,14 +228,8 @@ export function StageView({
 
   const { role } = composition;
   const dpr = Math.min(3, Math.max(1, window.scale));
-  const coverEdge = stageArtRetryEdge(
-    Math.min(COVER_MAX_EDGE, Math.round(window.height * dpr)),
-    textureShrink
-  );
-  const heroEdge = stageArtRetryEdge(
-    Math.min(HERO_MAX_EDGE, Math.round(window.height * dpr * 0.8)),
-    textureShrink
-  );
+  const coverEdge = Math.min(COVER_MAX_EDGE, Math.round(window.height * dpr));
+  const heroEdge = Math.min(HERO_MAX_EDGE, Math.round(window.height * dpr * 0.8));
   const gpuUri = (layer: StageLayer | null) => (effects.gpu ? layer?.uri : undefined);
   const backdropEdge = role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge;
   const backdropTexture = useStageTexture(gpuUri(composition.backdrop), backdropEdge, 'backdrop');
@@ -310,12 +248,11 @@ export function StageView({
   const paintingSize = textureSize(paintingTexture);
   const heroSize = textureSize(heroTexture);
   const frameSize = textureSize(frameTexture);
-  const trying = renderGpu && ladder.trial !== null && quality === ladder.trial;
   useEffect(() => {
     const deviceScale = PixelRatio.get();
     setStageRenderInfo({
       quality: renderGpu ? quality : 'static',
-      trial: trying,
+      trial: false,
       dpr: renderGpu ? Math.min(deviceScale, effects.maxDpr) : deviceScale,
       deviceScale,
       textures: [
@@ -328,7 +265,6 @@ export function StageView({
   }, [
     renderGpu,
     quality,
-    trying,
     effects.maxDpr,
     backdropSize,
     paintingSize,
@@ -573,7 +509,6 @@ export function StageView({
                 inputs={inputs}
                 bridge={bridge}
                 onQualityDrop={lowered}
-                onQualityHeld={held}
                 onError={fail}
                 onPresented={onPresented}
                 onSurfaceReset={onSurfaceReset}
