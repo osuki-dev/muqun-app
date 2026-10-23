@@ -7038,6 +7038,10 @@ msgstr "这一轮执行失败"
 msgid "Theme"
 msgstr "主题"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "跟随主题"

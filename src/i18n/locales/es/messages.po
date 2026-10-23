@@ -7038,6 +7038,10 @@ msgstr "El turno falló"
 msgid "Theme"
 msgstr "Tema"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Según el tema"
