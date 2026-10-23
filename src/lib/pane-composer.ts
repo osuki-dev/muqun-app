@@ -148,22 +148,26 @@ export interface PaneSkill {
 }
 
 /**
- * The skills part of a pane's shortcuts answer: the skills and the literal the
- * agent's TUI invokes one with (`/` for Claude Code, `$` for Codex).
+ * The composer part of a pane's shortcuts answer: the skills the app offers
+ * under `$` for that pane, and whether `@` file mentions mean anything to its
+ * agent.
  *
- * Both or neither. A skill is only worth offering when there is a way to type
- * it into the pane, so an answer without a known prefix yields nothing, as
- * does an older Gateway that sends neither. A name that is not one plain token
- * (`SKILL_NAME`) is dropped with the other malformed entries.
+ * `$` is the app's skills entry for every agent: a picked skill goes to the
+ * Gateway by name, and the Gateway decides how that pane's agent runs it. An
+ * older Gateway sends neither field, which offers no skills and no files. A
+ * name that is not one plain token (`SKILL_NAME`) is dropped with the other
+ * malformed entries.
  */
-export function paneSkillsFromAnswer(
-  value: unknown
-): { skills: PaneSkill[]; skillPrefix: '/' | '$' } | Record<string, never> {
+export function paneComposerExtrasFromAnswer(value: unknown): {
+  skills?: PaneSkill[];
+  fileMentions?: boolean;
+} {
   if (!value || typeof value !== 'object') return {};
   const raw = value as Record<string, unknown>;
-  const prefix = raw.skill_prefix;
-  if ((prefix !== '/' && prefix !== '$') || !Array.isArray(raw.skills)) return {};
-  return { skillPrefix: prefix, skills: raw.skills.filter(isPaneSkill) };
+  return {
+    ...(Array.isArray(raw.skills) ? { skills: raw.skills.filter(isPaneSkill) } : {}),
+    ...(typeof raw.file_mentions === 'boolean' ? { fileMentions: raw.file_mentions } : {}),
+  };
 }
 
 /**
