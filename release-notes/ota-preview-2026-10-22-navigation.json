@@ -1,3 +1,0 @@
-{
-  "en": "## Home navigation stability\n\n- Stage retains its presented 3D frame when Home loses focus, avoiding a static-image swap during navigation.\n- Settings and QR pairing ignore repeat taps while navigation is leaving Home.\n- Active agent subtitle subscriptions are retained when another agent joins or stops, avoiding redundant snapshot reloads.\n\nRequires Android preview build 234. No Gateway upgrade is required."
-}
