@@ -2249,10 +2249,6 @@ msgstr "Impossible de lire l’historique enregistré du terminal"
 msgid "Could not read the changes."
 msgstr "Impossible de lire les modifications"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "Impossible de lire la conversation"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "Aucun ordinateur sur lequel démarrer une tâche"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Aucun ordinateur appairé pour l’instant"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "Aucune conversation n’a encore été enregistrée pour ce panneau"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "Pas encore de conversation"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "Fichiers temporaires"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7641,10 +7628,6 @@ msgstr "Mettez à jour Herdr sur l’ordinateur en 0.9.0 ou plus récent, puis r
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "Mettez à jour Muqun Gateway sur l’ordinateur, puis redémarrez-le, pour confier une tâche à un autre assistant"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "Mettez à jour Muqun Gateway sur l’ordinateur, puis redémarrez-le, pour lire cette conversation ici"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

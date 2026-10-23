@@ -1,5 +1,5 @@
 import { asFiniteNumber, asRecord, asString } from './agent-protocol';
-import { healthCapabilityNames } from './server-capabilities';
+import { normalizeCapabilities } from './server-capabilities';
 import type { TaskEndpoint } from './task-ledger';
 
 /**
@@ -379,7 +379,7 @@ export async function fetchCapabilities(endpoint: FleetEndpoint): Promise<string
   try {
     const response = await endpointRequest(endpoint, '/api/capabilities', 'GET');
     if (!response.ok) return null;
-    return healthCapabilityNames(await response.json());
+    return normalizeCapabilities(asRecord(await response.json())?.capabilities);
   } catch {
     return null;
   }
