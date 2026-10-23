@@ -27,7 +27,7 @@
 import { SideBleedProvider, type SideInsets, useMeasuredSideInsets } from '@/hooks/use-side-insets';
 import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Button, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Button, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -233,6 +233,7 @@ export function SettingsThemeSheet({
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
+  const { showToast } = useToast();
   useRenderTally('SettingsThemeSheet');
   const { colors } = useThemeTokens();
   const openEditor = useOpenThemeEditor();
@@ -313,6 +314,17 @@ export function SettingsThemeSheet({
    * The picker cannot unmount its cover
    * midway through the reveal or expose the intermediate Settings screens.
    */
+  /**
+   * A failure is said twice: as a toast, which is seen wherever the sheet
+   * is scrolled to (a download started from the bottom of a long catalogue
+   * failed under the header, out of view), and in the header, where it
+   * stays until the next attempt.
+   */
+  function fail(message: string) {
+    setError(message);
+    showToast({ variant: 'danger', title: t`Theme action failed`, message });
+  }
+
   function wear(options: {
     pack: Pick<ThemeAppearance, 'light' | 'dark'>;
     prepare?: () => ReturnType<typeof prepareThemeArtwork>;
@@ -334,7 +346,7 @@ export function SettingsThemeSheet({
       })
       .catch(() => {
         // Failed writes leave the picker open so the choice can be retried.
-        if (mounted.current) setError(t`Could not save theme`);
+        if (mounted.current) fail(t`Could not save theme`);
       })
       .finally(() => {
         applying.current = false;
@@ -378,7 +390,7 @@ export function SettingsThemeSheet({
     openEditor({ manifest: theme.manifest, id: theme.id, assets: theme.assets });
   }
 
-  /** One guarded piece of work at a time, with its failure said in the header. */
+  /** One guarded piece of work at a time, with its failure said in the header and as a toast. */
   function perform(action: () => void | Promise<void>) {
     if (busy) return;
     setBusy(true);
@@ -390,7 +402,7 @@ export function SettingsThemeSheet({
             await action();
           },
           (cause) => {
-            setError(cause instanceof Error ? cause.message : t`Something went wrong`);
+            fail(cause instanceof Error ? cause.message : t`Something went wrong`);
           }
         ),
       () => setBusy(false)

@@ -182,9 +182,15 @@ export function HomeStage({
         if (task.state === 'done' && task.updatedMs > latest) latest = task.updatedMs;
     return latest;
   });
+  // The ledgers live in memory only, so Home mounts with none and the first
+  // read brings last session's finished tasks. Those are the baseline, not
+  // completions: taken as such they flared the motes and buzzed Success on
+  // every launch.
+  const ledgerRead = Object.keys(tasks).length > 0;
   const seenDoneMs = useRef<number | null>(null);
   const [burst, setBurst] = useState(0);
   useEffect(() => {
+    if (!ledgerRead) return;
     if (seenDoneMs.current === null) {
       seenDoneMs.current = latestDoneMs;
       return;
@@ -193,7 +199,7 @@ export function HomeStage({
     seenDoneMs.current = latestDoneMs;
     setBurst((count) => count + 1);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, [latestDoneMs]);
+  }, [latestDoneMs, ledgerRead]);
   // Rebuilt on every task frame, pane mirror pass and minute; kept by identity
   // while nothing shown changed, so the Stage below can skip the render.
   const built = useMemo(
@@ -575,11 +581,16 @@ export function HomeStageLayout({
                 room={subtitleRoom}
                 subtitle={!paused && !listOpen && !waiting}
                 onOpen={openProgress}>
-                <StageAgentRow
-                  panel={selected}
-                  paused={paused || listOpen}
-                  onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-                />
+                {(hidden) => (
+                  <StageAgentRow
+                    panel={selected}
+                    paused={paused || listOpen}
+                    hidden={hidden}
+                    onOpenAgent={(chip) =>
+                      opener.open(() => onOpenAgent(selectedIndex, chip.paneId))
+                    }
+                  />
+                )}
               </StageFootLine>
             </Animated.View>
           ) : null}
@@ -818,7 +829,8 @@ function StageFootLine({
   /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
   room: number;
   onOpen: (line: StageProgress) => void;
-  children: ReactNode;
+  /** The row's content, told whether the row is hidden (covered or folded) so its motion can rest. */
+  children: (hidden: boolean) => ReactNode;
 }) {
   const [shown, setShown] = useState(false);
   const covered = subtitle && shown;
@@ -848,7 +860,7 @@ function StageFootLine({
         accessibilityElementsHidden={hidden}
         importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
         style={[styles.footRow, rowStyle]}>
-        {children}
+        {children(hidden)}
       </Animated.View>
       {serverId && subtitle && maxRows > 0 ? (
         <View pointerEvents="box-none" style={styles.footLine}>
