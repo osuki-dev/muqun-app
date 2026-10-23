@@ -7038,6 +7038,10 @@ msgstr "Ход завершился ошибкой"
 msgid "Theme"
 msgstr "Тема"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Как в теме"

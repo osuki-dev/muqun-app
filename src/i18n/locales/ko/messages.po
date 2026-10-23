@@ -7038,6 +7038,10 @@ msgstr "이번 턴이 실패했습니다"
 msgid "Theme"
 msgstr "테마"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "테마 기본값"
