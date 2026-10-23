@@ -542,11 +542,14 @@ export function HomeStageLayout({
               room={subtitleRoom}
               subtitle={!paused && !listOpen && !waiting}
               onOpen={openProgress}>
-              <StageAgentRow
-                panel={selected}
-                paused={paused || listOpen}
-                onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
-              />
+              {(hidden) => (
+                <StageAgentRow
+                  panel={selected}
+                  paused={paused || listOpen}
+                  hidden={hidden}
+                  onOpenAgent={(chip) => opener.open(() => onOpenAgent(selectedIndex, chip.paneId))}
+                />
+              )}
             </StageFootLine>
           </Animated.View>
         ) : null}
@@ -780,7 +783,8 @@ function StageFootLine({
   /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
   room: number;
   onOpen: (line: StageProgress) => void;
-  children: ReactNode;
+  /** The row's content, told whether the row is hidden (covered or folded) so its motion can rest. */
+  children: (hidden: boolean) => ReactNode;
 }) {
   const [shown, setShown] = useState(false);
   const covered = subtitle && shown;
@@ -810,7 +814,7 @@ function StageFootLine({
         accessibilityElementsHidden={hidden}
         importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
         style={[styles.footRow, rowStyle]}>
-        {children}
+        {children(hidden)}
       </Animated.View>
       {serverId && subtitle && maxRows > 0 ? (
         <View pointerEvents="box-none" style={styles.footLine}>
