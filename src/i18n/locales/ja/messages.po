@@ -374,6 +374,10 @@ msgstr "{language} のコードをクリップボードにコピーしました"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — 離れている間に完了しました"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{total} 件中 {listed} 件のチェックアウト"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 件のメッセージ}}"

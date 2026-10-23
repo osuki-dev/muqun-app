@@ -374,6 +374,10 @@ msgstr "{language}-Code in die Zwischenablage kopiert"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} – wurde fertig, während Sie weg waren"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} von {total} Checkouts"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# Nachricht} other {# Nachrichten}}"

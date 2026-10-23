@@ -374,6 +374,10 @@ msgstr "{language} 코드를 클립보드에 복사했습니다"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — 자리를 비운 사이에 끝났습니다"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "체크아웃 {total}개 중 {listed}개"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {메시지 #개}}"

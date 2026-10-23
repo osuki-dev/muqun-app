@@ -374,6 +374,10 @@ msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — đã xong khi bạn đi vắng"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} trên {total} checkout"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# tin nhắn}}"

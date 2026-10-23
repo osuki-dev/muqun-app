@@ -374,6 +374,10 @@ msgstr "Code {language} copié dans le presse-papiers"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead} : {title} — terminé pendant votre absence"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} checkouts sur {total}"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# message} other {# messages}}"

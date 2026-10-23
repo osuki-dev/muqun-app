@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useRef, type ComponentRef } from 'react';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
@@ -8,7 +9,12 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SheetSceneNotice, SHEET_LADDER } from '@/components/sheet-scene';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import type { GitWorktree, GitWorktreeInventory } from '@/lib/git-worktrees';
+import {
+  compactWorktreeLabel,
+  orderWorktrees,
+  type GitWorktree,
+  type GitWorktreeInventory,
+} from '@/lib/git-worktrees';
 import { fadeIn, fadeOut } from '@/lib/motion';
 
 /**
@@ -17,11 +23,15 @@ import { fadeIn, fadeOut } from '@/lib/motion';
  * Nothing at all while the repository has only the checkout the pane is in:
  * a switcher with one option is a question with one answer. With several, a
  * chip per checkout named by its branch -- the thing a reader supervising an
- * agent tells them apart by -- and the one being read drawn solid. Selecting
- * one changes only this reader; the Git TUI follows it, the terminal does not.
+ * agent tells them apart by -- the pane's own checkout first and the one
+ * being read drawn solid. A repository with two hundred checkouts is a long
+ * row, not a long sheet: the chips are compact, the row scrolls sideways, and
+ * it opens on the chip being read. Selecting one changes only this reader;
+ * the Git TUI follows it, the terminal does not.
  *
  * An inventory that did not arrive is a quiet line with a Retry, not a red
- * sentence: nothing about the changes themselves is wrong.
+ * sentence: nothing about the changes themselves is wrong. An inventory the
+ * gateway cut says so under the row, with how many there really are.
  */
 export function ChangesWorktreeChips({
   inventory,
@@ -40,34 +50,59 @@ export function ChangesWorktreeChips({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const mono = useMonoFontFamily();
+  const ordered = useMemo(() => (inventory ? orderWorktrees(inventory) : []), [inventory]);
+  const scroller = useRef<ComponentRef<typeof ScrollView> | null>(null);
+  /**
+   * The chip being read lands in view once, when the row opens: its `onLayout`
+   * says where it sits in the row, and the row jumps there without animation.
+   * Once only -- after that the row is the reader's to scroll.
+   */
+  const landed = useRef(false);
+  const landOn = useCallback((event: LayoutChangeEvent) => {
+    if (landed.current) return;
+    landed.current = true;
+    const x = event.nativeEvent.layout.x;
+    if (x > 0) scroller.current?.scrollTo({ x, animated: false });
+  }, []);
   const selectedPath = selected ?? inventory?.current;
-  const several = (inventory?.worktrees.length ?? 0) > 1;
+  const several = ordered.length > 1;
   const missing =
-    selected !== undefined &&
-    inventory !== null &&
-    !inventory.worktrees.some((item) => item.path === selected);
+    selected !== undefined && inventory !== null && !ordered.some((item) => item.path === selected);
   const failed = error && !inventory;
   if (!several && !failed && !missing && selected === undefined) return null;
+  const listed = ordered.length;
+  const total = inventory?.total;
   return (
     <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')} style={styles.block}>
       {several && inventory ? (
         <ScrollView
+          ref={scroller}
           horizontal
           bounces={false}
           testID="changes-worktree-list"
           showsHorizontalScrollIndicator={false}
           style={styles.viewport}
           contentContainerStyle={styles.row}>
-          {inventory.worktrees.map((item) => (
-            <WorktreeChip
-              key={item.path}
-              item={item}
-              current={item.path === inventory.current}
-              selected={item.path === selectedPath}
-              onPress={() => onSelect(item.path === inventory.current ? undefined : item.path)}
-            />
-          ))}
+          {ordered.map((item) => {
+            const current = item.path === inventory.current;
+            const chosen = item.path === selectedPath;
+            return (
+              <WorktreeChip
+                key={item.path}
+                item={item}
+                current={current}
+                selected={chosen}
+                onLayout={chosen ? landOn : undefined}
+                onPress={() => onSelect(current ? undefined : item.path)}
+              />
+            );
+          })}
         </ScrollView>
+      ) : null}
+      {several && inventory?.truncated && total !== undefined ? (
+        <Text testID="changes-worktrees-truncated" variant="caption" color={theme.colors.textMuted}>
+          {t`${listed} of ${total} checkouts`}
+        </Text>
       ) : null}
       {failed ? (
         <SheetSceneNotice
@@ -104,11 +139,13 @@ function WorktreeChip({
   item,
   current,
   selected,
+  onLayout,
   onPress,
 }: {
   item: GitWorktree;
   current: boolean;
   selected: boolean;
+  onLayout?: (event: LayoutChangeEvent) => void;
   onPress: () => void;
 }) {
   const { t } = useLingui();
@@ -125,7 +162,9 @@ function WorktreeChip({
       }
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      // The whole name and the whole path: the chip shows a cut branch only.
       accessibilityLabel={`${current ? t`Current checkout` : t`Worktree ${name}`}, ${branch}, ${item.path}`}
+      onLayout={onLayout}
       onPress={onPress}
       style={[
         styles.chip,
@@ -141,9 +180,8 @@ function WorktreeChip({
         variant="caption"
         weight={selected ? 'semibold' : undefined}
         color={selected ? theme.colors.onPrimary : theme.colors.textMuted}
-        numberOfLines={1}
-        ellipsizeMode="middle">
-        {branch}
+        numberOfLines={1}>
+        {compactWorktreeLabel(branch)}
       </Text>
     </PressableScale>
   );
@@ -153,11 +191,12 @@ const styles = StyleSheet.create({
   block: { gap: SHEET_LADDER.gap },
   viewport: { flexGrow: 0, minWidth: 0, width: '100%' },
   row: { gap: SHEET_LADDER.gap },
+  // Compact: a branch name on one line, and nothing around it. Two hundred of
+  // these are a row to flick through, not a wall.
   chip: {
-    minHeight: 32,
+    minHeight: 30,
     justifyContent: 'center',
-    paddingHorizontal: 12,
-    maxWidth: 220,
+    paddingHorizontal: 10,
   },
   note: { gap: SHEET_LADDER.tight },
 });

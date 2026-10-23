@@ -374,6 +374,10 @@ msgstr "Код {language} скопирован в буфер обмена"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — завершилось, пока вас не было"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} из {total} рабочих копий"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# сообщение} few {# сообщения} many {# сообщений} other {# сообщения}}"

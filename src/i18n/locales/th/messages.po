@@ -374,6 +374,10 @@ msgstr "คัดลอกโค้ด {language} ไปยังคลิปบ
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "เช็กเอาต์ {listed} จาก {total} รายการ"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# ข้อความ}}"

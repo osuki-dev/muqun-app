@@ -374,6 +374,10 @@ msgstr "已复制 {language} 代码到剪贴板"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}：{title} — 在你离开时完成"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{total} 个检出中的 {listed} 个"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 条消息}}"

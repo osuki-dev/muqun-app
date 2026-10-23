@@ -374,6 +374,10 @@ msgstr "{language} code copied to clipboard"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — finished while you were away"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} of {total} checkouts"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# message} other {# messages}}"

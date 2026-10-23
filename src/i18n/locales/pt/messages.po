@@ -374,6 +374,10 @@ msgstr "Código {language} copiado para a área de transferência"
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — terminou enquanto você estava fora"
 
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} de {total} checkouts"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# mensagem} other {# mensagens}}"
