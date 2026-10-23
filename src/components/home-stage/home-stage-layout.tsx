@@ -182,9 +182,15 @@ export function HomeStage({
         if (task.state === 'done' && task.updatedMs > latest) latest = task.updatedMs;
     return latest;
   });
+  // The ledgers live in memory only, so Home mounts with none and the first
+  // read brings last session's finished tasks. Those are the baseline, not
+  // completions: taken as such they flared the motes and buzzed Success on
+  // every launch.
+  const ledgerRead = Object.keys(tasks).length > 0;
   const seenDoneMs = useRef<number | null>(null);
   const [burst, setBurst] = useState(0);
   useEffect(() => {
+    if (!ledgerRead) return;
     if (seenDoneMs.current === null) {
       seenDoneMs.current = latestDoneMs;
       return;
@@ -193,7 +199,7 @@ export function HomeStage({
     seenDoneMs.current = latestDoneMs;
     setBurst((count) => count + 1);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, [latestDoneMs]);
+  }, [latestDoneMs, ledgerRead]);
   // Rebuilt on every task frame, pane mirror pass and minute; kept by identity
   // while nothing shown changed, so the Stage below can skip the render.
   const built = useMemo(
