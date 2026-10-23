@@ -12,6 +12,7 @@ import { createStageCompilation } from '@/lib/stage-compilation';
 import { STAGE_CAMERA_FOV } from '@/lib/home-stage-geometry';
 import { stageEffects } from '@/lib/home-stage-motion';
 import { recordStageArtEvent } from '@/lib/stage-art-diagnostics';
+import { stopRendererLoop } from '@/lib/stage-renderer-loop';
 import { StageRuntime } from './stage-runtime';
 import type { StageSceneProps } from './types';
 
@@ -133,6 +134,10 @@ export default function GpuStage(props: StageSceneProps) {
                 await renderer.dispose();
                 throw error;
               }
+              // `init()` started three's own frame loop; the Stage draws on
+              // demand (`StageRuntime`), so an idle Home must not wake the
+              // JS thread every frame for it.
+              stopRendererLoop(renderer);
               const draw = renderer.render.bind(renderer);
               renderer.render = (scene, camera) => {
                 // Never draw into the canvas while Home is off screen: its

@@ -25,6 +25,7 @@ import {
   type StageQuality,
   type StageSpring,
 } from '@/lib/home-stage-motion';
+import { advanceRendererFrame } from '@/lib/stage-renderer-loop';
 import { createStageScene, type StagePicture } from './stage-scene';
 import type { StageSceneProps } from './types';
 
@@ -341,6 +342,8 @@ export function StageRuntime(
     });
     // Fiber's loop never resets the renderer's counters: the log counts per frame.
     if (stagePerf) (gl as unknown as WebGPURenderer).info.reset();
+    // The renderer's own loop is stopped: its frame counter moves here, once per drawn frame.
+    advanceRendererFrame(gl);
     gl.render(scene, camera);
     const workMs = performance.now() - now;
 
