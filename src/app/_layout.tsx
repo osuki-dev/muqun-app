@@ -181,6 +181,9 @@ const ReleaseProfilerControl =
         .ReleaseProfilerControl
     : null;
 
+/** How long a toast stays, unless the caller says otherwise. */
+const TOAST_DURATION_MS = 5000;
+
 export default function RootLayout() {
   useEffect(() => {
     // Local reads can overlap font registration and the native launch screen.
@@ -432,7 +435,11 @@ function RootContent() {
       */}
       <ToastProvider
         maxWidth={480}
-        defaultDurationMs={2000}
+        // Long enough to notice the toast and read a sentence: about a
+        // second to look, then a 15-word line at reading speed. 2 s was
+        // gone before most of them were read, which the owner noticed on
+        // the first failure toast.
+        defaultDurationMs={TOAST_DURATION_MS}
         toastStyle={[
           notificationSurfaceStyle,
           { borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
