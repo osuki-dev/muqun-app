@@ -447,19 +447,26 @@ export type ReskinConditions = {
  * millisecond dissolve has no travel in it at all and still spares the reader
  * the cut.
  *
- * A theme or mode change is a ripple and a font change is a scan. A device
- * whose ripple or scan would not compile gets the older wash or halftone if
- * that one did, and the cross-fade if neither did -- the picture is already
- * taken, and a dissolve is the part of the effect that needs no GPU program.
+ * A theme or mode change is a cross-fade: the old paper (Android's veil) or
+ * the old screen (iOS's photograph) dissolves over the settled new interface
+ * in one short beat. It was a ripple, and the ripple's full-screen shader ran
+ * on Home at the same moment the page re-themed every row and the Stage
+ * rebuilt its textures, and the landing stuttered on the owner's phone
+ * (2026-10-23); the owner chose the dissolve over the effect. The ripple and
+ * the wash stay compiled and drawable, but nothing selects them for a theme.
+ *
+ * A font change is a scan. A device whose scan would not compile gets the
+ * older halftone if that one did, and the cross-fade if neither did -- the
+ * picture is already taken, and a dissolve is the part of the effect that
+ * needs no GPU program.
  */
 export function selectReskinPlay(conditions: ReskinConditions): ReskinPlay {
   const { size } = conditions;
   if (conditions.snapshot !== 'ok') return 'none';
   if (!(size.width > 0) || !(size.height > 0)) return 'none';
-  if (conditions.reduceMotion) return 'crossfade';
-  const theme = conditions.kind === 'theme';
-  if (conditions.effectReady) return theme ? 'ripple' : 'scan';
-  if (conditions.fallbackReady) return theme ? 'wash' : 'halftone';
+  if (conditions.reduceMotion || conditions.kind === 'theme') return 'crossfade';
+  if (conditions.effectReady) return 'scan';
+  if (conditions.fallbackReady) return 'halftone';
   return 'crossfade';
 }
 

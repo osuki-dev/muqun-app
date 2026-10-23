@@ -2249,10 +2249,6 @@ msgstr "Không thể đọc lịch sử terminal đã lưu"
 msgid "Could not read the changes."
 msgstr "Không đọc được các thay đổi"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "Không thể đọc cuộc trò chuyện"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "Không có máy tính để bắt đầu tác vụ"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Chưa ghép nối máy tính nào"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "Chưa có cuộc trò chuyện nào được ghi lại cho ô này"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "Chưa có cuộc trò chuyện nào"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "Tệp tạm"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7641,10 +7628,6 @@ msgstr "Cập nhật Herdr trên máy tính lên 0.9.0 trở lên rồi khởi �
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "Cập nhật Muqun Gateway trên máy tính rồi khởi động lại để giao việc cho một trợ lý khác"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "Cập nhật Muqun Gateway trên máy tính rồi khởi động lại để đọc cuộc trò chuyện này tại đây"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
