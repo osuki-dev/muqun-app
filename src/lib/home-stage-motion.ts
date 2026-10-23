@@ -290,7 +290,10 @@ export type StageEffects = {
   /**
    * The highest pixel ratio the scene renders at; the device's own ratio
    * below it. Shading cost grows with its square: 2.0 on a 3x phone shades
-   * about 44% of the native pixels, 1.5 a quarter, 1.0 a ninth.
+   * about 44% of the native pixels, 1.5 a quarter, 1.0 a ninth. 1.5 is the
+   * ceiling: 2.0 held 60 fps on a flagship, so the ladder never stepped it
+   * down, and the phone ran hot. The ladder answers dropped frames, not
+   * heat, so the full rung has to be one a phone can sustain.
    */
   maxDpr: number;
   /** Minimum milliseconds between frames while a finger, the cover-flow or a dive moves it. */
@@ -315,7 +318,7 @@ export function stageEffects(
     particleShare: quality === 'full' ? 1 : 0.5,
     pulse: !calm,
     tilt: !calm,
-    maxDpr: quality === 'full' ? 2 : quality === 'reduced' ? 1.5 : 1,
+    maxDpr: quality === 'full' ? 1.5 : quality === 'reduced' ? 1.25 : 1,
     frameIntervalMs: low ? 1000 / 30 : 0,
     glideIntervalMs: 1000 / 30,
     idleIntervalMs: gpu && !calm ? 50 : null,
