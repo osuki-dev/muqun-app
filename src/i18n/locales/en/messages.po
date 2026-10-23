@@ -7038,6 +7038,10 @@ msgstr "The turn failed"
 msgid "Theme"
 msgstr "Theme"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr "Theme action failed"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Theme default"
