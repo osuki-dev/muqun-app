@@ -7038,6 +7038,10 @@ msgstr "この処理は失敗しました"
 msgid "Theme"
 msgstr "テーマ"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "テーマの既定"

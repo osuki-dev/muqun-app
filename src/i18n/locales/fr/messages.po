@@ -7038,6 +7038,10 @@ msgstr "Le tour a échoué"
 msgid "Theme"
 msgstr "Thème"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Défaut du thème"
