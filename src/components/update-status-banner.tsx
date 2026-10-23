@@ -36,6 +36,11 @@ const CHECK_SETTLE_MS = DURATION.short + DURATION.medium + 100 + 260;
 const calm = (duration: number) => timing(duration, { reduceMotion: ReduceMotion.Never });
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/** How tall the changelog may grow inside the dialog: a share of the window, between two bounds. */
+const NOTES_WINDOW_SHARE = 0.38;
+const NOTES_MIN_HEIGHT = 160;
+const NOTES_MAX_HEIGHT = 320;
+
 export function UpdateStatusBanner() {
   const phase = useAppUpdateStore((state) => state.phase);
   const visible = [
@@ -53,6 +58,12 @@ export function UpdateStatusBanner() {
 
 function UpdateDialog() {
   const { height } = useWindowDimensions();
+  // The notes are a window into the changelog, not the dialog's shape: a
+  // long one scrolls inside this much, without a scrollbar, so the dialog
+  // stays a dialog instead of growing to the screen's height.
+  const notesMaxHeight = Math.round(
+    Math.max(NOTES_MIN_HEIGHT, Math.min(NOTES_MAX_HEIGHT, height * NOTES_WINDOW_SHARE))
+  );
   const insets = useSafeAreaInsets();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   // The hook's `t`, bound to the Lingui context, so a language switch reaches
@@ -249,7 +260,8 @@ function UpdateDialog() {
               testID="update-prompt-scroll"
               accessibilityLabel={t`What's new`}
               nestedScrollEnabled
-              style={styles.body}
+              showsVerticalScrollIndicator={false}
+              style={[styles.body, { maxHeight: notesMaxHeight }]}
               contentContainerStyle={styles.bodyContent}>
               {bullets ? (
                 <View testID="update-release-notes" style={styles.bullets}>
