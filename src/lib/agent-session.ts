@@ -788,6 +788,25 @@ export async function invokeAgentSkill(
   await writeJson(sessionRoute(asid, '/skill', sessionId, false), 'Failed to run skill', body);
 }
 
+/**
+ * Runs a skill in an agent's terminal pane, by name, the way `invokeAgentSkill`
+ * does for a session: the Gateway checks the skill is one that pane offers and
+ * decides how its agent runs it. `args` is what was typed after the skill.
+ */
+export async function invokePaneSkill(
+  sessionId: string,
+  target: string,
+  params: { skill: string; args?: string }
+): Promise<void> {
+  const body: Record<string, unknown> = { skill: params.skill };
+  if (params.args) body.args = params.args;
+  await writeJson(
+    `/api/sessions/${encodeURIComponent(sessionId)}/agents/${encodeURIComponent(target)}/skill`,
+    'Failed to run skill',
+    body
+  );
+}
+
 export async function abortAgentSession(
   sessionId: string | undefined,
   asid: string

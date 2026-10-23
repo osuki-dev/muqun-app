@@ -1,5 +1,5 @@
 import { protectTemporaryCacheEntry } from './cache-cleanup';
-import { paneSkillsFromAnswer, type PaneSkill } from './pane-composer';
+import { paneComposerExtrasFromAnswer, type PaneSkill } from './pane-composer';
 import { decodeBase64Url, encodeBase64Url } from './base64url';
 import { originalImageCache, ORIGINAL_IMAGE_SEED_LIMIT } from './original-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
@@ -961,12 +961,12 @@ export interface PaneShortcuts {
    */
   keyboard?: { extended: boolean };
   /**
-   * The skills the pane's agent can use, and the literal its TUI invokes one
-   * with at the start of a line (`/` for Claude Code, `$` for Codex). Both or
-   * neither: an agent with no typed invocation, or an older Gateway, has none.
+   * The skills the app offers under `$` for this pane, run by name through the
+   * Gateway (`invokePaneSkill`). Absent from an older Gateway.
    */
   skills?: PaneSkill[];
-  skillPrefix?: '/' | '$';
+  /** Whether `@` file mentions mean anything to the pane's agent. */
+  fileMentions?: boolean;
 }
 
 export interface PaneOutputResponse {
@@ -3926,7 +3926,7 @@ export function paneShortcutsFromAnswer(value: Partial<PaneShortcuts> | undefine
     ...(typeof value?.keyboard?.extended === 'boolean'
       ? { keyboard: { extended: value.keyboard.extended } }
       : {}),
-    ...paneSkillsFromAnswer(value),
+    ...paneComposerExtrasFromAnswer(value),
   };
 }
 

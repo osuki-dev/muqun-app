@@ -374,6 +374,12 @@ export interface AgentComposerProps {
   /** Queue support is independent of steering into the current turn. */
   canQueueWhileRunning?: boolean;
   canMentionFiles?: boolean;
+  /**
+   * Where `@` looks for files, when not this session's project: Home's dock
+   * replying to a terminal pane searches that pane's folder. A new function
+   * means a new place, and the hits on screen are dropped with the old one.
+   */
+  searchFiles?: (query: string) => Promise<FileMentionHit[]>;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
   /**
@@ -648,6 +654,7 @@ export const AgentComposer = memo(function AgentComposer({
   canSendWhileRunning = true,
   canQueueWhileRunning = true,
   canMentionFiles = true,
+  searchFiles,
   interactionBlockedReason,
   blockedReasonInField = false,
   sessionStrip = EMPTY_STRIP,
@@ -1055,7 +1062,10 @@ export const AgentComposer = memo(function AgentComposer({
       return;
     }
     let active = true;
-    listAgentFiles(sessionId, activeAsid, mentionQuery, FILE_MENTION_LIMIT)
+    (searchFiles
+      ? searchFiles(mentionQuery)
+      : listAgentFiles(sessionId, activeAsid, mentionQuery, FILE_MENTION_LIMIT)
+    )
       .then((hits) => {
         if (active) setMentionHits(hits);
       })
@@ -1065,12 +1075,12 @@ export const AgentComposer = memo(function AgentComposer({
     return () => {
       active = false;
     };
-  }, [mentionQuery, sessionId, activeAsid, canMentionFiles]);
-  // Another session searches another workspace: its file hits never stay on
-  // screen while this one's are read.
+  }, [mentionQuery, sessionId, activeAsid, canMentionFiles, searchFiles]);
+  // Another session or pane searches another workspace: its file hits never
+  // stay on screen while this one's are read.
   useEffect(() => {
     setMentionHits([]);
-  }, [sessionId, activeAsid]);
+  }, [sessionId, activeAsid, searchFiles]);
 
   // Which words of the draft are mentions: every computer this composer
   // offers (typed by hand or picked) and the file paths picked in this draft.
