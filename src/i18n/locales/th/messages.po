@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# วัน}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# ไฟล์}}"
 
@@ -371,6 +373,10 @@ msgstr "คัดลอกโค้ด {language} ไปยังคลิปบ
 #: src/components/agent-composer.tsx
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
+
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "เช็กเอาต์ {listed} จาก {total} รายการ"
 
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
@@ -1231,6 +1237,11 @@ msgid "Capture restarted"
 msgstr "เริ่มการบันทึกใหม่แล้ว"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "เปลี่ยนแล้ว"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "เปลี่ยนแล้ว"
@@ -1358,17 +1369,9 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "เลือกการเปลี่ยนแปลงที่จะแสดง"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "เลือกเครื่องจำลองที่จะแสดง"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "เลือกเวิร์กทรี"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1687,6 +1690,11 @@ msgstr "ยืนยัน: {removeLabel} {label}"
 msgctxt "git file status"
 msgid "Conflicted"
 msgstr "มีข้อขัดแย้ง"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
+msgstr "ขัดแย้ง"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -2089,8 +2097,8 @@ msgid "Could not list this computer's agents."
 msgstr "แสดงรายการเอเจนต์ของคอมพิวเตอร์นี้ไม่ได้"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้ รีเฟรชเพื่อลองอีกครั้ง"
+msgid "Could not list worktrees."
+msgstr "ไม่สามารถแสดงรายการเวิร์กทรีได้"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2462,6 @@ msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "เช็กเอาต์ปัจจุบัน"
 
@@ -3722,6 +3729,10 @@ msgstr "โหลดเพิ่มเติม"
 msgid "Loading"
 msgstr "กำลังโหลด"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "กำลังโหลดการเปลี่ยนแปลง…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "กำลังโหลดคำสั่ง"
@@ -4153,7 +4164,6 @@ msgid "No changelog was provided for this update."
 msgstr "ไม่มีบันทึกการเปลี่ยนแปลงสำหรับการอัปเดตนี้"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "ไม่มีการเปลี่ยนแปลง"
 
@@ -4352,7 +4362,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
@@ -4463,6 +4472,10 @@ msgstr "ยังไม่มีอะไรให้แสดง"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "ไม่มีอะไรให้ย้อนกลับ"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "ไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4626,10 @@ msgstr "เปิดรูปภาพ"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "เปิดในหน้าการเปลี่ยนแปลง"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "เปิดใน Lazygit"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5106,15 @@ msgstr "โปรเจกต์"
 msgid "Project · {0}"
 msgstr "โปรเจกต์ · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "ไม่พบโฟลเดอร์ของโปรเจกต์"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "ไม่พบโฟลเดอร์ของโปรเจกต์: {0}"
 
@@ -5304,6 +5324,7 @@ msgstr "ลดการเคลื่อนไหว: มุมมองรา�
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5369,6 @@ msgid "Refresh to see new saved output."
 msgstr "รีเฟรชเพื่อดูผลลัพธ์ที่บันทึกใหม่"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "รีเฟรชเวิร์กทรี"
 
@@ -5542,6 +5562,7 @@ msgstr "ดำเนินการต่อ"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5731,10 @@ msgstr "เรียกใช้ Gateway บนเครื่องของค
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "กำลังทำงาน"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "เหมือนกับ {base}"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6327,6 +6352,11 @@ msgstr "คัดลอกบันทึกเวทีแล้ว"
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "เตรียมคอมมิตแล้ว"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Staged"
+msgstr "จัดเตรียมแล้ว"
 
 #: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
@@ -7032,6 +7062,10 @@ msgstr "บันทึกในรูปแบบบทสนทนา โด�
 msgid "The turn failed"
 msgstr "รอบนี้ล้มเหลว"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "ต้นไม้งานตรงกับคอมมิตล่าสุด"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7625,11 @@ msgstr "เข้าถึงไม่ได้"
 msgid "Unstaged"
 msgstr "ยังไม่เตรียมคอมมิต"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "ยังไม่จัดเตรียม"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7641,11 @@ msgstr "รายการที่ยังไม่รองรับ ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "เซสชันไม่มีชื่อ"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "ยังไม่ติดตาม"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7809,7 @@ msgstr "ดูการเปลี่ยนแปลงของไฟล์"
 msgid "View original"
 msgstr "ดูภาพต้นฉบับ"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "กำลังดูเช็กเอาต์อื่น การเปลี่ยนแปลงเป็นแบบอ่านอย่างเดียว"
 

@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { FolderIcon, OpenFolderIcon, MoreIcon, DeleteIcon } from '@/icons';
@@ -10,16 +11,18 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
 import { Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
-import { gitFileStatusWord } from '@/i18n/labels';
+import { changeGroupWord, gitFileStatusWord } from '@/i18n/labels';
 import {
   CHANGE_TREE_DIR_ROW_HEIGHT,
   CHANGE_TREE_FILE_ROW_HEIGHT,
+  CHANGE_TREE_GROUP_ROW_HEIGHT,
   CHANGE_TREE_ROW_INSET,
   changeTreeIndentOf,
   type ChangeTreeActionsRow,
   type ChangeTreeContextRow,
   type ChangeTreeDirRow,
   type ChangeTreeFileRow,
+  type ChangeTreeGroupRow,
 } from '@/lib/change-tree';
 
 /**
@@ -47,6 +50,65 @@ export interface ChangeTreeHandlers {
 
 /** An `Animated.View` style that holds the row's visible part at the viewport. */
 type Pinned = React.ComponentProps<typeof Animated.View>['style'];
+
+/**
+ * A status group's heading: its name at the left, and at the right how much
+ * is under it -- the one fact about the group, as the sheets' group headings
+ * put it. Not a control: the groups are the status's, not the reader's.
+ */
+export const ChangeTreeGroupRowView = memo(function ChangeTreeGroupRowView({
+  row,
+  width,
+  pinnedWidth,
+  colors,
+  pinned,
+}: {
+  row: ChangeTreeGroupRow;
+  width: number;
+  pinnedWidth: number;
+  colors: PaneChatColors;
+  pinned: Pinned;
+}) {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  const word = _(changeGroupWord[row.id]);
+  const count = t`${plural(row.fileCount, { one: '# file', other: '# files' })}`;
+  return (
+    <View
+      testID={`agent-changes-group-${row.id}`}
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={`${word}, ${count}`}
+      style={{ width }}>
+      <Animated.View style={[styles.row, styles.groupRow, pinned, { width: pinnedWidth }]}>
+        <Text
+          variant="caption"
+          weight="semibold"
+          color={row.id === 'conflicts' ? colors.status.running : colors.muted}
+          numberOfLines={1}
+          hugSlack={false}
+          style={styles.flexOne}>
+          {word}
+        </Text>
+        <View style={styles.meta}>
+          <Text variant="caption" color={colors.subtle} numberOfLines={1}>
+            {count}
+          </Text>
+          {row.additions > 0 ? (
+            <Text variant="caption" color={colors.added}>
+              +{row.additions}
+            </Text>
+          ) : null}
+          {row.deletions > 0 ? (
+            <Text variant="caption" color={colors.removed}>
+              −{row.deletions}
+            </Text>
+          ) : null}
+        </View>
+      </Animated.View>
+    </View>
+  );
+});
 
 export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
   row,
@@ -313,6 +375,16 @@ const styles = StyleSheet.create({
   },
   fileRow: {
     height: CHANGE_TREE_FILE_ROW_HEIGHT,
+    gap: 10,
+    overflow: 'hidden',
+  },
+  // The heading sits at the bottom of its row: the room above it is the break
+  // from the group before, and the first group's break is the list's top margin.
+  groupRow: {
+    height: CHANGE_TREE_GROUP_ROW_HEIGHT,
+    alignItems: 'flex-end',
+    paddingBottom: 6,
+    paddingLeft: CHANGE_TREE_ROW_INSET,
     gap: 10,
     overflow: 'hidden',
   },

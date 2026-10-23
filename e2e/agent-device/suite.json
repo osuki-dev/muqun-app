@@ -1171,6 +1171,50 @@
       },
       {
         "target": {
+          "id": "agent-changes-group-unstaged"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s5a"
+      },
+      {
+        "target": {
+          "text": "feat/linked-checkout"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s5b"
+      },
+      {
+        "run": "flows/git-diff.ad#s5c"
+      },
+      {
+        "target": {
+          "id": "agent-changes-file-linked-worktree.txt"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/git-diff.ad#s5d"
+      },
+      {
+        "target": {
+          "text": "feat/git-diff"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s5e"
+      },
+      {
+        "run": "flows/git-diff.ad#s5f"
+      },
+      {
+        "target": {
+          "id": "agent-changes-group-staged"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/git-diff.ad#s5g"
+      },
+      {
+        "target": {
           "id": "agent-changes-file-src/lib/demo-terminal-history.ts"
         },
         "mode": "press",

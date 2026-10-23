@@ -108,12 +108,16 @@ export function HomeComposerOptions({
         ))}
       </View>
       {replyTitle !== undefined ? (
-        <View>
+        // One header row: what the next message replies to, and the way out
+        // of it at the row's trailing edge, where the rows below keep their
+        // chevron. The action is a sibling of the labelled copy, not a child
+        // of it: an accessible element hides the elements inside it.
+        <View style={styles.row}>
           <View
             testID="home-composer-option-reply"
             accessible
             accessibilityLabel={t`Replying to ${replyTitle}`}
-            style={styles.row}>
+            style={styles.replyCopy}>
             <Text
               variant="bodySmall"
               weight="regular"
@@ -138,9 +142,14 @@ export function HomeComposerOptions({
               testID="home-composer-option-new-conversation"
               accessibilityRole="button"
               accessibilityLabel={t`New conversation`}
-              style={[styles.row, styles.newConversation]}
+              hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
+              style={styles.newConversation}
               onPress={onNewConversation}>
-              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                numberOfLines={1}
+                color={theme.colors.primary}>
                 {t`New conversation`}
               </Text>
             </PressableScale>
@@ -230,6 +239,18 @@ const styles = StyleSheet.create({
   label: { flexShrink: 0 },
   measure: { position: 'absolute', top: 0, left: 0, opacity: 0, alignItems: 'flex-start' },
   value: { flex: 1, minWidth: 0 },
-  newConversation: { justifyContent: 'flex-end' },
+  /** The reply row's own label and value, laid out like the rows under it. */
+  replyCopy: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  /**
+   * The row's full height as a touch target, without growing the row: the
+   * row pads 8 above and below, so the action grows back out by the same.
+   */
+  newConversation: {
+    alignSelf: 'stretch',
+    minHeight: 44,
+    marginVertical: -8,
+    paddingLeft: 8,
+    justifyContent: 'center',
+  },
   mode: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 26 },
 });

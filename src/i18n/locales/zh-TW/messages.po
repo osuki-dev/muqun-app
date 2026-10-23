@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 天}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 個檔案}}"
 
@@ -371,6 +373,10 @@ msgstr "已複製 {language} 程式碼到剪貼簿"
 #: src/components/agent-composer.tsx
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}：{title} — 在你離開時完成"
+
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{total} 個簽出中的 {listed} 個"
 
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
@@ -1231,6 +1237,11 @@ msgid "Capture restarted"
 msgstr "擷取已重新開始"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "已變更"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "已變更"
@@ -1358,17 +1369,9 @@ msgstr "選擇首頁與應用程式介面樣式。配色仍由主題決定"
 msgid "Choose project"
 msgstr "選擇專案"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "選擇要顯示的變更"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "選擇要顯示的模擬器"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "選擇工作樹"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1686,6 +1689,11 @@ msgstr "確認：{removeLabel} {label}"
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Conflicted"
+msgstr "衝突"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
 msgstr "衝突"
 
 #: src/components/custom-theme-preview.tsx
@@ -2089,8 +2097,8 @@ msgid "Could not list this computer's agents."
 msgstr "無法取得這台電腦的代理程式清單"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "無法列出工作樹。請重新整理後再試"
+msgid "Could not list worktrees."
+msgstr "無法列出工作樹"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2462,6 @@ msgid "Current agent"
 msgstr "目前的 Agent"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "目前檢出目錄"
 
@@ -3722,6 +3729,10 @@ msgstr "載入更多"
 msgid "Loading"
 msgstr "載入中"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "正在載入變更…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "正在載入指令"
@@ -4153,7 +4164,6 @@ msgid "No changelog was provided for this update."
 msgstr "本次更新未提供更新日誌"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "沒有變更"
 
@@ -4352,7 +4362,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "還沒有工作樹。在下面建立一個，就能在某個分支上工作而不打擾這份簽出"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "不是 Git 儲存庫"
 
@@ -4463,6 +4472,10 @@ msgstr "目前還沒有內容"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "沒有可復原的內容"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "沒有未提交的變更"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4626,10 @@ msgstr "開啟圖片"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "在變更中開啟"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "在 Lazygit 中開啟"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5106,15 @@ msgstr "專案"
 msgid "Project · {0}"
 msgstr "專案 · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "專案資料夾不存在"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "專案資料夾不存在：{0}"
 
@@ -5304,6 +5324,7 @@ msgstr "減少動態效果：清單檢視"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5369,6 @@ msgid "Refresh to see new saved output."
 msgstr "重新整理以查看新儲存的輸出"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "重新整理工作樹"
 
@@ -5542,6 +5562,7 @@ msgstr "恢復"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5731,10 @@ msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "執行中"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "與 {base} 相同"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6325,6 +6350,11 @@ msgid "Stage log copied"
 msgstr "已複製舞台記錄"
 
 #: src/components/diff-rows.tsx
+msgid "Staged"
+msgstr "已暫存"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
 msgid "Staged"
 msgstr "已暫存"
 
@@ -7032,6 +7062,10 @@ msgstr "把逐字記錄當成對話呈現，並收合工具步驟"
 msgid "The turn failed"
 msgstr "這一輪執行失敗"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "工作區與最近一次提交一致"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7625,11 @@ msgstr "無法連線"
 msgid "Unstaged"
 msgstr "未暫存"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "未暫存"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7641,11 @@ msgstr "暫不支援的內容（{0}）"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "未命名工作階段"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "未追蹤"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7809,7 @@ msgstr "查看檔案變更"
 msgid "View original"
 msgstr "查看原圖"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "正在檢視其他檢出目錄。變更僅供檢視"
 

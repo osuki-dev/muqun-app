@@ -1,17 +1,24 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { type LegendListRef } from '@legendapp/list/react-native';
 import { Dialog, useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { DoneIcon, DisclosureDownIcon, DisclosureUpIcon, BranchIcon, RefreshIcon } from '@/icons';
+import { BranchIcon, RefreshIcon, TerminalIcon } from '@/icons';
 
-import { AgentActionMenu } from '@/components/agent-action-menu';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { ChangeTreeHandlers } from '@/components/change-tree-rows';
 import { DiffRowList } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
-import { SheetScene, SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import {
+  SheetScene,
+  SheetSceneNotice,
+  SheetSceneQuietControl,
+  SHEET_LADDER,
+} from '@/components/sheet-scene';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { patchStateFromText } from '@/lib/agent-diff-rows';
@@ -20,10 +27,12 @@ import { agentRequestErrorDetail, isAgentOfflineError } from '@/lib/agent-reques
 import { diffEmptyState } from '@/lib/agent-workspace-missing';
 import {
   buildChangeTree,
-  changeTreeRows,
   collapseLandsOnHeader,
   defaultCollapsedDirs,
+  groupChanges,
+  groupedChangeTreeRows,
   nextDiffContext,
+  type ChangeTreeSection,
 } from '@/lib/change-tree';
 import { repoLine, type ChangeListing, type ChangesApi } from '@/lib/changes-api';
 import type { ChangesWorktreeContext } from '@/lib/changes-worktree-context';
@@ -36,16 +45,20 @@ import {
   type GitFileChange,
   type GitFilePatchState,
 } from '@/lib/git-diff';
+import { fadeIn } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 
 /**
  * What changed on disk, as a native form sheet route: the one Changes sheet,
  * for an agent session and for a terminal pane alike.
  *
- * The files are a directory tree across the sheet's full width: a directory
- * row per folder (a chain of single-folder folders is one row), a file row
- * that says its own name on one line, its status and its counts, and a file's
- * patch drawn under it by the shared diff list when the reader opens it.
+ * Read top to bottom the way a reader supervising an agent from a phone asks
+ * the questions: which branch, in the heading's detail line; whether it is
+ * dirty and by how much, in the caption; which comparison, as a segmented
+ * control when the gateway offers a base; which checkout, as the caller's
+ * switcher; then the files, grouped the way `git status` reports them
+ * (conflicts, staged, unstaged, untracked) when the listing carries the
+ * index, each row opening its patch in place.
  *
  * Where the answers come from is the `api` adapter's business
  * (`changes-api.ts`), and decides only how a patch arrives:
@@ -59,24 +72,26 @@ import { describeGatewayFailure } from '@/lib/network-error';
  *   one file's patch at a time, with "show more" under the last page.
  *
  * The scope is uncommitted changes, and "compared with {base}" when the
- * listing names a base to compare with. Under the caption, one quiet line says
- * which branch the repository is on, when the gateway says.
+ * listing names a base to compare with.
  */
 export interface ChangesSheetProps {
   testID: string;
   title?: string;
-  /** Memoised by the caller: a new adapter is a new source, and reloads. */
+  /**
+   * Memoised by the caller: a new adapter is a new source. The sheet notices
+   * the change, forgets the old listing and reloads, without remounting.
+   */
   api: ChangesApi;
   /** A file to open and land on once the uncommitted listing has it. */
   targetPath?: string;
   /** Verified checkout context, not a branch or an inferred workspace label. */
   worktree?: ChangesWorktreeContext;
-  headingActions?: ReactNode;
-  checkoutControl?: ReactNode;
-  /** Repository views pinned above the change list. */
-  navigation?: ReactNode;
-  /** Linked checkout list; the Git state survives a repository tab switch. */
-  overview?: ReactNode;
+  /** Pinned under the heading: a checkout switcher and its notices. */
+  switcher?: ReactNode;
+  /** Asked again whenever the reader refreshes the changes. */
+  onRefresh?: () => void;
+  /** The host's Git TUI, when the gateway offers it for this pane. */
+  lazygit?: { busy: boolean; open: () => void };
 }
 
 /** One file's fetched patch, per scope and path (`lazy` listings). */
@@ -96,11 +111,6 @@ const EMPTY_LISTING: ChangeListing = {
   patches: new Map(),
   truncated: false,
 };
-
-/** The unchecked scope keeps the check mark's width, so both labels line up. */
-function UncheckedSlot({ size = 16 }: { size?: number; color?: string }) {
-  return <View style={{ width: size, height: size }} />;
-}
 
 /**
  * Which branch the repository is on: `⎇ feat/x → fork/x ↑2 ↓1`, `detached at
@@ -240,6 +250,50 @@ function ChangesWorktreeLine({ worktree }: { worktree: ChangesWorktreeContext })
   );
 }
 
+/**
+ * One of the things to do from an empty sheet: a small raised chip, so two of
+ * them read as a pair of equal offers rather than as a form's one button.
+ */
+function EmptyAction({
+  label,
+  onPress,
+  busy = false,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  busy?: boolean;
+  testID?: string;
+}) {
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const surfaceBackground = useSurfaceBackground();
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ busy, disabled: busy }}
+      disabled={busy}
+      onPress={onPress}
+      style={[
+        styles.emptyAction,
+        {
+          borderRadius: profile.chrome.control,
+          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+        },
+      ]}>
+      {busy ? (
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+      ) : (
+        <Text variant="caption" weight="semibold" color={theme.colors.text}>
+          {label}
+        </Text>
+      )}
+    </PressableScale>
+  );
+}
+
 function patchKey(scope: VcsFilesMode, path: string): string {
   return `${scope}\n${path}`;
 }
@@ -258,10 +312,9 @@ export const ChangesSheet = memo(function ChangesSheet({
   api,
   targetPath,
   worktree,
-  headingActions,
-  checkoutControl,
-  navigation,
-  overview,
+  switcher,
+  onRefresh,
+  lazygit,
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -278,7 +331,6 @@ export const ChangesSheet = memo(function ChangesSheet({
   const [base, setBase] = useState<string | undefined>(undefined);
   /** Where the repository stands; kept across scopes and reloads until a listing says otherwise. */
   const [repo, setRepo] = useState<VcsRepoState | undefined>(undefined);
-  const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
   /** Which files are open, oldest first: see `openFile` for the eviction rule. */
   const [expandedOrder, setExpandedOrder] = useState<readonly string[]>([]);
   const [collapsedDirs, setCollapsedDirs] = useState<ReadonlySet<string>>(() => new Set());
@@ -291,6 +343,8 @@ export const ChangesSheet = memo(function ChangesSheet({
   const pendingTargetKey = useRef<string | null>(null);
   /** A refresh keeps the reader's open files and folders; a new scope does not. */
   const refreshing = useRef(false);
+  /** The adapter the listing in hand came from; a different one is a different source. */
+  const listedApi = useRef<ChangesApi | null>(null);
   /** Bumped whenever the patches in hand stop being current, so a late answer is dropped. */
   const patchGeneration = useRef(0);
   const pageRequests = useRef(new Map<string, AbortController>());
@@ -413,13 +467,24 @@ export const ChangesSheet = memo(function ChangesSheet({
   }, []);
 
   const listingFailed = t`Could not read the changes.`;
-  // Fetched once per opening, once per scope, and once per refresh: a route
-  // mounts when it opens.
+  // Fetched once per opening, once per scope, once per refresh, and once per
+  // adapter: a route mounts when it opens, and a checkout switch hands the
+  // sheet a new adapter in place.
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     const keepPlace = refreshing.current;
     refreshing.current = false;
+    if (listedApi.current !== api) {
+      // Another source: the rows in hand are another checkout's, and so are
+      // the base and the files the reader had open.
+      listedApi.current = api;
+      setListing(EMPTY_LISTING);
+      setExpandedOrder([]);
+      setMenuPath(null);
+      setError(null);
+      setBase(undefined);
+    }
     setLoading(true);
     api
       .listing(scope, controller.signal)
@@ -486,12 +551,12 @@ export const ChangesSheet = memo(function ChangesSheet({
     setMenuPath(null);
     refreshing.current = true;
     setReload((count) => count + 1);
-  }, []);
+    onRefresh?.();
+  }, [onRefresh]);
   const retry = useCallback(() => setReload((count) => count + 1), []);
 
   const changeScope = useCallback(
     (next: VcsFilesMode) => {
-      setScopeMenuOpen(false);
       if (next === scope) return;
       // A different comparison is different text; the list starts collapsed
       // again, which is also the honest reading position.
@@ -666,7 +731,19 @@ export const ChangesSheet = memo(function ChangesSheet({
   );
 
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
-  const tree = useMemo(() => buildChangeTree(listing.changes), [listing.changes]);
+  /**
+   * The files by status group, one tree each. Only `…/git/status` says where
+   * a change sits in the index; the `vcs/files` routes answer one flag for
+   * every file, so their listing has one tracked group and no headings.
+   */
+  const sections = useMemo<ChangeTreeSection[]>(
+    () =>
+      groupChanges(listing.changes, listing.source === 'paged').map((group) => ({
+        group,
+        tree: buildChangeTree(group.files),
+      })),
+    [listing.changes, listing.source]
+  );
   const {
     pages: openPages,
     contextOffers,
@@ -712,8 +789,7 @@ export const ChangesSheet = memo(function ChangesSheet({
 
   const rows = useMemo(
     () =>
-      changeTreeRows({
-        tree,
+      groupedChangeTreeRows(sections, {
         collapsed: collapsedDirs,
         expanded,
         pages: openPages,
@@ -729,7 +805,7 @@ export const ChangesSheet = memo(function ChangesSheet({
       expanded,
       menuPath,
       openPages,
-      tree,
+      sections,
       truncatedPaths,
       unchangedPaths,
     ]
@@ -770,45 +846,65 @@ export const ChangesSheet = memo(function ChangesSheet({
         ? listing.reason
         : undefined,
   });
-  // The caption keeps what the last scope said while the next one loads, so a
-  // reload never swaps the line for a blank or a third wording.
+  const paneGone = listing.reason === 'unknown_pane';
+  // The caption is the answer to "is it dirty": the counts when it is, and
+  // the reason when it is not. It keeps what the last listing said while the
+  // next one loads, so a reload never swaps the line for a blank or a third
+  // wording; only the very first load has nothing to keep and says so.
   const summary =
     fileCount > 0
       ? t`${plural(listing.changes.length, { one: '# file', other: '# files' })} · +${totals.additions} −${totals.deletions}`
-      : t`No changes`;
+      : listing.reason === 'not_a_repository'
+        ? t`Not a git repository`
+        : listing.reason === 'workspace_missing'
+          ? t`Project folder is missing`
+          : paneGone
+            ? t`This terminal pane is gone.`
+            : scope === 'branch' && base
+              ? t`Same as ${base}`
+              : t`Nothing uncommitted`;
   const [lastCaption, setLastCaption] = useState<string | null>(null);
   useEffect(() => {
     if (!loading) setLastCaption(summary);
   }, [loading, summary]);
-  const emptyText =
-    empty === 'clean' && listing.reason === 'unknown_pane'
+  const caption = loading ? (lastCaption ?? t`Loading changes…`) : summary;
+
+  const emptyTitle =
+    empty === 'clean' && paneGone
       ? t`This terminal pane is gone.`
       : empty === 'workspace-missing'
-        ? t`Project folder is missing: ${listing.missing?.directory ?? ''}`
+        ? t`Project folder is missing`
         : empty === 'not-a-repository'
           ? t`Not a git repository`
           : scope === 'branch' && base
             ? t`No changes compared with ${base}.`
             : t`Nothing uncommitted in this project.`;
+  const emptyCaption =
+    empty === 'workspace-missing'
+      ? (listing.missing?.directory ?? null)
+      : empty === 'clean' && !paneGone && !(scope === 'branch' && base)
+        ? t`The working tree matches the last commit.`
+        : null;
 
   const workingLabel = t`Uncommitted changes`;
   const branchLabel = base ? t`Compared with ${base}` : '';
-  const scopeLabel = scope === 'branch' && base ? branchLabel : workingLabel;
-  const ScopeChevron = scopeMenuOpen ? DisclosureUpIcon : DisclosureDownIcon;
 
   const discardName = discardTarget?.path.split('/').pop() ?? '';
   const discardUntracked = discardTarget?.status === 'untracked';
+
+  // The body is one state at a time -- rows, loading, an error, or an empty
+  // sheet -- and each one fades in where the last one was.
+  const bodyKey = rows.length > 0 ? 'rows' : error ? 'error' : empty;
 
   return (
     <SheetScene
       testID={testID}
       title={title ?? t`Changes`}
       // The caption line is always there, so the list under it never jumps.
-      caption={loading && lastCaption ? lastCaption : summary}
+      caption={caption}
       detail={
-        checkoutControl || worktree || repo ? (
+        worktree || repo ? (
           <View style={{ gap: 4 }}>
-            {checkoutControl}
             {worktree ? <ChangesWorktreeLine worktree={worktree} /> : null}
             {repo ? <ChangesRepoLine repo={repo} /> : null}
           </View>
@@ -816,56 +912,51 @@ export const ChangesSheet = memo(function ChangesSheet({
       }
       headingTrailing={
         <View style={styles.trailing}>
-          {headingActions}
-          {!overview ? (
-            <>
-              <PressableScale
-                testID="agent-changes-scope"
-                accessibilityRole="button"
-                accessibilityLabel={t`Choose which changes to show`}
-                accessibilityState={{ expanded: scopeMenuOpen, disabled: !base }}
-                disabled={!base}
-                onPress={() => setScopeMenuOpen((open) => !open)}
-                style={styles.scope}>
-                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                  {scopeLabel}
-                </Text>
-                {base ? <ScopeChevron size={14} color={theme.colors.textMuted} /> : null}
-              </PressableScale>
-              <SheetSceneQuietControl
-                testID="changes-refresh"
-                accessibilityLabel={t`Refresh changes`}
-                busy={loading}
-                onPress={refresh}>
-                <RefreshIcon size={17} color={theme.colors.textMuted} />
-              </SheetSceneQuietControl>
-            </>
+          {lazygit ? (
+            <SheetSceneQuietControl
+              testID="changes-lazygit"
+              accessibilityLabel={t`Open in Lazygit`}
+              busy={lazygit.busy}
+              onPress={lazygit.open}>
+              <TerminalIcon size={17} color={theme.colors.textMuted} />
+            </SheetSceneQuietControl>
           ) : null}
+          <SheetSceneQuietControl
+            testID="changes-refresh"
+            accessibilityLabel={t`Refresh changes`}
+            busy={loading}
+            onPress={refresh}>
+            <RefreshIcon size={17} color={theme.colors.textMuted} />
+          </SheetSceneQuietControl>
         </View>
       }
       header={
         <>
-          {navigation}
-          {!overview && scopeMenuOpen && base ? (
-            <AgentActionMenu
-              testID="agent-changes-scope-menu"
-              surface="ground"
-              items={[
-                {
-                  id: 'working',
-                  label: workingLabel,
-                  Icon: scope === 'working' ? DoneIcon : UncheckedSlot,
-                  onPress: () => changeScope('working'),
-                  testID: 'agent-changes-scope-working',
-                },
-                {
-                  id: 'branch',
-                  label: branchLabel,
-                  Icon: scope === 'branch' ? DoneIcon : UncheckedSlot,
-                  onPress: () => changeScope('branch'),
-                  testID: 'agent-changes-scope-branch',
-                },
-              ]}
+          {base ? (
+            // The comparison is a choice between two named things, so it is
+            // drawn as one: a segmented control, not a menu hanging off the
+            // heading. Only when there is a base to compare with.
+            <Animated.View entering={fadeIn('short')}>
+              <SettingsSegmented
+                testID="agent-changes-scope"
+                options={[
+                  { label: workingLabel, value: 'working' },
+                  { label: branchLabel, value: 'branch' },
+                ]}
+                value={scope}
+                onChange={(next) => changeScope(next === 'branch' ? 'branch' : 'working')}
+              />
+            </Animated.View>
+          ) : null}
+          {switcher}
+          {error && fileCount > 0 ? (
+            // The old rows are still good; what failed is asking again.
+            <SheetSceneNotice
+              testID="changes-refresh-notice"
+              message={error}
+              actionLabel={t`Try again`}
+              onAction={retry}
+              busy={loading}
             />
           ) : null}
           {listing.truncated ? (
@@ -906,60 +997,80 @@ export const ChangesSheet = memo(function ChangesSheet({
         error states are drawn inside `DiffRowList` -- or the native form sheet
         finds no scroll view and sizes itself to its contents.
       */}
-      {overview ?? (
-        <View style={styles.body}>
-          <DiffRowList
-            rows={rows}
-            colors={colors}
-            // The gutter stays opaque, not through the artwork-opacity slider:
-            // it is pinned over code panning sideways under it, and a
-            // see-through column shows that code behind the line numbers.
-            // Opacity audit: legibility -- the gutter sits over moving code and
-            // must hide it whatever the slider says.
-            gutterFill={theme.colors.surface}
-            headerFill={surfaceBackground(theme.colors.surface)}
-            surfaceFill="transparent"
-            // One list of changes against `HEAD`, not a staged/unstaged split.
-            showSide={false}
-            onToggleFile={toggleFile}
-            onShowMore={showMore}
-            listRef={listRef}
-            tree={treeHandlers}
-            fallback={
-              empty === 'loading' ? (
-                <ActivityIndicator size="small" color={theme.colors.textMuted} />
-              ) : error ? (
-                <>
-                  <Text
-                    testID="changes-error"
-                    variant="bodySmall"
-                    color={theme.colors.textMuted}
-                    style={styles.emptyText}>
-                    {error}
-                  </Text>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Try again`}
-                    onPress={retry}
-                    style={styles.retry}>
-                    <Text variant="caption" color={theme.colors.primary}>
-                      <Trans>Try again</Trans>
-                    </Text>
-                  </PressableScale>
-                </>
-              ) : (
+      <Animated.View key={bodyKey} entering={fadeIn('short')} style={styles.body}>
+        <DiffRowList
+          rows={rows}
+          colors={colors}
+          // The gutter stays opaque, not through the artwork-opacity slider:
+          // it is pinned over code panning sideways under it, and a
+          // see-through column shows that code behind the line numbers.
+          // Opacity audit: legibility -- the gutter sits over moving code and
+          // must hide it whatever the slider says.
+          gutterFill={theme.colors.surface}
+          headerFill={surfaceBackground(theme.colors.surface)}
+          surfaceFill="transparent"
+          // One list of changes against `HEAD`; the groups say where a change sits.
+          showSide={false}
+          onToggleFile={toggleFile}
+          onShowMore={showMore}
+          listRef={listRef}
+          tree={treeHandlers}
+          fallback={
+            empty === 'loading' ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
+            ) : error ? (
+              <>
                 <Text
-                  testID="agent-vcs-diff-empty"
+                  testID="changes-error"
                   variant="bodySmall"
                   color={theme.colors.textMuted}
                   style={styles.emptyText}>
-                  {emptyText}
+                  {error}
                 </Text>
-              )
-            }
-          />
-        </View>
-      )}
+                <View style={styles.emptyActions}>
+                  <EmptyAction testID="changes-retry" label={t`Try again`} onPress={retry} />
+                </View>
+              </>
+            ) : (
+              <>
+                <Text
+                  testID="agent-vcs-diff-empty"
+                  variant="bodySmall"
+                  color={theme.colors.text}
+                  style={styles.emptyText}>
+                  {emptyTitle}
+                </Text>
+                {emptyCaption ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    numberOfLines={2}
+                    style={styles.emptyText}>
+                    {emptyCaption}
+                  </Text>
+                ) : null}
+                {paneGone ? null : (
+                  <View style={styles.emptyActions}>
+                    <EmptyAction
+                      testID="changes-empty-refresh"
+                      label={t`Refresh`}
+                      onPress={refresh}
+                    />
+                    {lazygit && empty === 'clean' ? (
+                      <EmptyAction
+                        testID="changes-empty-lazygit"
+                        label={t`Open in Lazygit`}
+                        busy={lazygit.busy}
+                        onPress={lazygit.open}
+                      />
+                    ) : null}
+                  </View>
+                )}
+              </>
+            )
+          }
+        />
+      </Animated.View>
     </SheetScene>
   );
 });
@@ -967,23 +1078,22 @@ export const ChangesSheet = memo(function ChangesSheet({
 const styles = StyleSheet.create({
   body: { flex: 1, minHeight: 0 },
   emptyText: { textAlign: 'center', paddingHorizontal: SHEET_LADDER.gutter },
+  emptyActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: SHEET_LADDER.gap,
+    marginTop: SHEET_LADDER.tight,
+  },
+  emptyAction: {
+    minHeight: 36,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderCurve: 'continuous',
+  },
   trailing: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   repoLine: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
   repoName: { flexShrink: 1, minWidth: 0 },
   repoUpstream: { flexShrink: 2, minWidth: 0 },
   repoFixed: { flexShrink: 0 },
-  scope: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    maxWidth: 200,
-    minHeight: 32,
-    paddingLeft: 8,
-  },
-  retry: {
-    minHeight: 32,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });
