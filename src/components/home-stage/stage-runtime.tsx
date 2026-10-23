@@ -270,7 +270,6 @@ export function StageRuntime(
   }, [onSceneReady]);
 
   const qualityDropped = useStableHandler((next: StageQuality) => props.onQualityDrop(next));
-  const qualityHeld = useStableHandler((rung: StageQuality) => props.onQualityHeld?.(rung));
 
   // Priority 1: this callback draws the frame itself, instead of Fiber.
   useFrame(() => {
@@ -355,7 +354,6 @@ export function StageRuntime(
     // are evidence of nothing.
     if (!reducedMotion && (state.wasMoving || moving || ambient)) {
       const was = state.budget.quality;
-      const wasHeld = state.budget.held;
       const next = recordStageFrame(state.budget, {
         nowMs: now,
         // Only the frame's own work: the gap to the next frame also measures
@@ -364,7 +362,6 @@ export function StageRuntime(
         frameMs: workMs,
       });
       if (next !== was) qualityDropped(next);
-      else if (!wasHeld && state.budget.held) qualityHeld(next);
     }
     if (stagePerf) {
       const { render } = (gl as unknown as WebGPURenderer).info;
