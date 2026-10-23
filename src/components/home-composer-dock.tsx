@@ -599,6 +599,20 @@ export function HomeComposerDock({
         })),
     [paneShortcuts]
   );
+  // Its skills, when its agent has a typed way to ask for one: `$` lists them
+  // and a pick is typed into the pane with the agent's own prefix.
+  const paneSkillPrefix = paneShortcuts?.skillPrefix;
+  const paneSkills = useMemo<AgentCatalog['skills']>(
+    () =>
+      paneSkillPrefix
+        ? (paneShortcuts?.skills ?? []).map((skill) => ({
+            id: skill.name,
+            name: skill.name,
+            description: skill.description,
+          }))
+        : NO_SKILLS,
+    [paneShortcuts, paneSkillPrefix]
+  );
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
@@ -1630,6 +1644,12 @@ export function HomeComposerDock({
   }
   async function invokeSkill(skill: string, args: string) {
     const targeted = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
+    if (targeted?.kind === 'pane') {
+      // Typed into the pane the way its agent asks for a skill; the composer
+      // keeps the draft until the pane has taken it.
+      if (!paneSkillPrefix) return false;
+      return followUp(targeted, `${paneSkillPrefix}${skill}${args ? ` ${args}` : ''}`, []);
+    }
     const accepted =
       (await threadAct((sessionId, asid) => invokeAgentSkill(sessionId, asid, { skill }))) ??
       (targeted
@@ -2097,7 +2117,9 @@ export function HomeComposerDock({
         thread
           ? threadSession && threadFeatures.skills
             ? (threadCatalog?.skills ?? NO_SKILLS)
-            : NO_SKILLS
+            : threadPane
+              ? paneSkills
+              : NO_SKILLS
           : features.skills && !terminalAgent
             ? (catalog?.skills ?? NO_SKILLS)
             : NO_SKILLS

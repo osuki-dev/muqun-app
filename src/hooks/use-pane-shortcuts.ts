@@ -26,24 +26,31 @@ export function usePaneShortcuts({
   enabled: boolean;
   refreshKey?: string;
 }): PaneShortcuts | null {
-  const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
+  // Held with the pane it answers for: another pane's keys, commands and
+  // skills are never returned for this one, not even until this one answers.
+  const [answer, setAnswer] = useState<{ key: string; shortcuts: PaneShortcuts } | null>(null);
+  const key = `${sessionId}\u0000${paneId}`;
   useEffect(() => {
     if (!enabled || !paneId || !sessionId) {
-      setShortcuts(null);
+      setAnswer(null);
       return;
     }
     let cancelled = false;
     void loadPaneShortcuts(sessionId, paneId)
       .then((value) => {
         if (cancelled) return;
-        setShortcuts((previous) => (samePaneShortcuts(previous, value) ? previous : value));
+        setAnswer((previous) =>
+          previous && previous.key === key && samePaneShortcuts(previous.shortcuts, value)
+            ? previous
+            : { key, shortcuts: value }
+        );
       })
       .catch(() => {
-        if (!cancelled) setShortcuts(null);
+        if (!cancelled) setAnswer(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [enabled, paneId, refreshKey, sessionId]);
-  return shortcuts;
+  }, [enabled, key, paneId, refreshKey, sessionId]);
+  return enabled && answer?.key === key ? answer.shortcuts : null;
 }
