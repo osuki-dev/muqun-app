@@ -1597,8 +1597,13 @@ export function HomeComposerDock({
       .map((item) => item.id)
       .join(',')
   );
+  // Kept while Home is merely mounted: tearing this down on blur and back up
+  // on focus re-read every followed row's whole transcript on each return
+  // from the terminal. The socket watches stay; the poll skips its ticks while
+  // Home is not in front (`readInFront`).
+  const readInFront = useLatestReader(focused);
   useEffect(() => {
-    if (!followedBound || !focused) return;
+    if (!followedBound || !appActive) return;
     // One read per row at a time: a snapshot takes up to the request budget,
     // which is longer than the poll, and the poll used to stack reads behind
     // a slow one. Where the row's computer has `ws_events`, its session's
@@ -1655,6 +1660,7 @@ export function HomeComposerDock({
     const timer =
       polled.length > 0
         ? setInterval(() => {
+            if (!readInFront()) return;
             for (const item of polled) readOne(item);
           }, BOUND_SESSION_READ_MS)
         : null;
@@ -1663,7 +1669,7 @@ export function HomeComposerDock({
       for (const pending of settle.values()) clearTimeout(pending);
       for (const release of releases) release();
     };
-  }, [followedBound, focused]);
+  }, [appActive, followedBound, readInFront]);
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
@@ -1732,7 +1738,11 @@ export function HomeComposerDock({
   const bar = (
     <View>
       {thread ? (
-        <HomeThreadFeed target={thread} enabled={focused && appActive && ready && selected} />
+        <HomeThreadFeed
+          target={thread}
+          enabled={appActive && ready && selected}
+          inFront={focused}
+        />
       ) : null}
       {visibleUnsure ? (
         <View
