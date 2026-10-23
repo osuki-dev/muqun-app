@@ -228,7 +228,7 @@ export function SheetDust({
 }
 
 /** A sheet's grain, as a multiple of a card's. */
-const SHEET_GRAIN = 1.6;
+const SHEET_GRAIN = 1.2;
 /** A sheet's grains land before its picture forms (`gather`), and glow (`glow`). */
 const SHEET_GATHER = 0.25;
 const SHEET_GLOW = 0.8;
