@@ -100,6 +100,8 @@ export function SshHostList() {
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
+        // Inset from the sides so the form centres in the safe area (iPhone Duo).
+        style={{ marginLeft: insets.left, marginRight: insets.right }}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
         {editing ? (
           <SshHostForm

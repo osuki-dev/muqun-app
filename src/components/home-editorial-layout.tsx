@@ -40,6 +40,7 @@ import {
   getEditorialLayoutGeometry,
   editorialScenePlacement,
 } from '@/lib/home-editorial-layout';
+import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { LAUNCH_ENTRY_HEIGHT, LAUNCH_GRID_GAP } from '@/lib/home-launch-model';
 import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
@@ -81,6 +82,12 @@ export type HomeEditorialLayoutProps = {
   artworkForeground?: boolean;
   /** Safe-area space above the phone composition, available to scenic artwork only. */
   topInset?: number;
+  /**
+   * The side safe areas (iPhone Duo's status bar runs down the right edge).
+   * The page's columns, title and controls are laid out between them; the
+   * artwork bleeds through them to the glass.
+   */
+  sideInsets?: SideInsets;
   /** Scroll position drives reversible cover fades and pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
@@ -259,6 +266,7 @@ export function HomeEditorialLayout({
   artworkTopInset = 0,
   artworkForeground = true,
   topInset = 0,
+  sideInsets = NO_SIDE_INSETS,
   cover = false,
   coverTitle,
   headerAction,
@@ -317,7 +325,10 @@ export function HomeEditorialLayout({
   );
   const maxWidth = pad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH;
   const geometry = getEditorialLayoutGeometry(
-    measuredWidth || Math.min(contentWidth, maxWidth),
+    Math.max(
+      0,
+      (measuredWidth || Math.min(contentWidth, maxWidth)) - sideInsets.left - sideInsets.right
+    ),
     fontScale,
     hasAside,
     pad
@@ -330,6 +341,16 @@ export function HomeEditorialLayout({
   const padComposerStyle = useAnimatedStyle(() => ({
     height: padComposerHeight + Math.max(0, -keyboardOffset.get()),
   }));
+  // The gutter is measured from the safe edges, and a full-bleed band pays the
+  // whole margin back so its picture still reaches the glass.
+  const rootPadding = {
+    paddingLeft: geometry.gutter + sideInsets.left,
+    paddingRight: geometry.gutter + sideInsets.right,
+  };
+  const bleed = {
+    marginLeft: -rootPadding.paddingLeft,
+    marginRight: -rootPadding.paddingRight,
+  };
   const padLaunchLayout =
     pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
@@ -523,7 +544,8 @@ export function HomeEditorialLayout({
         style={[
           styles.root,
           styles.padRoot,
-          { maxWidth, height: viewportHeight, paddingHorizontal: geometry.gutter },
+          { maxWidth, height: viewportHeight },
+          rootPadding,
           style,
         ]}>
         {hasHeaderRow ? (
@@ -756,7 +778,7 @@ export function HomeEditorialLayout({
           setMeasuredWidth(event.nativeEvent.layout.width);
           sceneOrigin.set(event.nativeEvent.layout.y + 12);
         }}
-        style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
+        style={[styles.root, { maxWidth }, rootPadding, style]}>
         <View style={split ? styles.coverColumns : undefined}>
           <View style={split ? { width: coverWidth, minWidth: 0 } : undefined}>
             <View style={styles.coverScene}>
@@ -820,7 +842,7 @@ export function HomeEditorialLayout({
                         : 0,
                     // Keep the launch tiles and reading sections at their existing positions.
                     marginBottom: fullBleedScene ? scenePlacement.marginBottom : 0,
-                    marginHorizontal: split ? 0 : -geometry.gutter,
+                    ...(split ? null : bleed),
                     zIndex: 1,
                   },
                   animatedArtworkStyle,
@@ -894,12 +916,7 @@ export function HomeEditorialLayout({
         key="without-artwork"
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-        style={[
-          styles.root,
-          styles.noArtworkRoot,
-          { maxWidth, paddingHorizontal: geometry.gutter },
-          style,
-        ]}>
+        style={[styles.root, styles.noArtworkRoot, { maxWidth }, rootPadding, style]}>
         {hasHeaderRow ? (
           <View style={styles.noArtworkToolbar}>
             <View style={[styles.mastheadLeadGroup, styles.noArtworkLeadGroup]}>
@@ -1012,7 +1029,7 @@ export function HomeEditorialLayout({
       key="with-artwork"
       testID="home-editorial-layout"
       onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-      style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
+      style={[styles.root, { maxWidth }, rootPadding, style]}>
       <View style={styles.masthead}>
         {hasHeaderRow ? (
           <View style={styles.mastheadActionRow}>
@@ -1036,7 +1053,7 @@ export function HomeEditorialLayout({
         <Animated.View
           style={[
             {
-              marginHorizontal: -geometry.gutter,
+              ...bleed,
               // The launch entries rise one entry's height into the artwork,
               // over its foot, so the page starts where the picture ends.
               marginBottom: hasSlot(launches) ? 12 - LAUNCH_ENTRY_HEIGHT : 12,

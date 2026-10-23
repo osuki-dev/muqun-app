@@ -8,6 +8,7 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { FloatingHandle } from '@/components/floating-handle';
 import { GlassChrome } from '@/components/glass-chrome';
 import { appChrome } from '@/constants/appearance';
+import { sideInsetPadding, type SideInsets } from '@/hooks/use-side-insets';
 import { fadeIn, fadeOutDown, riseIn } from '@/lib/motion';
 
 /**
@@ -70,6 +71,12 @@ export interface EditorControlsProps {
   /** Clearance at the bottom: the safe area, and anything standing in it. */
   bottomInset?: number;
   /**
+   * The side safe-area insets where the pane meets the glass. The button's
+   * rails and the panel's controls stay inside them; the panel's glass still
+   * runs to the edge.
+   */
+  sideInsets?: SideInsets;
+  /**
    * The system keyboard's height as it animates, negative while it is up.
    *
    * The panel rides it rather than the terminal doing so, and that is a
@@ -94,6 +101,7 @@ export function EditorControls({
   offsetY,
   topInset = 0,
   bottomInset = 0,
+  sideInsets = NO_SIDE_INSETS,
   keyboardOffset,
   children,
   disabled = false,
@@ -118,25 +126,31 @@ export function EditorControls({
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       {/* Hidden rather than unmounted while the keyboard is out, so the layer
           keeps the pane's measurement and the rail the button was parked on. */}
-      <FloatingHandle
-        offsetX={offsetX}
-        offsetY={offsetY}
-        topInset={topInset}
-        bottomInset={bottomInset}
-        hidden={expanded}
-        onPress={onExpand}
-        accessibilityLabel={t`Show the editor keyboard`}
-        accessibilityHint={t`Opens the keyboard, the editor keys and the composer over this editor. Drag to move.`}
-        moveLabel={t`Move the editor controls`}>
-        {/* `primary`, not `text`. This handle floats over the *pane*, whose
+      {/* The handle measures this layer for its rails, so insetting the layer
+          keeps both rails clear of the side insets. */}
+      <View
+        pointerEvents="box-none"
+        style={[styles.handleLayer, { left: sideInsets.left, right: sideInsets.right }]}>
+        <FloatingHandle
+          offsetX={offsetX}
+          offsetY={offsetY}
+          topInset={topInset}
+          bottomInset={bottomInset}
+          hidden={expanded}
+          onPress={onExpand}
+          accessibilityLabel={t`Show the editor keyboard`}
+          accessibilityHint={t`Opens the keyboard, the editor keys and the composer over this editor. Drag to move.`}
+          moveLabel={t`Move the editor controls`}>
+          {/* `primary`, not `text`. This handle floats over the *pane*, whose
             background is the terminal's, while `text` is the colour of the
             app's own surfaces -- so in light mode it drew a dark glyph on a
             dark editor and the control read as a blank grey disc. The other
             controls that float over the pane (`paneEntries` in its transparent
             tray) already use `primary` for the same reason, and a custom pack's
             primary is contrast-checked against its surfaces. */}
-        <KeyboardIcon size={20} color={theme.colors.primary} />
-      </FloatingHandle>
+          <KeyboardIcon size={20} color={theme.colors.primary} />
+        </FloatingHandle>
+      </View>
       {expanded ? (
         <Animated.View pointerEvents="box-none" style={[styles.panelAnchor, panelStyle]}>
           <GlassChrome
@@ -144,7 +158,13 @@ export function EditorControls({
             shape="composerDock"
             entering={riseIn()}
             exiting={fadeOutDown('short')}
-            style={[styles.panel, { paddingBottom: Math.max(bottomInset, 10) }]}>
+            style={[
+              styles.panel,
+              {
+                paddingBottom: Math.max(bottomInset, 10),
+                ...sideInsetPadding(sideInsets, PANEL_GUTTER),
+              },
+            ]}>
             <View
               // The body is inert while the pane cannot take input -- a
               // reconnecting SSH shell, a pane the gateway has not answered for.
@@ -170,7 +190,15 @@ export const editorPanelRow = {
   exiting: fadeOutDown('short'),
 };
 
+const NO_SIDE_INSETS: SideInsets = { left: 0, right: 0 };
+const PANEL_GUTTER = 10;
+
 const styles = StyleSheet.create({
+  handleLayer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+  },
   /** Where a keyboard goes: the full width of the pane, along the bottom of it. */
   panelAnchor: {
     position: 'absolute',
@@ -183,7 +211,6 @@ const styles = StyleSheet.create({
   /** The ordinary dock's own shape, because this stands in the dock's seat. */
   panel: {
     paddingTop: 8,
-    paddingHorizontal: 10,
     borderTopLeftRadius: appChrome.radius.composerDock,
     borderTopRightRadius: appChrome.radius.composerDock,
     borderCurve: 'continuous',

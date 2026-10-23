@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The settings page's furniture: the section surface, the five kinds of row that
@@ -281,6 +282,7 @@ export function SettingsCard({
   flush?: boolean;
 }) {
   const profile = useAppearanceProfile();
+  const bleed = useSideBleed();
   const items = Children.toArray(children);
   const rows = items.map((row, position) => {
     const key = isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`;
@@ -300,7 +302,9 @@ export function SettingsCard({
       </Fragment>
     );
   });
-  if (flush) return <View style={styles.sectionBodyFlush}>{rows}</View>;
+  // In a sheet whose rows run under a side status bar (iPhone Duo) a clipped
+  // body would cut them off at the column's edge.
+  if (flush) return <View style={bleed.active ? undefined : styles.sectionBodyFlush}>{rows}</View>;
   return (
     <Surface
       slot="cards.decoration"

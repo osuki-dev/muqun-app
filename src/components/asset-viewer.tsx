@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 
 import { useMarkdownStyle } from '@/hooks/use-markdown-style';
 import type { createMarkdownStyle } from '@/lib/markdown-style';
@@ -143,7 +144,10 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
             <PressableScale
               accessibilityLabel={t`Close preview`}
               onPress={onClose}
-              style={[styles.encryptedLoadingClose, { top: insets.top + 10 }]}>
+              style={[
+                styles.encryptedLoadingClose,
+                { top: insets.top + 10, right: 14 + insets.right },
+              ]}>
               <CloseIcon size={20} color="#FFFFFF" />
             </PressableScale>
           </View>
@@ -422,7 +426,13 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             photograph is too. */}
         <ReskinSurface id="asset-viewer">
           <SheetFrame tint="background" frosted>
-            <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
+            <View
+              style={[
+                styles.sheetColumn,
+                // The sides too: iPhone Duo keeps its status bar down the right edge.
+                sideInsetPadding(insets),
+                { paddingBottom: insets.bottom },
+              ]}>
               {/* SafeAreaView reports zero insets inside a native Modal, so pad from
               the root provider's insets instead.
 

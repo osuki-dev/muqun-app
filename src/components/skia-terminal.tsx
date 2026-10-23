@@ -123,6 +123,7 @@ import {
 import { readTerminalSurface, type TerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import { useUserFontProblem } from '@/hooks/use-user-fonts';
+import type { SideInsets } from '@/hooks/use-side-insets';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { glyphMetrics, renderingIdentity } from '@/terminal/glyph-cache';
 import { useAppSettings } from '@/stores/app-settings';
@@ -464,6 +465,7 @@ export function SkiaTerminal({
   paneScale = 'remembered',
   opaqueCanvas = true,
   touchInput,
+  sideInsets = NO_SIDE_INSETS,
 }: {
   /**
    * The pane's rendered text, parsed here on every change. What the gateway
@@ -618,6 +620,15 @@ export function SkiaTerminal({
     rows: number;
     send: (bytes: Uint8Array) => void;
   };
+  /**
+   * The screen's left and right safe-area insets where this canvas meets the
+   * glass. The grid, its overlays and its touch area stay inside them, so the
+   * column count is measured from the inset width; the strips beside it are
+   * painted with the canvas's own fill, so the terminal's background still runs
+   * to the edge. Zero everywhere except a display that reports side insets in
+   * portrait, such as iPhone Duo's status column on the right.
+   */
+  sideInsets?: SideInsets;
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
@@ -3425,11 +3436,24 @@ export function SkiaTerminal({
   }
 
   return (
-    <View
-      onLayout={handleLayout}
-      style={[styles.shell, canvasIsOpaque && { backgroundColor: canvasFill }]}>
-      <GestureDetector gesture={gesture}>
-        {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
+    <View style={[styles.frame, { paddingLeft: sideInsets.left, paddingRight: sideInsets.right }]}>
+      {sideInsets.left > 0 ? (
+        <View
+          pointerEvents="none"
+          style={[styles.bleed, { left: 0, width: sideInsets.left, backgroundColor: canvasFill }]}
+        />
+      ) : null}
+      {sideInsets.right > 0 ? (
+        <View
+          pointerEvents="none"
+          style={[styles.bleed, { right: 0, width: sideInsets.right, backgroundColor: canvasFill }]}
+        />
+      ) : null}
+      <View
+        onLayout={handleLayout}
+        style={[styles.shell, canvasIsOpaque && { backgroundColor: canvasFill }]}>
+        <GestureDetector gesture={gesture}>
+          {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
             the native view outright, and the non-opaque one is a texture HWUI
             re-samples and recomposites every frame, with whatever is behind it
             blended in rather than occlusion-skipped.
@@ -3444,174 +3468,174 @@ export function SkiaTerminal({
             Keep the TextureView backing stable so parent clipping, transforms
             and sibling overlays remain correct. Skia applies opacity changes
             in place without replacing the native view. See `terminalCanvasPaint`. */}
-        <View collapsable={false} style={styles.canvas} onLayout={revealCanvas}>
-          <Canvas
-            android={{ backingView: 'TextureView', opaque: canvasIsOpaque && opaqueCanvas }}
-            style={StyleSheet.absoluteFill}>
-            <Fill color={canvasFill} />
-            <Group transform={contentTransform}>
-              {chunkDraws.map((chunk) => (
-                // A block records its rows from its own first row down and is
-                // placed by this transform, which is what lets a recording outlive
-                // the rows underneath it scrolling: a streaming pane re-draws the
-                // same display list one row higher instead of recording it again.
-                // The transform is a constant, not an animated value -- the one
-                // above it is the only thing moving, so there is no second live
-                // transform for this one to disagree with per frame.
-                //
-                // The key is positional on purpose: these are interchangeable
-                // siblings, and keying by content would collide the moment two
-                // blocks held the same rows.
-                <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
-                  <Picture picture={chunk.picture} />
-                </Group>
-              ))}
-              {/*
+          <View collapsable={false} style={styles.canvas} onLayout={revealCanvas}>
+            <Canvas
+              android={{ backingView: 'TextureView', opaque: canvasIsOpaque && opaqueCanvas }}
+              style={StyleSheet.absoluteFill}>
+              <Fill color={canvasFill} />
+              <Group transform={contentTransform}>
+                {chunkDraws.map((chunk) => (
+                  // A block records its rows from its own first row down and is
+                  // placed by this transform, which is what lets a recording outlive
+                  // the rows underneath it scrolling: a streaming pane re-draws the
+                  // same display list one row higher instead of recording it again.
+                  // The transform is a constant, not an animated value -- the one
+                  // above it is the only thing moving, so there is no second live
+                  // transform for this one to disagree with per frame.
+                  //
+                  // The key is positional on purpose: these are interchangeable
+                  // siblings, and keying by content would collide the moment two
+                  // blocks held the same rows.
+                  <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
+                    <Picture picture={chunk.picture} />
+                  </Group>
+                ))}
+                {/*
               Above the text, not behind it: a terminal's own background runs
               cell-to-cell and a highlight painted underneath would be invisible
               on every row an agent gave a background colour to. Translucent, so
               the text it is describing stays readable through it -- the reader
               is checking what they grabbed.
             */}
-              {highlightRects.map((highlight) => (
-                <Rect
-                  key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
-                  x={highlight.x}
-                  y={highlight.y}
-                  width={highlight.width}
-                  height={highlight.height}
-                  color={selectionFill}
-                />
-              ))}
-              {frame.cursor.visible && hasOutput ? (
-                // A slim beam caret rather than a full-cell underline: the
-                // underline read as a stray horizontal bar sitting under the
-                // last line.
-                //
-                // `output` as well, because a pane that has not answered yet
-                // parses to one empty row with the cursor at its origin -- and
-                // the grid is anchored to the bottom, so that origin is the
-                // bottom-left corner of the screen. The caret for a screen that
-                // does not exist yet drew as a blue tick in the corner of the
-                // connecting spinner, under the logo, pointing at nothing.
-                <Rect
-                  x={horizontalPadding + frame.cursor.column * cellWidth}
-                  y={verticalPadding + frame.cursor.row * lineHeight + 2}
-                  width={2}
-                  height={lineHeight - 4}
-                  color={paneTheme.cursor}
-                />
-              ) : null}
-            </Group>
-          </Canvas>
-          {coverDone ? null : (
-            <Animated.View
-              pointerEvents="none"
-              style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
-            />
-          )}
-        </View>
-      </GestureDetector>
-      {canLoadEarlier || loadingEarlier ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.historyIndicator,
-            {
-              borderRadius: profile.chrome.roundControl,
-              top: historyIndicatorTopInset,
-              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            },
-            pullIndicatorStyle,
-          ]}>
-          {/* The gesture explains itself: the reader is already pulling, and
+                {highlightRects.map((highlight) => (
+                  <Rect
+                    key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
+                    x={highlight.x}
+                    y={highlight.y}
+                    width={highlight.width}
+                    height={highlight.height}
+                    color={selectionFill}
+                  />
+                ))}
+                {frame.cursor.visible && hasOutput ? (
+                  // A slim beam caret rather than a full-cell underline: the
+                  // underline read as a stray horizontal bar sitting under the
+                  // last line.
+                  //
+                  // `output` as well, because a pane that has not answered yet
+                  // parses to one empty row with the cursor at its origin -- and
+                  // the grid is anchored to the bottom, so that origin is the
+                  // bottom-left corner of the screen. The caret for a screen that
+                  // does not exist yet drew as a blue tick in the corner of the
+                  // connecting spinner, under the logo, pointing at nothing.
+                  <Rect
+                    x={horizontalPadding + frame.cursor.column * cellWidth}
+                    y={verticalPadding + frame.cursor.row * lineHeight + 2}
+                    width={2}
+                    height={lineHeight - 4}
+                    color={paneTheme.cursor}
+                  />
+                ) : null}
+              </Group>
+            </Canvas>
+            {coverDone ? null : (
+              <Animated.View
+                pointerEvents="none"
+                style={[StyleSheet.absoluteFill, { backgroundColor: canvasFill }, canvasCoverStyle]}
+              />
+            )}
+          </View>
+        </GestureDetector>
+        {canLoadEarlier || loadingEarlier ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.historyIndicator,
+              {
+                borderRadius: profile.chrome.roundControl,
+                top: historyIndicatorTopInset,
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+              },
+              pullIndicatorStyle,
+            ]}>
+            {/* The gesture explains itself: the reader is already pulling, and
               a pill that says "pull for earlier output" while they are pulling
               is a caption on their own hand. What is worth showing is that the
               pull was heard, which is the mark alone. */}
-          {loadingEarlier ? (
-            <ActivityIndicator size={12} color={theme.colors.primary} />
-          ) : (
-            <DisclosureUpIcon size={13} color={theme.colors.textMuted} />
-          )}
-        </Animated.View>
-      ) : null}
-      {/*
+            {loadingEarlier ? (
+              <ActivityIndicator size={12} color={theme.colors.primary} />
+            ) : (
+              <DisclosureUpIcon size={13} color={theme.colors.textMuted} />
+            )}
+          </Animated.View>
+        ) : null}
+        {/*
         The selection's own controls, floated once the finger is off the glass.
         Bottom-centre and within a thumb's reach, in the same place -- and only
         ever one at a time -- as the Latest button below, which stands down
         while a selection is up.
       */}
-      {selection && !selectionDragging ? (
-        <View
-          style={[
-            styles.selectionBar,
-            {
-              borderRadius: profile.chrome.noticeBanner,
-              bottom: 14 + bottomInset,
-              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            },
-          ]}>
-          <Button
-            variant="ghost"
-            disabled={!selectionHasText}
-            onPress={copySelection}
-            style={styles.selectionAction}
-            testID="terminal-selection-copy">
-            {t`Copy`}
-          </Button>
-          <Button
-            variant="ghost"
-            onPress={selectAll}
-            style={styles.selectionAction}
-            testID="terminal-selection-all">
-            {t`Select all`}
-          </Button>
-          <Button
-            variant="ghost"
-            onPress={clearSelection}
-            style={styles.selectionAction}
-            testID="terminal-selection-cancel">
-            {t`Cancel`}
-          </Button>
-        </View>
-      ) : null}
-      {latestPillVisible({ following, selecting: selection !== null, ownsScreen }) ? (
-        // One of the most frequently seen controls in the app, and until now the
-        // only one that appeared and vanished between two frames. It comes up
-        // when the reader leaves the tail of a live stream, which is a moment
-        // they are already reading through, so it arrives rather than being
-        // suddenly there.
-        //
-        // Whether it may be here at all is `latestPillVisible`, and it is a
-        // function in `dock-presentation` rather than the three `&&`s that used
-        // to be on this line: the third of them -- that an editor has no
-        // "latest" to jump to -- is a rule about the app, not about this view,
-        // and a rule about the app belongs somewhere a test can read it.
-        <Animated.View
-          entering={zoomIn('micro')}
-          exiting={zoomOut('micro')}
-          style={[styles.latestAnchor, latestButtonStyle]}>
-          <PressableScale
-            accessibilityLabel={t`Jump to latest output`}
-            onPress={jumpToLatest}
+        {selection && !selectionDragging ? (
+          <View
             style={[
-              styles.latestButton,
+              styles.selectionBar,
               {
-                borderRadius: profile.chrome.roundControl,
+                borderRadius: profile.chrome.noticeBanner,
+                bottom: 14 + bottomInset,
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               },
             ]}>
-            <Text
+            <Button
+              variant="ghost"
+              disabled={!selectionHasText}
+              onPress={copySelection}
+              style={styles.selectionAction}
+              testID="terminal-selection-copy">
+              {t`Copy`}
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={selectAll}
+              style={styles.selectionAction}
+              testID="terminal-selection-all">
+              {t`Select all`}
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={clearSelection}
+              style={styles.selectionAction}
+              testID="terminal-selection-cancel">
+              {t`Cancel`}
+            </Button>
+          </View>
+        ) : null}
+        {latestPillVisible({ following, selecting: selection !== null, ownsScreen }) ? (
+          // One of the most frequently seen controls in the app, and until now the
+          // only one that appeared and vanished between two frames. It comes up
+          // when the reader leaves the tail of a live stream, which is a moment
+          // they are already reading through, so it arrives rather than being
+          // suddenly there.
+          //
+          // Whether it may be here at all is `latestPillVisible`, and it is a
+          // function in `dock-presentation` rather than the three `&&`s that used
+          // to be on this line: the third of them -- that an editor has no
+          // "latest" to jump to -- is a rule about the app, not about this view,
+          // and a rule about the app belongs somewhere a test can read it.
+          <Animated.View
+            entering={zoomIn('micro')}
+            exiting={zoomOut('micro')}
+            style={[styles.latestAnchor, latestButtonStyle]}>
+            <PressableScale
+              accessibilityLabel={t`Jump to latest output`}
+              onPress={jumpToLatest}
               style={[
-                styles.latestButtonText,
-                { color: theme.colors.text, fontFamily: chromeFontFamily },
+                styles.latestButton,
+                {
+                  borderRadius: profile.chrome.roundControl,
+                  backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                },
               ]}>
-              ↓ <Trans>Latest</Trans>
-            </Text>
-          </PressableScale>
-        </Animated.View>
-      ) : null}
-      {/*
+              <Text
+                style={[
+                  styles.latestButtonText,
+                  { color: theme.colors.text, fontFamily: chromeFontFamily },
+                ]}>
+                ↓ <Trans>Latest</Trans>
+              </Text>
+            </PressableScale>
+          </Animated.View>
+        ) : null}
+        {/*
         Loading is centred and wordless: "Waiting for output" pinned to the
         bottom read as a message from the pane rather than as the app still
         connecting, which is what it actually meant.
@@ -3621,21 +3645,22 @@ export function SkiaTerminal({
         and the first frame of output landing on top of a full-size logo is the
         one transition every user of this app sees most.
       */}
-      {!nerdFont && fontError ? (
-        <View pointerEvents="none" style={styles.empty}>
-          <Text
-            style={[
-              styles.emptyText,
-              { color: theme.colors.textSubtle, fontFamily: chromeFontFamily },
-            ]}>
-            {fontError}
-          </Text>
-        </View>
-      ) : !nerdFont || !hasOutput ? (
-        <Animated.View pointerEvents="none" exiting={fadeOut('short')} style={styles.loading}>
-          <LogoLoader accessibilityLabel={t`Loading terminal`} size={64} />
-        </Animated.View>
-      ) : null}
+        {!nerdFont && fontError ? (
+          <View pointerEvents="none" style={styles.empty}>
+            <Text
+              style={[
+                styles.emptyText,
+                { color: theme.colors.textSubtle, fontFamily: chromeFontFamily },
+              ]}>
+              {fontError}
+            </Text>
+          </View>
+        ) : !nerdFont || !hasOutput ? (
+          <Animated.View pointerEvents="none" exiting={fadeOut('short')} style={styles.loading}>
+            <LogoLoader accessibilityLabel={t`Loading terminal`} size={64} />
+          </Animated.View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -4279,7 +4304,21 @@ export function measureCellWidth(
   return snapToDevicePixel(Math.max(7, advance), PixelRatio.get());
 }
 
+const NO_SIDE_INSETS: SideInsets = { left: 0, right: 0 };
+
 const styles = StyleSheet.create({
+  // Carries the side insets as padding, so the shell inside -- and the
+  // `onLayout` that sizes the grid -- is the safe width.
+  frame: {
+    flex: 1,
+    width: '100%',
+    minHeight: 280,
+  },
+  bleed: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+  },
   shell: {
     flex: 1,
     width: '100%',

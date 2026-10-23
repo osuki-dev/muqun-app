@@ -24,6 +24,7 @@
  * Which tab is open is remembered for the session. A reader with no themes of
  * their own starts on the gallery, where the themes are.
  */
+import { SideBleedProvider, type SideInsets, useMeasuredSideInsets } from '@/hooks/use-side-insets';
 import { LegendList, type LegendListRef } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Button, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -282,13 +283,22 @@ export function SettingsThemeSheet({
 
   // The column the content sits in: the sheet's gutter on both sides, and on a
   // wide Pad no wider than the cap, centred. Cards, tabs and the bar share it.
-  const sheetWidth = listWidth || window.width;
+  // A phone's sheet is as wide as the window and its top corner runs under a
+  // side status bar (iPhone Duo): the column keeps clear of it.
+  const side = useMeasuredSideInsets();
+  const sheetWidth = (listWidth || window.width) - side.left - side.right;
+  const sideBleed = { left: side.left, right: side.right };
   const columnWidth = Math.min(
     sheetWidth - SHEET_LADDER.gutter * 2,
     THEME_PICKER_MAX_CONTENT_WIDTH
   );
   const layout = themeGridLayout(columnWidth, window.fontScale);
-  const column = { width: columnWidth, alignSelf: 'center' as const };
+  // Centred between the side safe areas while the list itself spans the
+  // sheet, so the tag row can run under a side status bar to the sheet's edge.
+  const column = {
+    width: columnWidth,
+    marginLeft: side.left + Math.max(0, (sheetWidth - columnWidth) / 2),
+  };
 
   function chooseTab(next: ThemeTab) {
     if (next === tab) return;
@@ -841,61 +851,69 @@ export function SettingsThemeSheet({
       <View
         collapsable={false}
         style={styles.sheet}
-        onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}>
-        <LegendList
-          ref={listRef}
-          onMetricsChange={(metrics) => {
-            gridStart.current = metrics.headerSize;
-          }}
-          testID={
-            tab === 'gallery'
-              ? 'theme-browse-list'
-              : tab === 'mine'
-                ? 'theme-mine-grid'
-                : 'theme-picker-grid'
-          }
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          data={rows}
-          // A tab, or a change of column count, is a different set of rows;
-          // the list is told so rather than left to reuse positions.
-          dataKey={`${tab}:${layout.columns}`}
-          keyExtractor={keyOfRow}
-          getItemType={typeOfRow}
-          extraData={rowState}
-          // Never: a card owns a picture, and recycling would hand one
-          // theme's picture to another for a frame.
-          recycleItems={false}
-          getFixedItemSize={(row: Row) =>
-            row.kind === 'cards'
-              ? layout.itemHeight
-              : row.kind === 'bar'
-                ? row.search
-                  ? barHeight
-                  : 0
-                : undefined
-          }
-          estimatedItemSize={layout.itemHeight}
-          stickyHeaderIndices={STICKY_BAR}
-          onEndReached={tab === 'gallery' ? gallery.appendPage : undefined}
-          onEndReachedThreshold={0.5}
-          renderItem={({ item }: { item: Row }) => renderRow(item)}
-          ListHeaderComponent={header}
-          ListFooterComponent={
-            <>
-              {showGalleryFooter ? (
-                <View style={column}>
-                  <GalleryFooter gallery={gallery} />
-                </View>
-              ) : null}
-              <SheetSceneFooter bottomInset={insets.bottom} />
-            </>
-          }
-          style={styles.sheet}
-        />
-        {menu ? <CardMenuOverlay menu={menu} onClose={() => setMenu(null)} /> : null}
+        onLayout={(event) => {
+          side.onLayout(event);
+          setListWidth(event.nativeEvent.layout.width);
+        }}>
+        {/* The tag row runs back out under the status bar to the sheet's edge. */}
+        <SideBleedProvider value={sideBleed}>
+          <LegendList
+            ref={listRef}
+            onMetricsChange={(metrics) => {
+              gridStart.current = metrics.headerSize;
+            }}
+            testID={
+              tab === 'gallery'
+                ? 'theme-browse-list'
+                : tab === 'mine'
+                  ? 'theme-mine-grid'
+                  : 'theme-picker-grid'
+            }
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            data={rows}
+            // A tab, or a change of column count, is a different set of rows;
+            // the list is told so rather than left to reuse positions.
+            dataKey={`${tab}:${layout.columns}`}
+            keyExtractor={keyOfRow}
+            getItemType={typeOfRow}
+            extraData={rowState}
+            // Never: a card owns a picture, and recycling would hand one
+            // theme's picture to another for a frame.
+            recycleItems={false}
+            getFixedItemSize={(row: Row) =>
+              row.kind === 'cards'
+                ? layout.itemHeight
+                : row.kind === 'bar'
+                  ? row.search
+                    ? barHeight
+                    : 0
+                  : undefined
+            }
+            estimatedItemSize={layout.itemHeight}
+            stickyHeaderIndices={STICKY_BAR}
+            onEndReached={tab === 'gallery' ? gallery.appendPage : undefined}
+            onEndReachedThreshold={0.5}
+            renderItem={({ item }: { item: Row }) => renderRow(item)}
+            ListHeaderComponent={header}
+            ListFooterComponent={
+              <>
+                {showGalleryFooter ? (
+                  <View style={column}>
+                    <GalleryFooter gallery={gallery} />
+                  </View>
+                ) : null}
+                <SheetSceneFooter bottomInset={insets.bottom} />
+              </>
+            }
+            style={styles.sheet}
+          />
+        </SideBleedProvider>
+        {menu ? (
+          <CardMenuOverlay menu={menu} side={sideBleed} onClose={() => setMenu(null)} />
+        ) : null}
       </View>
     </SheetFrame>
   );
@@ -1086,7 +1104,16 @@ function ImportChoices({
  * live content, so it keeps the frost's legibility floor under the reader's
  * opacity; the dim behind it is a scrim, and a tap on it closes the menu.
  */
-function CardMenuOverlay({ menu, onClose }: { menu: CardMenu; onClose: () => void }) {
+function CardMenuOverlay({
+  menu,
+  side,
+  onClose,
+}: {
+  menu: CardMenu;
+  /** The sheet's overlap with the side safe areas, which the menu keeps clear of. */
+  side: SideInsets;
+  onClose: () => void;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -1124,7 +1151,14 @@ function CardMenuOverlay({ menu, onClose }: { menu: CardMenu; onClose: () => voi
       </Animated.View>
       <View
         pointerEvents="box-none"
-        style={[styles.menuDock, { bottom: SHEET_LADDER.section + insets.bottom }]}>
+        style={[
+          styles.menuDock,
+          {
+            bottom: SHEET_LADDER.section + insets.bottom,
+            left: SHEET_LADDER.gutter + side.left,
+            right: SHEET_LADDER.gutter + side.right,
+          },
+        ]}>
         <Animated.View
           testID="theme-card-menu"
           entering={fadeInDown('dropdown')}

@@ -1,3 +1,4 @@
+import type { SideInsets } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useIsFocused, useRouter } from 'expo-router';
@@ -5,7 +6,11 @@ import { ControlsIcon } from '@/icons';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 
-import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
+import {
+  AgentComposer,
+  type ComposerDraftMemory,
+  type DraftInjector,
+} from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
@@ -156,6 +161,19 @@ const REFUSAL_SESSIONS_READ = 30;
 /** How long Send waits on the target's links before sending without mentions. */
 const MENTIONS_READ_TIMEOUT_MS = 2_000;
 
+/**
+ * Home's unsent text, outside the dock. The phone page and the Pad page each
+ * mount their own dock, and unfolding iPhone Duo (or resizing a window across
+ * the Pad width) swaps one for the other mid-sentence.
+ */
+let homeDockDraft = '';
+const HOME_DOCK_DRAFT: ComposerDraftMemory = {
+  read: () => homeDockDraft,
+  write: (text) => {
+    homeDockDraft = text;
+  },
+};
+
 export function HomeComposerDock({
   revealed,
   controller,
@@ -163,6 +181,7 @@ export function HomeComposerDock({
   bottomInset = 0,
   topInset = 0,
   outerInsets,
+  sideInsets,
   edgeBar,
   fieldLines,
   autoHide,
@@ -179,6 +198,8 @@ export function HomeComposerDock({
   topInset?: number;
   /** Phone-only space outside the field; Pad keeps its column geometry. */
   outerInsets?: { horizontal: number; bottom: number };
+  /** See `AgentComposer`'s `sideInsets`: for a dock that spans the window. */
+  sideInsets?: SideInsets;
   /** See `AgentComposer`'s `bar`. */
   edgeBar?: { inset: number };
   /** See `AgentComposer`'s `fieldLines`. */
@@ -1971,6 +1992,7 @@ export function HomeComposerDock({
       bottomInset={bottomInset}
       topInset={topInset}
       outerInsets={outerInsets}
+      sideInsets={sideInsets}
       bar={edgeBar}
       fieldLines={Math.max(3, fieldLines ?? 3)}
       compact
@@ -1992,6 +2014,7 @@ export function HomeComposerDock({
       onInvokeSkill={invokeSkill}
       onClientCommand={clientCommand}
       injectDraftRef={injectDraftRef}
+      draftMemory={HOME_DOCK_DRAFT}
       clearDraftRef={clearDraftRef}
       holdStagedAttachments={holdStagedFiles}
     />

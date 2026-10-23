@@ -7,6 +7,7 @@ import { useIsFocused } from 'expo-router';
 import { RefreshIcon } from '@/icons';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { SheetScene, SheetSceneQuietControl, sheetSceneStyles } from '@/components/sheet-scene';
 import { TRANSCRIPT_ROW_GAP } from '@/components/agent-message-block';
@@ -90,12 +91,18 @@ export function DemoStreamingTranscript() {
         maintainScrollAtEndThreshold={0.1}
         showsVerticalScrollIndicator={false}
         style={sheetSceneStyles.scroller}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[
+          styles.content,
+          sideInsetPadding(insets, CONTENT_GUTTER),
+          { paddingBottom: insets.bottom + 32 },
+        ]}
       />
     </SheetScene>
   );
 }
+/** The rows' gutter, from the safe edges. */
+const CONTENT_GUTTER = 20;
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: 20, paddingTop: 8, gap: TRANSCRIPT_ROW_GAP },
+  content: { paddingTop: 8, gap: TRANSCRIPT_ROW_GAP },
 });

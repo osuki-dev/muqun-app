@@ -126,14 +126,23 @@ function IntroParticles({ scene, animate }: { scene: number; animate: boolean })
   );
 }
 
-export function ReleaseIntroArt({ scene, visible }: { scene: number; visible: boolean }) {
+export function ReleaseIntroArt({
+  scene,
+  visible,
+  maxHeight,
+}: {
+  scene: number;
+  visible: boolean;
+  /** Caps the art on a short window so the copy below it is not pushed out. */
+  maxHeight?: number;
+}) {
   const theme = useThemeTokens();
   const active = useAppActive();
   const motion = useDecorativeMotion();
   const Icon = [WorkflowIcon, ForkIcon, StackIcon][scene] ?? WorkflowIcon;
   return (
     <View
-      style={styles.art}
+      style={[styles.art, maxHeight !== undefined && { maxHeight }]}
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants">
