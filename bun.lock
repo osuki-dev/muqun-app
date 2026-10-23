@@ -16,7 +16,7 @@
         "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.1",
         "@osuki-dev/skia-diagrams": "0.2.0",
-        "@osuki-dev/ui": "2.0.0-beta.5",
+        "@osuki-dev/ui": "2.0.0-beta.6",
         "@react-three/fiber": "9.8.2",
         "expo": "~58.0.17",
         "expo-alternate-app-icons": "^8.0.0",
@@ -116,8 +116,6 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
-    "@osuki-dev/ui@2.0.0-beta.5": "patches/@osuki-dev%2Fui@2.0.0-beta.5.patch",
-    "expo-image@58.0.16": "patches/expo-image@58.0.16.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
     "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
@@ -446,8 +444,6 @@
 
     "@expo/ui": ["@expo/ui@58.0.22", "", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "@babel/core": "*", "expo": "*", "react": "*", "react-dom": "*", "react-native": "*", "react-native-worklets": "*" }, "optionalPeers": ["@babel/core", "react-dom", "react-native-worklets"] }, "sha512-5g4vSLnBSGipQP/kwZL7uijs4CRHf6rL9sR5GX3uYwpekFpawhqTh6qdkbUsvmtzj+Y3++troCnym5VwTJrFdw=="],
 
-    "@expo/ws-tunnel": ["@expo/ws-tunnel@2.0.1", "", { "peerDependencies": { "ws": "^8.0.0" } }, "sha512-mljsRffbOHzmSimYQbQu9h9NR3alwCCwEEouRGFL4QRTt8dNvsNtKEPa/5jHmtDLDtsh4xXsWKwzjN9BTpeXHQ=="],
-
     "@expo/xcpretty": ["@expo/xcpretty@4.4.6", "", { "dependencies": { "@babel/code-frame": "^7.20.0", "chalk": "^4.1.0", "js-yaml": "^4.1.0" }, "bin": { "excpretty": "build/cli.js" } }, "sha512-uRaZZ/IsX1WkFW69xxTZtMeRvI5ziD9yoian+FMqdhITkU6NGvIWd5uRMh2Gbo/6xstpQ4v0GtF1V5YatTwzDA=="],
 
     "@floating-ui/core": ["@floating-ui/core@1.8.0", "", { "dependencies": { "@floating-ui/utils": "^0.2.12" } }, "sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ=="],
@@ -636,7 +632,7 @@
 
     "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@0.2.0", "", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.3.0" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-I9aqXAQutYDpG0Vim54lulsVKKlAxvN9KTMWZKNPGVXLqY5Th3BO/qYUYGeSpnW6v10jKlfkipDjwb9ltLIKOQ=="],
 
-    "@osuki-dev/ui": ["@osuki-dev/ui@2.0.0-beta.5", "", { "peerDependencies": { "@expo/ui": ">=58.0.0", "expo-blur": ">=58.0.0", "expo-font": ">=58.0.0", "expo-glass-effect": ">=58.0.0", "expo-image": ">=58.0.0", "expo-router": ">=58.0.0", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.3.0", "react-native": ">=0.88.0", "react-native-gesture-handler": ">=3.4.0", "react-native-keyboard-controller": ">=1.22.0", "react-native-nano-icons": ">=1.0.0", "react-native-reanimated": ">=4.7.0", "react-native-safe-area-context": ">=5.10.0", "react-native-svg": ">=15.16.0" }, "optionalPeers": ["expo-blur", "expo-glass-effect", "lucide-react-native", "react-native-nano-icons", "react-native-svg"] }, "sha512-nkk7xuDD4ex3FmRhk5YSoLXlFqAOj1QGg5dzp7mxJyq70auvgn5ZgS5wWwnHfamI35EhviJ8IBgcJFvSPXUBdA=="],
+    "@osuki-dev/ui": ["@osuki-dev/ui@2.0.0-beta.6", "", { "peerDependencies": { "@expo/ui": ">=58.0.0", "expo-blur": ">=58.0.0", "expo-font": ">=58.0.0", "expo-glass-effect": ">=58.0.0", "expo-image": ">=58.0.0", "expo-router": ">=58.0.0", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.3.0", "react-native": ">=0.88.0", "react-native-gesture-handler": ">=3.4.0", "react-native-keyboard-controller": ">=1.22.0", "react-native-nano-icons": ">=1.0.0", "react-native-reanimated": ">=4.7.0", "react-native-safe-area-context": ">=5.10.0", "react-native-svg": ">=15.16.0" }, "optionalPeers": ["expo-blur", "expo-glass-effect", "lucide-react-native", "react-native-nano-icons", "react-native-svg"] }, "sha512-tGYCpGz71H8Y4kRR/Acvdiu5wGECk908MilyzrQRgI0RtIUtHmJtuzXuhe89spVyvzvj+0+P+EZzhLBfHQ3zRA=="],
 
     "@oxc-parser/binding-android-arm-eabi": ["@oxc-parser/binding-android-arm-eabi@0.155.0", "", { "os": "android", "cpu": "arm" }, "sha512-A6xv7hDtnTm+xlZ7utn6rRQpRMJHRhVr3gjRGqlx0RUX84mNk0pAsy6YN/wWhuOTkaZhRrrzaLxf0NfbH77j2w=="],
 
@@ -2740,6 +2736,8 @@
 
     "@expo/cli/@expo/plist": ["@expo/plist@0.10.1", "", { "dependencies": { "@xmldom/xmldom": "^0.8.8", "base64-js": "^1.5.1", "xmlbuilder": "^15.1.1" } }, "sha512-nuNOqj+r/hGJbZ1Ax3jUpZaOB8UAMHUrISALJEUKaCieTflYj7224EqFWmMpriCGk9wXS1gH+9GGVnSj0tWzuQ=="],
 
+    "@expo/cli/@expo/ws-tunnel": ["@expo/ws-tunnel@2.0.1", "", { "peerDependencies": { "ws": "^8.0.0" } }, "sha512-mljsRffbOHzmSimYQbQu9h9NR3alwCCwEEouRGFL4QRTt8dNvsNtKEPa/5jHmtDLDtsh4xXsWKwzjN9BTpeXHQ=="],
+
     "@expo/cli/ora": ["ora@3.4.0", "", { "dependencies": { "chalk": "^2.4.2", "cli-cursor": "^2.1.0", "cli-spinners": "^2.0.0", "log-symbols": "^2.2.0", "strip-ansi": "^5.2.0", "wcwidth": "^1.0.1" } }, "sha512-eNwHudNbO1folBP3JsZ19v9azXWtQZjICdr3Q0TDPIaeBQ3mXLrh54wM+er0+hSp+dWKf+Z8KM58CYzEyIYxYg=="],
 
     "@expo/cli/picomatch": ["picomatch@4.0.7", "", {}, "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA=="],
@@ -2765,8 +2763,6 @@
     "@expo/prebuild-config/@expo/image-utils": ["@expo/image-utils@0.12.5", "", { "dependencies": { "@expo/require-utils": "^58.0.4", "@expo/spawn-async": "^1.8.0", "chalk": "^4.0.0", "getenv": "^2.0.0", "jimp-compact": "0.16.1", "parse-png": "^2.1.0", "semver": "^7.7.4" } }, "sha512-nsFYd7GfDdwZa+S+p+EkVCkh7UKKNf0kfUXDQ53HbyMmNFD3psb5JYwU/2N+uZG5wOEfKGfQ5u7pk/wn2gMlBA=="],
 
     "@expo/require-utils/@babel/core": ["@babel/core@7.29.7", "", { "dependencies": { "@babel/code-frame": "^7.29.7", "@babel/generator": "^7.29.7", "@babel/helper-compilation-targets": "^7.29.7", "@babel/helper-module-transforms": "^7.29.7", "@babel/helpers": "^7.29.7", "@babel/parser": "^7.29.7", "@babel/template": "^7.29.7", "@babel/traverse": "^7.29.7", "@babel/types": "^7.29.7", "@jridgewell/remapping": "^2.3.5", "convert-source-map": "^2.0.0", "debug": "^4.1.0", "gensync": "^1.0.0-beta.2", "json5": "^2.2.3", "semver": "^6.3.1" } }, "sha512-RgHBCvtjbOK2gXSNBNIkNoEc9qoVEtau3hj8gEqKQuL3HZAibKarWFEI3Lfm6EYKkLalOh8eSrj9b+ch9H/VBA=="],
-
-    "@expo/ws-tunnel/ws": ["ws@8.22.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg=="],
 
     "@expo/xcpretty/js-yaml": ["js-yaml@4.3.2", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA=="],
 
