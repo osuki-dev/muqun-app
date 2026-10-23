@@ -183,6 +183,11 @@ const ReleaseProfilerControl =
 
 /** How long a toast stays, unless the caller says otherwise. */
 const TOAST_DURATION_MS = 5000;
+/**
+ * An error outlasts a confirmation: a reader has to read what went wrong
+ * and may want to act on it, a "saved" needs only to be noticed.
+ */
+const TOAST_DURATION_BY_VARIANT = { warning: 7000, danger: 8000 } as const;
 
 export default function RootLayout() {
   useEffect(() => {
@@ -440,6 +445,7 @@ function RootContent() {
         // gone before most of them were read, which the owner noticed on
         // the first failure toast.
         defaultDurationMs={TOAST_DURATION_MS}
+        durationByVariant={TOAST_DURATION_BY_VARIANT}
         toastStyle={[
           notificationSurfaceStyle,
           { borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
