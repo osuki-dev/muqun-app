@@ -7,7 +7,12 @@ import {
   type AgentVcsFiles,
   type VcsRepoState,
 } from '../agent-protocol';
-import { buildChangeTree, changeTreeRows } from '../change-tree';
+import {
+  buildChangeTree,
+  changeTreeRows,
+  groupChanges,
+  groupedChangeTreeRows,
+} from '../change-tree';
 import {
   agentChangesApi,
   listingFromGitStatus,
@@ -319,6 +324,67 @@ describe('listingFromGitStatus', () => {
       ['treeFile', 'b.ts'],
       ['treeFile', 'README.md'],
     ]);
+  });
+
+  test('groups the way git status reports, and keys every row once', () => {
+    const listing = listingFromGitStatus(
+      gitStatusFromResponse({
+        repo: { toplevel: '/r', branch: 'main', head: 'abc' },
+        truncated: false,
+        files: [
+          { path: 'src/lib/a.ts', status: 'modified', staged: false, unstaged: true, added: 1 },
+          { path: 'src/lib/b.ts', status: 'added', staged: true, unstaged: false, added: 3 },
+          { path: 'src/lib/c.ts', status: 'modified', staged: true, unstaged: true, added: 2 },
+          { path: 'README.md', status: 'untracked', staged: false, unstaged: true, added: 2 },
+          { path: 'merge.txt', status: 'conflicted', staged: false, unstaged: true },
+        ],
+      })
+    );
+    const groups = groupChanges(listing.changes, true);
+    // Conflicts first, untracked last; a partly staged file is still unstaged work.
+    expect(groups.map((group) => [group.id, group.files.map((file) => file.path)])).toEqual([
+      ['conflicts', ['merge.txt']],
+      ['staged', ['src/lib/b.ts']],
+      ['unstaged', ['src/lib/a.ts', 'src/lib/c.ts']],
+      ['untracked', ['README.md']],
+    ]);
+    const input = { collapsed: new Set<string>(), expanded: new Set<string>(), pages: new Map() };
+    const rows = groupedChangeTreeRows(
+      groups.map((group) => ({ group, tree: buildChangeTree(group.files) })),
+      input
+    );
+    expect(rows.map((row) => row.type)).toEqual([
+      'group',
+      'treeFile',
+      'group',
+      'dir',
+      'treeFile',
+      'group',
+      'dir',
+      'treeFile',
+      'treeFile',
+      'group',
+      'treeFile',
+    ]);
+    // `src/lib` sits in two groups: two rows, two keys, one path to collapse.
+    expect(new Set(rows.map((row) => row.key)).size).toBe(rows.length);
+    expect(rows.filter((row) => row.type === 'dir').map((row) => row.path)).toEqual([
+      'src/lib',
+      'src/lib',
+    ]);
+    // A listing without index state has no staged/unstaged split.
+    expect(groupChanges(listing.changes, false).map((group) => group.id)).toEqual([
+      'conflicts',
+      'changed',
+      'untracked',
+    ]);
+    // One group draws no heading at all.
+    const one = groupChanges(listing.changes.slice(0, 1), true);
+    const plain = groupedChangeTreeRows(
+      one.map((group) => ({ group, tree: buildChangeTree(group.files) })),
+      input
+    );
+    expect(plain.map((row) => row.type)).toEqual(['dir', 'treeFile']);
   });
 
   test('a pane outside a checkout is "not a git repository", not "no changes"', () => {

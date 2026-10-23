@@ -35,6 +35,7 @@ import { sideOfFile, type GitDiffRow } from '@/lib/git-diff';
 import {
   CHANGE_TREE_DIR_ROW_HEIGHT,
   CHANGE_TREE_FILE_ROW_HEIGHT,
+  CHANGE_TREE_GROUP_ROW_HEIGHT,
   isMeasuredDiffRow,
   type DiffListItem,
 } from '@/lib/change-tree';
@@ -43,6 +44,7 @@ import {
   ChangeTreeContextRowView,
   ChangeTreeDirRowView,
   ChangeTreeFileRowView,
+  ChangeTreeGroupRowView,
   type ChangeTreeHandlers,
 } from '@/components/change-tree-rows';
 import {
@@ -134,6 +136,7 @@ const ROW_HEIGHT: Record<DiffListItem['type'], number> = {
   treeFile: CHANGE_TREE_FILE_ROW_HEIGHT,
   context: MORE_ROW_HEIGHT,
   actions: 50,
+  group: CHANGE_TREE_GROUP_ROW_HEIGHT,
 };
 
 /** Matching `pane-chat-view`: the reader's place across a change of data. */
@@ -263,6 +266,17 @@ export const DiffListRow = memo(function DiffListRow({
   const mono = useMonoFontFamily();
   const { contentWidth: width, pinnedWidth, onGrid } = useContext(DiffLayoutContext);
 
+  if (row.type === 'group') {
+    return (
+      <ChangeTreeGroupRowView
+        row={row}
+        width={width}
+        pinnedWidth={pinnedWidth}
+        colors={colors}
+        pinned={pinned}
+      />
+    );
+  }
   if (row.type === 'dir') {
     return tree ? (
       <ChangeTreeDirRowView

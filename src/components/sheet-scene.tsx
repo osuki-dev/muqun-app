@@ -48,7 +48,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
-import { fadeIn, PRESET, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, PRESET, timing } from '@/lib/motion';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -627,6 +627,61 @@ export function SheetSceneQuietControl({
 }
 
 /**
+ * Something that did not work, said quietly, with the one thing to do about
+ * it on the same line.
+ *
+ * A red sentence on a sheet is an alarm, and most of what goes wrong on one is
+ * a request that can simply be asked again: a worktree list that did not
+ * arrive, a refresh that failed while the old rows are still good. So the
+ * sentence is `textMuted` and the action is the only thing in colour. The
+ * notice fades in and out rather than appearing between two frames, so a
+ * retry that succeeds reads as the line going away, not the sheet jumping.
+ */
+export function SheetSceneNotice({
+  message,
+  actionLabel,
+  onAction,
+  busy = false,
+  testID,
+}: {
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
+  busy?: boolean;
+  testID?: string;
+}) {
+  const { colors } = useThemeTokens();
+  return (
+    <Animated.View
+      testID={testID}
+      entering={fadeIn('short')}
+      exiting={fadeOut('micro')}
+      style={styles.notice}>
+      <Text variant="caption" color={colors.textMuted} style={styles.noticeText}>
+        {message}
+      </Text>
+      <PressableScale
+        testID={testID ? `${testID}-action` : undefined}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        accessibilityState={{ busy, disabled: busy }}
+        disabled={busy}
+        hitSlop={8}
+        onPress={onAction}
+        style={styles.noticeAction}>
+        {busy ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Text variant="caption" weight="semibold" color={colors.primary}>
+            {actionLabel}
+          </Text>
+        )}
+      </PressableScale>
+    </Animated.View>
+  );
+}
+
+/**
  * One row, and the left rule that marks it as current.
  *
  * The rule rather than a radio or a tick: a radio asks the reader to read a
@@ -1149,6 +1204,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SHEET_LADDER.snug,
+    minHeight: 32,
+  },
+  noticeText: { flexShrink: 1, minWidth: 0 },
+  noticeAction: { minHeight: 32, justifyContent: 'center', flexShrink: 0 },
   rowWrap: { position: 'relative' },
   rule: {
     position: 'absolute',

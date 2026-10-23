@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# jour} other {# jours}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# fichier} other {# fichiers}}"
 
@@ -371,6 +373,10 @@ msgstr "Code {language} copié dans le presse-papiers"
 #: src/components/agent-composer.tsx
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead} : {title} — terminé pendant votre absence"
+
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} checkouts sur {total}"
 
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
@@ -1231,6 +1237,11 @@ msgid "Capture restarted"
 msgstr "Capture redémarrée"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "Modifiés"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "Modifié"
@@ -1358,17 +1369,9 @@ msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs resten
 msgid "Choose project"
 msgstr "Choisir un projet"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "Choisir les modifications à afficher"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Choisir le simulateur à afficher"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "Choisir un worktree"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1687,6 +1690,11 @@ msgstr "Confirmer : {removeLabel} {label}"
 msgctxt "git file status"
 msgid "Conflicted"
 msgstr "En conflit"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
+msgstr "Conflits"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -2089,8 +2097,8 @@ msgid "Could not list this computer's agents."
 msgstr "Impossible de lister les agents de cet ordinateur"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "Impossible de lister les worktrees. Actualisez pour réessayer"
+msgid "Could not list worktrees."
+msgstr "Impossible de lister les worktrees"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2462,6 @@ msgid "Current agent"
 msgstr "Agent actuel"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "Checkout actuel"
 
@@ -3722,6 +3729,10 @@ msgstr "Charger plus"
 msgid "Loading"
 msgstr "Chargement"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "Chargement des modifications…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Chargement des commandes"
@@ -4153,7 +4164,6 @@ msgid "No changelog was provided for this update."
 msgstr "Aucune note de version n’a été fournie pour cette mise à jour"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "Aucune modification"
 
@@ -4352,7 +4362,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Aucun worktree pour l’instant. Crées-en un ci-dessous pour travailler sur une branche sans toucher à ce checkout"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Pas un dépôt Git"
 
@@ -4463,6 +4472,10 @@ msgstr "Rien à afficher pour l’instant"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "Rien à annuler"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "Aucune modification non validée"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4626,10 @@ msgstr "Ouvrir l'image"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Ouvrir dans Modifications"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "Ouvrir dans Lazygit"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5106,15 @@ msgstr "Projet"
 msgid "Project · {0}"
 msgstr "Projet · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "Le dossier du projet est introuvable"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "Le dossier du projet est introuvable : {0}"
 
@@ -5304,6 +5324,7 @@ msgstr "Animations réduites : vue en liste"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5369,6 @@ msgid "Refresh to see new saved output."
 msgstr "Actualisez pour voir les nouvelles sorties enregistrées"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Actualiser les worktrees"
 
@@ -5542,6 +5562,7 @@ msgstr "Reprendre"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5731,10 @@ msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affich
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "En cours"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "Identique à {base}"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6327,6 +6352,11 @@ msgstr "Journal de la Scène copié"
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "Indexé"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Staged"
+msgstr "Indexés"
 
 #: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
@@ -7032,6 +7062,10 @@ msgstr "La transcription sous forme de conversation, avec les étapes d’outils
 msgid "The turn failed"
 msgstr "Le tour a échoué"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "L'arbre de travail correspond au dernier commit"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7625,11 @@ msgstr "Injoignable"
 msgid "Unstaged"
 msgstr "Non indexé"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "Non indexés"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7641,11 @@ msgstr "Élément non pris en charge ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "Session sans titre"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "Non suivis"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7809,7 @@ msgstr "Afficher les modifications de fichiers"
 msgid "View original"
 msgstr "Voir l’image originale"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "Un autre checkout est affiché. Les modifications sont en lecture seule"
 

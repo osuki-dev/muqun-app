@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# ngày}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# tệp}}"
 
@@ -371,6 +373,10 @@ msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
 #: src/components/agent-composer.tsx
 msgid "{lead}: {title} — finished while you were away"
 msgstr "{lead}: {title} — đã xong khi bạn đi vắng"
+
+#: src/components/changes-worktree-list.tsx
+msgid "{listed} of {total} checkouts"
+msgstr "{listed} trên {total} checkout"
 
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
@@ -1231,6 +1237,11 @@ msgid "Capture restarted"
 msgstr "Đã bắt đầu ghi lại từ đầu"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "Đã thay đổi"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "Đã thay đổi"
@@ -1358,17 +1369,9 @@ msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn
 msgid "Choose project"
 msgstr "Chọn dự án"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "Chọn thay đổi cần hiển thị"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "Chọn cây làm việc"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1686,6 +1689,11 @@ msgstr "Xác nhận: {removeLabel} {label}"
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Conflicted"
+msgstr "Xung đột"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
 msgstr "Xung đột"
 
 #: src/components/custom-theme-preview.tsx
@@ -2089,8 +2097,8 @@ msgid "Could not list this computer's agents."
 msgstr "Không thể liệt kê các tác tử của máy tính này"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "Không thể liệt kê cây làm việc. Hãy làm mới để thử lại"
+msgid "Could not list worktrees."
+msgstr "Không thể liệt kê cây làm việc"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2462,6 @@ msgid "Current agent"
 msgstr "Agent hiện tại"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "Bản làm việc hiện tại"
 
@@ -3722,6 +3729,10 @@ msgstr "Tải thêm"
 msgid "Loading"
 msgstr "Đang tải"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "Đang tải thay đổi…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Đang tải lệnh"
@@ -4153,7 +4164,6 @@ msgid "No changelog was provided for this update."
 msgstr "Bản cập nhật này không có nhật ký thay đổi"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "Không có thay đổi"
 
@@ -4352,7 +4362,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc trên một nhánh mà không đụng tới bản checkout này"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
@@ -4463,6 +4472,10 @@ msgstr "Chưa có gì để hiển thị"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "Không có gì để hoàn tác"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "Không có thay đổi chưa commit"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4626,10 @@ msgstr "Mở ảnh"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Mở trong Thay đổi"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "Mở trong Lazygit"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5106,15 @@ msgstr "Dự án"
 msgid "Project · {0}"
 msgstr "Dự án · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "Thiếu thư mục dự án"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "Thiếu thư mục dự án: {0}"
 
@@ -5304,6 +5324,7 @@ msgstr "Giảm chuyển động: chế độ danh sách"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5369,6 @@ msgid "Refresh to see new saved output."
 msgstr "Làm mới để xem đầu ra mới được lưu"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Làm mới worktree"
 
@@ -5542,6 +5562,7 @@ msgstr "Tiếp tục"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5731,10 @@ msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Đang chạy"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "Giống {base}"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6327,6 +6352,11 @@ msgstr "Đã sao chép nhật ký Sân khấu"
 #: src/components/diff-rows.tsx
 msgid "Staged"
 msgstr "Đã staged"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Staged"
+msgstr "Đã stage"
 
 #: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
@@ -7032,6 +7062,10 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 msgid "The turn failed"
 msgstr "Lượt này đã thất bại"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "Cây làm việc khớp với commit gần nhất"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7625,11 @@ msgstr "Không kết nối được"
 msgid "Unstaged"
 msgstr "Chưa staged"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "Chưa stage"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7641,11 @@ msgstr "Mục chưa được hỗ trợ ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "Phiên chưa có tên"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "Chưa theo dõi"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7809,7 @@ msgstr "Xem các thay đổi tệp"
 msgid "View original"
 msgstr "Xem ảnh gốc"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "Đang xem bản làm việc khác. Các thay đổi chỉ có thể đọc"
 

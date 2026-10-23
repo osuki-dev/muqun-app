@@ -105,6 +105,10 @@ export function GitDiffButton({
             serverId,
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
             worktrees: gatewaySupportsGitWorktrees(capabilities) ? '1' : '0',
+            // The sheet offers the host's Git TUI only when the gateway said
+            // it has one; the capability list is in hand here, not there.
+            lazygit: capabilities?.includes('pane_lazygit') ? '1' : '0',
+            lazygitWorktree: capabilities?.includes('pane_lazygit_worktree') ? '1' : '0',
           },
         } as unknown as Href);
       }}

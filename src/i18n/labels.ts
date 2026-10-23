@@ -21,6 +21,7 @@ import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
 import type { AgentClientCommandId } from '@/lib/agent-commands';
+import type { ChangeGroupId } from '@/lib/change-tree';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
@@ -258,6 +259,18 @@ export const gitFileStatusWord: Record<GitFileStatus, MessageDescriptor> = {
   conflicted: msg({ message: 'Conflicted', context: 'git file status' }),
   type_changed: msg({ message: 'Type changed', context: 'git file status' }),
   unknown: msg({ message: 'Changed', context: 'git file status' }),
+};
+
+/**
+ * The Changes sheet's group headings, the way `git status` sections its
+ * report. `changed` is the one group a listing without index state has.
+ */
+export const changeGroupWord: Record<ChangeGroupId, MessageDescriptor> = {
+  conflicts: msg({ message: 'Conflicts', context: 'git change group' }),
+  staged: msg({ message: 'Staged', context: 'git change group' }),
+  unstaged: msg({ message: 'Unstaged', context: 'git change group' }),
+  changed: msg({ message: 'Changed', context: 'git change group' }),
+  untracked: msg({ message: 'Untracked', context: 'git change group' }),
 };
 
 /**
