@@ -153,8 +153,8 @@ export interface PaneSkill {
  *
  * Both or neither. A skill is only worth offering when there is a way to type
  * it into the pane, so an answer without a known prefix yields nothing, as
- * does an older Gateway that sends neither. A name with whitespace could not
- * be typed as one token and is dropped with the other malformed entries.
+ * does an older Gateway that sends neither. A name that is not one plain token
+ * (`SKILL_NAME`) is dropped with the other malformed entries.
  */
 export function paneSkillsFromAnswer(
   value: unknown
@@ -166,13 +166,18 @@ export function paneSkillsFromAnswer(
   return { skillPrefix: prefix, skills: raw.skills.filter(isPaneSkill) };
 }
 
+/**
+ * A name that is typed into a terminal as one token: no whitespace, and no
+ * control or escape characters that the pane would read as keystrokes.
+ */
+const SKILL_NAME = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
+
 function isPaneSkill(value: unknown): value is PaneSkill {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
   return (
     typeof entry.name === 'string' &&
-    entry.name.length > 0 &&
-    !/\s/.test(entry.name) &&
+    SKILL_NAME.test(entry.name) &&
     typeof entry.description === 'string' &&
     (entry.source === 'user' || entry.source === 'workspace')
   );
