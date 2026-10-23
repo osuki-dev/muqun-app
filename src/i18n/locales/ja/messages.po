@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 日}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 件のファイル}}"
 
@@ -1231,6 +1233,11 @@ msgid "Capture restarted"
 msgstr "キャプチャ再開"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "変更"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "変更"
@@ -1358,17 +1365,9 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 msgid "Choose project"
 msgstr "プロジェクトを選択"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "表示する変更を選択"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "ワークツリーを選択"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1687,6 +1686,11 @@ msgstr "確認：{removeLabel} {label}"
 msgctxt "git file status"
 msgid "Conflicted"
 msgstr "コンフリクト"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
+msgstr "競合"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -2089,8 +2093,8 @@ msgid "Could not list this computer's agents."
 msgstr "このコンピュータのエージェント一覧を取得できませんでした"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "ワークツリーを取得できませんでした。更新して再試行してください"
+msgid "Could not list worktrees."
+msgstr "ワークツリーを取得できませんでした"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2458,6 @@ msgid "Current agent"
 msgstr "現在のエージェント"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "現在のチェックアウト"
 
@@ -3722,6 +3725,10 @@ msgstr "さらに読み込む"
 msgid "Loading"
 msgstr "読み込み中"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "変更を読み込み中…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "コマンドを読み込み中"
@@ -4153,7 +4160,6 @@ msgid "No changelog was provided for this update."
 msgstr "この更新には変更履歴がありません"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "変更なし"
 
@@ -4352,7 +4358,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "ワークツリーはまだありません。下で作成すると、このチェックアウトを触らずにブランチで作業できます"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Git リポジトリではありません"
 
@@ -4463,6 +4468,10 @@ msgstr "まだ表示するものはありません"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "元に戻せるものがありません"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "未コミットの変更はありません"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4622,10 @@ msgstr "画像を開く"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "「変更」で開く"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "Lazygit で開く"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5102,15 @@ msgstr "プロジェクト"
 msgid "Project · {0}"
 msgstr "プロジェクト · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "プロジェクトのフォルダが見つかりません"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "プロジェクトのフォルダが見つかりません: {0}"
 
@@ -5304,6 +5320,7 @@ msgstr "視差効果を減らす：リスト表示"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5365,6 @@ msgid "Refresh to see new saved output."
 msgstr "更新すると、新しく保存された出力が表示されます"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "ワークツリーを更新"
 
@@ -5542,6 +5558,7 @@ msgstr "再開"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5727,10 @@ msgstr "自分のマシンで Gateway を起動し、表示された QR コー�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "実行中"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "{base} と同じ"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6325,6 +6346,11 @@ msgid "Stage log copied"
 msgstr "ステージのログをコピーしました"
 
 #: src/components/diff-rows.tsx
+msgid "Staged"
+msgstr "ステージ済み"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
 msgid "Staged"
 msgstr "ステージ済み"
 
@@ -7032,6 +7058,10 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 msgid "The turn failed"
 msgstr "この処理は失敗しました"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "作業ツリーは最新のコミットと一致しています"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7621,11 @@ msgstr "接続できません"
 msgid "Unstaged"
 msgstr "未ステージ"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "未ステージ"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7637,11 @@ msgstr "未対応の項目 ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "未追跡"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7805,7 @@ msgstr "ファイルの変更を表示"
 msgid "View original"
 msgstr "元の画像を表示"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "別のチェックアウトを表示中です。変更は読み取り専用です"
 

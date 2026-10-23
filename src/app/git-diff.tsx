@@ -25,6 +25,9 @@ export default function GitDiffScreen() {
     paneId?: string;
     vcsFiles?: string;
     worktrees?: string;
+    /** `1` when the gateway advertised `pane_lazygit`, and `pane_lazygit_worktree`. */
+    lazygit?: string;
+    lazygitWorktree?: string;
     serverId?: string;
   }>();
 
@@ -35,6 +38,8 @@ export default function GitDiffScreen() {
       paneId={params.paneId || ''}
       vcsFiles={params.vcsFiles === '1'}
       worktreesSupported={params.worktrees === '1'}
+      lazygitSupported={params.lazygit === '1'}
+      lazygitWorktreeSupported={params.lazygitWorktree === '1'}
       serverId={params.serverId}
     />
   );

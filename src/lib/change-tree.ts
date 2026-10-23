@@ -175,6 +175,8 @@ export function visibleChangeTree<T>(
 export const CHANGE_TREE_DIR_ROW_HEIGHT = 40;
 /** A file row's height: its name on one line, and one line of note under it. */
 export const CHANGE_TREE_FILE_ROW_HEIGHT = 48;
+/** A group heading's height: the room above it is the break between two groups. */
+export const CHANGE_TREE_GROUP_ROW_HEIGHT = 40;
 /** The row's own inset, before any indent. */
 export const CHANGE_TREE_ROW_INSET = 16;
 /** One level of the tree. */
@@ -240,11 +242,92 @@ export interface ChangeTreeActionsRow {
   path: string;
 }
 
+/** A status group's heading: its name, and how much is under it. */
+export interface ChangeTreeGroupRow {
+  type: 'group';
+  key: string;
+  id: ChangeGroupId;
+  fileCount: number;
+  additions: number;
+  deletions: number;
+}
+
 export type ChangeTreeRow =
   | ChangeTreeDirRow
   | ChangeTreeFileRow
   | ChangeTreeContextRow
-  | ChangeTreeActionsRow;
+  | ChangeTreeActionsRow
+  | ChangeTreeGroupRow;
+
+// ---------------------------------------------------------------------------
+// Status groups
+// ---------------------------------------------------------------------------
+
+/**
+ * Where a change stands, the way `git status` reports it.
+ *
+ * `staged` and `unstaged` exist only for a listing that carries the index
+ * (`…/git/status`); `…/vcs/files` answers one flag for every file, so a listing
+ * from it has `changed` instead. A conflict is the one group that asks for the
+ * reader's attention and goes first; untracked files are the quietest and go
+ * last.
+ */
+export type ChangeGroupId = 'conflicts' | 'staged' | 'unstaged' | 'changed' | 'untracked';
+
+export const CHANGE_GROUP_ORDER: readonly ChangeGroupId[] = [
+  'conflicts',
+  'staged',
+  'unstaged',
+  'changed',
+  'untracked',
+];
+
+/**
+ * Which group a file belongs to. A file that is both staged and unstaged is
+ * `unstaged`: something in it is still not in the index, and the reader scanning
+ * that group for what is left to do must find it there.
+ */
+export function changeGroupOf(file: GitFileChange, indexed: boolean): ChangeGroupId {
+  if (file.status === 'conflicted') return 'conflicts';
+  if (file.status === 'untracked') return 'untracked';
+  if (!indexed) return 'changed';
+  return file.staged && !file.unstaged ? 'staged' : 'unstaged';
+}
+
+export interface ChangeGroup {
+  id: ChangeGroupId;
+  files: GitFileChange[];
+  additions: number;
+  deletions: number;
+}
+
+/** The non-empty groups, in `CHANGE_GROUP_ORDER`, each keeping the listing's file order. */
+export function groupChanges(files: readonly GitFileChange[], indexed: boolean): ChangeGroup[] {
+  const byId = new Map<ChangeGroupId, ChangeGroup>();
+  for (const file of files) {
+    const id = changeGroupOf(file, indexed);
+    let group = byId.get(id);
+    if (!group) {
+      group = { id, files: [], additions: 0, deletions: 0 };
+      byId.set(id, group);
+    }
+    group.files.push(file);
+    group.additions += file.added ?? 0;
+    group.deletions += file.removed ?? 0;
+  }
+  const out: ChangeGroup[] = [];
+  for (const id of CHANGE_GROUP_ORDER) {
+    const group = byId.get(id);
+    if (group) out.push(group);
+  }
+  return out;
+}
+
+/** One group's tree, built once per listing by the sheet. */
+export interface ChangeTreeSection {
+  group: ChangeGroup;
+  tree: readonly ChangeTreeNode<GitFileChange>[];
+}
 
 /** Every row the shared diff list can draw. */
 export type DiffListItem = GitDiffRow | ChangeTreeRow;
@@ -326,6 +409,39 @@ export function changeTreeRows({
         path: node.path,
         loading: contextLoading,
       });
+    }
+  }
+  return rows;
+}
+
+/**
+ * The tree, one status group at a time, with a heading row over each group.
+ *
+ * One group draws no heading: the list then reads exactly as the plain tree.
+ * With several, a directory can sit in more than one of them, so its row key
+ * carries the group while its path -- the thing the reader collapses -- does
+ * not: hiding `src/lib` hides it wherever it appears. File keys stay `f:path`,
+ * because a file is in one group only and the sheet lands on files by key.
+ */
+export function groupedChangeTreeRows(
+  sections: readonly ChangeTreeSection[],
+  input: Omit<ChangeTreeRowsInput, 'tree'>
+): DiffListItem[] {
+  if (sections.length <= 1) {
+    return sections.length === 0 ? [] : changeTreeRows({ ...input, tree: sections[0].tree });
+  }
+  const rows: DiffListItem[] = [];
+  for (const { group, tree } of sections) {
+    rows.push({
+      type: 'group',
+      key: `g:${group.id}`,
+      id: group.id,
+      fileCount: group.files.length,
+      additions: group.additions,
+      deletions: group.deletions,
+    });
+    for (const row of changeTreeRows({ ...input, tree })) {
+      rows.push(row.type === 'dir' ? { ...row, key: `d:${group.id}/${row.path}` } : row);
     }
   }
   return rows;

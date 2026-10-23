@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {#일}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {파일 #개}}"
 
@@ -1231,6 +1233,11 @@ msgid "Capture restarted"
 msgstr "캡처 재시작"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "변경됨"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "변경됨"
@@ -1358,17 +1365,9 @@ msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테�
 msgid "Choose project"
 msgstr "프로젝트 선택"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "표시할 변경 사항 선택"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "작업 트리 선택"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1686,6 +1685,11 @@ msgstr "확인: {removeLabel} {label}"
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Conflicted"
+msgstr "충돌"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
 msgstr "충돌"
 
 #: src/components/custom-theme-preview.tsx
@@ -2089,8 +2093,8 @@ msgid "Could not list this computer's agents."
 msgstr "이 컴퓨터의 에이전트 목록을 가져오지 못했습니다"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "작업 트리를 불러올 수 없습니다. 새로고침하여 다시 시도하세요"
+msgid "Could not list worktrees."
+msgstr "작업 트리를 불러올 수 없습니다"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2458,6 @@ msgid "Current agent"
 msgstr "현재 에이전트"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "현재 체크아웃"
 
@@ -3722,6 +3725,10 @@ msgstr "더 불러오기"
 msgid "Loading"
 msgstr "불러오는 중"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "변경 사항 불러오는 중…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
@@ -4153,7 +4160,6 @@ msgid "No changelog was provided for this update."
 msgstr "이 업데이트에는 변경 내역이 제공되지 않았습니다"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "변경 사항 없음"
 
@@ -4352,7 +4358,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 체크아웃을 건드리지 않고 브랜치에서 작업할 수 있습니다"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Git 저장소가 아닙니다"
 
@@ -4463,6 +4468,10 @@ msgstr "아직 표시할 내용이 없습니다"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "실행 취소할 것이 없습니다"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "커밋되지 않은 변경 없음"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4622,10 @@ msgstr "이미지 열기"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "변경 사항에서 열기"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "Lazygit에서 열기"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5102,15 @@ msgstr "프로젝트"
 msgid "Project · {0}"
 msgstr "프로젝트 · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "프로젝트 폴더가 없습니다"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "프로젝트 폴더가 없습니다: {0}"
 
@@ -5304,6 +5320,7 @@ msgstr "동작 줄이기: 목록 보기"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5365,6 @@ msgid "Refresh to see new saved output."
 msgstr "새로 저장된 출력을 보려면 새로고침하세요"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "워크트리 새로고침"
 
@@ -5542,6 +5558,7 @@ msgstr "재개"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5727,10 @@ msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "{base}와(과) 동일"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6325,6 +6346,11 @@ msgid "Stage log copied"
 msgstr "스테이지 로그를 복사했습니다"
 
 #: src/components/diff-rows.tsx
+msgid "Staged"
+msgstr "스테이징됨"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
 msgid "Staged"
 msgstr "스테이징됨"
 
@@ -7032,6 +7058,10 @@ msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니�
 msgid "The turn failed"
 msgstr "이번 턴이 실패했습니다"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "작업 트리가 마지막 커밋과 일치합니다"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7621,11 @@ msgstr "연결할 수 없음"
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "스테이징 안 됨"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7637,11 @@ msgstr "지원하지 않는 항목 ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "제목 없는 세션"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "추적되지 않음"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7805,7 @@ msgstr "파일 변경 사항 보기"
 msgid "View original"
 msgstr "원본 이미지 보기"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "다른 체크아웃을 보고 있습니다. 변경 사항은 읽기 전용입니다"
 

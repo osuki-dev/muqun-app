@@ -61,7 +61,9 @@ msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# день} few {# дня} many {# дней} other {# дня}}"
 
 #. placeholder {0}: files.length
+#. placeholder {0}: row.fileCount
 #: src/components/agent-revert-plate.tsx
+#: src/components/change-tree-rows.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# файл} few {# файла} many {# файлов} other {# файла}}"
 
@@ -1231,6 +1233,11 @@ msgid "Capture restarted"
 msgstr "Запись перезапущена"
 
 #: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Changed"
+msgstr "Изменённые"
+
+#: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
 msgstr "Изменён"
@@ -1358,17 +1365,9 @@ msgstr "Выберите вид главной и интерфейса. Цвет
 msgid "Choose project"
 msgstr "Выбрать проект"
 
-#: src/components/changes-sheet.tsx
-msgid "Choose which changes to show"
-msgstr "Выбрать, какие изменения показывать"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Выбрать, какой симулятор показывать"
-
-#: src/components/git-diff-view.tsx
-msgid "Choose worktree"
-msgstr "Выбрать рабочее дерево"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -1687,6 +1686,11 @@ msgstr "Подтвердите: {removeLabel} {label}"
 msgctxt "git file status"
 msgid "Conflicted"
 msgstr "Конфликт"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Conflicts"
+msgstr "Конфликты"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -2089,8 +2093,8 @@ msgid "Could not list this computer's agents."
 msgstr "Не удалось получить список агентов этого компьютера"
 
 #: src/components/changes-worktree-list.tsx
-msgid "Could not list worktrees. Refresh to try again."
-msgstr "Не удалось получить список рабочих деревьев. Обновите и повторите попытку"
+msgid "Could not list worktrees."
+msgstr "Не удалось получить список рабочих деревьев"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -2454,7 +2458,6 @@ msgid "Current agent"
 msgstr "Текущий агент"
 
 #: src/components/changes-worktree-list.tsx
-#: src/components/git-diff-view.tsx
 msgid "Current checkout"
 msgstr "Текущая рабочая копия"
 
@@ -3722,6 +3725,10 @@ msgstr "Загрузить еще"
 msgid "Loading"
 msgstr "Загрузка"
 
+#: src/components/changes-sheet.tsx
+msgid "Loading changes…"
+msgstr "Загрузка изменений…"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Загружаем команды"
@@ -4153,7 +4160,6 @@ msgid "No changelog was provided for this update."
 msgstr "Для этого обновления не предоставлен список изменений"
 
 #: src/components/change-tree-rows.tsx
-#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "Без изменений"
 
@@ -4352,7 +4358,6 @@ msgid "No worktrees yet. Make one below to work on a branch without disturbing t
 msgstr "Worktree ещё нет. Создайте его ниже, чтобы работать над веткой, не трогая эту рабочую копию"
 
 #: src/components/changes-sheet.tsx
-#: src/components/changes-worktree-list.tsx
 msgid "Not a git repository"
 msgstr "Не Git-репозиторий"
 
@@ -4463,6 +4468,10 @@ msgstr "Пока нечего показать"
 #: src/components/agent-workbench.tsx
 msgid "Nothing to undo"
 msgstr "Нечего отменять"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing uncommitted"
+msgstr "Нет незакоммиченных изменений"
 
 #: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
@@ -4613,6 +4622,10 @@ msgstr "Открыть изображение"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Открыть в изменениях"
+
+#: src/components/changes-sheet.tsx
+msgid "Open in Lazygit"
+msgstr "Открыть в Lazygit"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open in viewer"
@@ -5089,12 +5102,15 @@ msgstr "Проект"
 msgid "Project · {0}"
 msgstr "Проект · {0}"
 
+#: src/components/changes-sheet.tsx
+msgid "Project folder is missing"
+msgstr "Папка проекта не найдена"
+
 #. placeholder {0}: gone.directory
-#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
+#. placeholder {0}: workspaceMissing.directory
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "Папка проекта не найдена: {0}"
 
@@ -5304,6 +5320,7 @@ msgstr "Уменьшение движения: вид списком"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/demo-streaming-transcript.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -5348,7 +5365,6 @@ msgid "Refresh to see new saved output."
 msgstr "Обновите, чтобы увидеть новый сохранённый вывод"
 
 #: src/components/agent-worktree-sheet.tsx
-#: src/components/git-diff-view.tsx
 msgid "Refresh worktrees"
 msgstr "Обновить worktree"
 
@@ -5542,6 +5558,7 @@ msgstr "Возобновить"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
 #: src/components/pane-history-sheet.tsx
@@ -5710,6 +5727,10 @@ msgstr "Запустите Gateway на своём компьютере и от�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Выполняется"
+
+#: src/components/changes-sheet.tsx
+msgid "Same as {base}"
+msgstr "Как {base}"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -6325,6 +6346,11 @@ msgid "Stage log copied"
 msgstr "Журнал Сцены скопирован"
 
 #: src/components/diff-rows.tsx
+msgid "Staged"
+msgstr "В индексе"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
 msgid "Staged"
 msgstr "В индексе"
 
@@ -7032,6 +7058,10 @@ msgstr "Транскрипт в виде беседы, шаги инструме
 msgid "The turn failed"
 msgstr "Ход завершился ошибкой"
 
+#: src/components/changes-sheet.tsx
+msgid "The working tree matches the last commit."
+msgstr "Рабочее дерево совпадает с последним коммитом"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/lib/demo-gateway.ts
@@ -7591,6 +7621,11 @@ msgstr "Недоступен"
 msgid "Unstaged"
 msgstr "Не в индексе"
 
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Unstaged"
+msgstr "Не в индексе"
+
 #. placeholder {0}: part.raw_type
 #: src/components/agent-message-block.tsx
 msgid "Unsupported item ({0})"
@@ -7602,6 +7637,11 @@ msgstr "Неподдерживаемый элемент ({0})"
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "Сессия без названия"
+
+#: src/i18n/labels.ts
+msgctxt "git change group"
+msgid "Untracked"
+msgstr "Не отслеживаются"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -7765,7 +7805,7 @@ msgstr "Просмотреть изменения файлов"
 msgid "View original"
 msgstr "Посмотреть оригинал изображения"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-worktree-list.tsx
 msgid "Viewing another checkout. Changes are read-only."
 msgstr "Просмотр другой рабочей копии. Изменения доступны только для чтения"
 

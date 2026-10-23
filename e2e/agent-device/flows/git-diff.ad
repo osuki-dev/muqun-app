@@ -13,6 +13,30 @@ wait stable 400 8000
 # section s5
 screenshot "shots/20-changes.png"
 
+# The status groups and the checkout chips: the demo repository has staged,
+# unstaged and untracked files and a second linked checkout. Switching reads
+# that checkout's one file, and switching back lands on the groups again.
+# section s5a
+is visible "${TARGET}"
+
+# section s5b
+press "${TARGET}"
+
+# section s5c
+wait stable 400 15000
+
+# section s5d
+is visible "${TARGET}"
+
+# section s5e
+press "${TARGET}"
+
+# section s5f
+wait stable 400 15000
+
+# section s5g
+is visible "${TARGET}"
+
 # section s6
 press "${TARGET}"
 
