@@ -24,19 +24,29 @@ import { useStageProgress } from './use-stage-overlay';
 /** Compact, independently updating speakers above the session strip. */
 export function StageSubtitle({
   serverId,
+  paused = false,
   compact = false,
   maxRows = 5,
   onShownChange,
   onOpen,
 }: {
   serverId: string;
+  /**
+   * Home is not in front. The stack is kept mounted and draws nothing: it
+   * used to unmount with the Stage, and every return from a conversation
+   * then re-followed each speaker's session from scratch -- a whole
+   * transcript read per session, on the frames Home was sliding back in.
+   * The subscriptions are cheap and keep the lines current; only the pane
+   * reads pause (`useStageProgress`).
+   */
+  paused?: boolean;
   compact?: boolean;
   maxRows?: number;
   onShownChange?: (shown: boolean) => void;
   onOpen?: (line: StageProgress) => void;
 }) {
-  const lines = useStageProgress(serverId);
-  const visible = lines.length > 0;
+  const lines = useStageProgress(serverId, paused);
+  const visible = lines.length > 0 && !paused;
   const report = useEffectEvent((next: boolean) => onShownChange?.(next));
   useEffect(() => {
     report(visible);

@@ -33,13 +33,14 @@ import {
   type SocketAuthorization,
 } from './gateway-socket';
 import { authorizationFromProbe } from './server-reachability';
+import { decodeBase64Url } from './base64url';
 import { streamRecordCrypto } from './gateway-transport';
 import { onNetworkChange } from './network-events';
 
 const TAG_BYTES = 16;
 
 function fromBase64Url(value: string) {
-  return QuickCrypto.Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+  return QuickCrypto.Buffer.from(decodeBase64Url(value));
 }
 
 export const socketFrameCrypto: SocketFrameCrypto = {

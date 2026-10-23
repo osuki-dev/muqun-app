@@ -36,28 +36,28 @@ const fn = (root: Node, id: string) =>
   nodes(root).find((node) => node.type === 'FunctionDeclaration' && node.id?.name === id);
 
 export function paneShape(root: Node): string[] {
+  // The spelling itself lives in `lib/pane-window-mirror` (`paneWindowShape`),
+  // shared with the reply drawer so a window one screen remembers is one the
+  // other recognises. The screen must build its shape through it exactly
+  // once, from the format, the source and screen ownership, and never spell
+  // the three parts out itself.
   const templates = nodes(root).filter(
     (node) => node.type === 'TemplateLiteral' && hasIdentifier(node, 'PANE_OUTPUT_FORMAT')
   );
-  const shape = templates[0];
+  const shapes = calls(root, 'paneWindowShape');
+  const shape = shapes[0];
   const problems: string[] = [];
   if (
-    templates.length !== 1 ||
-    shape?.type !== 'TemplateLiteral' ||
-    shape.expressions.length !== 3 ||
-    name(shape.expressions[0]) !== 'PANE_OUTPUT_FORMAT' ||
-    name(shape.expressions[1]) !== 'source' ||
-    shape.expressions[2]?.type !== 'ConditionalExpression' ||
-    name(shape.expressions[2].test) !== 'ownsScreen' ||
-    shape.expressions[2].consequent.type !== 'Literal' ||
-    shape.expressions[2].consequent.value !== 'alt' ||
-    shape.expressions[2].alternate.type !== 'Literal' ||
-    shape.expressions[2].alternate.value !== 'main' ||
-    JSON.stringify(shape.quasis.map((quasi) => quasi.value.cooked)) !==
-      JSON.stringify(['', ':', ':', ''])
+    templates.length !== 0 ||
+    shapes.length !== 1 ||
+    shape?.type !== 'CallExpression' ||
+    shape.arguments.length !== 3 ||
+    name(shape.arguments[0]) !== 'PANE_OUTPUT_FORMAT' ||
+    name(shape.arguments[1]) !== 'source' ||
+    name(shape.arguments[2]) !== 'ownsScreen'
   )
     problems.push(
-      'Build the three-part pane cache shape exactly once, from format, source and screen ownership.'
+      'Build the three-part pane cache shape exactly once, through paneWindowShape(PANE_OUTPUT_FORMAT, source, ownsScreen).'
     );
   if (
     calls(root, 'panePrefetchTargets').length &&

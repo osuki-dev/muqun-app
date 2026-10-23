@@ -42,7 +42,6 @@ import {
 } from '@/icons';
 import {
   type ComponentProps,
-  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -57,25 +56,18 @@ import {
   Keyboard,
   type LayoutChangeEvent,
   Pressable,
-  ScrollView,
   type ScrollViewInstance,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
-import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 import AppDrawer from '@/components/app-drawer';
@@ -126,6 +118,9 @@ import {
   usePaneOutput,
 } from '@/terminal/pane-output-store';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
+import { TerminalKeyRow } from '@/components/terminal-key-row';
+import { usePaneShortcuts } from '@/hooks/use-pane-shortcuts';
+import { keyDeliverable, resolveTerminalKeys, terminalKeyDelivery } from '@/lib/terminal-key-row';
 import { WorkspaceTitleSwitcher } from '@/components/workspace-title-switcher';
 import { appChrome } from '@/constants/appearance';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
@@ -166,7 +161,6 @@ import {
   useStableHandler,
 } from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
-import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import {
@@ -192,8 +186,6 @@ import {
   MAX_PANE_OUTPUT_LINES,
   PANE_OUTPUT_PAGE_LINES,
   loadAgentProfiles,
-  loadPaneShortcuts,
-  samePaneShortcuts,
   readAssetBytes,
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
@@ -216,7 +208,6 @@ import {
   type HealthResponse,
   type HerdrEntity,
   type PaneComposer,
-  type PaneShortcuts,
   type SessionAsset,
   type SessionsResponse,
 } from '@/lib/gateway-client';
@@ -230,7 +221,6 @@ import {
   type ComposerDraft,
   type ComposerDraftStore,
 } from '@/lib/composer-draft-store';
-import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { composerBackdropBottom } from '@/lib/composer-popup';
 import { withAlpha } from '@/lib/color';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
@@ -294,16 +284,7 @@ import {
 } from '@/lib/pane-parts';
 import { asAgentActivityStatus, syncAgentActivity } from '@/lib/live-activity';
 import { dockPresentation } from '@/lib/dock-presentation';
-import {
-  fadeIn,
-  fadeInDown,
-  fadeOut,
-  fadeOutDown,
-  listLayout,
-  PRESS,
-  riseIn,
-  timing,
-} from '@/lib/motion';
+import { fadeIn, fadeInDown, fadeOut, fadeOutDown, listLayout, riseIn, timing } from '@/lib/motion';
 import { mirroredServerAgents, mirroredServerPanes } from '@/lib/server-agents';
 import {
   gatewayConnectionPhase,
@@ -311,7 +292,7 @@ import {
   type ServerReachability,
 } from '@/lib/server-reachability';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
-import { loadUsage, orderByUsage, recordUsage, usageScope } from '@/lib/shortcut-usage';
+import { recordUsage, usageScope } from '@/lib/shortcut-usage';
 import {
   recallTabPane,
   rememberTabPane,
@@ -366,14 +347,9 @@ import {
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { refreshAgentsDiscovery, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
-import {
-  allowChord,
-  keyFailureOutcome,
-  paneVocabulary,
-  vocabularyForSession,
-} from '@/lib/key-vocabulary';
+import { keyFailureOutcome, paneVocabulary, vocabularyForSession } from '@/lib/key-vocabulary';
 import { useServerChannels } from '@/stores/server-channels';
-import { useServerReachability } from '@/stores/server-reachability';
+import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
@@ -381,13 +357,8 @@ import {
   type TerminalKey,
   isFullScreenTuiPane,
   isLazygitPane,
-  keyCap,
   parseNvimMode,
-  terminalShortcutTestId,
   keyboardCombinationKeys,
-  terminalKeysFromGateway,
-  withCommonTerminalCombinations,
-  withEditorActions,
 } from '@/lib/terminal-keys';
 import { parseTerminalSnapshot, terminalFrameText } from '@/terminal/terminal-core';
 import {
@@ -412,6 +383,11 @@ import {
   warmWorkspace,
   type WarmWorkspace,
 } from '@/lib/server-warm-cache';
+import {
+  mirroredPaneWindow,
+  paneWindowShape,
+  rememberMirroredPaneWindow,
+} from '@/lib/pane-window-mirror';
 import { startWorkspacePoller } from '@/lib/workspace-poller';
 import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -523,6 +499,8 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
+/** How long an open waits for the pane's first text before the held-back work goes anyway. */
+const OPEN_SETTLE_GRACE_MS = 800;
 /** One pane's captured-history state, filed with its window (`PaneWindow.captured`). */
 type CapturedPaneState = {
   generation: number;
@@ -606,7 +584,7 @@ function paneReading(
     editor,
     ownsScreen,
     source,
-    shape: `${PANE_OUTPUT_FORMAT}:${source}:${ownsScreen ? 'alt' : 'main'}`,
+    shape: paneWindowShape(PANE_OUTPUT_FORMAT, source, ownsScreen),
   };
 }
 
@@ -642,23 +620,93 @@ function paneReading(
  * been made on the frame this runs, so `outputShape` in the render below is
  * built from the same absence and the two agree.
  */
-function warmPaneSeed(serverId: string): { output: string; cache: PaneCache } {
-  const none = { output: '', cache: emptyPaneCache };
+/**
+ * The warm snapshot, if it describes the session this open is for.
+ *
+ * The cache holds one snapshot per server, of whichever session was warmed
+ * last -- Home's focus warm takes the remembered session. A route that names a
+ * pane in another session must not paint that snapshot as its first frame: it
+ * would land connected on the wrong session, read the pane there (where it does
+ * not exist) and only switch once the real snapshot answered. Without a session
+ * to compare against, the snapshot stands as before.
+ */
+function usableWarmWorkspace(
+  serverId: string,
+  sessionId: string | undefined
+): WarmWorkspace | null {
   const warm = warmWorkspace(serverId);
-  if (!warm?.firstPane) return none;
-  const { paneId } = reconcileSelection(warm, initialSelection);
-  if (!paneId || warm.firstPane.paneId !== paneId) return none;
-  const pane = warm.panes.find((entity) => entity.id === paneId);
-  // The shape has to match or the window is declined: a pane that has handed
-  // its tty to an editor is read another way, and painting a stale main-screen
-  // window over it would be worse than the blank it replaces. This is the same
-  // comparison `recallPaneWindow` makes of every cached window, made here
-  // against one that arrived from outside the cache.
-  if (warm.firstPane.shape !== paneReading(pane, undefined).shape) return none;
-  const output = warm.firstPane.output;
+  return warm && (!sessionId || warm.sessionId === sessionId) ? warm : null;
+}
+
+type WarmPaneSeed = {
+  output: string;
+  cache: PaneCache;
+  /**
+   * The pane the route named, with the session it is in, when both are known
+   * before anything has been asked of the gateway. The screen lands on it at
+   * once -- the canvas mounts on the first frame and the pane's own read is
+   * issued beside the snapshot rather than after it (`routePaneRead`) --
+   * instead of showing "Opening…" until `/api/sessions` and the snapshot have
+   * answered. Null for an unscoped open, which lands wherever the snapshot says.
+   */
+  target: { sessionId: string; paneId: string; shape: string } | null;
+};
+
+function warmPaneSeed(
+  serverId: string,
+  route: { sessionId?: string; paneId?: string }
+): WarmPaneSeed {
+  // The session a route pane lives in: the route's own, else the one Home's
+  // mirror last listed this server's panes under. Without either, a pane id
+  // alone cannot be read (ids are per session) and the open stays unscoped.
+  const sessionId =
+    route.sessionId ??
+    useServerAgents.getState().byServer[serverId]?.sessionId ??
+    warmWorkspace(serverId)?.sessionId;
+  const warm = usableWarmWorkspace(serverId, sessionId);
+  const target =
+    route.paneId && sessionId
+      ? {
+          sessionId,
+          paneId: route.paneId,
+          // Read as a pane whose program does not own the screen. An editor
+          // pane is read another way, and the mirror's window for it would
+          // be declined below on its shape, exactly as the cache declines.
+          shape: paneReading(undefined, undefined).shape,
+        }
+      : null;
+  const none = { output: '', cache: emptyPaneCache, target };
+  let paneId: string;
+  let shape: string;
+  let output: string;
+  let scroll: unknown;
+  if (target && (!warm?.firstPane || warm.firstPane.paneId !== target.paneId)) {
+    // The pane the route named, as the last screen to show it left it: the
+    // drawer's window, or this screen's own from an earlier visit.
+    const mirrored = mirroredPaneWindow(serverId, target.sessionId, target.paneId);
+    if (!mirrored || mirrored.shape !== target.shape) return none;
+    paneId = target.paneId;
+    shape = mirrored.shape;
+    output = mirrored.output;
+    scroll = undefined;
+  } else {
+    if (!warm?.firstPane) return none;
+    paneId = reconcileSelection(warm, initialSelection).paneId;
+    if (!paneId || warm.firstPane.paneId !== paneId) return none;
+    const pane = warm.panes.find((entity) => entity.id === paneId);
+    // The shape has to match or the window is declined: a pane that has handed
+    // its tty to an editor is read another way, and painting a stale main-screen
+    // window over it would be worse than the blank it replaces. This is the same
+    // comparison `recallPaneWindow` makes of every cached window, made here
+    // against one that arrived from outside the cache.
+    if (warm.firstPane.shape !== paneReading(pane, undefined).shape) return none;
+    shape = warm.firstPane.shape;
+    output = warm.firstPane.output;
+    scroll = pane?.raw.scroll;
+  }
   if (!output) return none;
   const window: PaneWindow = {
-    shape: warm.firstPane.shape,
+    shape,
     output,
     lineLimit: INITIAL_PANE_OUTPUT_LINES,
     revision: -1,
@@ -666,13 +714,13 @@ function warmPaneSeed(serverId: string): { output: string; cache: PaneCache } {
       output,
       INITIAL_PANE_OUTPUT_LINES,
       MAX_PANE_OUTPUT_LINES,
-      pane?.raw.scroll
+      scroll
     ),
     earlierRows: terminalOutputLineCount(output),
     rangeUnsupported: false,
     lastRead: null,
   };
-  return { output, cache: warmPaneWindow(emptyPaneCache, paneId, window) };
+  return { output, cache: warmPaneWindow(emptyPaneCache, paneId, window), target };
 }
 
 /**
@@ -1143,10 +1191,36 @@ export function ServerTerminalWorkspace({
   } | null>(null);
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
+  // Seeded from the prefetch when it read the pane this screen is about to
+  // land on, in the shape this screen reads -- or, for a route that names a
+  // pane, from the last window any screen drew of it (`lib/pane-window-mirror`).
+  // Everything else about the workspace already painted from the warm
+  // snapshot on the first frame; without this the terminal under it stayed
+  // empty until its own read returned, which made the instant chrome
+  // advertise the one thing that was not.
+  //
+  // The decision -- which pane, which shape, and whether the read is usable at
+  // all -- is `warmPaneSeed`, made once and read three times: for the window
+  // the canvas starts from, into `paneCacheRef` for every frame after the
+  // selection resolves, and for the pane the screen lands on before the
+  // snapshot (`target`). The poll below corrects or confirms whatever this
+  // paints, exactly as it does for `data`.
+  const [warmSeed] = useState(() =>
+    warmPaneSeed(serverId, { sessionId: routeSessionId, paneId: routePaneId })
+  );
   // Opening a server the app was just in paints its workspace instead of
   // spelling out `Connecting`. The snapshot only decides the first frame: the
-  // poller below runs immediately and corrects or confirms it.
-  const [data, setData] = useState<ServerData>(() => warmWorkspace(serverId) ?? initialData);
+  // poller below runs immediately and corrects or confirms it. Declined when
+  // it is of another session than the route's pane (`usableWarmWorkspace`).
+  const [warmSnapshot] = useState(() => usableWarmWorkspace(serverId, warmSeed.target?.sessionId));
+  const [data, setData] = useState<ServerData>(
+    () =>
+      warmSnapshot ??
+      // The session the route's pane is in, so that everything keyed on the
+      // session before the snapshot lands -- the pane's first read, the zoom,
+      // the stream -- is asked of the right one rather than of `default`.
+      (warmSeed.target ? { ...initialData, sessionId: warmSeed.target.sessionId } : initialData)
+  );
   const [snapshotGeneration, setSnapshotGeneration] = useState(0);
   const snapshotGenerationRef = useRef(0);
   // For the refresh deciding whether anyone waits on a new generation.
@@ -1230,10 +1304,23 @@ export function ServerTerminalWorkspace({
     serverId,
   ]);
   const [deliveryOwnership] = useState(() => new DeliveryOwnership());
-  const [selectionOwner] = useState(
-    () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
+  // A route that names a pane lands on it from the first frame. The workspace
+  // and tab are filled in by the snapshot (`selectionForPane`), and a pane the
+  // snapshot does not list is reported unavailable by the strict effect below
+  // -- the same answers as before, only the canvas no longer waits for them.
+  const [landing] = useState<Selection>(() =>
+    warmSeed.target ? { ...initialSelection, paneId: warmSeed.target.paneId } : initialSelection
   );
-  const [selection, publishSelection] = useState<Selection>(initialSelection);
+  // One frame after mount: the canvas gets the first commit to itself.
+  const [dockArmed, setDockArmed] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setDockArmed(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  const [selectionOwner] = useState(
+    () => new DeliverySelection(landing, sameSelection, deliveryOwnership)
+  );
+  const [selection, publishSelection] = useState<Selection>(landing);
   const setSelection = useCallback(
     (next: Selection | ((current: Selection) => Selection)) => {
       const resolved = selectionOwner.update(next);
@@ -1258,19 +1345,15 @@ export function ServerTerminalWorkspace({
     }) &&
     (!strictRequestedWorkspaceId || selection.workspaceId === strictRequestedWorkspaceId) &&
     (!strictRequestedTabId || selection.tabId === strictRequestedTabId);
-  const targetPending = Boolean(activeStrictTarget) && !targetUnavailable && !targetReady;
-  // Seeded from the prefetch when it read the pane this screen is about to
-  // land on, in the shape this screen reads. Everything else about the
-  // workspace already painted from that snapshot on the first frame; without
-  // this the terminal under it stayed empty until its own read returned, which
-  // made the instant chrome advertise the one thing that was not.
-  //
-  // The decision -- which pane, which shape, and whether the warm read is
-  // usable at all -- is `warmPaneSeed`, made once and read twice: here for the
-  // frame before the selection resolves, and into `paneCacheRef` for every
-  // frame after it. The poll below corrects or confirms whatever this paints,
-  // exactly as it does for `data`.
-  const [warmSeed] = useState(() => warmPaneSeed(serverId));
+  // "Opening…" is for a target the screen cannot show yet. A pane the
+  // selection already holds -- the route's own, landed on before the snapshot
+  // -- is shown, under the connecting notice, and either confirmed or
+  // replaced by the unavailable state when the snapshot answers.
+  const targetPending =
+    Boolean(activeStrictTarget) &&
+    !targetUnavailable &&
+    !targetReady &&
+    !(strictRequestedPaneId && selection.paneId === strictRequestedPaneId);
   // The window on screen and the revision it was read at, in a store rather
   // than state: both change on every frame a streaming pane sends, and as
   // state they re-rendered this whole screen -- key row, drawer chrome, chips
@@ -1317,7 +1400,6 @@ export function ServerTerminalWorkspace({
     [deliveryOwnership]
   );
   const [sendingKey, setSendingKey] = useState<string | null>(null);
-  const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
   // The dock's measured height, throttled: the reason it cannot be written
   // straight out of `onLayout` is the whole of `useSettledHeight`.
   const [composerHeight, measureComposerHeight] = useSettledHeight(96);
@@ -1417,12 +1499,20 @@ export function ServerTerminalWorkspace({
   const prefilledDraft = useComposerDraftStore((state) => state.draft);
   const clearPrefilledDraft = useComposerDraftStore((state) => state.clearDraft);
   const [error, setError] = useState<string | null>(null);
+  // The opening frame is out, so what was held back for it may go: the pane
+  // zoom, the approval and parts probes, the shortcuts, the discovery refresh.
+  // True a frame after the canvas first has the pane's text, or after a short
+  // grace when none arrives -- an empty pane still needs its banner and keys.
+  // Measured against a paired gateway these requests, issued beside the pane's
+  // first read, queued it behind them (145 ms against 2-50 ms alone) and their
+  // answers re-rendered the screen while it was still parsing the first frame.
+  const [openSettled, setOpenSettled] = useState(false);
   const [connection, setConnection] = useState<ConnectionStatus>(() => ({
     // A warm snapshot is a reply this process received on an open connection a
     // moment ago (`server-warm-cache`). Painting it under a banner that says
     // Connecting is the flash the cache exists to remove. The poller runs at
     // once either way and corrects this if the gateway has since gone.
-    phase: warmWorkspace(serverId) ? 'connected' : 'connecting',
+    phase: warmSnapshot ? 'connected' : 'connecting',
     attempt: 0,
   }));
   const [retryNonce, setRetryNonce] = useState(0);
@@ -1445,6 +1535,7 @@ export function ServerTerminalWorkspace({
   // rebuilt -- and the poll loop restarted -- when health first arrives.
   const healthRef = useRef<HealthResponse | null>(null);
   const dataRequestIdRef = useRef(0);
+  const dataInFlightRef = useRef<Promise<RefreshResult> | null>(null);
   const outputRequestIdRef = useRef(0);
   // A read that lands after a newer streamed frame is not applied: see
   // `createStreamReadFence`.
@@ -1902,6 +1993,14 @@ export function ServerTerminalWorkspace({
   const refreshData = useCallback(
     async (showLoading = false): Promise<RefreshResult> => {
       if (!ready) return null;
+      // A poll re-armed while the first load is still out (the poller effect
+      // restarts as its inputs settle) joins that load rather than starting
+      // another: the transport already answered both with one request, but
+      // each answer was applied, and the screen re-rendered, once per poll.
+      if (dataInFlightRef.current) {
+        if (showLoading) setLoadingData(true);
+        return dataInFlightRef.current;
+      }
       const requestId = ++dataRequestIdRef.current;
       const requestServerId = serverId;
       const isCurrentRequest = () =>
@@ -1909,13 +2008,21 @@ export function ServerTerminalWorkspace({
         dataRequestIdRef.current === requestId &&
         useGatewayConnectionStore.getState().record?.serverId === requestServerId;
       if (showLoading) setLoadingData(true);
-      return settleAfter(
+      const run: Promise<RefreshResult> = settleAfter(
         async () => {
           return recoverWith<RefreshResult>(
             async () => {
               // Health costs a herdr round-trip and is only read as a "have we loaded
               // anything yet" flag, so it is fetched once rather than every poll.
-              const health = healthRef.current;
+              // The first load takes the Home probe's `/health` body rather than
+              // asking again (the warm prefetch does the same), and names the
+              // session the route's pane is in, so the snapshot is asked for
+              // beside `/api/sessions` instead of after it.
+              const firstLoad = dataRef.current.health === null;
+              const health =
+                healthRef.current ?? (firstLoad ? serverPrewarmGate(serverId).health : null);
+              const hint =
+                firstLoad && warmSeed.target ? { sessionId: warmSeed.target.sessionId } : undefined;
               const previous = resolvedSessionRef.current;
               // A backend coming back must reveal a choice, not pull the reader away
               // from the live fallback they are now using. Explicit picks reset this.
@@ -1926,12 +2033,14 @@ export function ServerTerminalWorkspace({
                 previous?.serverId === serverId && previous.preference === preferredSessionId
                   ? previous.sessionId
                   : preferredSessionId;
-              const {
-                snapshot: next,
-                choices,
-                allSessions,
-              } = await loadWorkspaceSnapshot(stablePreference, health);
-              if (!isCurrentRequest()) return null;
+              const loaded = await loadWorkspaceSnapshot(
+                stablePreference,
+                health,
+                isCurrentRequest,
+                hint
+              );
+              if (!loaded || !isCurrentRequest()) return null;
+              const { snapshot: next, choices, allSessions } = loaded;
               setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
               setBackendSessions((current) =>
                 JSON.stringify(current) === JSON.stringify(allSessions) ? current : allSessions
@@ -2022,8 +2131,11 @@ export function ServerTerminalWorkspace({
         },
         () => {
           if (isCurrentRequest()) setLoadingData(false);
+          if (dataInFlightRef.current === run) dataInFlightRef.current = null;
         }
       );
+      dataInFlightRef.current = run;
+      return run;
     },
     [
       activeStrictTarget,
@@ -2040,6 +2152,7 @@ export function ServerTerminalWorkspace({
       setData,
       dataRef,
       strictTargetRef,
+      warmSeed,
     ]
   );
 
@@ -2376,6 +2489,7 @@ export function ServerTerminalWorkspace({
     async (contentKey: string) => {
       const requestPaneId = selection.paneId;
       if (!ready || connection.phase !== 'connected' || !requestPaneId || !agentPane) return;
+      if (!openSettled) return;
       // A page is being pulled in; letting the ordinary refresh land first would
       // replace the wider transcript with the narrower one under the reader.
       if (loadingEarlierPartsRef.current) return;
@@ -2431,7 +2545,7 @@ export function ServerTerminalWorkspace({
         }
       );
     },
-    [agentPane, connection.phase, data.sessionId, ready, selection.paneId, serverId]
+    [agentPane, connection.phase, data.sessionId, openSettled, ready, selection.paneId, serverId]
   );
 
   /**
@@ -2764,6 +2878,20 @@ export function ServerTerminalWorkspace({
   // Read off `paneReading`, which answers this and the three questions below
   // it from the same two fields -- see its docblock for why the shape in
   // particular has exactly one spelling in this app.
+  // Which keys and slash commands this pane responds to is the gateway's
+  // answer (`usePaneShortcuts`). Asked again on every keyboard open, so a
+  // shell that has just started an agent gets its chords back without a pane
+  // switch, and whenever the pane's title turns: a pane opened as a shell
+  // would otherwise keep its 'shell' profile for as long as it lived, and a
+  // resolved profile outranks the editor title fallback by design. Held back
+  // until the opening frame is out (`openSettled`).
+  const selectedPaneTitle = selectedPane ? field(selectedPane, 'terminal_title_stripped') : null;
+  const shortcuts = usePaneShortcuts({
+    sessionId: data.sessionId,
+    paneId: selection.paneId,
+    enabled: ready && connection.phase === 'connected' && openSettled,
+    refreshKey: `${keyboardOpens}\u0000${selectedPaneTitle ?? ''}`,
+  });
   const selectedPaneReading = paneReading(selectedPane, shortcuts?.profile);
   const fullScreenPane = selectedPaneReading.editor;
   /*
@@ -2905,7 +3033,7 @@ export function ServerTerminalWorkspace({
   // Asked again whenever the screen connects, so a tmux whose extended-keys
   // option changed is seen on the next visit. Undefined on a gateway older
   // than the field, which keeps the SSH encoder as the judge.
-  useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected');
+  useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected' && openSettled);
   const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
   const backendVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
   // A gateway with no terminal backend running answers with an empty session
@@ -2951,10 +3079,7 @@ export function ServerTerminalWorkspace({
   // fails. A sequence (`["\\", "enter"]`) is offered when each of its keys is.
   // Only with a vocabulary: without one, nothing was filtered before.
   const deliverableKey = useCallback(
-    (item: TerminalKey) =>
-      !keyVocabulary ||
-      item.text !== undefined ||
-      (item.keys ?? [item.key]).every((key) => allowChord(key, keyVocabulary)),
+    (item: TerminalKey) => keyDeliverable(item, keyVocabulary),
     [keyVocabulary]
   );
 
@@ -2963,42 +3088,18 @@ export function ServerTerminalWorkspace({
   // Ordered by how often these keys have actually been pressed, for this server
   // and this kind of pane. Recomputed when the pane changes, never on a tap: a
   // row that rearranges under a thumb is worse than one a session out of date.
-  const terminalKeys = useMemo(() => {
-    // Every nvim verb on the row -- `dd`, `u`, even bare `:` -- is a normal-mode
-    // command. While nvim is typing every keystroke into the buffer, pressing
-    // any of them types its literal characters instead of doing what its label
-    // says, which is exactly the fat-fingered corruption a phone invites. This
-    // is the one case that does not go through the usual resolve-then-merge
-    // below: the usage-ordered row is deliberately not used here either, so
-    // Esc stays first no matter how often the other keys have been pressed.
-    if (fullScreenPane && nvimMode === 'insert') {
-      return (shortcuts ? terminalKeysFromGateway(shortcuts.keys) : [])
-        .filter(deliverableKey)
-        .filter((item) => ['esc', 'enter', 'tab', 'ctrl+c', 'backspace'].includes(item.key))
-        .map((item) => (item.key === 'esc' ? { ...item, emphasis: true } : item));
-    }
-    const resolved = shortcuts
-      ? terminalKeysFromGateway([...shortcuts.keys, ...(shortcuts.keyActions ?? [])])
-      : [];
-    // An editor's own commands go on top of whatever was resolved rather than
-    // into the table: the gateway's answer wins when there is one, so a set
-    // added only to the fallback would never be seen against a real gateway.
-    // Older Gateways have no keyActions field. Keep their editor shortcuts
-    // usable until the installed Gateway is updated; a current Gateway is
-    // authoritative for both the dock and the virtual keyboard.
-    const base =
-      shortcuts?.keyActions === undefined
-        ? fullScreenPane && !lazygitPane
-          ? withEditorActions(withCommonTerminalCombinations(resolved))
-          : withCommonTerminalCombinations(resolved)
-        : resolved;
-    const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
-    return orderByUsage(
-      base.filter(deliverableKey),
-      scope ? loadUsage()[scope] : undefined,
-      (item) => item.key
-    );
-  }, [deliverableKey, fullScreenPane, lazygitPane, nvimMode, serverId, shortcuts]);
+  const terminalKeys = useMemo(
+    () =>
+      resolveTerminalKeys({
+        serverId,
+        shortcuts,
+        vocabulary: keyVocabulary,
+        fullScreenPane,
+        lazygitPane,
+        nvimMode,
+      }),
+    [fullScreenPane, keyVocabulary, lazygitPane, nvimMode, serverId, shortcuts]
+  );
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -3113,7 +3214,16 @@ export function ServerTerminalWorkspace({
   // loaded Mac that was the 3-6 s the iOS pass saw the dock arrive after the
   // terminal. Its shortcuts and vocabulary fill in as they land.
   const composerVisible =
-    onScreen && (hasLoadedData || !loadingData) && Boolean(selectedPane) && targetReady;
+    onScreen &&
+    (((hasLoadedData || !loadingData) && Boolean(selectedPane) && targetReady) ||
+      // The route's pane, landed on before the snapshot: the dock mounts a
+      // frame after the canvas, while the pane's first read is still out,
+      // instead of as one blocking commit once the snapshot confirms it. Its
+      // controls stay disabled until `targetReady`, as they already were.
+      (dockArmed &&
+        Boolean(landing.paneId) &&
+        selection.paneId === landing.paneId &&
+        !targetUnavailable));
   // Attachments are the gateway's own upload endpoint, which the bundled demo
   // data has no counterpart for.
   const attachmentsAvailable = composerVisible && !demoMode;
@@ -3594,48 +3704,6 @@ export function ServerTerminalWorkspace({
     setSelection,
   ]);
 
-  // Which keys and slash commands this pane responds to is the gateway's
-  // answer, so a newly supported agent needs a gateway update rather than an
-  // app release. A failure here is not worth surfacing: the local tables cover
-  // the pane until the next attempt.
-  //
-  // The pane id names the pane, not what it runs: when a shell hands its tty
-  // to nvim the id stays put and only the title turns. The title is a
-  // dependency because a pane opened as a shell would otherwise keep its
-  // 'shell' profile for as long as it lived -- and a resolved profile
-  // outranks the editor title fallback by design.
-  const selectedPaneTitle = selectedPane ? field(selectedPane, 'terminal_title_stripped') : null;
-  useEffect(() => {
-    if (!ready || connection.phase !== 'connected' || !selection.paneId) {
-      setShortcuts(null);
-      return;
-    }
-    let cancelled = false;
-    const requestPaneId = selection.paneId;
-    void loadPaneShortcuts(data.sessionId, requestPaneId)
-      .then((value) => {
-        // Asked again on every keyboard open; an unchanged answer keeps the
-        // same object so the usage-ordered row does not reshuffle under a thumb.
-        if (!cancelled && activePaneRef.current === requestPaneId) {
-          setShortcuts((previous) => (samePaneShortcuts(previous, value) ? previous : value));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setShortcuts(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    connection.phase,
-    data.sessionId,
-    keyboardOpens,
-    ready,
-    selection.paneId,
-    selectedPaneTitle,
-    t,
-  ]);
-
   // A quick action that needs an argument typed comes back as a draft rather
   // than as a sent message.
   useEffect(() => {
@@ -3710,6 +3778,14 @@ export function ServerTerminalWorkspace({
           paneScreenRowsRef.current
         );
       });
+      // The window as folded, for whichever screen shows this pane next.
+      rememberMirroredPaneWindow(
+        serverId,
+        dataRef.current.sessionId,
+        requestPaneId,
+        heldShapeRef.current,
+        outputStore.get().window.output
+      );
       if (lineLimit === INITIAL_PANE_OUTPUT_LINES) {
         const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
         earlierOutputRowsRef.current = terminalOutputLineCount(value);
@@ -3724,7 +3800,7 @@ export function ServerTerminalWorkspace({
       }
       setError(null);
     },
-    [outputShapeRef, outputStore, streamReadFence]
+    [dataRef, outputShapeRef, outputStore, serverId, streamReadFence]
   );
 
   const refreshOutput = useCallback(async () => {
@@ -3789,6 +3865,83 @@ export function ServerTerminalWorkspace({
     t,
     watching,
   ]);
+
+  // The route's pane, read the moment the screen mounts -- beside the snapshot,
+  // not after it. Until the snapshot has answered, the selection is the route's
+  // pane by name only (`landing`), `refreshOutput` is waiting on `connected`,
+  // and the canvas is showing the mirror's last window or nothing; this read is
+  // what fills it in the meantime. Painted straight in when the pane is the one
+  // being watched, filed in the cache for the switch that lands on it otherwise.
+  // Once per server: a pane switch within the screen has its own reads.
+  const routePaneReadRef = useRef<string | null>(null);
+  useEffect(() => {
+    const target = warmSeed.target;
+    if (!target || !selectedServer || routePaneReadRef.current === serverId) return;
+    routePaneReadRef.current = serverId;
+    const { sessionId, paneId, shape } = target;
+    const notOvertaken = streamReadFence.begin();
+    let live = true;
+    void readPaneOutput(
+      sessionId,
+      paneId,
+      PANE_OUTPUT_FORMAT,
+      INITIAL_PANE_OUTPUT_LINES,
+      'recent-unwrapped'
+    ).then(
+      (value) => {
+        if (!live || !value || !notOvertaken()) return;
+        if (watchedPaneRef.current === paneId && dataRef.current.sessionId === sessionId) {
+          applyPaneOutputRef.current(paneId, value, undefined, 'refresh');
+          return;
+        }
+        paneCacheRef.current = warmPaneWindow(paneCacheRef.current, paneId, {
+          shape,
+          output: value,
+          lineLimit: INITIAL_PANE_OUTPUT_LINES,
+          revision: -1,
+          canLoadEarlier: hasEarlierTerminalOutput(
+            value,
+            INITIAL_PANE_OUTPUT_LINES,
+            MAX_PANE_OUTPUT_LINES,
+            undefined
+          ),
+          earlierRows: terminalOutputLineCount(value),
+          rangeUnsupported: false,
+          lastRead: null,
+        });
+      },
+      // The ordinary read follows the snapshot and reports its own failure.
+      () => {}
+    );
+    return () => {
+      live = false;
+    };
+  }, [dataRef, selectedServer, serverId, streamReadFence, warmSeed]);
+
+  // When the opening frame is out: see `openSettled`.
+  useEffect(() => {
+    if (openSettled || !ready) return;
+    let frame: number | null = null;
+    let settling = false;
+    const settle = () => {
+      if (settling) return;
+      settling = true;
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => setOpenSettled(true));
+      });
+    };
+    const check = () => {
+      if (outputStore.get().window.output) settle();
+    };
+    check();
+    const unsubscribe = outputStore.subscribe(check);
+    const timer = setTimeout(settle, OPEN_SETTLE_GRACE_MS);
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [openSettled, outputStore, ready]);
 
   const loadEarlierOutput = useCallback(async () => {
     const requestPaneId = selection.paneId;
@@ -4278,7 +4431,7 @@ export function ServerTerminalWorkspace({
     sessionId: data.sessionId,
     paneId: selection.paneId,
     supported: gatewaySupportsApprovals(data.health?.capabilities),
-    enabled: ready && connection.phase === 'connected',
+    enabled: ready && connection.phase === 'connected' && openSettled,
   });
   // Read through a ref for the same reason the output handlers are: the event
   // handlers are built once and must not rebuild the subscription.
@@ -4292,7 +4445,7 @@ export function ServerTerminalWorkspace({
     serverId,
     sessionId: data.sessionId,
     supported: gatewaySupportsAgentEvents(data.health?.capabilities),
-    enabled: ready && connection.phase === 'connected',
+    enabled: ready && connection.phase === 'connected' && openSettled,
   });
 
   // What the dock shows right now. A standing approval clears it down to the
@@ -5062,18 +5215,19 @@ export function ServerTerminalWorkspace({
       async () => {
         return recoverWith(
           async () => {
-            if (item.text === undefined) {
-              await sendPaneKeys(data.sessionId, requestPaneId, item.keys ?? [item.key]);
+            // The same rule the drawer's row sends by (`terminalKeyDelivery`):
+            // a cap made of characters goes as keys, and only characters the
+            // gateway cannot take as key names fall back to a paste.
+            const delivery = terminalKeyDelivery(item);
+            if (delivery.kind === 'keys') {
+              await sendPaneKeys(data.sessionId, requestPaneId, delivery.keys);
             } else {
-              // A cap made of characters is still a key the reader pressed, so it
-              // goes as keys: `:` has to open nvim's command line rather than arrive
-              // in the buffer, and `dd` has to delete a line rather than type two.
-              //
-              // The note that used to be here said the gateway rejects `:` as a key
-              // name. It does not -- `tmux_key` takes any single non-control
-              // character verbatim -- and sending these as text is what made every
-              // editor key on this screen do nothing.
-              await sendPaneCharacters(requestPaneId, item.text, 'terminal-key', item.submit);
+              await sendPaneCharacters(
+                requestPaneId,
+                delivery.text,
+                'terminal-key',
+                delivery.submit
+              );
             }
             setTimeout(() => void refreshOutput(), 80);
           },
@@ -5391,22 +5545,6 @@ export function ServerTerminalWorkspace({
   // screen, which a refreshed pane record alone would otherwise cause.
   const terminalKeysDisabled =
     !targetReady || connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey);
-  const renderTerminalKeyButtons = (keys: TerminalKey[]) =>
-    keys.map((item) => (
-      <TerminalKeyButton
-        key={item.key}
-        item={item}
-        sending={sendingKey === item.key}
-        disabled={terminalKeysDisabled}
-        onPressKey={pressTerminalKey}
-        textColor={chromeText}
-        background={chromeGlass}
-        activeBackground={theme.colors.primary}
-        activeText={theme.colors.onPrimary}
-      />
-    ));
-
-  const terminalKeyButtons = renderTerminalKeyButtons(terminalKeys);
 
   /**
    * The way back to a composer the app's keyboard stood down.
@@ -5505,20 +5643,22 @@ export function ServerTerminalWorkspace({
    */
   const keyboardShortcuts = dock.keysInKeyboard ? (
     <View style={styles.keyRowWrap}>
-      <ScrollView
-        horizontal
-        keyboardShouldPersistTaps="always"
-        showsHorizontalScrollIndicator={false}
-        style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
-        contentContainerStyle={styles.terminalKeyList}>
-        {renderTerminalKeyButtons(
-          // The fallback chords this adds for an older gateway (alt+arrows)
-          // pass the same test as the row they join.
-          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined).filter(
-            deliverableKey
-          )
+      <TerminalKeyRow
+        // The fallback chords this adds for an older gateway (alt+arrows)
+        // pass the same test as the row they join.
+        keys={keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined).filter(
+          deliverableKey
         )}
-      </ScrollView>
+        sendingKey={sendingKey}
+        disabled={terminalKeysDisabled}
+        onPressKey={pressTerminalKey}
+        textColor={chromeText}
+        background={chromeGlass}
+        activeBackground={theme.colors.primary}
+        activeText={theme.colors.onPrimary}
+        style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
+        contentContainerStyle={styles.terminalKeyList}
+      />
       {dock.composerEntry ? composerEntry : null}
     </View>
   ) : undefined;
@@ -5705,19 +5845,22 @@ export function ServerTerminalWorkspace({
             ]}>
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
-          <ScrollView
-            horizontal
-            keyboardShouldPersistTaps="always"
-            showsHorizontalScrollIndicator={false}
+          <TerminalKeyRow
+            keys={terminalKeys}
+            sendingKey={sendingKey}
+            disabled={terminalKeysDisabled}
+            onPressKey={pressTerminalKey}
+            textColor={chromeText}
+            background={chromeGlass}
+            activeBackground={theme.colors.primary}
+            activeText={theme.colors.onPrimary}
+            leading={assignmentToggle}
             // Only the trailing edge: the keyboard toggle holds the leading one.
             style={{ marginRight: -dockBleed.right }}
-            contentContainerStyle={[
-              styles.keyRowScroller,
-              { paddingRight: styles.keyRowScroller.paddingRight + dockBleed.right },
-            ]}>
-            {assignmentToggle}
-            {terminalKeyButtons}
-          </ScrollView>
+            contentContainerStyle={{
+              paddingRight: styles.keyRowScroller.paddingRight + dockBleed.right,
+            }}
+          />
         </Animated.View>
       ) : null}
       {/* Above the field, because it answers a question the field then asks:
@@ -6268,6 +6411,7 @@ export function ServerTerminalWorkspace({
                           loadingEarlier={loadingEarlierOutput}
                           onLoadEarlier={loadEarlierOutput}
                           onViewportReady={refreshOutput}
+                          zoom={openSettled}
                           historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
                           stickBottomNonce={stickBottomNonce}
                           onFileLink={openFileLink}
@@ -6634,43 +6778,48 @@ export function ServerTerminalWorkspace({
                               four circles and the keys could fit -- so a fifth
                               control had nowhere to go, and on a narrow phone
                               the keys were already losing their tail. */}
-                              <ScrollView
-                                horizontal
-                                keyboardShouldPersistTaps="always"
-                                showsHorizontalScrollIndicator={false}
+                              <TerminalKeyRow
+                                keys={terminalKeys}
+                                sendingKey={sendingKey}
+                                disabled={terminalKeysDisabled}
+                                onPressKey={pressTerminalKey}
+                                textColor={chromeText}
+                                background={chromeGlass}
+                                activeBackground={theme.colors.primary}
+                                activeText={theme.colors.onPrimary}
+                                leading={
+                                  <>
+                                    {paneEntries(chromeGlass)}
+                                    <PressableScale
+                                      testID="terminal-open-keyboard"
+                                      accessibilityLabel={t`Open on-screen keyboard`}
+                                      feedback="selection"
+                                      pressedScale={0.9}
+                                      onPress={openKeyboard}
+                                      style={[
+                                        styles.keyRowToggle,
+                                        { borderRadius: profile.chrome.control },
+                                        { backgroundColor: surfaceBackground(chromeGlass) },
+                                      ]}>
+                                      {/* The pack's primary, like the four entries beside it: it
+                                  opens a surface, as they do. It was the text
+                                  colour, which is what the key caps after it
+                                  wear, and read as a dead button in a lit row. */}
+                                      <KeyboardIcon size={16} color={theme.colors.primary} />
+                                    </PressableScale>
+                                    {assignmentToggle}
+                                  </>
+                                }
                                 style={{
                                   marginLeft: -dockBleed.left,
                                   marginRight: -dockBleed.right,
                                 }}
-                                contentContainerStyle={[
-                                  styles.keyRowScroller,
-                                  {
-                                    paddingLeft: dockBleed.left,
-                                    paddingRight:
-                                      styles.keyRowScroller.paddingRight + dockBleed.right,
-                                  },
-                                ]}>
-                                {paneEntries(chromeGlass)}
-                                <PressableScale
-                                  testID="terminal-open-keyboard"
-                                  accessibilityLabel={t`Open on-screen keyboard`}
-                                  feedback="selection"
-                                  pressedScale={0.9}
-                                  onPress={openKeyboard}
-                                  style={[
-                                    styles.keyRowToggle,
-                                    { borderRadius: profile.chrome.control },
-                                    { backgroundColor: surfaceBackground(chromeGlass) },
-                                  ]}>
-                                  {/* The pack's primary, like the four entries beside it: it
-                                  opens a surface, as they do. It was the text
-                                  colour, which is what the key caps after it
-                                  wear, and read as a dead button in a lit row. */}
-                                  <KeyboardIcon size={16} color={theme.colors.primary} />
-                                </PressableScale>
-                                {assignmentToggle}
-                                {terminalKeyButtons}
-                              </ScrollView>
+                                contentContainerStyle={{
+                                  paddingLeft: dockBleed.left,
+                                  paddingRight:
+                                    styles.keyRowScroller.paddingRight + dockBleed.right,
+                                }}
+                              />
                             </Animated.View>
                           ) : null}
                           {/* The files staged for the next message. They are not lost while
@@ -6912,175 +7061,6 @@ function nvimModeOf(output: string, columns: number | undefined): NvimMode {
 }
 
 type NvimMode = ReturnType<typeof parseNvimMode>;
-
-/**
- * Memoised: its props are a key, two flags, a stable handler and colours, so
- * a render of the screen that changed none of them -- which is most of them --
- * leaves the whole row alone.
- */
-const TerminalKeyButton = memo(function TerminalKeyButton({
-  item,
-  sending,
-  disabled,
-  onPressKey,
-  textColor,
-  background,
-  activeBackground,
-  activeText,
-}: {
-  item: TerminalKey;
-  sending: boolean;
-  disabled: boolean;
-  onPressKey: (item: TerminalKey) => void;
-  textColor: string;
-  background: string;
-  activeBackground: string;
-  activeText: string;
-}) {
-  const profile = useAppearanceProfile();
-  const { t } = useLingui();
-  const surfaceBackground = useSurfaceBackground();
-  // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The mono slot is
-  // what makes the row line up and what puts the glyphs the reader picked their
-  // font for -- U+2423 for the leader, the arrows -- on the caps. The family
-  // used to be a `Menlo`/`monospace` literal in the stylesheet at the foot of
-  // this file, and a `StyleSheet` is built the moment the module is imported:
-  // it never had a chance to learn that the reader had installed a mono, so the
-  // key row stayed in the platform's face while the pane above it changed.
-  const mono = useMonoFontFamily();
-  const { _ } = useLinguiRuntime();
-  // vim's vocabulary is the same in every language, so the cap is left alone;
-  // what a screen reader says about it is not.
-  //
-  // Two tables, in this order. `editorActionDescription` is keyed by the action
-  // identity and wins, because `nvim:w` has a real sentence behind it that the
-  // terse `accessibilityLabel` does not. Everything else -- `esc`, `⌃C`, the
-  // arrows, the shell set, whatever each agent advertises -- is keyed by its
-  // English label, which is the only thing that tells the three different
-  // `ctrl+r` rows apart. Anything neither table knows is the gateway's own
-  // description, which the gateway has already localised from the locale header
-  // we send it.
-  const described =
-    editorActionDescription[item.key] ?? terminalKeyDescription[item.accessibilityLabel];
-  const spoken = described ? _(described) : item.accessibilityLabel;
-  const cap = keyCap(item.key, item.cap);
-
-  // `sending` is true from the instant the key is tapped until the send
-  // resolves, so it doubles as the "you tapped this" highlight. The label stays
-  // put -- swapping it for a spinner changed the button's width and made the
-  // whole row jump.
-  //
-  // A key send against a healthy gateway resolves in a few tens of milliseconds,
-  // and the highlight used to be applied and removed on whichever frames those
-  // happened to land on: a flash, or on a fast enough send nothing at all. So
-  // the release is a sequence rather than a ramp -- it reaches the highlight
-  // first and only then leaves it -- which makes the beat the same length
-  // whether the gateway took 20 ms or 200.
-  const held = useSharedValue(0);
-  const pressed = useSharedValue(0);
-  useEffect(() => {
-    if (disabled) pressed.set(0);
-  }, [disabled, pressed]);
-  // Only a key that was actually sending has a release to play. The effect
-  // also runs on mount with `sending` false, and playing the sequence there
-  // pulsed every key in the row -- the whole row flashed on every remount,
-  // which is every pane switch and every keyboard close.
-  const wasSending = useRef(false);
-  useEffect(() => {
-    if (sending) {
-      wasSending.current = true;
-      held.set(withTiming(1, timing('micro')));
-    } else if (wasSending.current) {
-      wasSending.current = false;
-      held.set(withSequence(withTiming(1, timing(PRESS.in)), withTiming(0, timing('micro'))));
-    }
-  }, [held, sending]);
-
-  const activeFillStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(held.value, pressed.value),
-  }));
-  const restLabelStyle = useAnimatedStyle(() => ({
-    opacity: 1 - Math.max(held.value, pressed.value),
-  }));
-  const activeLabelStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(held.value, pressed.value),
-  }));
-
-  return (
-    <PressableScale
-      // Spelled out: a chip with only a label never reached the accessibility
-      // tree on the Pad, so neither a screen reader nor automation could press it.
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={t`Send ${spoken}`}
-      testID={terminalShortcutTestId(item.key)}
-      disabled={disabled}
-      pressedScale={0.94}
-      hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
-      onPress={() => onPressKey(item)}
-      onPressIn={() => {
-        if (!disabled) pressed.set(1);
-      }}
-      onPressOut={() => {
-        pressed.set(0);
-      }}
-      style={[
-        styles.terminalKey,
-        { borderRadius: profile.chrome.control },
-        { backgroundColor: surfaceBackground(background) },
-        // Insert mode's Esc: bigger, and bordered in the same colour the
-        // press animation below already uses for "sent", so it reads as the
-        // row's one deliberate action rather than another glass chip.
-        item.emphasis ? [styles.terminalKeyEmphasis, { borderColor: activeBackground }] : null,
-      ]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          styles.terminalKeyFill,
-          { borderRadius: profile.chrome.control },
-          { backgroundColor: surfaceBackground(activeBackground) },
-          activeFillStyle,
-        ]}
-      />
-      {/* Spelled-out combos ("Ctrl C") rather than tiny modifier glyphs, sized
-          to the text since the row scrolls. The resting copy is what gives the
-          key its width; the sending copy is drawn over it. */}
-      <Animated.View style={restLabelStyle}>
-        <Text
-          variant="caption"
-          color={textColor}
-          // Insert mode's Esc used to carry `fontWeight: '700'`, and 700 is the
-          // weight at which a reader's font silently leaves the screen on
-          // Android: `expo-font` registers a loaded face under
-          // `Typeface.NORMAL` only, `ReactFontManager` rounds anything from 700
-          // up to BOLD, finds no entry, and falls through to
-          // `Typeface.create(family, style)` -- a lookup against the *system*
-          // font list, which does not know the reader's family by name. The one
-          // key meant to stand out was the one key in a different font from the
-          // rest of the row. `weight="semibold"` resolves to 600, under the
-          // threshold, so the registered face is still found.
-          weight={item.emphasis ? 'semibold' : undefined}
-          style={[styles.terminalKeyText, { fontFamily: mono }]}>
-          {cap}
-        </Text>
-      </Animated.View>
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, styles.terminalKeyGlyph, activeLabelStyle]}>
-        <Text
-          variant="caption"
-          color={activeText}
-          // The sending copy is drawn exactly over the resting one, so anything
-          // that changes its metrics moves the label. Same weight, same family.
-          weight={item.emphasis ? 'semibold' : undefined}
-          style={[styles.terminalKeyText, { fontFamily: mono }]}>
-          {cap}
-        </Text>
-      </Animated.View>
-    </PressableScale>
-  );
-});
 
 /**
  * The terminal plane is up at the gateway but no backend behind it is running.
@@ -7803,36 +7783,6 @@ const styles = StyleSheet.create({
     // them. The scroll view is exactly as tall as the row, and the row is
     // exactly as tall as a key.
     alignItems: 'center',
-  },
-  terminalKey: {
-    height: KEY_ROW_HEIGHT,
-    minWidth: 40,
-    paddingHorizontal: 12,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  terminalKeyFill: {
-    borderCurve: 'continuous',
-  },
-  terminalKeyGlyph: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // No `fontFamily`: the reader's monospace slot is merged in by
-  // `TerminalKeyButton`, which can ask for it. See the comment there.
-  terminalKeyText: {
-    fontVariant: ['tabular-nums'],
-  },
-  // Insert mode's Esc. Wider and bordered rather than a louder fill, so it
-  // stays legible against both theme packs without needing a colour of its
-  // own -- the border already reuses `activeBackground`, which is themed. Its
-  // extra weight is the kit's `weight` prop on the label, not a style here;
-  // see `TerminalKeyButton`.
-  terminalKeyEmphasis: {
-    minWidth: 64,
-    paddingHorizontal: 18,
-    borderWidth: 2,
   },
   viewToggle: {
     width: 46,
