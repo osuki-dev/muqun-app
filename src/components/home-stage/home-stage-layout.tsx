@@ -579,7 +579,8 @@ export function HomeStageLayout({
                 compact={typing}
                 maxRows={subtitleRows}
                 room={subtitleRoom}
-                subtitle={!paused && !listOpen && !waiting}
+                subtitle={!listOpen && !waiting}
+                paused={paused}
                 onOpen={openProgress}>
                 {(hidden) => (
                   <StageAgentRow
@@ -816,6 +817,7 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
 function StageFootLine({
   serverId,
   subtitle,
+  paused,
   compact,
   maxRows,
   room,
@@ -824,6 +826,8 @@ function StageFootLine({
 }: {
   serverId: string | undefined;
   subtitle: boolean;
+  /** Home is not in front: the subtitle draws nothing and reads no pane, but keeps its session subscriptions. */
+  paused: boolean;
   compact: boolean;
   maxRows: number;
   /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
@@ -867,6 +871,7 @@ function StageFootLine({
           <StageSubtitle
             key={serverId}
             serverId={serverId}
+            paused={paused}
             compact={compact}
             maxRows={maxRows}
             onShownChange={setShown}

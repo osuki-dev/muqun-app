@@ -186,7 +186,7 @@ function ownsComputer(serverId: string): (() => boolean) | null {
  * screen streams in it, the rest are read on its hints, and all of them on a
  * 4.5 s poll whenever no feed is up.
  */
-export function useStageProgress(serverId: string): StageProgress[] {
+export function useStageProgress(serverId: string, paused = false): StageProgress[] {
   const tasks = useServerTasksStore((state) => state.index[serverId]?.tasks ?? NO_TASKS);
   const panes = useServerAgents((state) => state.byServer[serverId]);
   const sessions = useHomeAgentSessions((state) => state.byServer[serverId]);
@@ -412,7 +412,9 @@ export function useStageProgress(serverId: string): StageProgress[] {
   // while no screen holds one for this computer, and then streams one pane's
   // screen in it.
   const record = connectionRecord?.serverId === serverId ? connectionRecord : null;
-  const working = paneSources.length > 0 && Boolean(paneSessionId && record);
+  // Paused, the panes are neither streamed nor polled; the session followers
+  // above stay subscribed (see `StageSubtitle`).
+  const working = paneSources.length > 0 && Boolean(paneSessionId && record) && !paused;
   const tunnel = useGatewayTunnel(record, working);
   const feedKey =
     working && tunnel.baseUrl && paneSessionId ? paneFeedKey(tunnel.baseUrl, paneSessionId) : null;
@@ -441,7 +443,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
   );
   useEffect(() => {
     const owns = ownsComputer(serverId);
-    if (!owns || !paneSessionId) return;
+    if (!owns || !paneSessionId || paused) return;
     const entries = JSON.parse(paneSubscriptions) as PaneSource[];
     if (entries.length === 0) return;
     let active = true;
@@ -587,6 +589,7 @@ export function useStageProgress(serverId: string): StageProgress[] {
     connectionRecord,
     paneSessionId,
     paneSubscriptions,
+    paused,
     nextStreamed,
     feedKey,
     ownFeed,

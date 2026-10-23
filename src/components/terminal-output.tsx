@@ -23,6 +23,7 @@ export function TerminalPanel({
   sessionId,
   paneId,
   output,
+  zoom = true,
   bottomInset = 0,
   topInset = 0,
   topClearance = 0,
@@ -96,6 +97,12 @@ export function TerminalPanel({
   paneCursorRow?: number;
   /** The screen's side safe-area insets; see `SkiaTerminal`. */
   sideInsets?: SideInsets;
+  /**
+   * Whether to zoom the pane on the gateway. The workspace holds this back
+   * until its opening frame is out (`openSettled`): the POST and the refresh
+   * it schedules were queuing the pane's very first read behind them.
+   */
+  zoom?: boolean;
 }) {
   // Kept in a ref so a new callback identity (it changes whenever the parent's
   // connection/output deps do) does not re-run the effect and re-POST zoom on
@@ -106,7 +113,7 @@ export function TerminalPanel({
   }, [onViewportReady]);
 
   useEffect(() => {
-    if (!paneId) return;
+    if (!paneId || !zoom) return;
     let active = true;
     let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -124,7 +131,7 @@ export function TerminalPanel({
       active = false;
       if (refreshTimer) clearTimeout(refreshTimer);
     };
-  }, [paneId, sessionId]);
+  }, [paneId, sessionId, zoom]);
 
   return (
     <SkiaTerminal

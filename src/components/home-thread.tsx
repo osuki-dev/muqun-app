@@ -54,6 +54,8 @@ const HOME_THREAD_PANE_READ_MS = 2_000;
 const HOME_THREAD_PANE_FIRST_READ_MS = 1_500;
 /** Then, while its reply is awaited or its agent works, every few seconds. */
 export const HOME_THREAD_PANE_POLL_MS = 3_000;
+/** A subscription confirmed this soon after a read does not read again. */
+const HOME_THREAD_SUBSCRIBE_READ_FRESH_MS = 5_000;
 /** Rows of the pane's visible screen read: the agent's last message is near the bottom. */
 const HOME_THREAD_PANE_ROWS = 80;
 
@@ -91,6 +93,7 @@ export function followHomeSession({
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let reading = false;
   let readAgain = false;
+  let readStartedAtMs = 0;
   let closeStream: (() => void) | null = null;
   let releaseSocket: (() => void) | null = null;
 
@@ -100,6 +103,7 @@ export function followHomeSession({
       return;
     }
     reading = true;
+    readStartedAtMs = Date.now();
     void getAgentSessionSnapshot(sessionId, asid)
       .then(
         (snapshot) => {
@@ -117,6 +121,15 @@ export function followHomeSession({
         }
       });
   };
+  // The read a (re)subscription asks for, unless one was just made: the
+  // subscribe lands moments after the first read is sent, and both answered
+  // with the whole transcript -- 1.8 MB opened and parsed twice on the JS
+  // thread, on every return to Home. Nothing is missed by skipping it: the
+  // events arrive live from the subscription on.
+  const readOnSubscribe = () => {
+    if (Date.now() - readStartedAtMs < HOME_THREAD_SUBSCRIBE_READ_FRESH_MS) return;
+    read();
+  };
   const heard = (event: AgentDomainEvent) => {
     if (!active || !owns() || (event.asid && event.asid !== asid)) return;
     if (event.type === 'agent.resync') read();
@@ -127,7 +140,7 @@ export function followHomeSession({
       asid,
       sessionId,
       onEvent: heard,
-      onConnected: read,
+      onConnected: readOnSubscribe,
       onError: reconnect,
       onClose: reconnect,
     });
@@ -145,7 +158,7 @@ export function followHomeSession({
     useServerCapabilities.getState().byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true;
   if (wsEvents) {
     releaseSocket = gatewaySocketFor(serverId).watch(asid, {
-      onSubscribed: read,
+      onSubscribed: readOnSubscribe,
       onEvent: heard,
       onResync: read,
       // The socket cannot carry it: the session's own stream does, as on its screen.
@@ -177,9 +190,18 @@ export function followHomeSession({
 export function HomeThreadFeed({
   target,
   enabled,
+  inFront = enabled,
 }: {
   target: HomeThreadTarget;
+  /** The app is in front and the target's computer is selected. */
   enabled: boolean;
+  /**
+   * Home itself is in front. A session is followed while Home is merely
+   * mounted -- the subscription is cheap and its events keep the live state
+   * current -- so coming back from the terminal does not re-read the whole
+   * transcript. The pane reads below still wait for Home to be in front.
+   */
+  inFront?: boolean;
 }) {
   const key = homeThreadKey(target);
   const { serverId } = target;
@@ -238,7 +260,7 @@ export function HomeThreadFeed({
   const sentAtMs = target.sentAtMs;
   const readTarget = useLatestReader(target);
   useEffect(() => {
-    if (!enabled || !paneId || !paneSessionId) return;
+    if (!enabled || !inFront || !paneId || !paneSessionId) return;
     const owner = useGatewayConnectionStore.getState().record;
     if (owner?.serverId !== serverId) return;
     let active = true;
@@ -295,7 +317,7 @@ export function HomeThreadFeed({
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [enabled, key, serverId, paneId, paneSessionId, paneStatus, sentAtMs, readTarget]);
+  }, [enabled, inFront, key, serverId, paneId, paneSessionId, paneStatus, sentAtMs, readTarget]);
 
   // When the conversation has ended the target goes with it; a task the
   // gateway has bound since becomes the session or pane it runs in.

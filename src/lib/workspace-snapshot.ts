@@ -46,6 +46,20 @@ type WorkspaceSnapshotResult = {
   allSessions: NonNullable<SessionsResponse['sessions']>;
 };
 
+/**
+ * The session a caller already expects to land on.
+ *
+ * A route from Home names the session its pane is in, and Home's mirror
+ * (`stores/server-agents`) records the one it last listed. With either, the
+ * session's shape is asked for *beside* `/health` and `/api/sessions` rather
+ * than after them: measured against a paired gateway those two took 290 ms
+ * before the 15-110 ms snapshot could even start, which was most of the time
+ * between tapping a pane and seeing it. The hint is only ever a head start --
+ * the sessions list still resolves the session, and a hint it does not confirm
+ * is thrown away and the shape read again the ordinary way.
+ */
+export type SessionHint = { sessionId: string };
+
 export function loadWorkspaceSnapshot(
   preference: string | undefined,
   knownHealth?: HealthResponse | null
@@ -53,15 +67,26 @@ export function loadWorkspaceSnapshot(
 export function loadWorkspaceSnapshot(
   preference: string | undefined,
   knownHealth: HealthResponse | null | undefined,
-  isCurrent: () => boolean
+  isCurrent: () => boolean,
+  hint?: SessionHint
 ): Promise<WorkspaceSnapshotResult | null>;
 export async function loadWorkspaceSnapshot(
   preference: string | undefined,
   /** Health already in hand. It costs a round trip and never changes mid-screen. */
   knownHealth?: HealthResponse | null,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  hint?: SessionHint
 ): Promise<WorkspaceSnapshotResult | null> {
   if (!isCurrent()) return null;
+  // Started before the sessions answer, on the hinted session. Its failure is
+  // swallowed here and surfaced, if it recurs, by the ordinary read below:
+  // a head start must never be the reason a workspace fails to load.
+  const early = hint
+    ? sessionEntities(hint.sessionId, knownHealth ?? null).then(
+        (value) => value,
+        () => null
+      )
+    : null;
   const [health, sessions] = await Promise.all([
     knownHealth ? Promise.resolve(knownHealth) : gatewayTransport.loadHealth(),
     gatewayTransport.loadSessions(),
@@ -75,7 +100,9 @@ export async function loadWorkspaceSnapshot(
     choices.length ? choices : sessionChoices(sessions.sessions, true),
     preference
   );
-  const { workspaces, tabs, panes, agents } = await sessionEntities(sessionId, health);
+  const { workspaces, tabs, panes, agents } =
+    (early && hint?.sessionId === sessionId ? await early : null) ??
+    (await sessionEntities(sessionId, health));
   if (!isCurrent()) return null;
   return {
     snapshot: { health, sessionId, workspaces, tabs, panes, agents },

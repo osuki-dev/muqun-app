@@ -27,7 +27,23 @@ test('pane shape lint detects an extra cache identity and a missing screen compo
     paneShape(parse(workspace, `${text}\nconst bad = \`${'${PANE_OUTPUT_FORMAT}'}:extra\`;`))
   ).not.toEqual([]);
   expect(
-    paneShape(parse(workspace, text.replace(":${ownsScreen ? 'alt' : 'main'}", '')))
+    paneShape(
+      parse(
+        workspace,
+        `${text}\nconst twice = paneWindowShape(PANE_OUTPUT_FORMAT, source, ownsScreen);`
+      )
+    )
+  ).not.toEqual([]);
+  expect(
+    paneShape(
+      parse(
+        workspace,
+        text.replace(
+          'paneWindowShape(PANE_OUTPUT_FORMAT, source, ownsScreen)',
+          'paneWindowShape(PANE_OUTPUT_FORMAT, source, false)'
+        )
+      )
+    )
   ).not.toEqual([]);
 });
 test('composer lint rejects waiting for output rather than delivery', () => {

@@ -1,4 +1,5 @@
 import { protectTemporaryCacheEntry } from './cache-cleanup';
+import { decodeBase64Url, encodeBase64Url } from './base64url';
 import { originalImageCache, ORIGINAL_IMAGE_SEED_LIMIT } from './original-image-cache';
 import { parseGitWorktrees, type GitWorktreeInventory } from './git-worktrees';
 import * as TransportSecureStore from 'expo-secure-store';
@@ -315,11 +316,11 @@ interface EncryptedResponsePayload {
 }
 
 function base64Url(value: Uint8Array): string {
-  return QuickCrypto.Buffer.from(value).toString('base64url');
+  return encodeBase64Url(value);
 }
 
-function fromBase64Url(value: string) {
-  return QuickCrypto.Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+function fromBase64Url(value: string): Uint8Array {
+  return decodeBase64Url(value);
 }
 
 function requestUrl(input: RequestInfo | URL): string {
