@@ -843,8 +843,6 @@ export interface HealthResponse {
   legacyUnversionedApi?: boolean;
   transport_versions?: number[];
   capabilities?: string[];
-  /** The terminal agents whose transcripts `agent_transcripts_v1` reads. */
-  agent_transcripts?: string[];
   serverId: string;
   label: string;
   /**

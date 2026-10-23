@@ -2249,10 +2249,6 @@ msgstr "無法讀取已儲存的終端機歷史記錄"
 msgid "Could not read the changes."
 msgstr "無法讀取變更"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "無法讀取對話"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "沒有可以開始任務的電腦"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "尚未配對任何電腦"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "這個窗格還沒有記錄到對話"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "還沒有對話"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "暫存檔案"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7050,6 +7037,10 @@ msgstr "這一輪執行失敗"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主題"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7641,10 +7632,6 @@ msgstr "請將電腦上的 Herdr 更新到 0.9.0 或更新版本並重新啟動�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "請更新電腦上的 Muqun Gateway 並重新啟動，才能把任務交給其他助手"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "請更新電腦上的 Muqun Gateway 並重新啟動，才能在這裡閱讀這段對話"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

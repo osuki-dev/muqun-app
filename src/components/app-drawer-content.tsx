@@ -90,7 +90,9 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
   return (
     <SafeAreaView
-      edges={['top', 'bottom']}
+      // Every edge: the panel slides in from the left, and on a display with
+      // side insets (iPhone Duo) its rows keep clear of them.
+      edges={['top', 'bottom', 'left', 'right']}
       style={[styles.safeArea, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
       <View style={styles.header}>
         <View style={styles.flexOne}>

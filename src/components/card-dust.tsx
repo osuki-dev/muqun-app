@@ -87,6 +87,9 @@ export function CardDust({
     progress: outProgress.get(),
     direction,
     axis: 0,
+    spread: 1,
+    gather: 0,
+    glow: 0,
   }));
   // Reformed against the other way, so it comes back from the leading edge
   // first and its ash, run backwards, still blows the way the pull went.
@@ -97,6 +100,9 @@ export function CardDust({
     progress: inProgress.get(),
     direction: -direction,
     axis: 0,
+    spread: 1,
+    gather: 0,
+    glow: 0,
   }));
   if (!CARD_DUST_EFFECT) return null;
   return (
@@ -179,9 +185,14 @@ export function SheetDust({
     };
   }, [onDrawn, token]);
   const ratio = shot.image.width() / Math.max(1, shot.width);
-  const cell = snapCellSize(shot.width, shot.height, ratio);
+  // Coarser grains than a card's, still on device pixels: on a surface this
+  // large the card's grain is a fine noise, and grains have to be seen to gather.
+  const cell =
+    Math.max(1, Math.round(snapCellSize(shot.width, shot.height, ratio) * SHEET_GRAIN * ratio)) /
+    ratio;
   const shotWidth = shot.width;
   const reach = Math.max(1, Math.min(shot.height, extent));
+  const spread = sheetSpread(reach);
   const uniforms = useDerivedValue(() => ({
     size: [shotWidth, reach],
     cell,
@@ -189,6 +200,9 @@ export function SheetDust({
     progress: progress.get(),
     direction: 1,
     axis: 1,
+    spread,
+    gather: SHEET_GATHER,
+    glow: SHEET_GLOW,
   }));
   if (!CARD_DUST_EFFECT) return null;
   return (
@@ -211,6 +225,18 @@ export function SheetDust({
       </Fill>
     </Canvas>
   );
+}
+
+/** A sheet's grain, as a multiple of a card's. */
+const SHEET_GRAIN = 1.2;
+/** A sheet's grains land before its picture forms (`gather`), and glow (`glow`). */
+const SHEET_GATHER = 0.25;
+const SHEET_GLOW = 0.8;
+/** The height of a deck card, which the dust's travel was drawn for. */
+const CARD_REACH = 150;
+/** How far a sheet's ash travels, as a multiple of a card's: with its height, up to three times. */
+export function sheetSpread(reach: number): number {
+  return Math.min(3, Math.max(1.4, reach / CARD_REACH));
 }
 
 const styles = StyleSheet.create({

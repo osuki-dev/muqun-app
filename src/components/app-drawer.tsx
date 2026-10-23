@@ -173,8 +173,10 @@ export default function AppDrawer({
               // PadServerRail owns its fill; painting the wrapper too would
               // double the user-selected alpha. Its own top edge -- not only
               // its first child -- has to clear the status bar. PadServerRail
-              // consequently applies only the bottom safe-area inset.
+              // consequently applies only the bottom safe-area inset. The
+              // left inset is its margin's too: the rail meets that edge.
               marginTop: insets.top + appChrome.layout.padWorkspaceGutter,
+              marginLeft: insets.left + appChrome.layout.padWorkspaceGutter,
             },
           ]}>
           {padRail}
@@ -206,6 +208,7 @@ export default function AppDrawer({
               {
                 width: workspaceLayout.railWidth,
                 marginTop: insets.top + appChrome.layout.padWorkspaceGutter,
+                marginLeft: insets.left + appChrome.layout.padWorkspaceGutter,
               },
             ]}>
             {padRail}
@@ -234,7 +237,7 @@ export default function AppDrawer({
             exiting={fadeOut()}
             pointerEvents="box-none"
             style={styles.railHandleSlot}>
-            <SafeAreaView edges={['top']} pointerEvents="box-none">
+            <SafeAreaView edges={['top', 'left']} pointerEvents="box-none">
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={t`Show the computer list`}

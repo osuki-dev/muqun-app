@@ -1,3 +1,4 @@
+import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { ScrollView, StyleSheet } from 'react-native';
@@ -26,15 +27,17 @@ export function HomeRecentChips({
       label: servers.find((server) => server.serverId === serverId)?.label ?? serverId,
     })),
   ];
+  const bleed = useSideBleed();
   return (
     <ScrollView
       horizontal
       bounces={false}
-      style={styles.viewport}
+      // Out to the glass past a side status bar, resting clear of it.
+      style={[styles.viewport, bleed.active && styles.bleeding, bleed.frame]}
       testID="home-recent-chips"
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.row}>
+      contentContainerStyle={[styles.row, bleed.content]}>
       {chips.map((chip) => (
         <Chip
           key={chip.id ?? 'all'}
@@ -91,6 +94,8 @@ function Chip({
 
 const styles = StyleSheet.create({
   viewport: { flexGrow: 0, minWidth: 0, width: '100%' },
+  // A fixed width would not grow into the negative margins.
+  bleeding: { width: 'auto', alignSelf: 'stretch' },
   row: { gap: 8, paddingBottom: 8 },
   chip: {
     minHeight: 32,

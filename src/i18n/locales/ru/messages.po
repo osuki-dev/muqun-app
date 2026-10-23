@@ -2249,10 +2249,6 @@ msgstr "Не удалось прочитать сохранённую истор
 msgid "Could not read the changes."
 msgstr "Не удалось прочитать изменения"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "Не удалось прочитать разговор"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "Нет компьютера, на котором можно запуст
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Пока нет привязанных компьютеров"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "Для этой панели разговор ещё не записан"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "Разговора пока нет"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "Временные файлы"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7050,6 +7037,10 @@ msgstr "Ход завершился ошибкой"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Тема"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7641,10 +7632,6 @@ msgstr "Обновите Herdr на компьютере до 0.9.0 или но�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "Обновите Muqun Gateway на компьютере и перезапустите его, чтобы поручить задачу другому ассистенту"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "Обновите Muqun Gateway на компьютере и перезапустите его, чтобы читать этот разговор здесь"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

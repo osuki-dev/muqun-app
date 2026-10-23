@@ -3,6 +3,7 @@ import { Input, Card, Spinner, useThemeTokens, Skeleton, Button, Tabs, Text } fr
 import { PressableScale } from '@/components/pressable-scale';
 import { usePillTabsLayering, useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
+import { useMeasuredSideInsets } from '@/hooks/use-side-insets';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetSceneGroupHeading,
@@ -182,6 +183,7 @@ export default function QuickCommandsScreen() {
   const monoField = useMonoFieldStyle();
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const side = useMeasuredSideInsets();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
   const params = useLocalSearchParams<{
     sessionId: string;
@@ -616,7 +618,11 @@ export default function QuickCommandsScreen() {
     // surface, which is what lets the rows below be plain text on it.
     <SheetFrame tint="background" frosted>
       {/* Keep the fixed header and scroller in one native layout column. */}
-      <View collapsable={false} style={styles.sheet}>
+      <View
+        collapsable={false}
+        onLayout={side.onLayout}
+        // Clear of a side status bar (iPhone Duo) where the sheet reaches it.
+        style={[styles.sheet, { paddingLeft: side.left, paddingRight: side.right }]}>
         <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
           <SheetHandle />
 

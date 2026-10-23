@@ -2249,10 +2249,6 @@ msgstr "อ่านประวัติเทอร์มินัลที่
 msgid "Could not read the changes."
 msgstr "อ่านการเปลี่ยนแปลงไม่ได้"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "อ่านบทสนทนาไม่สำเร็จ"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "ไม่มีคอมพิวเตอร์ให้เริ่ม
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "ยังไม่ได้จับคู่คอมพิวเตอร์"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "ยังไม่มีบทสนทนาที่บันทึกไว้สำหรับหน้าต่างนี้"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "ยังไม่มีบทสนทนา"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "ไฟล์ชั่วคราว"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7050,6 +7037,10 @@ msgstr "รอบนี้ล้มเหลว"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "ธีม"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7641,10 +7632,6 @@ msgstr "อัปเดต Herdr บนคอมพิวเตอร์เป�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "อัปเดต Muqun Gateway บนคอมพิวเตอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "อัปเดต Muqun Gateway บนคอมพิวเตอร์แล้วเริ่มใหม่ เพื่ออ่านบทสนทนานี้ที่นี่"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

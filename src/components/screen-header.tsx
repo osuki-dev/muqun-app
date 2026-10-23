@@ -19,6 +19,7 @@ import {
   navHeaderRowStyle,
 } from '@/components/nav-header';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { sideInsetPadding } from '@/hooks/use-side-insets';
 
 /** How far past the pills the fade reaches before it is fully transparent. */
 // Pushed screens reserve an 8-point gap after the controls. Keep the fade in
@@ -81,7 +82,12 @@ export function ScreenHeader({
       style={[
         navHeaderBarStyle,
         { paddingTop: insets.top + NAV_HEADER_TOP_GAP },
-        contentMaxWidth !== undefined && { paddingHorizontal: 0 },
+        // The controls keep clear of a side status bar (iPhone Duo); the
+        // backdrop and fade are absolute and still span the screen.
+        sideInsetPadding(
+          insets,
+          contentMaxWidth !== undefined ? 0 : navHeaderBarStyle.paddingHorizontal
+        ),
       ]}>
       {/* Keep labels scrolling behind the controls from showing through their
           translucent material. The solid themed plane covers the status bar

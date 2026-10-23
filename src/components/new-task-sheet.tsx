@@ -1,3 +1,4 @@
+import { SideBleedScrollView } from '@/components/side-bleed-scroll-view';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
@@ -25,14 +26,7 @@ import {
 import { Trans, useLingui } from '@lingui/react/macro';
 import { AgentIcon, DoneIcon, OpenFolderIcon } from '@/icons';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Keyboard,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-  type TextInputInstance,
-} from 'react-native';
+import { Keyboard, Platform, StyleSheet, View, type TextInputInstance } from 'react-native';
 import {
   KeyboardAwareScrollView,
   KeyboardController,
@@ -310,8 +304,8 @@ export function NewTaskSheet({
                   <Trans>This computer did not name any agents it can start.</Trans>
                 </Text>
               ) : (
-                <ScrollView
-                  horizontal
+                <SideBleedScrollView
+                  // Under a side status bar (iPhone Duo) to the sheet's edge.
                   testID="new-task-agents"
                   showsHorizontalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
@@ -329,7 +323,7 @@ export function NewTaskSheet({
                       />
                     </Animated.View>
                   ))}
-                </ScrollView>
+                </SideBleedScrollView>
               )}
             </SheetSceneField>
 

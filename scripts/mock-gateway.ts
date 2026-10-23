@@ -618,6 +618,10 @@ const server = Bun.serve({
         server_id: serverId,
         server_label: serverLabel,
         status: 'pending',
+        // The mock speaks cleartext: without this a typed-address pairing
+        // expects a code-sealed claim (see `claimPairingTransaction`) and
+        // refuses the plain one below.
+        transport_encryption: 'disabled',
       });
     }
 

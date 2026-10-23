@@ -2249,10 +2249,6 @@ msgstr "저장된 터미널 기록을 읽지 못했습니다"
 msgid "Could not read the changes."
 msgstr "변경 사항을 읽을 수 없습니다"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "대화를 읽지 못했습니다"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "작업을 시작할 컴퓨터가 없습니다"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "아직 페어링된 컴퓨터가 없습니다"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "이 창에는 아직 기록된 대화가 없습니다"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "아직 대화가 없습니다"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "임시 파일"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7050,6 +7037,10 @@ msgstr "이번 턴이 실패했습니다"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "테마"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7641,10 +7632,6 @@ msgstr "다른 어시스턴트에게 작업을 맡기려면 컴퓨터의 Herdr�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "다른 어시스턴트에게 작업을 맡기려면 컴퓨터의 Muqun Gateway를 업데이트한 뒤 다시 시작하세요"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "여기서 이 대화를 읽으려면 컴퓨터의 Muqun Gateway를 업데이트한 뒤 다시 시작하세요"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx

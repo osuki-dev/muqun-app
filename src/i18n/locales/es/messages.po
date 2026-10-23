@@ -2249,10 +2249,6 @@ msgstr "No se pudo leer el historial guardado del terminal"
 msgid "Could not read the changes."
 msgstr "No se han podido leer los cambios"
 
-#: src/components/agent-transcript-reader.tsx
-msgid "Could not read the conversation."
-msgstr "No se pudo leer la conversación"
-
 #: src/components/home-reply-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -4186,14 +4182,6 @@ msgstr "No hay ningún ordenador en el que iniciar una tarea"
 #: src/components/settings-servers.tsx
 msgid "No computers paired yet"
 msgstr "Aún no hay ordenadores vinculados"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation has been recorded for this pane yet."
-msgstr "Todavía no se ha registrado ninguna conversación para este panel"
-
-#: src/components/agent-transcript-reader.tsx
-msgid "No conversation yet."
-msgstr "Todavía no hay conversación"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -6718,7 +6706,6 @@ msgstr "Archivos temporales"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-row.tsx
 #: src/i18n/labels.ts
@@ -7050,6 +7037,10 @@ msgstr "El turno falló"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Tema"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme action failed"
+msgstr ""
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7641,10 +7632,6 @@ msgstr "Actualiza Herdr en el ordenador a 0.9.0 o posterior y reinicia la sesió
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
 msgstr "Actualiza Muqun Gateway en el ordenador y reinícialo para asignar una tarea a otro asistente"
-
-#: src/components/home-reply-drawer.tsx
-msgid "Update Muqun Gateway on the computer, then restart it, to read this conversation here."
-msgstr "Actualiza Muqun Gateway en el ordenador y reinícialo para leer esta conversación aquí"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
