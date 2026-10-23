@@ -106,12 +106,12 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "4.30.0",
-    "react-native-skia": "3.7.3",
+    "react-native-skia": "3.7.4",
     "react-native-video": "7.0.0-beta.12",
     "react-native-vision-camera": "^5.2.3",
     "react-native-vision-camera-barcode-scanner": "^5.2.3",
     "react-native-web": "~0.21.4",
-    "react-native-webgpu": "0.17.0",
+    "react-native-webgpu": "0.19.0",
     "react-native-webview": "14.0.1",
     "react-native-worklets": "0.13.0",
     "three": "0.186.1",
@@ -176,8 +176,7 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
-    "react-native-webgpu@0.17.0": "patches/react-native-webgpu@0.17.0.patch"
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
   },
   "trustedDependencies": [
     "react-native-skia",
