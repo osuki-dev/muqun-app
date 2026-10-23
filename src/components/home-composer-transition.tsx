@@ -14,7 +14,12 @@ import { HOME_COMPOSER_TRANSITION_SKSL } from '@/lib/home-composer-transition-sh
 import { HOME_COMPOSER_TRANSITION_MS } from '@/lib/motion';
 import { useAppSettings } from '@/stores/app-settings';
 
-export type HomeComposerTransitionKind = 'options' | 'choice' | 'send';
+/**
+ * Opening the options and taking a choice from them. Send has none: a light
+ * running along the field's edge as a message leaves read as a red outline
+ * on a field designed without one.
+ */
+export type HomeComposerTransitionKind = 'options' | 'choice';
 export type HomeComposerPulse = { id: number; kind: HomeComposerTransitionKind };
 
 function compileEffect() {
@@ -41,7 +46,7 @@ function Flow({ kind, radius }: { kind: HomeComposerTransitionKind; radius: numb
     return () => frame.setActive(false);
   }, [frame]);
   const tint = Array.from(Skia.Color(theme.colors.primary));
-  const phase = kind === 'options' ? 0 : kind === 'choice' ? 1 : 2;
+  const phase = kind === 'options' ? 0 : 1;
   const uniforms = useDerivedValue(() => ({
     size: [size.get().width, size.get().height],
     radius,
@@ -74,7 +79,6 @@ export function HomeComposerTransition({
   focused: boolean;
   radius: number;
 }) {
-  const theme = useThemeTokens();
   const active = useAppActive();
   const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
   const initialReduced = useReducedMotion();
@@ -103,6 +107,9 @@ export function HomeComposerTransition({
     return () => clearTimeout(timer);
   }, [pulse, focused, active]);
   if (!pulse || pulse.id <= finished || !focused || !active) return null;
+  // Reduce Motion or theme effects off: no stand-in. A still outline in its
+  // place was a border on a field designed without one.
+  if (reduced || !effectsEnabled || !effect) return null;
   return (
     <View
       testID="home-composer-transition"
@@ -111,21 +118,11 @@ export function HomeComposerTransition({
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={[StyleSheet.absoluteFill, styles.clip, { borderRadius: radius }]}>
-      {!reduced && effectsEnabled && effect ? (
-        <Flow key={pulse.id} kind={pulse.kind} radius={radius} />
-      ) : (
-        <View
-          style={[
-            styles.quiet,
-            { borderRadius: Math.max(0, radius - 3), borderColor: theme.colors.primary },
-          ]}
-        />
-      )}
+      <Flow key={pulse.id} kind={pulse.kind} radius={radius} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },
-  quiet: { position: 'absolute', inset: 3, borderWidth: 1, opacity: 0.35 },
 });

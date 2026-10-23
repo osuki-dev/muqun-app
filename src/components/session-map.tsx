@@ -2,7 +2,8 @@ import { SideBleedScrollView } from '@/components/side-bleed-scroll-view';
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Skeleton, Input, Button, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Skeleton, Input, Button, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { AgentIcon, CreateIcon, RefreshIcon, TerminalWindowIcon } from '@/icons';
 import {
   type ReactNode,

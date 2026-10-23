@@ -56,11 +56,11 @@ export async function finishOtaPublication(
   return succeeded;
 }
 
-/** The pinned 1.0.0 CLI prints a full commit receipt; never infer a latest release. */
+/** The pinned CLI prints a full commit receipt; never infer a latest release. */
 export function deployedOtaReleaseId(output: string): string {
   const receipts = [
     ...stripVTControlCharacters(output).matchAll(
-      /Deployment successful[^\n]*\n[^\n]*\bID:\s*([0-9a-f-]{36})\b/g
+      /Deployment successful[^\n]*\n\s*ID:\s*([0-9a-f-]{36})\b/g
     ),
   ];
   const id = receipts[0]?.[1];
@@ -69,12 +69,36 @@ export function deployedOtaReleaseId(output: string): string {
   return id;
 }
 
+export function deployedOtaReleaseIds(output: string, platforms: readonly ('ios' | 'android')[]) {
+  if (platforms.length === 1)
+    return [{ platform: platforms[0], releaseId: deployedOtaReleaseId(output) }];
+  const clean = stripVTControlCharacters(output);
+  const receipts = [
+    ...clean.matchAll(
+      /Deployment successful[^\n]*\n\s*iOS ID:\s*([0-9a-f-]{36})\s*\n\s*Android ID:\s*([0-9a-f-]{36})/g
+    ),
+  ];
+  const receipt = receipts[0];
+  if (
+    receipts.length !== 1 ||
+    !receipt ||
+    !OTA_RELEASE_ID.test(receipt[1]) ||
+    !OTA_RELEASE_ID.test(receipt[2]) ||
+    receipt[1] === receipt[2]
+  )
+    throw new Error('No unambiguous dual-platform deployment receipt; do not retry automatically');
+  return [
+    { platform: 'ios' as const, releaseId: receipt[1] },
+    { platform: 'android' as const, releaseId: receipt[2] },
+  ];
+}
+
 type NotesApi = {
   publish(releaseId: string, expectedRevision: number, notes: unknown): Promise<void>;
   get(releaseId: string, locale: string): Promise<OtaReleaseNote | null>;
 };
 
-export async function publishOtaNotesAndEnable(
+export async function prepareOtaNotesEnablement(
   core: Pick<HotUpdaterCoreApi, 'getRelease' | 'findChannelByName' | 'updateReleasePolicy'>,
   api: NotesApi,
   releaseId: string,
@@ -106,12 +130,21 @@ export async function publishOtaNotesAndEnable(
     )
       throw new Error('OTA notes readback failed; release was not enabled');
   }
-  // A concurrent release edit must fail, including an unexpected enablement.
-  const enabled = await core.updateReleasePolicy({
-    releaseId,
-    expectedRevision: release.revision,
-    patch: { enabled: true },
-  });
-  if (enabled.release?.id !== releaseId || !enabled.release.enabled)
-    throw new Error('Enablement result is ambiguous; inspect this release before any retry');
+  // Return enablement so both platforms' notes can be verified before either is enabled.
+  return async () => {
+    const enabled = await core.updateReleasePolicy({
+      releaseId,
+      expectedRevision: release.revision,
+      patch: { enabled: true },
+    });
+    if (enabled.release?.id !== releaseId || !enabled.release.enabled)
+      throw new Error('Enablement result is ambiguous; inspect this release before any retry');
+  };
+}
+
+export async function publishOtaNotesAndEnable(
+  ...args: Parameters<typeof prepareOtaNotesEnablement>
+) {
+  const enable = await prepareOtaNotesEnablement(...args);
+  await enable();
 }

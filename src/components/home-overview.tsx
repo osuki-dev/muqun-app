@@ -1,3 +1,4 @@
+import { startDemoStageProgress, stopDemoStageProgress } from '@/lib/demo-stage-progress-native';
 import {
   HOME_TOOLBAR_BUTTON_SIZE,
   HOME_TOOLBAR_ICON_SIZE,
@@ -121,6 +122,8 @@ import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry, hasHomeComposerRevealed } from '@/lib/home-first-entry';
+import type { HomeTaskRow } from '@/lib/home-in-progress';
+import type { HomeTarget } from '@/lib/home-recents';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import {
@@ -894,8 +897,21 @@ export function HomeOverview({
     openAgentInPlace: onOpenAgentInPlace,
     workspaceServerId: embedded ? activeConnection?.serverId : undefined,
   });
+  const { homeContinueFixture, stageProgressFixture } = useLocalSearchParams<{
+    homeContinueFixture?: string;
+    stageProgressFixture?: string;
+  }>();
+  // The offline fixture's transient connection is never a saved computer.
+  // Expose it only to this explicit QA Home, without changing persisted records.
+  const homeServers = useMemo(
+    () =>
+      stageProgressFixture === 'linked' && isDemoRecord(record) && record
+        ? [...records.filter((server) => server.serverId !== record.serverId), record]
+        : records,
+    [records, record, stageProgressFixture]
+  );
   const launchController = useHomeLaunchController({
-    servers: records,
+    servers: homeServers,
     selectedServerId: record?.serverId,
     connectionStatuses,
     reachabilityByServer: padReachabilityByServer,
@@ -905,13 +921,20 @@ export function HomeOverview({
   const availableRecentEntries = useHomeRecentEntries({
     // Every layout keeps its pane inventory in Continue; Classic's computer
     // cards below are entry points, not a second list of those panes.
-    servers: records,
+    servers: homeServers,
     hosts: sshRows,
     selectedServerId: launchController.chosen?.serverId,
     reachabilityByServer: padReachabilityByServer,
     activeConnection,
   });
-  const { homeContinueFixture } = useLocalSearchParams<{ homeContinueFixture?: string }>();
+  useEffect(() => {
+    if (stageProgressFixture === 'off') {
+      stopDemoStageProgress();
+      return;
+    }
+    if (stageProgressFixture === 'linked' && isDemoRecord(record))
+      startDemoStageProgress(record!.serverId, true);
+  }, [record, stageProgressFixture]);
   const demoSearchEntries = demoContinueSearchEntries(homeContinueFixture, isDemoRecord(record));
   const recentEntries = demoSearchEntries ?? availableRecentEntries;
   const [continueQuery, setContinueQuery] = useState('');
@@ -930,9 +953,9 @@ export function HomeOverview({
     recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
   const recentShown = filterHomeRecent(recentEntries, recentFilter);
 
-  function openServer(serverId: string, paneId?: string) {
+  function openServer(serverId: string, paneId?: string, sessionId?: string) {
     retryHomeRefresh(serverId);
-    void commands.openServer(serverId, paneId);
+    void commands.openServer(serverId, paneId, sessionId);
   }
 
   function resumeServerTarget(target: HomeServerEntry) {
@@ -1135,7 +1158,7 @@ export function HomeOverview({
   };
   function openThread(target: HomeThreadTarget) {
     if (target.kind === 'pane') {
-      openServer(target.serverId, target.paneId);
+      openServer(target.serverId, target.paneId, target.sessionId);
       return;
     }
     if (target.kind !== 'session') return;
@@ -1155,25 +1178,24 @@ export function HomeOverview({
       target.agentId
     );
   }
+  const openAttentionTarget = (target: HomeTarget) => {
+    void commands.resumeTarget(target);
+  };
+  // A request is answered where the task runs: its session or its pane, on
+  // its own computer.
+  const openWaitingTask = ({ serverId, task }: HomeTaskRow) => {
+    dismissTaskNotices(task);
+    // Opening work on another computer keeps the dock where it is.
+    launchController.pinTarget();
+    showOpeningWhile(taskOpeningKey(serverId, task.taskId), openTaskWork(commands, serverId, task));
+  };
   const attentionSection =
     !loading && !hydrationError ? (
       <HomeAttention
         servers={records}
         taskServerIds={taskServerIds}
-        onOpen={(target) => {
-          void commands.resumeTarget(target);
-        }}
-        // A request is answered where the task runs: its session
-        // or its pane, on its own computer.
-        onOpenTask={({ serverId, task }) => {
-          dismissTaskNotices(task);
-          // Opening work on another computer keeps the dock where it is.
-          launchController.pinTarget();
-          showOpeningWhile(
-            taskOpeningKey(serverId, task.taskId),
-            openTaskWork(commands, serverId, task)
-          );
-        }}
+        onOpen={openAttentionTarget}
+        onOpenTask={openWaitingTask}
       />
     ) : undefined;
   const progressSection =
@@ -1219,7 +1241,7 @@ export function HomeOverview({
         limit={5}
         linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
         selectedServerId={launchController.chosen?.serverId}
-        servers={records}
+        servers={homeServers}
         hosts={sshRows}
         available={recentShown}
         query={recentQuery}
@@ -1349,6 +1371,8 @@ export function HomeOverview({
             onOpenDetails={(serverId) =>
               router.push({ pathname: '/settings-servers', params: { serverId } })
             }
+            onOpenRequest={openAttentionTarget}
+            onOpenWaitingTask={openWaitingTask}
             threadKey={stageThreadKey}
             onClearThread={() => {
               if (chosenThread)
@@ -1359,8 +1383,8 @@ export function HomeOverview({
             onOpenSession={(entry) => {
               void commands.dispatch(homeContinueCommand(entry.destination));
             }}
-            // The host starts a new task on the composer's computer, as Home's
-            // New session action does (an offline target opens the picker).
+            // A double tap on the art starts a new task on the composer's
+            // computer, as Home's New session action does.
             onNewTask={() => launchController.launchOnChosen(commands.newAgent)}
             onViewport={(height) => {
               pageDockHide.settle({ viewportHeight: height });
@@ -1640,7 +1664,7 @@ export function HomeOverview({
                         editorial
                         bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                         label={t`Settings`}
-                        onPress={() => router.push('/settings')}>
+                        onPress={() => void commands.manageConnections()}>
                         <ThemeIcon
                           name="chrome.settings"
                           fallback={SettingsIcon}

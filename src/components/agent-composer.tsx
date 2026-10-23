@@ -209,7 +209,8 @@ function TreeMark({
  * cross-fade when they arrive.
  */
 const SessionChip = memo(function SessionChip({
-  node,
+  session,
+  hasChildren,
   active,
   current,
   lead,
@@ -218,7 +219,12 @@ const SessionChip = memo(function SessionChip({
   onMeasure,
   subtaskActivity,
 }: {
-  node: SessionNode;
+  /**
+   * The session and its flag, not the strip node: nodes are rebuilt on every
+   * read, which defeated this chip's memo.
+   */
+  session: AgentSessionInfo;
+  hasChildren: boolean;
   active: boolean;
   /** This root is the session on screen, not merely a highlighted ancestor. */
   current: boolean;
@@ -239,7 +245,6 @@ const SessionChip = memo(function SessionChip({
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
 
-  const session = node.session;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
@@ -250,7 +255,7 @@ const SessionChip = memo(function SessionChip({
   const running = subtaskActivity?.running ?? 0;
   const waiting = subtaskActivity?.blocked ?? 0;
   const pressSession = () => {
-    if (current && node.hasChildren && onOpenTree) {
+    if (current && hasChildren && onOpenTree) {
       onOpenTree(session.asid);
     } else {
       onPress(session.asid);
@@ -269,9 +274,9 @@ const SessionChip = memo(function SessionChip({
         onPress={pressSession}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityHint={node.hasChildren ? t`Contains subagent sessions` : undefined}
+        accessibilityHint={hasChildren ? t`Contains subagent sessions` : undefined}
         accessibilityActions={
-          node.hasChildren && onOpenTree
+          hasChildren && onOpenTree
             ? [{ name: 'openSessionTree', label: t`Open session tree` }]
             : undefined
         }
@@ -341,7 +346,7 @@ const SessionChip = memo(function SessionChip({
             {title}
           </Text>
         </Animated.View>
-        {node.hasChildren ? (
+        {hasChildren ? (
           <TreeMark
             testID={`agent-composer-session-tree-mark-${session.asid}`}
             color={active ? theme.colors.onPrimary : theme.colors.primary}
@@ -372,6 +377,12 @@ export interface AgentComposerProps {
   canMentionFiles?: boolean;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlockedReason?: string;
+  /**
+   * Says why sending waits in the field's placeholder instead of a caption row
+   * above the field. Home's field carries a decoration that overhangs its rim
+   * into a clearance the dock reserves; a row in between leaves a hole.
+   */
+  blockedReasonInField?: boolean;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
@@ -466,6 +477,9 @@ export interface AgentComposerProps {
   attachmentTargetId?: string;
   /** Replaces the field's own invitation, e.g. to say why attaching is off. */
   placeholder?: string;
+  inputAccessibilityLabel?: string;
+  /** Persistent recipient context above the draft, including while typing. */
+  fieldHeader?: React.ReactNode;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
   sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
@@ -636,6 +650,7 @@ export const AgentComposer = memo(function AgentComposer({
   canQueueWhileRunning = true,
   canMentionFiles = true,
   interactionBlockedReason,
+  blockedReasonInField = false,
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
@@ -680,6 +695,8 @@ export const AgentComposer = memo(function AgentComposer({
   canAttach = true,
   attachmentTargetId,
   placeholder,
+  inputAccessibilityLabel,
+  fieldHeader,
   sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
@@ -790,6 +807,10 @@ export const AgentComposer = memo(function AgentComposer({
   } | null>(null);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
+  const fieldBlockedReason =
+    blockedReasonInField && !promptAllowed
+      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
+      : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
@@ -2024,7 +2045,8 @@ export const AgentComposer = memo(function AgentComposer({
                   {sessionStrip.map((node) => (
                     <SessionChip
                       key={node.session.asid}
-                      node={node}
+                      session={node.session}
+                      hasChildren={node.hasChildren}
                       active={node.session.asid === selectedRootAsid}
                       current={node.session.asid === activeAsid}
                       lead={
@@ -2131,11 +2153,10 @@ export const AgentComposer = memo(function AgentComposer({
                         style={[
                           styles.actionBtnWithLabel,
                           { borderRadius: profile.chrome.roundControl },
-                          // Always one point of border, coloured only while open, so
-                          // opening the menu never widens the chip and moves the next.
+                          // Keep chip geometry stable; the material and label carry its state.
                           {
                             borderWidth: 1,
-                            borderColor: modeMenuOpen ? theme.colors.primary : 'transparent',
+                            borderColor: 'transparent',
                           },
                           { backgroundColor: surfaceBackground(chromeGlass) },
                         ]}>
@@ -2280,10 +2301,7 @@ export const AgentComposer = memo(function AgentComposer({
                                 ? withAlpha(theme.colors.warning, 0.2)
                                 : withAlpha(theme.colors.primary, 0.2)
                             ),
-                            borderColor:
-                              deliveryMode === 'steer'
-                                ? withAlpha(theme.colors.warning, 0.5)
-                                : withAlpha(theme.colors.primary, 0.5),
+                            borderColor: 'transparent',
                             borderWidth: 1,
                           },
                         ]}>
@@ -2513,7 +2531,7 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {!promptAllowed ? (
+              {!promptAllowed && !fieldBlockedReason ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {interactionBlockedReason ?? (
                     <Trans>
@@ -2532,6 +2550,7 @@ export const AgentComposer = memo(function AgentComposer({
                   setInputRowWidth(width);
                 }}>
                 <TerminalComposer
+                  fieldHeader={fieldHeader}
                   fieldBackground={fieldBackground}
                   fieldBackgroundColor={fieldBackgroundColor}
                   fieldBackgroundOutset={fieldBackgroundOutset}
@@ -2579,9 +2598,12 @@ export const AgentComposer = memo(function AgentComposer({
                       ? agentName
                         ? t`${agentName} is offline`
                         : t`The agent is offline`
-                      : (placeholder ??
-                        t`Send a message, type / for commands, $ for skills, @ for files…`),
-                    shortPlaceholder: t`Send a message…`,
+                      : (fieldBlockedReason ??
+                        placeholder ??
+                        t`Send a message, type / for commands, $ for skills, @ for files`),
+                    shortPlaceholder:
+                      fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
+                    accessibilityLabel: inputAccessibilityLabel,
                     editable: !sending && !disabled,
                     testID: inputTestID,
                     selection,

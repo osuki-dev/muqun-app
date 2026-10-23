@@ -60,7 +60,8 @@ float hash12(float2 p) {
 
 half4 main(float2 pos) {
   half4 base = image.eval(pos);
-  if (fade <= 0.0) return base;
+  // The trail is multiplied by (1 - base.a), so opaque artwork is unchanged.
+  if (fade <= 0.0 || base.a == 1.0) return base;
 
   float2 grid = pos / max(cell, 1.0);
   float2 id = floor(grid);
@@ -68,6 +69,9 @@ half4 main(float2 pos) {
   if (seed > density) return base;
   float h2 = hash12(id + 7.0);
   float h3 = hash12(id + 19.0);
+  float2 centre = float2(0.2 + h2 * 0.6, 0.2 + h3 * 0.6);
+  float speck = 1.0 - smoothstep(0.1, 0.3 + 0.2 * h3, length(fract(grid) - centre));
+  if (speck == 0.0) return base;
 
   // Grains are born and die on their own clocks, so the drift is continuous
   // rather than one burst.
@@ -92,8 +96,6 @@ half4 main(float2 pos) {
 
   float life = 1.0 - age / period;
   life = life * sqrt(life);
-  float2 centre = float2(0.2 + h2 * 0.6, 0.2 + h3 * 0.6);
-  float speck = 1.0 - smoothstep(0.1, 0.3 + 0.2 * h3, length(fract(grid) - centre));
   float strength = min(1.0, rim * life * speck * fade * (1.0 + 0.6 * h2));
   // Ash keeps a little of the drawing's colour, as the exit's does.
   half grey = dot(src.rgb, half3(0.2126, 0.7152, 0.0722));

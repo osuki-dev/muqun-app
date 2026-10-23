@@ -62,7 +62,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
   // Opacity audit: safety -- recovery stays opaque and independent of the theme's preferences.
   return (
     <View style={[styles.shell, { backgroundColor: colors.background }]}>
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: 'transparent' }]}>
         <View style={[styles.icon, { backgroundColor: colors.background }]}>
           <TrustWarningIcon size={32} color={colors.text} accessible={false} />
         </View>

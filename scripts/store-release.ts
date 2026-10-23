@@ -15,6 +15,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as nodeUtil from 'node:util';
+import { recordNativeUpdateTarget } from './native-update-target';
 import { readHotUpdaterAppConfig } from './hot-updater-app-config';
 import { storeReleaseEnvironment, type StoreChannel } from './store-release-env';
 import { summarizeBuildFailure } from './build-failure-summary';
@@ -186,6 +187,14 @@ export function runStoreCommand(
       if (!existsSync(fingerprint))
         throw new StoreCommandError('Native fingerprint missing; submission stopped.');
       copyFileSync(fingerprint, join(artifacts, 'fingerprint.json'));
+      const target = recordNativeUpdateTarget(
+        projectRoot,
+        command.channel,
+        command.platform,
+        artifact,
+        JSON.parse(readFileSync(fingerprint, 'utf8'))
+      );
+      console.log(`OTA target: ${target}`);
       console.log(
         `Artifact: ${artifact}\nNative fingerprint: ${join(artifacts, 'fingerprint.json')}`
       );

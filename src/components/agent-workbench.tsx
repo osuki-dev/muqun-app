@@ -220,7 +220,9 @@ import {
   sessionsOfAgent,
   workbenchAgentId,
   type ChildrenByParent,
+  reuseUnchangedSessions,
 } from '@/lib/agent-session-tree';
+import { sameData } from '@/lib/same-data';
 import {
   applySubtaskBlockEvent,
   descendantsOf,
@@ -1568,9 +1570,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 const fresh = freshSessionRef.current;
                 setSessions((previous) => {
                   const local = previous.find((item) => item.asid === fresh);
-                  return local && !list.some((item) => item.asid === fresh)
-                    ? [local, ...list]
-                    : list;
+                  return reuseUnchangedSessions(
+                    previous,
+                    local && !list.some((item) => item.asid === fresh) ? [local, ...list] : list
+                  );
                 });
                 setChildrenByParent((previous) =>
                   list.reduce(
@@ -2313,7 +2316,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // The roots list and the subagent tree take every status, whoever it
           // is about: that is what a chip's own dot is drawn from.
           setSessions((prev) =>
-            prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
+            reuseUnchangedSessions(
+              prev,
+              prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
+            )
           );
           setChildrenByParent((prev) => applyChildStatus(prev, event.asid, event.status));
           syncHomeRecentStatus(event.asid || activeAsidRef.current || '', event.status);
@@ -2427,7 +2433,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           }
           setSessions((prev) =>
             prev.some((s) => s.asid === info.asid)
-              ? prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
+              ? reuseUnchangedSessions(
+                  prev,
+                  prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
+                )
               : info.parent_id
                 ? prev
                 : [...prev, info]
@@ -5780,7 +5789,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     styles.screenNotice,
                     {
                       backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.border,
+                      borderColor: 'transparent',
                       borderRadius: profile.chrome.noticeBanner,
                     },
                   ]}>
@@ -5826,7 +5835,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     styles.screenNotice,
                     {
                       backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.border,
+                      borderColor: 'transparent',
                       borderRadius: profile.chrome.noticeBanner,
                     },
                   ]}>
@@ -6092,8 +6101,11 @@ function applyChildInfo(previous: ChildrenByParent, info: AgentSessionInfo): Chi
   for (const [parent, children] of Object.entries(previous)) {
     next[parent] = children.map((child) => {
       if (child.asid !== info.asid) return child;
+      const merged = { ...child, ...info };
+      // Every inventory read re-applies each child: unchanged is not news.
+      if (sameData(merged, child)) return child;
       changed = true;
-      return { ...child, ...info };
+      return merged;
     });
   }
   if (info.parent_id && !(next[info.parent_id] ?? []).some((child) => child.asid === info.asid)) {

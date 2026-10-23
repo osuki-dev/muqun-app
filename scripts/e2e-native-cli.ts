@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   NativeRunner,
+  androidDeviceKind,
   deviceFlags,
   junit,
   selectFlows,
@@ -98,6 +99,9 @@ async function validate(): Promise<void> {
       (typeof flow.cleanup !== 'string' || !suite.programs[flow.cleanup])
     )
       throw new Error(`Missing flow cleanup program: ${flow.cleanup}`);
+    for (const kind of flow.devices ?? [])
+      if (!['iphone', 'ipad', 'android-phone', 'android-tablet'].includes(kind))
+        throw new Error(`Unknown device kind for ${flow.name}: ${kind}`);
   }
   for (const program of Object.values(suite.programs)) {
     const visit = async (steps: typeof program, stack: string[] = []): Promise<void> => {
@@ -212,9 +216,11 @@ if (platform === 'ios') {
   if (!selected) throw new Error(`Unknown iOS test device: ${device}`);
   env.DEVICE_KIND = /ipad/i.test(selected.name) ? 'ipad' : 'iphone';
 } else {
-  const result = spawnSync('adb', ['-s', device, 'emu', 'avd', 'name']);
-  if (result.status !== 0) throw new Error(`Cannot identify Android test device: ${device}`);
-  env.DEVICE_KIND = /tablet/i.test(result.stdout.toString()) ? 'android-tablet' : 'android-phone';
+  const size = spawnSync('adb', ['-s', device, 'shell', 'wm', 'size']);
+  const density = spawnSync('adb', ['-s', device, 'shell', 'wm', 'density']);
+  if (size.status !== 0 || density.status !== 0)
+    throw new Error(`Cannot identify Android test device: ${device}`);
+  env.DEVICE_KIND = androidDeviceKind(size.stdout.toString(), density.stdout.toString());
 }
 const androidSerials: string[] = [];
 if (platform === 'android' && which('adb')) {
@@ -239,7 +245,7 @@ if (script) {
   suite.flows.push({ name, program: 'single', tags: [], platforms: [platform] });
   suite.programs.single = [{ run: relative }];
 }
-const flows = selectFlows(suite, tag, platform, name);
+const flows = selectFlows(suite, tag, platform, name, env.DEVICE_KIND);
 if (!flows.length) throw new Error('No runnable flows selected');
 const reportRoot = path.resolve(process.env.E2E_REPORT_DIR ?? path.join(root, 'dist/e2e-reports'));
 const runDirectory = path.join(reportRoot, `${name ?? tag}-${Date.now()}`);

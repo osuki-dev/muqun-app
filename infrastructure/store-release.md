@@ -81,17 +81,62 @@ public release instead of rebuilding it.
 
 ## Publish a JavaScript update
 
-Use the corresponding native build's `fingerprint.json` at the project root and
-its matching source/dependency state. Configure the ignored provider credentials
+Successful local builds automatically record their native OTA target in
+`.hot-updater/native-builds/<channel>/<platform>.json`. Each channel/platform has
+an independent, atomically written record containing the complete fingerprint,
+artifact filename, SHA-256 and recording time. Failed builds do not replace it.
+The original fingerprint also stays beside its artifact under `dist/eas-builds/`.
+Build-only commands register targets too: built does not mean submitted or installed.
+Install and test that exact binary before publishing an update for it.
+
+Update commands automatically select the explicit channel/platform record, without
+searching artifacts or using an unrelated root fingerprint. Missing or mismatched
+records stop publication. Native source/dependencies must still match the binary;
+the CLI compatibility check remains enabled. The wrapper temporarily supplies the
+selected fingerprint to the CLI and restores the original root file after success
+or failure. A per-checkout lock rejects concurrent deployments.
+
+After a killed process, verify no deployment is running before restoring
+`.hot-updater/native-deploy.lock/fingerprint.backup` to the root fingerprint
+(or removing the root fingerprint if there was no backup), then remove the lock.
+Never automatically retry an ambiguous publication.
+
+Records are ignored by Git and EAS. When moving to another checkout or machine,
+copy the exact channel/platform record too. Fingerprint sources can contain local
+build paths; do not commit them. OTA does not require the large artifact to remain.
+Configure the ignored provider credentials
 and private signing-key path in `.env.hotupdater`. The scripts explicitly select
 the channel and enable OTA; stale channel settings in that file cannot redirect them.
 
 ```sh
 bun run update:preview android release-notes/ota-notes.json
 bun run update:preview ios release-notes/ota-notes.json
-bun run update:production android
-bun run update:production ios
+bun run update:production android release-notes/ota-notes.json
+bun run update:production ios release-notes/ota-notes.json
+bun run update:preview both release-notes/ota-notes.json
+bun run update:production both release-notes/ota-notes.json
 ```
+
+`both` composes the official `{ ios, android, inputs }` fingerprint from each
+platform's completed native build. It requires both records and matching input
+configuration. Channel metadata lives outside that official format: a fingerprint
+is a compatibility identity, not a channel, and two channels can share one hash.
+The CLI builds/uploads both platforms and commits both disabled releases in one
+transaction. Both releases' localized notes are verified before either is enabled.
+Enablement uses separate guarded policy writes; if the second fails, the first
+may already be enabled. The command reports exact release IDs and stops without
+retrying. Do not launch competing commands in the same checkout; use `both`.
+
+Hot Updater also supports promoting a tested preview update to production with
+`hot-updater bundle promote <source-id> --target production`. Promotion reuses the
+uploaded artifact and keeps its platform/fingerprint; verify the production
+native target matches. It creates a new enabled release with 100% rollout, so
+review policy and localized release-note handling before using the direct CLI.
+It does not switch an installed app's native channel.
+
+References: [fingerprint format](https://hot-updater.dev/docs/guides/update-strategies/fingerprint),
+[dual-platform deploy](https://hot-updater.dev/docs/guides/deploy), and
+[promotion](https://hot-updater.dev/docs/guides/console#promote).
 
 These publish OTA updates, not store binaries. Native dependency/configuration
 changes require a new store build first. Preserve each native build's fingerprint;

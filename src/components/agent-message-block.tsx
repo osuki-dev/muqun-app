@@ -4,7 +4,8 @@ import type { ToolExpansionIntent } from '@/components/embedded-terminal-tool-bl
 import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
-import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
 import {
@@ -59,7 +60,6 @@ import { InlineFileLink } from '@/components/inline-file-link';
 import { ThemeFencePreview } from '@/components/theme-fence-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { splitAudioMarkdown } from '@/lib/audio-markdown';
-import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
@@ -74,7 +74,6 @@ import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeIn, riseIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
-import { hasSidewaysBlock } from '@/lib/markdown-blocks';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
@@ -1405,7 +1404,6 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           styles.messageBlock,
           plate,
           styles.userBlock,
-          goalSummary ? styles.goalMessage : null,
           { borderLeftColor: colors.accent },
           queued ? { borderLeftColor: theme.colors.warning } : null,
         ]}>
@@ -1424,8 +1422,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
             </Text>
           ) : null}
           {queued ? (
-            <>
-              <View style={styles.roleSpacer} />
+            <View style={styles.queuedControls}>
               <View style={styles.queuedPill}>
                 <TimeIcon size={11} color={theme.colors.warning} />
                 <Text
@@ -1460,7 +1457,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
                   </PressableScale>
                 </>
               ) : null}
-            </>
+            </View>
           ) : null}
         </View>
 
@@ -1594,23 +1591,17 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   const rows: ReactNode[] = [];
   let run: ReactNode[] = [];
   let runKey = '';
-  let runNeedsFullWidth = false;
   let runHasOnlyAudio = true;
   const flush = () => {
     if (run.length === 0) return;
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={
-          runHasOnlyAudio
-            ? styles.standaloneRow
-            : [styles.messageBlock, runNeedsFullWidth && styles.fullWidthMessage, plate]
-        }>
+        style={runHasOnlyAudio ? styles.standaloneRow : [styles.messageBlock, plate]}>
         {run}
       </View>
     );
     run = [];
-    runNeedsFullWidth = false;
     runHasOnlyAudio = true;
   };
   displayEntries.forEach((displayEntry) => {
@@ -1663,19 +1654,6 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       return;
     }
     if (run.length === 0) runKey = entry.item.id;
-    if (entry.item.part.type === 'text')
-      runNeedsFullWidth =
-        runNeedsFullWidth ||
-        splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
-        splitBlockImages(entry.item.part.text).some((part) => part.kind === 'image') ||
-        (Boolean(actions.audioSessionId) &&
-          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown')) ||
-        // A fence or a table is scrolled sideways and so cannot measure inside a
-        // plate that hugs its contents. The `diff` fences are the patch rows'
-        // to draw, not the markdown renderer's, so they do not count here.
-        splitDiffFences(entry.item.part.text).some(
-          (part) => part.kind !== 'diff' && hasSidewaysBlock(part.text)
-        );
     const audioParts =
       entry.item.part.type === 'text' && actions.audioSessionId
         ? splitAudioMarkdown(entry.item.part.text)
@@ -1727,9 +1705,8 @@ export const TRANSCRIPT_ROW_GAP = TRANSCRIPT_GRID.rowGap;
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
   messageBlock: {
-    // Hugs its content: "OK" is a short plate, a paragraph a wide one.
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    alignSelf: 'stretch',
+    width: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
     paddingVertical: TRANSCRIPT_GRID.plateInsetY,
     paddingHorizontal: TRANSCRIPT_GRID.inset,
@@ -1737,9 +1714,9 @@ const styles = StyleSheet.create({
   },
   userBlock: {
     borderLeftWidth: 2,
+    // Keep the text aligned with assistant prose despite the role marker.
+    paddingLeft: TRANSCRIPT_GRID.inset - 2,
   },
-  // Percentage-width media cannot measure inside a plate that hugs its contents.
-  fullWidthMessage: { alignSelf: 'stretch', width: '100%' },
   // A thought row spans the message: the pill hugs itself inside it, and the
   // expanded plate takes the full width. A row that hugged its content was
   // only as wide as the pill on iOS, where the markdown under `flex: 1`
@@ -1771,7 +1748,6 @@ const styles = StyleSheet.create({
   toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
   toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
   toolGroupItems: { gap: 0 },
-  goalMessage: { alignSelf: 'stretch', width: '100%' },
   goalDisclosure: {
     alignSelf: 'stretch',
     minHeight: 44,
@@ -1786,6 +1762,7 @@ const styles = StyleSheet.create({
   goalFullText: { alignSelf: 'stretch', flexShrink: 1 },
   roleRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 6,
   },
@@ -1797,8 +1774,13 @@ const styles = StyleSheet.create({
     // Never shrinks: "just now" is not allowed to become "just".
     flexShrink: 0,
   },
-  roleSpacer: {
-    flex: 1,
+  queuedControls: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 'auto',
+    maxWidth: '100%',
   },
   queuedPill: {
     flexDirection: 'row',
@@ -1809,7 +1791,10 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.micro.size,
   },
   queuedActionBtn: {
-    padding: 3,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   attachmentRow: {
     flexDirection: 'row',

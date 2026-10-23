@@ -1,6 +1,7 @@
 import { memo, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import Animated from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';

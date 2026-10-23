@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, PressableScale } from '@osuki-dev/ui';
+import { Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { CloseIcon } from '@/icons';
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';

@@ -61,7 +61,8 @@ export function FloatingMenu({
 const styles = StyleSheet.create({
   menu: {
     alignSelf: 'flex-start',
-    marginBottom: 7,
+    // No margin of its own: the composer anchors it one gap above the field,
+    // the same gap the Stage's session strip keeps.
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     overflow: 'hidden',

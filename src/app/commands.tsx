@@ -1,15 +1,6 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
-import {
-  Input,
-  Card,
-  Spinner,
-  useThemeTokens,
-  Skeleton,
-  Button,
-  PressableScale,
-  Tabs,
-  Text,
-} from '@osuki-dev/ui';
+import { Input, Card, Spinner, useThemeTokens, Skeleton, Button, Tabs, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { usePillTabsLayering, useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
 import { useMeasuredSideInsets } from '@/hooks/use-side-insets';

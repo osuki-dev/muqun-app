@@ -1,7 +1,8 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import { StopIcon, TerminalIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

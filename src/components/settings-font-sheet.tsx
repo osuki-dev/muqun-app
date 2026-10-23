@@ -686,7 +686,7 @@ function FontSlotGroup({
       />
 
       <SheetSceneRow
-        title={t`Paste a URL…`}
+        title={t`Paste a URL`}
         disabled={busy}
         onPress={onOpenUrl}
         testID={`font-paste-${id}`}
@@ -738,7 +738,7 @@ function FontSlotGroup({
       ) : null}
 
       <SheetSceneRow
-        title={t`Import a file…`}
+        title={t`Import a file`}
         caption={
           // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
           t`A .ttf or .otf up to ${Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))} MB.`

@@ -34,7 +34,8 @@ function stop(): void {
   timer = null;
 }
 
-function subscribe(listener: () => void): () => void {
+/** The shared minute clock's subscription, for a read that folds it into a derived answer. */
+export function subscribeMinuteNow(listener: () => void): () => void {
   listeners.add(listener);
   if (listeners.size === 1) {
     appState = AppState.addEventListener('change', (next) => (next === 'active' ? run() : stop()));
@@ -55,7 +56,7 @@ function subscribe(listener: () => void): () => void {
  * `subscribe` lands only after paint). Advance it here instead; within a
  * minute two reads still agree, as `useSyncExternalStore` requires.
  */
-const read = () => {
+export const readMinuteNow = (): number => {
   if (timer === null && Date.now() - nowMs >= MINUTE_MS) nowMs = Date.now();
   return nowMs;
 };
@@ -66,5 +67,5 @@ const read = () => {
  * freshness clock), so the answer is never older than what the parent drew.
  */
 export function useMinuteNow(floorMs = 0): number {
-  return Math.max(useSyncExternalStore(subscribe, read, read), floorMs);
+  return Math.max(useSyncExternalStore(subscribeMinuteNow, readMinuteNow, readMinuteNow), floorMs);
 }

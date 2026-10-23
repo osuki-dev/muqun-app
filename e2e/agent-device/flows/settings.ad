@@ -57,6 +57,14 @@ press "${TARGET}"
 # quiet interval; the following theme assertions still verify the selection.
 wait stable 400 15000
 
+# section theme-applied-home
+# Applying a theme closes the entire picker stack and reveals Home. Reopen
+# Appearance explicitly before checking the saved theme or changing more settings.
+wait absent "id=settings-theme-sheet" 10000
+wait absent "id=settings-appearance-sheet" 10000
+wait "role=button label=\"Settings\"" 10000
+is visible "role=button label=\"Settings\""
+
 # section confirm-reset
 press "${TARGET}"
 
@@ -283,7 +291,7 @@ scroll down --pixels 160 --duration-ms 300
 wait stable 300 5000
 
 # section storage-scroll
-# STORAGE sits between SECURITY and ABOUT. Its four rows are within a screen of
+# STORAGE sits between SECURITY and ABOUT. Its rows are within a screen of
 # each other, so the ordinary flick is enough here: unlike the ALERTS heading in
 # `s56`, every target below is a full row rather than a 13pt instrument label,
 # and a flick that overshoots one of them still leaves it in the tree for the
@@ -300,15 +308,22 @@ wait stable 300 5000
 # every row below is composed (the anchor screenshot proves it), and each
 # upward flick either reveals the target or overshoots above it, in which case
 # the next iteration re-anchors and tries again: the loop always makes
-# progress or resets, and can never wedge at the stop.
-scroll bottom
+# progress or resets, and can never wedge at the stop. `--in-sheet` keeps an
+# Android tablet's flicks inside the sheet; see custom-themes `storage-anchor`.
+scroll bottom --in-sheet
 wait stable 400 5000
 scroll up --pixels 160 --duration-ms 300
 wait stable 300 5000
 
+# section storage-anchor
+# The actions at the sheet's foot are pressed from its bottom stop, never from
+# where a downward seek parked them: that leaves the row against the screen's
+# bottom edge, where a tablet's tap lands below it.
+scroll bottom --in-sheet
+wait stable 400 5000
+
 # section storage-visible
 is visible "${TARGET}"
-is hidden "id=\"settings-storage-other-row\""
 
 # section storage-press
 press "${TARGET}"

@@ -14,6 +14,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { agentStatusWord, connectionStatusDescription } from '@/i18n/labels';
@@ -23,7 +24,9 @@ import { stageAgentRow, type StageAgentChip, type StagePanel } from '@/lib/home-
 import { PULSE_PERIOD, timing } from '@/lib/motion';
 
 /** The row's height, kept while it is empty so the art above it never moves. */
-const ROW_HEIGHT = 30;
+/** The chips row's height; the Stage's foot folds it away while typing. */
+export const STAGE_AGENT_ROW_HEIGHT = 30;
+const ROW_HEIGHT = STAGE_AGENT_ROW_HEIGHT;
 
 /**
  * The selected computer's agents, one chip each under the art: a dot in the
@@ -147,6 +150,7 @@ function StageAgentChipView({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const { resolvedMode } = useThemeMode();
   const tone =
     chip.mark === 'needs-you'
@@ -165,6 +169,8 @@ function StageAgentChipView({
       style={[
         styles.chip,
         {
+          // The theme's control corner, as every other chip and button wears.
+          borderRadius: profile.chrome.control,
           backgroundColor: withAlpha(theme.colors.surface, resolvedMode === 'light' ? 0.78 : 0.66),
           borderColor:
             chip.mark === 'needs-you'
@@ -205,7 +211,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    borderRadius: (ROW_HEIGHT - 2) / 2,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },

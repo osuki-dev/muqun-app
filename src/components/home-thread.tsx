@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { agentRequestErrorDetail } from '@/lib/agent-request-error';
@@ -360,16 +360,24 @@ export function homeThreadFactsNow(target: HomeThreadTarget): HomeThreadFacts {
 
 /** The target's live state: the dock's grabber tint and the drawer's state word. */
 export function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
+  // One word read across three stores, so the drawer re-renders when the word
+  // changes -- not on each of the live part's publishes (up to four a second
+  // while a reply streams), each task frame or each pane pass.
+  const read = () => homeThreadStateNow(target);
+  return useSyncExternalStore(subscribeHomeThreadStateInputs, read, read);
+}
+
+function homeThreadStateNow(target: HomeThreadTarget): HomeThreadState {
   const key = homeThreadKey(target);
-  const live = useHomeThreadLive((state) => (state.key === key ? state.live : undefined));
-  const task = useServerTasksStore((state) =>
-    homeThreadTask(target, state.index[target.serverId]?.tasks)
-  );
-  const pane = useServerAgents((state) =>
+  const liveState = useHomeThreadLive.getState();
+  const live = liveState.key === key ? liveState.live : undefined;
+  const task = homeThreadTask(target, useServerTasksStore.getState().index[target.serverId]?.tasks);
+  const pane =
     target.kind === 'pane'
-      ? state.byServer[target.serverId]?.agents.find((agent) => agent.paneId === target.paneId)
-      : undefined
-  );
+      ? useServerAgents
+          .getState()
+          .byServer[target.serverId]?.agents.find((agent) => agent.paneId === target.paneId)
+      : undefined;
   const paneBusy = target.kind === 'pane' && live?.paneBusy === true;
   return homeThreadState({
     ...(target.kind === 'session' && live ? { live } : {}),
@@ -384,6 +392,17 @@ export function useHomeThreadState(target: HomeThreadTarget): HomeThreadState {
       : {}),
     unbound: target.kind === 'task',
   });
+}
+
+function subscribeHomeThreadStateInputs(onChange: () => void): () => void {
+  const unsubscribe = [
+    useHomeThreadLive.subscribe(onChange),
+    useServerTasksStore.subscribe(onChange),
+    useServerAgents.subscribe(onChange),
+  ];
+  return () => {
+    for (const stop of unsubscribe) stop();
+  };
 }
 
 /** A send whose delivery could not be confirmed: never resent without the reader. */

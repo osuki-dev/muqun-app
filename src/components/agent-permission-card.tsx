@@ -1,7 +1,8 @@
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { DoneIcon, TrustWarningIcon, TrustedIcon, DismissIcon } from '@/icons';
@@ -55,6 +56,28 @@ function spellOutAction(action: string): string {
 }
 
 /**
+ * A request's answers in its own order, worded as the permission card words
+ * them: known labels localized, an unfamiliar scope in the provider's words,
+ * and the three every permission has when the payload listed none.
+ */
+export function usePermissionOptions(request: PermissionRequest): readonly PermissionOption[] {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  return (
+    request.options.length > 0 ? request.options : DEFAULT_PERMISSION_DECISIONS.map(asOption)
+  ).map((option) => ({
+    ...option,
+    label: permissionOptionLabel(option, {
+      allow: _(permissionDecisionLabel.allow),
+      allow_always: _(permissionDecisionLabel.allow_always),
+      deny: _(permissionDecisionLabel.deny),
+      once: t`Allow once`,
+      turn: t`Allow for this turn`,
+    }),
+  }));
+}
+
+/**
  * What the agent is asking to do, and the answers it offered.
  *
  * OpenCode sends `options[]` -- an index, a label and a decision each -- so a
@@ -105,18 +128,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
     [diffFiles]
   );
 
-  const options: readonly PermissionOption[] = (
-    request.options.length > 0 ? request.options : DEFAULT_PERMISSION_DECISIONS.map(asOption)
-  ).map((option) => ({
-    ...option,
-    label: permissionOptionLabel(option, {
-      allow: _(permissionDecisionLabel.allow),
-      allow_always: _(permissionDecisionLabel.allow_always),
-      deny: _(permissionDecisionLabel.deny),
-      once: t`Allow once`,
-      turn: t`Allow for this turn`,
-    }),
-  }));
+  const options = usePermissionOptions(request);
   const permissions = requestedPermissionsText(request);
 
   /** The rule the engine tripped, as a phrase; the key spelled out when it has none. */

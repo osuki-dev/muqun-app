@@ -1,7 +1,7 @@
 import { Skia, type SkImage } from 'react-native-skia';
 import { useEffect, useEffectEvent, useState } from 'react';
 
-import { createRefCountedCache } from '@/lib/ref-counted-cache';
+import { createRefCountedCache, type CacheHandle } from '@/lib/ref-counted-cache';
 
 /**
  * Decoded theme pictures, shared by every Skia canvas that draws them.
@@ -30,16 +30,31 @@ const cache = createRefCountedCache<SkImage>({
   dispose: (image) => image.dispose(),
 });
 
+/** Why the last load of each URI failed, for the caller's `onError`; cleared on success. */
+const failures = new Map<string, string>();
+
 async function decodeOnce(uri: string): Promise<SkImage | null> {
+  try {
+    const image = await decode(uri);
+    if (image) failures.delete(uri);
+    else failures.set(uri, 'The picture could not be decoded');
+    return image;
+  } catch (error) {
+    failures.set(uri, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+}
+
+async function decode(uri: string): Promise<SkImage | null> {
   const data = await Skia.Data.fromURI(uri);
   const lazy = Skia.Image.MakeImageFromEncoded(data);
   if (!lazy) return null;
-  let raster: SkImage | undefined;
+  let raster: SkImage | null | undefined;
   try {
     // Skia 3 decodes on its worker. readPixels decoded the full hero on JS,
     // preventing navigation and the already-started ripple from committing.
     raster = await lazy.makeRasterImage();
-    return raster;
+    return raster ?? null;
   } finally {
     if (raster !== lazy) lazy.dispose();
   }
@@ -47,23 +62,24 @@ async function decodeOnce(uri: string): Promise<SkImage | null> {
 
 /**
  * The decoded picture at `uri`, the same instance for every caller, or null
- * until it has loaded (and for no `uri`). `onError` is called once when it
- * cannot be loaded.
+ * until it has loaded (and for no `uri`). `onError` is called once, with why,
+ * when it cannot be loaded; a failure is not cached, so asking again (a new
+ * `uri`, or the same one after none) loads it again.
  */
 export function useSharedSkiaImage(
   uri: string | null | undefined,
-  onError?: () => void
+  onError?: (error: string | undefined) => void
 ): SkImage | null {
-  const [loaded, setLoaded] = useState<{ uri: string; image: SkImage } | null>(null);
-  const fail = useEffectEvent(() => onError?.());
+  const [loaded, setLoaded] = useState<{ uri: string; handle: CacheHandle<SkImage> } | null>(null);
+  const fail = useEffectEvent((failed: string) => onError?.(failures.get(failed)));
   useEffect(() => {
     if (!uri) return;
     const handle = cache.acquire(uri);
     let live = true;
     void handle.promise.then((image) => {
       if (!live) return;
-      if (image) setLoaded({ uri, image });
-      else fail();
+      if (image) setLoaded({ uri, handle });
+      else fail(uri);
     });
     return () => {
       live = false;
@@ -71,9 +87,9 @@ export function useSharedSkiaImage(
     };
   }, [uri]);
   if (!uri) return null;
-  if (loaded?.uri === uri) return loaded.image;
-  // Already decoded for somebody else: draw it on the first frame.
-  return cache.peek(uri);
+  // A URI can return after its previous lease was released and disposed.
+  // Never reuse that render state or borrow another owner's unleased image.
+  return loaded?.uri === uri ? loaded.handle.current() : null;
 }
 
 /** Hold decoded images until the newly mounted artwork has acquired its own lease. */

@@ -91,7 +91,7 @@ function originalImageExtension(mime: string): string {
   );
 }
 
-/** A per-view/export copy survives native cache eviction; no second cache is retained. */
+/** A per-view/export copy survives the originals cache being trimmed or cleared. */
 export async function copyCachedOriginalImageFile(
   cachedPath: string,
   info: OriginalImageInfo

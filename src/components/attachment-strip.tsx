@@ -1,6 +1,7 @@
 import { AppIcon } from '@/icons/app-icon';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';

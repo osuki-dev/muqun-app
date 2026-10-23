@@ -1,3 +1,5 @@
+import { demoStagePanes, demoStagePaneOutput, demoStageTasks } from './demo-stage-progress';
+import { stopDemoStageProgress } from './demo-stage-progress-native';
 import { demoPdfBytes } from './demo-pdf';
 import {
   demoCompactionLogSnapshot,
@@ -187,6 +189,7 @@ export function setDemoActive(value: boolean): void {
     demoCompactionListeners.clear();
     demoCompactionStep = 0;
     stopDemoNoticeFixture();
+    stopDemoStageProgress();
     stopDemoCompactionLogs();
   }
   active = value;
@@ -348,7 +351,7 @@ export function demoTasks(): TaskView[] {
         },
       ],
     }) ?? []
-  ).concat(demoNoticeTasks());
+  ).concat(demoNoticeTasks(), demoStageTasks());
 }
 
 /** Native E2E fixture for the recursive session-tree sheet; never used by live gateways. */
@@ -1141,6 +1144,8 @@ function demoPaneRows(paneId: string, advance: boolean): string[] {
 
 /** A little life on each read, so demo mode does not look frozen. */
 export function demoPaneOutput(paneId: string, lines: number): string {
+  const stage = demoStagePaneOutput(paneId);
+  if (stage !== undefined) return stage;
   return demoTerminalTail(demoPaneRows(paneId, true), lines);
 }
 
@@ -1915,6 +1920,8 @@ export function demoTabs(): GatewayEntity[] {
   return normalizeGatewayEntities(tabsRaw(), []);
 }
 export function demoPanes(): GatewayEntity[] {
+  const stage = demoStagePanes();
+  if (stage) return normalizeGatewayEntities(stage, []);
   return normalizeGatewayEntities(
     [
       ...(demoLazygit
@@ -1950,6 +1957,8 @@ export function demoPanes(): GatewayEntity[] {
   );
 }
 export function demoAgents(): GatewayEntity[] {
+  const stage = demoStagePanes();
+  if (stage) return normalizeGatewayEntities(stage, []);
   return normalizeGatewayEntities(
     demoAssistant
       ? [

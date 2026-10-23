@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { PhotoFileIcon, DocumentIcon } from '@/icons';
-import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
+import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import { AssetViewer } from '@/components/asset-viewer';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';

@@ -54,6 +54,8 @@ export type Flow = {
   platforms: string[];
   disabled?: string;
   cleanup?: string;
+  /** Device kinds (`DEVICE_KIND`) the flow runs on; every kind when absent. */
+  devices?: string[];
 };
 
 export async function runWithCleanup(ports: {
@@ -148,13 +150,39 @@ export function requirePass(data: Record<string, unknown>): void {
   if (data.pass !== true) throw new Error(`UI assertion failed: ${JSON.stringify(data)}`);
 }
 
-export function selectFlows(suite: Suite, tag: string, platform: string, name?: string): Flow[] {
+export function selectFlows(
+  suite: Suite,
+  tag: string,
+  platform: string,
+  name?: string,
+  deviceKind?: string
+): Flow[] {
   const selected = suite.flows.filter((flow) =>
     name ? flow.name === name : flow.tags.includes(tag)
   );
   if (name && !selected.length) throw new Error(`Unknown flow: ${name}`);
   if (name && selected[0].disabled) throw new Error(selected[0].disabled);
-  return selected.filter((flow) => !flow.disabled && flow.platforms.includes(platform));
+  const runsOn = (flow: Flow) => !deviceKind || !flow.devices || flow.devices.includes(deviceKind);
+  if (name && !runsOn(selected[0])) throw new Error(`${name} does not run on ${deviceKind}`);
+  return selected.filter(
+    (flow) => !flow.disabled && flow.platforms.includes(platform) && runsOn(flow)
+  );
+}
+
+/**
+ * An Android device's kind by its smallest width, the way Android itself
+ * tells a tablet (600 dp and up) from a phone; `wm`'s override line, printed
+ * after the physical one, wins.
+ */
+export function androidDeviceKind(
+  size: string,
+  density: string
+): 'android-tablet' | 'android-phone' {
+  const pixels = [...size.matchAll(/(\d+)x(\d+)/g)].at(-1);
+  const dpi = [...density.matchAll(/(\d+)/g)].at(-1);
+  if (!pixels || !dpi) throw new Error('Cannot read the Android display size');
+  const smallest = (Math.min(Number(pixels[1]), Number(pixels[2])) * 160) / Number(dpi[1]);
+  return smallest >= 600 ? 'android-tablet' : 'android-phone';
 }
 
 export function tokenize(line: string): string[] {
@@ -989,10 +1017,36 @@ export class NativeRunner {
         continue;
       }
       if (args.includes('--in-sheet')) {
-        if (args[0] !== 'scroll' || (args[1] !== 'down' && args[1] !== 'up'))
-          throw new Error('In-sheet scrolling requires scroll down or up');
+        if (args[0] !== 'scroll' || !['down', 'up', 'bottom'].includes(args[1]))
+          throw new Error('In-sheet scrolling requires scroll down, up or bottom');
         args.splice(args.indexOf('--in-sheet'), 1);
-        if (env.DEVICE_KIND === 'ipad') {
+        if (args[1] === 'bottom') {
+          // An Android tablet's form sheet leaves the screen behind it in the
+          // tree, and native `scroll bottom` may measure that screen's list
+          // while its swipe moves the sheet's: it then reports no progress.
+          // Three flicks up the sheet's middle reach any sheet's bottom stop.
+          if (env.DEVICE_KIND === 'android-tablet') {
+            const nodes = await this.readySnapshot(true);
+            const sheet = nodes
+              .filter((node) => node.identifier?.endsWith('-sheet') && node.rect)
+              .sort((a, b) => a.rect!.width * a.rect!.height - b.rect!.width * b.rect!.height)[0];
+            if (!sheet?.rect) throw new Error('Missing sheet for in-sheet scroll');
+            const x = Math.round(sheet.rect.x + sheet.rect.width / 2);
+            const from = Math.round(sheet.rect.y + sheet.rect.height * 0.85);
+            const dy = -Math.round(sheet.rect.height * 0.6);
+            for (let pass = 0; pass < 3; pass++)
+              await this.invoke([
+                'gesture',
+                'pan',
+                String(x),
+                String(from),
+                '0',
+                String(dy),
+                '300',
+              ]);
+            continue;
+          }
+        } else if (env.DEVICE_KIND === 'ipad') {
           // A drag from the grabber's column inside the sheet. The native
           // scroll's press-then-drag does not reliably move a list in an iPad
           // form sheet. A whole-number amount is a pass count; a viewport

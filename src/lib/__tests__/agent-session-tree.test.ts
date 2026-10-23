@@ -18,6 +18,7 @@ import {
   groupDescendantsByParent,
   loadSessionDescendants,
   mergeSessionChildren,
+  reuseUnchangedSessions,
   type ChildrenByParent,
   type SessionDescendantsInventory,
 } from '../agent-session-tree';
@@ -710,5 +711,27 @@ describe('a whole subtree in one request', () => {
       expect(walked[0]).toBe('ses_a');
       expect(walked).toContain('ses_a1x');
     }
+  });
+});
+
+describe('reuseUnchangedSessions', () => {
+  test('keeps the previous list when a read changed nothing', () => {
+    const previous = [ROOT_A, ROOT_B];
+    expect(reuseUnchangedSessions(previous, [{ ...ROOT_A }, { ...ROOT_B }])).toBe(previous);
+  });
+
+  test('replaces only the session that changed and keeps the order it was given', () => {
+    const previous = [ROOT_A, ROOT_B];
+    const busy = { ...ROOT_B, status: 'busy' as const };
+    const next = reuseUnchangedSessions(previous, [busy, { ...ROOT_A }]);
+    expect(next).not.toBe(previous);
+    expect(next[0]).toBe(busy);
+    expect(next[1]).toBe(ROOT_A);
+  });
+
+  test('a session dropped from the read is gone', () => {
+    const next = reuseUnchangedSessions([ROOT_A, ROOT_B], [{ ...ROOT_A }]);
+    expect(next).toEqual([ROOT_A]);
+    expect(next[0]).toBe(ROOT_A);
   });
 });

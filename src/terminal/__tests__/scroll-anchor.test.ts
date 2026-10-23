@@ -13,6 +13,8 @@ import {
   clampScrollOffset,
   measureRowsDropped,
   measureRowsPrepended,
+  keepRowsAboveReader,
+  TERMINAL_KEPT_MAX_ROWS,
   terminalBottomStop,
   terminalFollowsOutput,
   terminalRestOffset,
@@ -20,7 +22,7 @@ import {
   TERMINAL_FOLLOW_SLACK,
 } from '@/terminal/scroll-anchor';
 import { parseTerminalSnapshot } from '@/terminal/terminal-core';
-import type { TerminalLine } from '@/terminal/types';
+import type { TerminalFrame, TerminalLine } from '@/terminal/types';
 
 /** A frame's worth of rows, stubbed down to what the anchor actually reads. */
 function rows(signatures: readonly number[]): TerminalLine[] {
@@ -377,3 +379,62 @@ describe('terminalRestOffset', () => {
 // `pullDistance / 22`, which is 0 whenever nobody is pulling: a pane with a
 // thousand rows of history behind it looked exactly like a pane with none, and
 // the only way to learn that paging existed was to perform it.
+
+describe('keepRowsAboveReader', () => {
+  const frame = (lines: TerminalLine[]): TerminalFrame => ({
+    columns: 40,
+    rows: lines.length,
+    lines,
+    cursor: { column: 0, row: lines.length - 1, visible: true },
+    title: null,
+  });
+  const ids = (lines: readonly TerminalLine[]) => lines.map((line) => line.signature);
+
+  test('a parked reader keeps the rows a full window drops, so nothing above them moves', () => {
+    const first = keepRowsAboveReader(null, frame(window(0, 240)), false);
+    const second = keepRowsAboveReader(first, frame(window(3, 240)), false);
+    expect(second.kept).toBe(3);
+    expect(ids(second.frame.lines)).toEqual(ids(window(0, 243)));
+    expect(second.frame.cursor.row).toBe(242);
+    const third = keepRowsAboveReader(second, frame(window(5, 240)), false);
+    expect(ids(third.frame.lines)).toEqual(ids(window(0, 245)));
+  });
+
+  test('a following reader keeps the height it has, letting the oldest rows go as new ones arrive', () => {
+    const parked = keepRowsAboveReader(
+      keepRowsAboveReader(null, frame(window(0, 240)), false),
+      frame(window(10, 240)),
+      false
+    );
+    const following = keepRowsAboveReader(parked, frame(window(14, 240)), true);
+    expect(following.frame.lines.length).toBe(250);
+    expect(ids(following.frame.lines)).toEqual(ids(window(4, 250)));
+  });
+
+  test('a window that is still filling is drawn as it is', () => {
+    const first = keepRowsAboveReader(null, frame(window(0, 50)), false);
+    const second = keepRowsAboveReader(first, frame(window(0, 60)), false);
+    expect(second.kept).toBe(0);
+    expect(second.frame.lines.length).toBe(60);
+  });
+
+  test('a frame that does not line up with the last one starts again', () => {
+    const parked = keepRowsAboveReader(
+      keepRowsAboveReader(null, frame(window(0, 240)), false),
+      frame(window(10, 240)),
+      false
+    );
+    const cleared = keepRowsAboveReader(parked, frame(window(5000, 20)), false);
+    expect(cleared.kept).toBe(0);
+    expect(ids(cleared.frame.lines)).toEqual(ids(window(5000, 20)));
+  });
+
+  test('the kept rows stop at the cap', () => {
+    let state = keepRowsAboveReader(null, frame(window(0, 240)), false);
+    for (let first = 100; first <= 2000; first += 100) {
+      state = keepRowsAboveReader(state, frame(window(first, 240)), false);
+      expect(state.frame.lines.length).toBeLessThanOrEqual(TERMINAL_KEPT_MAX_ROWS);
+    }
+    expect(ids(state.frame.lines).at(-1)).toBe(window(2000, 240).at(-1)?.signature);
+  });
+});

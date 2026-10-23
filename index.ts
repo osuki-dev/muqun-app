@@ -6,6 +6,8 @@
 // bundle's entry rather than inside a screen: Android starts that task with no
 // activity running, so nothing in `src/app` has mounted by the time it fires.
 import './src/lib/polyfills';
+// Before any screen: moves aside library caches Clear cache asked to remove.
+import './src/lib/launch-cache-purge';
 import 'expo-router/entry';
 
 import { Platform } from 'react-native';

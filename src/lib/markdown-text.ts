@@ -28,6 +28,11 @@
  * collapses the blank lines a document is made of into single spaces.
  */
 export function plainFromMarkdown(markdown: string): string {
+  return withoutInlineMarks(withoutBlockMarks(markdown)).replace(/\s+/g, ' ').trim();
+}
+
+/** Block syntax and links taken off; inline emphasis and code left in place. */
+function withoutBlockMarks(markdown: string): string {
   return (
     markdown
       // A fenced block is the one thing worth dropping whole: its body is code,
@@ -41,6 +46,13 @@ export function plainFromMarkdown(markdown: string): string {
       .replace(/^[ \t]{0,3}([-*_][ \t]*){3,}$/gm, ' ')
       .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/~~([\s\S]*?)~~/g, '$1')
+  );
+}
+
+function withoutInlineMarks(text: string): string {
+  return (
+    text
       .replace(/`+([^`]*)`+/g, '$1')
       .replace(/\*\*([\s\S]*?)\*\*/g, '$1')
       .replace(/(^|[^\w])__([\s\S]*?)__(?!\w)/g, '$1$2')
@@ -50,10 +62,45 @@ export function plainFromMarkdown(markdown: string): string {
       // identifier, and a preview that ate either would be lying about the text.
       .replace(/\*(?!\s)([^*\n]*[^\s*])\*/g, '$1')
       .replace(/(^|[^\w])_(?!\s)([^_\n]*[^\s_])_(?!\w)/g, '$1$2')
-      .replace(/~~([\s\S]*?)~~/g, '$1')
-      .replace(/\s+/g, ' ')
-      .trim()
   );
+}
+
+export type InlineMarkdownSpan = { text: string; mark?: 'strong' | 'emphasis' | 'code' };
+
+// One alternation, in the order `plainFromMarkdown` takes the marks off, so
+// both read a line the same way: code first (its body is never emphasis),
+// then strong, then emphasis by the renderer's flanking rule.
+const INLINE_MARK =
+  /`+([^`]+)`+|\*\*(\S[\s\S]*?)\*\*|(^|[^\w])__(\S[\s\S]*?)__(?!\w)|\*(?!\s)([^*\n]*[^\s*])\*|(^|[^\w])_(?!\s)([^_\n]*[^\s_])_(?!\w)/g;
+
+/**
+ * One line of markdown as styled spans, for a caption too small for a native
+ * markdown view: block syntax and links go as in `plainFromMarkdown`, bold,
+ * emphasis and inline code stay as marks. Marks don't nest; the inner text
+ * of a span is shown as written.
+ */
+export function inlineMarkdownSpans(markdown: string): InlineMarkdownSpan[] {
+  const text = withoutBlockMarks(markdown).replace(/\s+/g, ' ').trim();
+  const spans: InlineMarkdownSpan[] = [];
+  const push = (part: string, mark?: InlineMarkdownSpan['mark']) => {
+    if (!part) return;
+    const last = spans.at(-1);
+    if (!mark && last && !last.mark) last.text += part;
+    else spans.push(mark ? { text: part, mark } : { text: part });
+  };
+  let at = 0;
+  for (const match of text.matchAll(INLINE_MARK)) {
+    const [whole, code, strong, strongLead, strongUnder, emphasis, emLead, emUnder] = match;
+    const lead = strongLead ?? emLead ?? '';
+    push(text.slice(at, match.index) + lead);
+    if (code !== undefined) push(code, 'code');
+    else if (strong !== undefined) push(strong, 'strong');
+    else if (strongUnder !== undefined) push(strongUnder, 'strong');
+    else push(emphasis ?? emUnder ?? '', 'emphasis');
+    at = match.index + whole.length;
+  }
+  push(text.slice(at));
+  return spans;
 }
 
 /** The marks that make a string worth a markdown view rather than a `<Text>`. */

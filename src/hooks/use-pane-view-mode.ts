@@ -20,6 +20,8 @@ export interface PaneViewModeInput {
   parts: boolean;
   /** The gateway supports modern agent sessions. */
   agentSessions?: boolean;
+  /** The gateway reads this pane's agent transcript. */
+  transcript?: boolean;
 }
 
 export interface PaneViewModeControls {
@@ -50,6 +52,7 @@ export function usePaneViewMode({
   agent,
   parts,
   agentSessions,
+  transcript,
 }: PaneViewModeInput): PaneViewModeControls {
   const defaultMode = useAppSettings((state) => state.agentDefaultView);
   const choices = usePaneViewChoices((state) => state.choices);
@@ -58,8 +61,8 @@ export function usePaneViewMode({
   const key = paneViewKey(serverId, paneId);
   const choice = choices[key];
   const available = useMemo(
-    () => availablePaneViewModes({ agent, parts, agentSessions }),
-    [agent, parts, agentSessions]
+    () => availablePaneViewModes({ agent, parts, agentSessions, transcript }),
+    [agent, parts, agentSessions, transcript]
   );
   const preferred = choice?.mode ?? defaultMode;
   const mode = resolvePaneViewMode(preferred, available);

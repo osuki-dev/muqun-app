@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
+import { useThemeTokens, Text, TextField } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import { RepositoryIcon, BranchIcon, MoreIcon, CreateIcon, RefreshIcon, DeleteIcon } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -495,7 +496,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
           <SheetSceneGroupRule />
           <SheetSceneRow
             testID="agent-worktree-new-btn"
-            title={t`New worktree…`}
+            title={t`New worktree`}
             caption={creating ? undefined : t`A second checkout of this repository`}
             leading={<CreateIcon size={17} color={theme.colors.primary} />}
             onPress={() => {

@@ -1,4 +1,3 @@
-import { useSideBleed } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -6,12 +5,15 @@ import {
   ScrollView,
   StyleSheet,
   useWindowDimensions,
+  View,
   type ScrollViewInstance,
   type StyleProp,
   type ViewInstance,
   type ViewStyle,
 } from 'react-native';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
+  interpolate,
   LayoutAnimationConfig,
   ReduceMotion,
   useAnimatedStyle,
@@ -19,6 +21,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -26,7 +29,6 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { CloseIcon, NextIcon } from '@/icons';
-import { withAlpha } from '@/lib/color';
 import type { HomeContinueEntry } from '@/lib/home-continue';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import {
@@ -58,6 +60,22 @@ const STRIP_GAP = 8;
 /** The composer's own gutter, so the first card lines up with the composer below it. */
 const STRIP_PADDING = HOME_DOCK_OUTER_INSET;
 const HALF_TURN = Math.PI / 2;
+/** A card's height and vertical padding, resting and while typing (compact). */
+export const STAGE_STRIP_CARD_HEIGHT = [40, 34] as const;
+export const STAGE_STRIP_CARD_PADDING = [9, 6] as const;
+const CARD_HEIGHT = STAGE_STRIP_CARD_HEIGHT;
+const CARD_PADDING = STAGE_STRIP_CARD_PADDING;
+
+/** A card's size, compact as far as the keyboard is up: on the keyboard's own motion. */
+function useCompactCardStyle(keyboard: SharedValue<number>) {
+  return useAnimatedStyle(() => {
+    const open = keyboard.get();
+    return {
+      minHeight: interpolate(open, [0, 1], CARD_HEIGHT),
+      paddingVertical: interpolate(open, [0, 1], CARD_PADDING),
+    };
+  });
+}
 
 type Flip = {
   /** Bumped each time the chosen computer changes; 0 until the first change. */
@@ -79,10 +97,10 @@ export type StageSessionStripProps = {
   selectedIndex: number;
   panelCount: number;
   sessions: readonly HomeContinueEntry[];
-  /** The session the dock is talking to: its card is outlined. */
+  /** The session the dock is talking to: its card's title is in the accent. */
   threadKey?: string;
   onOpenSession: (entry: HomeContinueEntry) => void;
-  /** Lets the dock's conversation go: the × on its outlined card. */
+  /** Lets the dock's conversation go: the × on its marked card. */
   onClearThread?: () => void;
   /** The card whose long-press menu is open: it shows as pressed. */
   menuKey?: string;
@@ -119,6 +137,9 @@ export function StageSessionStrip({
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
   const scroll = useRef<ScrollViewInstance>(null);
+  // While typing the strip sits right above the composer, its cards a little shorter.
+  const { progress: keyboard } = useReanimatedKeyboardAnimation();
+  const moreCompact = useCompactCardStyle(keyboard);
 
   // What the strip last showed, carried forward so a computer change knows the
   // faces to turn away. Adjusted during render so the first frame of the new
@@ -150,7 +171,7 @@ export function StageSessionStrip({
     if (flip.generation > 0) resetScroll();
   }, [flip.generation]);
 
-  const visible = stageFlipVisibleSlots(width, CARD_ESTIMATE, STRIP_GAP, STRIP_PADDING);
+  const visible = stageFlipVisibleSlots(width, CARD_ESTIMATE, STRIP_GAP, STRIP_PADDING * 2);
   const bounds = { minWidth: CARD_MIN_WIDTH, maxWidth: Math.round(width * CARD_MAX_SHARE) };
   // Each session's card width as last laid out, by session, so the commit
   // that changes computer already gives every face turning away its own old
@@ -161,16 +182,11 @@ export function StageSessionStrip({
     setWidths((all) => (all[key] === faceWidth ? all : { ...all, [key]: faceWidth }))
   );
   const surface = background(theme.colors.surface);
-  const idleBorder = withAlpha(theme.colors.text, 0.1);
-  const liveBorder = withAlpha(theme.colors.primary, 0.6);
-  // The strip runs under a side status bar to the glass, resting clear of it.
-  const bleed = useSideBleed(STRIP_PADDING);
   const raised = background(theme.colors.surfaceRaised);
   const face = (entry: HomeContinueEntry) => ({
+    // Borderless by design: the dock's conversation is marked by its accent
+    // title, and the Stage's chips and subtitle say who is working.
     backgroundColor: entry.key === menuKey ? raised : surface,
-    // The dock's conversation is outlined by the turn's own overlay, which
-    // fades: a border swapped here would jump in a frame.
-    borderColor: entry.observation?.status === 'working' ? liveBorder : idleBorder,
     borderRadius: profile.chrome.card,
   });
 
@@ -178,9 +194,13 @@ export function StageSessionStrip({
     <ScrollView
       ref={scroll}
       horizontal
+      // A card pressed while typing keeps the keyboard, and the draft, up.
+      keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
-      style={bleed.frame}
-      contentContainerStyle={[styles.strip, bleed.content]}>
+      // The strip is as wide as the composer under it, not the screen: a
+      // card that does not fit is cut at the composer's edge, never past it.
+      style={styles.frame}
+      contentContainerStyle={styles.strip}>
       <LayoutAnimationConfig skipEntering>
         {sessions.map((entry, index) => {
           const from = flip.from[index];
@@ -210,7 +230,7 @@ export function StageSessionStrip({
                 faceStyle={[face(entry), bounds]}
                 fromStyle={from ? [face(from), bounds] : undefined}
                 fromWidth={from ? widths[from.key] : undefined}
-                radius={profile.chrome.card}
+                keyboard={keyboard}
                 onMeasured={measured}
                 onPress={() => onOpenSession(entry)}
                 selected={entry.key === menuKey}
@@ -227,27 +247,27 @@ export function StageSessionStrip({
             accessibilityLabel={t`All sessions`}
             onPress={onOpenAll}
             style={[
-              styles.card,
-              styles.moreCard,
+              styles.moreOuter,
               {
                 backgroundColor: surface,
-                borderColor: idleBorder,
                 borderRadius: profile.chrome.card,
               },
             ]}>
-            <Text
-              variant="bodySmall"
-              weight="semibold"
-              color={theme.colors.primary}
-              style={styles.moreLabel}>
-              {t`All sessions`}
-            </Text>
-            <ThemeIcon
-              name="home.arrow"
-              fallback={NextIcon}
-              size={16}
-              color={theme.colors.primary}
-            />
+            <Animated.View style={[styles.moreCard, moreCompact]}>
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                color={theme.colors.primary}
+                style={styles.moreLabel}>
+                {t`All sessions`}
+              </Text>
+              <ThemeIcon
+                name="home.arrow"
+                fallback={NextIcon}
+                size={16}
+                color={theme.colors.primary}
+              />
+            </Animated.View>
           </PressableScale>
         </Animated.View>
       </LayoutAnimationConfig>
@@ -270,7 +290,7 @@ function StageSessionSlot({
   faceStyle,
   fromStyle,
   fromWidth,
-  radius,
+  keyboard,
   onMeasured,
   onPress,
   onLongPress,
@@ -285,7 +305,7 @@ function StageSessionSlot({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
-  radius: number;
+  keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   onPress: () => void;
   onLongPress?: (card: { x: number; y: number; width: number; height: number }) => void;
@@ -325,7 +345,7 @@ function StageSessionSlot({
         faceStyle={faceStyle}
         fromStyle={fromStyle}
         fromWidth={fromWidth}
-        radius={radius}
+        keyboard={keyboard}
         onMeasured={onMeasured}
         onClear={onClear}
       />
@@ -343,7 +363,7 @@ function StageSessionTurn({
   faceStyle,
   fromStyle,
   fromWidth,
-  radius,
+  keyboard,
   onMeasured,
   onClear,
 }: {
@@ -356,8 +376,7 @@ function StageSessionTurn({
   faceStyle: FaceStyle;
   fromStyle: FaceStyle | undefined;
   fromWidth: number | undefined;
-  /** The card's corner radius, which its outline follows. */
-  radius: number;
+  keyboard: SharedValue<number>;
   onMeasured: (key: string, width: number) => void;
   /** This card is the dock's conversation: its × lets it go. */
   onClear?: () => void;
@@ -368,16 +387,18 @@ function StageSessionTurn({
   const title = entry.title;
   const turns = animate && from !== undefined;
   const progress = useSharedValue(turns ? 0 : 1);
-  // The outline of the dock's conversation fades in on the card it moves to
-  // and out on the one it leaves, over the reply bar's cross-fade.
+  // The dock's conversation is marked by its title in the accent, no border:
+  // the accent title fades in on the card it moves to and out on the one it
+  // leaves, over the reply bar's cross-fade.
   const targeted = onClear !== undefined;
-  const outline = useSharedValue(targeted ? 1 : 0);
+  const mark = useSharedValue(targeted ? 1 : 0);
   useEffect(() => {
-    outline.set(
-      withTiming(targeted ? 1 : 0, timing('short', { reduceMotion: ReduceMotion.Never }))
-    );
-  }, [targeted, outline]);
-  const outlineStyle = useAnimatedStyle(() => ({ opacity: outline.get() }));
+    mark.set(withTiming(targeted ? 1 : 0, timing('short', { reduceMotion: ReduceMotion.Never })));
+  }, [targeted, mark]);
+  const plainTitleStyle = useAnimatedStyle(() => ({ opacity: 1 - mark.get() }));
+  const markedTitleStyle = useAnimatedStyle(() => ({ opacity: mark.get() }));
+  const compactStyle = useCompactCardStyle(keyboard);
+  const backCompactStyle = useCompactCardStyle(keyboard);
 
   const start = useEffectEvent(() => {
     if (!turns) return;
@@ -425,18 +446,34 @@ function StageSessionTurn({
     <>
       <Animated.View
         onLayout={(event) => onMeasured(entryKey, event.nativeEvent.layout.width)}
-        style={[styles.card, styles.face, faceStyle, newStyle, onClear && styles.targeted]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.outline,
-            { borderColor: theme.colors.primary, borderRadius: radius },
-            outlineStyle,
-          ]}
-        />
-        <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
+        style={[
+          styles.card,
+          styles.face,
+          faceStyle,
+          compactStyle,
+          newStyle,
+          onClear && styles.targeted,
+        ]}>
+        <View style={styles.title}>
+          <Animated.View style={plainTitleStyle}>
+            <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+              {title}
+            </Text>
+          </Animated.View>
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.markedTitle, markedTitleStyle]}>
+            <Text
+              variant="bodySmall"
+              weight="semibold"
+              numberOfLines={1}
+              color={theme.colors.primary}>
+              {title}
+            </Text>
+          </Animated.View>
+        </View>
         {onClear ? (
           <Animated.View
             entering={reduced ? calmFadeIn() : markIn()}
@@ -464,6 +501,7 @@ function StageSessionTurn({
             fromStyle,
             // Its own width from before the change, never the new card's.
             fromWidth === undefined ? null : { width: fromWidth },
+            backCompactStyle,
             oldStyle,
           ]}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
@@ -476,30 +514,31 @@ function StageSessionTurn({
 }
 
 const styles = StyleSheet.create({
-  // Horizontal padding is `STRIP_PADDING` plus any side bleed.
+  frame: { marginHorizontal: STRIP_PADDING },
   strip: { gap: STRIP_GAP },
   slot: { alignSelf: 'flex-start' },
   card: {
-    minHeight: 46,
+    minHeight: CARD_HEIGHT[0],
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: CARD_PADDING[0],
     justifyContent: 'center',
   },
   face: { backfaceVisibility: 'hidden' },
   targeted: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  // Over the card's own hairline, which sits outside its absolute children.
-  outline: {
-    position: 'absolute',
-    top: -StyleSheet.hairlineWidth,
-    left: -StyleSheet.hairlineWidth,
-    right: -StyleSheet.hairlineWidth,
-    bottom: -StyleSheet.hairlineWidth,
-    borderWidth: 1.5,
-  },
+  markedTitle: { position: 'absolute', left: 0, right: 0, top: 0 },
   title: { flexShrink: 1 },
   // Pinned to the slot's left, top and bottom; its width is the old title's own.
   back: { position: 'absolute', left: 0, top: 0, bottom: 0 },
-  moreCard: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  moreOuter: {
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  moreCard: {
+    minHeight: CARD_HEIGHT[0],
+    paddingVertical: CARD_PADDING[0],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   moreLabel: { flexShrink: 0 },
 });

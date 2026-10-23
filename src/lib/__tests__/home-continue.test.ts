@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import {
   homeContinueEntries,
+  homeContinueCommand,
   homeContinueObservationNow,
   supersededTerminalRecent,
   type HomeContinueEntry,
@@ -12,6 +13,7 @@ import { MAX_SERVER_AGENTS, type ServerAgentsIndex } from '../server-agents';
 const snapshots: ServerAgentsIndex = {
   a: {
     serverId: 'a',
+    sessionId: 'routing',
     checkedAtMs: 1,
     agents: [
       { id: 'agent', paneId: 'p1', name: 'Current agent title', hasAgent: true, status: 'idle' },
@@ -49,12 +51,15 @@ test('first Home visit shows the same pane inventory as Classic without recent h
     paneMode: 'all',
     nowMs: 100,
   });
-  expect(rows.map((row) => row.key)).toEqual(classic.rows.map((row) => row.key));
+  expect(rows.map((row) => row.key)).toEqual(
+    classic.rows.map((row) => JSON.stringify([row.key, 'routing']))
+  );
   expect(rows.map((row) => row.title)).toEqual(['Current agent title', 'Shell']);
   expect(rows[0].destination).toEqual({
     type: 'pane',
     serverId: 'a',
     paneId: 'p1',
+    sessionId: 'routing',
     cwd: undefined,
   });
   expect(shownAt(rows, 100)).toEqual({
@@ -312,6 +317,7 @@ test('offline filtering is gateway-scoped, retains unknown and SSH entries, and 
       a: snapshots.a,
       b: {
         serverId: 'b',
+        sessionId: 'routing',
         checkedAtMs: 1,
         agents: [
           { id: 'live', paneId: 'live', name: 'Live agent', hasAgent: true, status: 'idle' },
@@ -448,7 +454,7 @@ test('a recent for a pane in another Herdr session than the snapshot is kept', (
   ).not.toContain('Other session shell');
 });
 
-test('supersededTerminalRecent keeps the old filter for a snapshot without a session', () => {
+test('supersededTerminalRecent cannot discard a known session from a legacy unscoped snapshot', () => {
   const legacy = { ...snapshots.a, sessionId: undefined };
   const shell = {
     kind: 'gateway-terminal' as const,
@@ -456,7 +462,7 @@ test('supersededTerminalRecent keeps the old filter for a snapshot without a ses
     sessionId: 'any',
     paneId: 'p2',
   };
-  expect(supersededTerminalRecent(shell, legacy, 'agents')).toBe(true);
+  expect(supersededTerminalRecent(shell, legacy, 'agents')).toBe(false);
 });
 
 test('supersededTerminalRecent drops a recent whose pane is already a snapshot row', () => {
@@ -496,4 +502,20 @@ test('a recent missing from a snapshot cut at the mirror cap is kept, not taken 
     recents: [{ key: 'newest', title: 'me@desk:~/app', atMs: 50, target: shell }],
   });
   expect(rows[0]?.title).toBe('me@desk:~/app');
+});
+
+test('a pane snapshot keeps its routing session through the Home navigation command', () => {
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: { a: { ...snapshots.a!, sessionId: 'other-routing-session' } },
+  });
+  expect(homeContinueCommand(rows[0]!.destination)).toEqual({
+    type: 'resume-server',
+    target: {
+      kind: 'gateway-terminal',
+      serverId: 'a',
+      sessionId: 'other-routing-session',
+      paneId: 'p1',
+    },
+  });
 });

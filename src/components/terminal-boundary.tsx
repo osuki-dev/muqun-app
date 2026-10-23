@@ -4,6 +4,7 @@ import { Component, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { withAlpha } from '@/lib/color';
 
 /**
  * Keeps a render failure in the terminal from taking down the whole app.
@@ -62,7 +63,14 @@ function TerminalRetry({ textColor, onPress }: { textColor: string; onPress: () 
     <PressableScale
       accessibilityLabel={t`Retry drawing the terminal`}
       onPress={onPress}
-      style={[styles.retry, { borderColor: textColor, borderRadius: profile.radius.pill }]}>
+      style={[
+        styles.retry,
+        {
+          borderColor: 'transparent',
+          backgroundColor: withAlpha(textColor, 0.1),
+          borderRadius: profile.radius.pill,
+        },
+      ]}>
       <Text variant="caption" color={textColor}>
         <Trans>Retry</Trans>
       </Text>

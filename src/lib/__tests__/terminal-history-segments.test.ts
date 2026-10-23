@@ -291,7 +291,7 @@ test('segmented snapshots neither arm the inline pull nor navigate when a native
     const code = source.code(callback);
     if (
       node.callee.name === 'useEffect' &&
-      code.includes('const probedOutput = readOutputWindow().output;')
+      code.includes('const probedOutput = outputStore.get().window.output;')
     )
       probeSource = code;
     if (

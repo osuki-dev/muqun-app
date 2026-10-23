@@ -21,8 +21,8 @@ import { ThemeRenderReadiness } from '@/hooks/use-theme-render-ready';
  * opacity, fit and focal point (see `resolveThemeImage`). A pack that declares
  * neither, only a `home.artwork` illustration, stays undecorated by design.
  *
- * Not for the terminal: what sits behind terminal text is the terminal's own
- * decision, and `skia-terminal` asks for the shell slot alone.
+ * Terminal shells share this source; the terminal's authored background opacity
+ * and explicit ANSI cell backgrounds still control text readability.
  */
 export const SHELL_WALLPAPER_FALLBACK: ThemeSlot = 'home.wallpaper';
 

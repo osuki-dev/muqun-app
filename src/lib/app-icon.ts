@@ -1,3 +1,5 @@
+import catalog from '@/assets/icons/catalog.json';
+
 /**
  * The launcher icons a reader can choose between.
  *
@@ -44,6 +46,11 @@ export function appIconFromNative(name: string | null | undefined): AppIconId {
  * so installed selections stay valid, without showing two identical Neon tiles.
  */
 export const APP_ICON_CHOICES = APP_ICONS.filter((id) => id !== 'Mint');
+
+/** The artwork folder under `assets/icons/` for an icon, read from the shared catalog. */
+export function appIconDirectory(id: AppIconId): string {
+  return (catalog.find((entry) => entry.id === id) ?? catalog[0]).directory;
+}
 
 export function appIconIsSelected(choice: AppIconId, active: AppIconId): boolean {
   return choice === active || (choice === 'default' && active === 'Mint');

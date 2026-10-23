@@ -145,7 +145,7 @@ export const HOME_COMPOSER_TRANSITION_MS = DURATION.long + DURATION.micro;
  */
 export const RESKIN_MOTION = {
   /** The theme wash, from the near edge to past the far corner. */
-  washMs: 700,
+  washMs: 360,
   /**
    * How far the snapshot is carried away as the wash takes it, as a scale.
    *
@@ -161,10 +161,10 @@ export const RESKIN_MOTION = {
   /** The font halftone, from the tapped row out past the last corner. */
   halftoneMs: 600,
   /**
-   * The theme ripple, drop to flat water: the front crosses in the first 720
+   * The theme ripple, drop to flat water: the front crosses in the first 336
    * ms (`RIPPLE_FRONT_SHARE` of this) and the rings settle in the rest.
    */
-  rippleMs: 900,
+  rippleMs: 420,
   /** The font scan, both bands from the tapped row out past the screen's ends. */
   scanMs: 640,
   /**
@@ -241,6 +241,14 @@ export const RISE_DISTANCE = 6;
  * a heartbeat at the edge of vision, not as something asking to be watched.
  */
 export const PULSE_PERIOD = 2600;
+
+/**
+ * One slow breath of something waiting on the reader, such as the update
+ * dialog's ring: long enough that it reads as alive rather than as asking.
+ * A period, like `PULSE_PERIOD`; its amplitude belongs to the caller and
+ * should stay small.
+ */
+export const BREATH_PERIOD = 4800;
 
 /**
  * One pass of a segment travelling an indeterminate progress track.

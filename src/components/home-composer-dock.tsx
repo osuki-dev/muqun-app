@@ -437,11 +437,16 @@ export function HomeComposerDock({
   const visibleUnsure = unsure && unsure.key === threadKey ? unsure : null;
   // The conversation's drawer, rising from behind the field: only for a
   // session or a pane (a task that has not said where it runs has nothing to
-  // show yet), and only while Home is in front with the computer it is on.
+  // show yet), and only while Home is the focused screen with the computer it
+  // is on. The app leaving the
+  // foreground does not close it: Android reports a system dialog over the
+  // app, such as the microphone permission prompt voice input raises, as the
+  // app going to the background, and the drawer's own streams already pause
+  // there by themselves.
   const [dockClip, setDockClip] = useState(0);
   const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
   const conversation = thread && thread.kind !== 'task' ? thread : undefined;
-  const drawerAllowed = Boolean(conversation) && focused && appActive;
+  const drawerAllowed = Boolean(conversation) && focused;
   const closeDrawer = drawer.close;
   const drawerOpen = drawer.open;
   const liveThreadTitle = useHomeThreadLive((state) =>
@@ -703,10 +708,8 @@ export function HomeComposerDock({
       setError(t`Computer unavailable.`);
       return null;
     }
-    if (target.kind === 'offline') {
-      openTargetPicker();
-      return null;
-    }
+    // An offline computer keeps the draft and says so (`offlineReason`); it
+    // is never swapped for another one behind the reader's back.
     if (target.kind !== 'ready') return null;
     const serverId = target.server.serverId;
     if (useGatewayConnectionStore.getState().record?.serverId === serverId) return serverId;
@@ -792,7 +795,6 @@ export function HomeComposerDock({
     const key = homeThreadKey(current);
     const pills = threadPills(current);
     inFlightRef.current = true;
-    if (ready) playTransition('send');
     return settleAfter(
       async () => {
         setError(null);
@@ -1478,7 +1480,6 @@ export function HomeComposerDock({
     const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
     if (current && ready) return followUp(current, text, attachments ?? []);
     if (terminalAgent) {
-      if (!inFlightRef.current && ready) playTransition('send');
       // The terminal entry of a provider whose ledger carries goals into a
       // pane: the task is the computer's, with the pane as its delivery.
       const paneEntry = ledgerDelivery ? discoveredAgent(terminalAgent) : undefined;
@@ -1510,7 +1511,6 @@ export function HomeComposerDock({
       return attachments?.length ? start() : dispatchTask(text, start);
     }
     if (heldByModelGate()) return Promise.resolve(false);
-    if (!inFlightRef.current && ready) playTransition('send');
     // A session entry: a ledger task bound to the provider's native session
     // where the gateway takes the delivery by name and the provider lists it,
     // which is what lets the card follow the work and keep it across this
@@ -1691,8 +1691,30 @@ export function HomeComposerDock({
           onOpenThread(conversation);
         }
       : undefined;
-  // Where the next message goes is the placeholder's to say; the toolbar's
-  // conversation button shows it.
+  // This is the same server-scoped thread Send follows, never the agent picker.
+  // Live titles already passed the thread-key check above. Keep the recipient
+  // visible after typing has replaced the placeholder.
+  const replyTitle = thread
+    ? liveThreadTitle?.trim() ||
+      thread.title.trim() ||
+      (thread.kind === 'session'
+        ? thread.asid
+        : thread.kind === 'pane'
+          ? thread.paneId
+          : thread.taskId)
+    : undefined;
+  const replyAgentId =
+    thread?.kind === 'session'
+      ? thread.agentId
+      : thread?.kind === 'pane'
+        ? thread.agentLabel
+        : undefined;
+  const replyAgentName = replyAgentId
+    ? agentDisplayName(discoveredAgents, replyAgentId)
+    : undefined;
+  const replyContext = thread
+    ? `${t`Reply to`} ${replyTitle}${replyAgentName ? `${META_SEPARATOR}${replyAgentName}` : ''}`
+    : undefined;
   const replyButton = conversation ? (
     <HomeReplyButton target={conversation} controller={drawer} onOpenFull={openThread} />
   ) : null;
@@ -1702,11 +1724,9 @@ export function HomeComposerDock({
         target={conversation}
         controller={drawer}
         agentName={threadAgentName}
-        offline={target.kind !== 'ready'}
         bleed={outerInsets?.horizontal ?? 0}
         maxWidth={drawerMaxWidth}
         onOpenFull={openThread}
-        onNewConversation={clearThread}
       />
     ) : null;
   const bar = (
@@ -1791,6 +1811,15 @@ export function HomeComposerDock({
       ) : null}
     </View>
   );
+  // The chosen computer is confirmed offline: Send waits, with the reason, as
+  // a session observed elsewhere does. A reconnecting one is not offline.
+  const offlineComputer = target.kind === 'offline' ? target.server.label : undefined;
+  const offlineReason = offlineComputer
+    ? (() => {
+        const agentName = offlineComputer;
+        return t`${agentName} is offline`;
+      })()
+    : undefined;
   const options = (
     <HomeComposerOptions
       computer={targetServer ? computerLabel : t`No computer online`}
@@ -1833,7 +1862,7 @@ export function HomeComposerDock({
       }
       onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
       onMode={canPickMode && !terminalAgent ? selectMode : undefined}
-      replyTitle={thread ? liveThreadTitle || thread.title || t`Conversation` : undefined}
+      replyTitle={replyTitle}
       onNewConversation={() => {
         setOptionsOpen(false);
         // As the drawer's header does: an open drawer settles shut first.
@@ -1921,9 +1950,25 @@ export function HomeComposerDock({
       sendTestID="home-composer-send"
       running={false}
       disabled={target.kind === 'none'}
+      interactionBlockedReason={offlineReason}
+      blockedReasonInField
       agentName={agentLabel}
-      placeholder={
-        thread ? t`Reply to ${threadAgentName}…` : t`New conversation with ${agentLabel}…`
+      placeholder={replyContext ? '' : t`New conversation with ${agentLabel}`}
+      inputAccessibilityLabel={replyContext}
+      fieldHeader={
+        replyContext ? (
+          <Text
+            testID="home-composer-reply-target"
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            accessibilityLabel={replyContext}
+            accessibilityLiveRegion="polite"
+            style={styles.replyContext}>
+            {replyContext}
+          </Text>
+        ) : undefined
       }
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
@@ -2004,6 +2049,7 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
+  replyContext: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 },
   error: { padding: 8, marginBottom: 4, width: '100%' },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
   unsureText: { flexShrink: 1 },

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { PressableScale, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { PressableScale } from '@/components/pressable-scale';
 
 import { AppearanceIcon } from '@/icons';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
