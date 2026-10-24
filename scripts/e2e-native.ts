@@ -307,7 +307,7 @@ function nodeRole(node: Node): string {
     .split('.')
     .at(-1)!
     .toLowerCase();
-  // Match agent-device 0.21.12's semantic type normalization, not raw AX or
+  // Match agent-device's semantic type normalization, not raw AX or
   // Android class names. TextView is editable on iOS but static on Android.
   if (role === 'textview')
     return /^(android\.|androidx\.|com\.)/.test(source) ? 'text' : 'text-view';

@@ -58,7 +58,9 @@ still needs an actual release-build rollback test; unit tests do not establish i
 
 ## Prepare infrastructure locally
 
-Use Bun 1.4.2 and the committed lockfile:
+Use the latest stable Bun and the committed lockfile. Commands use the installed
+toolchain without automatically upgrading it. EAS uses its environment's Bun
+version; toolchain upgrades are separate, explicitly requested maintenance:
 
 ```sh
 bun install --frozen-lockfile
