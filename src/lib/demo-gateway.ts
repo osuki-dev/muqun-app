@@ -684,6 +684,138 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  const muqunFixtures: Record<
+    string,
+    { name: string; input: Record<string, unknown>; result: unknown }
+  > = {
+    'demo-tree-leaf-11': {
+      name: 'exec.run',
+      input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
+      result: {
+        task_id: 'demo-build',
+        state: 'working',
+        machine: 'mini',
+        stdout_tail: 'Building the app…',
+      },
+    },
+    'demo-tree-leaf-12': {
+      name: 'tasks.delegate',
+      input: { goal: 'Review the build output', machine: 'mini' },
+      result: {
+        task_id: 'demo-review',
+        state: 'working',
+        goal: 'Review the build output',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-13': {
+      name: 'tasks.wait',
+      input: { task_id: 'demo-build' },
+      result: {
+        task_id: 'demo-build',
+        state: 'done',
+        kind: 'command',
+        goal: 'bun run build',
+        binding: { peer_name: 'mini' },
+        exit_code: 0,
+        stdout_tail: 'Build complete\nAll checks passed',
+      },
+    },
+    'demo-tree-leaf-14': {
+      name: 'tasks.read',
+      input: { task_id: 'demo-review' },
+      result: {
+        task_id: 'demo-review',
+        state: 'working',
+        goal: 'Review the build output',
+        progress: 'Checking the generated bundle',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-15': {
+      name: 'tasks.cancel',
+      input: { task_id: 'demo-review' },
+      result: {
+        task_id: 'demo-review',
+        state: 'cancelled',
+        goal: 'Review the build output',
+        binding: { peer_name: 'mini' },
+        exit_code: 130,
+      },
+    },
+    'demo-tree-leaf-16': {
+      name: 'tasks.complete',
+      input: { task_id: 'demo-review', summary: 'Build reviewed' },
+      result: {
+        task_id: 'demo-review',
+        state: 'done',
+        summary: 'Build reviewed',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-17': {
+      name: 'fleet.list',
+      input: {},
+      result: {
+        machines: [
+          { machineId: 'demo-mini', label: 'mini', os: 'macos', online: true },
+          { machineId: 'demo-workstation', label: 'workstation', os: 'linux', online: false },
+        ],
+      },
+    },
+    'demo-tree-leaf-18': {
+      name: 'fleet.describe',
+      input: { machine: 'mini' },
+      result: {
+        machineId: 'demo-mini',
+        label: 'mini',
+        os: 'macos',
+        arch: 'aarch64',
+        gatewayVersion: '4.0.0',
+        agents: [
+          { id: 'codex', version: '1.0' },
+          { id: 'opencode', version: '1.0' },
+        ],
+        toolchains: [{ id: 'bun', version: '1.3' }],
+      },
+    },
+    'demo-tree-leaf-19': {
+      name: 'exec.run',
+      input: { command: 'bun run verify', cwd: '~/Work/sample', machine: 'mini' },
+      result: {
+        task_id: 'demo-failure',
+        state: 'failed',
+        machine: 'mini',
+        exit_code: 1,
+        stdout_tail: 'Verification failed\nMissing required fixture',
+      },
+    },
+  };
+  const muqunFixture = muqunFixtures[asid];
+  if (muqunFixture) {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-muqun-tool',
+        message_id: 'demo-muqun-tool',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-muqun-call',
+          name: `muqun:${muqunFixture.name}`,
+          input: muqunFixture.input,
+          output: { content: [{ type: 'text', text: JSON.stringify(muqunFixture.result) }] },
+          content: [],
+          metadata: {},
+          state: 'completed',
+          time: { ran: 1000, completed: 2500 },
+        },
+        seq: 1,
+        updated_ms: 1,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: 1 };
+  }
   if (asid === 'demo-tree-leaf-20') {
     // Distinct messages keep these calls out of routine-tool grouping. They
     // exercise the real disclosure, detail and image renderer without a host.

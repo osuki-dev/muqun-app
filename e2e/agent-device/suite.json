@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "muqun-tools",
+      "program": "flows/muqun-tools",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
       "tags": ["full", "agents"],
@@ -7059,6 +7065,103 @@
         "run": "flows/agent-session-tree.ad#visible"
       },
       { "run": "flows/agent-session-tree.ad#context-closed" }
+    ],
+    "flows/muqun-tools": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "11",
+          "TITLE": "Run command · mini",
+          "STATUS": "Started",
+          "EXPECTED": "bun run build"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "12",
+          "TITLE": "Start task · mini",
+          "STATUS": "Started",
+          "EXPECTED": "Review the build output"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "13",
+          "TITLE": "Wait for task · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Exit code"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "14",
+          "TITLE": "Read task · mini",
+          "STATUS": "Running when checked",
+          "EXPECTED": "Checking the generated bundle"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "15",
+          "TITLE": "Cancel task · mini",
+          "STATUS": "Cancelled",
+          "EXPECTED": "130"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "16",
+          "TITLE": "Complete task · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Build reviewed"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "17",
+          "TITLE": "Computers",
+          "STATUS": "Received",
+          "EXPECTED": "workstation"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "18",
+          "TITLE": "Computer details · mini",
+          "STATUS": "Received",
+          "EXPECTED": "Toolchains"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "19",
+          "TITLE": "Run command · mini",
+          "STATUS": "Failed",
+          "EXPECTED": "Exit code"
+        }
+      }
+    ],
+    "subflows/muqun-tool": [
+      {
+        "run": "flows/muqun-tools.ad#open"
+      },
+      {
+        "run": "flows/muqun-tools.ad#inspect"
+      },
+      {
+        "run": "flows/muqun-tools.ad#close"
+      }
     ],
     "flows/agent-tool-detail": [
       { "include": "subflows/open-demo" },

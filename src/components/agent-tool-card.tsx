@@ -21,6 +21,13 @@ import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { AgentSleepToolBody } from '@/components/agent-sleep-tool-body';
+import {
+  AgentMuqunToolBody,
+  MuqunToolState,
+  muqunOperationWord,
+  muqunStatusWord,
+} from '@/components/agent-muqun-tool-body';
+import { muqunToolPresentation } from '@/lib/muqun-tool-presentation';
 import { formatToolDuration } from '@/lib/tool-call-detail';
 import { FileTextBody } from '@/components/file-text-body';
 import {
@@ -471,6 +478,15 @@ export const AgentToolCard = memo(function AgentToolCard({
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
+  const muqun = muqunToolPresentation(part);
+  const muqunTitle = muqun
+    ? [
+        i18n._(muqunOperationWord[muqun.operation]),
+        muqun.machine === 'self' ? t`This computer` : muqun.machine,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : '';
   /**
    * The input, or as much of it as has arrived.
    *
@@ -904,48 +920,56 @@ export const AgentToolCard = memo(function AgentToolCard({
       }
       kind={kind}
       taskSummary={
-        kind === 'subagent'
+        muqun
           ? {
-              title:
-                (typeof input?.description === 'string' && input.description.trim()) ||
-                (typeof input?.prompt === 'string' && input.prompt.trim().split('\n')[0]) ||
-                headerCaption ||
-                headerTitle ||
-                part.name,
-              identity: headerTitle,
-              role:
-                childSession && childSession.asid === part.child_session_id
-                  ? childSession.agent_role
-                  : undefined,
-              statusLabel: childStatusLabel,
-              busy: childWorking,
-              status: (
-                <View style={styles.taskState}>
-                  <StatusDot
-                    size={7}
-                    filled
-                    pulse={childWorking}
-                    color={
-                      child?.state === 'failed'
-                        ? theme.colors.danger
-                        : childWorking || child?.state === 'blocked'
-                          ? theme.colors.warning
-                          : theme.colors.textMuted
-                    }
-                  />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.textMuted}
-                    style={[styles.actionText, styles.taskStateText]}>
-                    {childStatusLabel}
-                  </Text>
-                </View>
-              ),
+              title: muqunTitle,
+              identity: '',
+              statusLabel: i18n._(muqunStatusWord[muqun.status]),
+              status: <MuqunToolState status={muqun.status} />,
+              busy: muqun.status === 'calling',
             }
-          : undefined
+          : kind === 'subagent'
+            ? {
+                title:
+                  (typeof input?.description === 'string' && input.description.trim()) ||
+                  (typeof input?.prompt === 'string' && input.prompt.trim().split('\n')[0]) ||
+                  headerCaption ||
+                  headerTitle ||
+                  part.name,
+                identity: headerTitle,
+                role:
+                  childSession && childSession.asid === part.child_session_id
+                    ? childSession.agent_role
+                    : undefined,
+                statusLabel: childStatusLabel,
+                busy: childWorking,
+                status: (
+                  <View style={styles.taskState}>
+                    <StatusDot
+                      size={7}
+                      filled
+                      pulse={childWorking}
+                      color={
+                        child?.state === 'failed'
+                          ? theme.colors.danger
+                          : childWorking || child?.state === 'blocked'
+                            ? theme.colors.warning
+                            : theme.colors.textMuted
+                      }
+                    />
+                    <Text
+                      variant="caption"
+                      color={theme.colors.textMuted}
+                      style={[styles.actionText, styles.taskStateText]}>
+                      {childStatusLabel}
+                    </Text>
+                  </View>
+                ),
+              }
+            : undefined
       }
       title={
-        sleepDuration !== undefined || (kind === 'shell' && headerTitle === target)
+        muqun || sleepDuration !== undefined || (kind === 'shell' && headerTitle === target)
           ? undefined
           : headerTitle
       }
@@ -970,21 +994,25 @@ export const AgentToolCard = memo(function AgentToolCard({
           </PressableScale>
         ) : undefined
       }
-      caption={headerCaption}
+      caption={muqun ? undefined : headerCaption}
       status={!pending && resultFailed ? 'failed' : part.state}
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
-      {...(errorLine ? { error: errorLine } : {})}
+      {...(!muqun && errorLine ? { error: errorLine } : {})}
       background={detached}
       {...(onOpenDetail ? { onOpenDetail } : {})}
       onExpand={onExpand}
-      chips={chips}
+      chips={muqun ? undefined : chips}
       actions={actions}
       // Every rich result mounts only after disclosure, including images and diffs.
       preview={
         // While the input is still arriving there is no result to preview and
         // the arguments are the only thing there is to say.
-        pending && argumentLine && sleepDuration === undefined && !(kind === 'shell' && target) ? (
+        !muqun &&
+        pending &&
+        argumentLine &&
+        sleepDuration === undefined &&
+        !(kind === 'shell' && target) ? (
           <StreamingArguments text={argumentLine} />
         ) : kind === 'edit' || kind === 'patch' ? (
           body
@@ -999,7 +1027,11 @@ export const AgentToolCard = memo(function AgentToolCard({
           />
         ) : null
       }>
-      {kind === 'edit' || kind === 'patch' ? null : body}
+      {muqun ? (
+        <AgentMuqunToolBody presentation={muqun} durationMs={durationMs} />
+      ) : kind === 'edit' || kind === 'patch' ? null : (
+        body
+      )}
     </EmbeddedTerminalToolBlock>
   );
 });

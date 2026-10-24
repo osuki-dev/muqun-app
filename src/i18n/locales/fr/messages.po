@@ -678,6 +678,7 @@ msgstr "Vue par défaut des panneaux d’agent"
 msgid "Agent working"
 msgstr "Agent au travail"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -1161,6 +1162,10 @@ msgstr "Écriture du cache"
 msgid "Calculating…"
 msgstr "Calcul en cours…"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Call duration"
+msgstr "Durée de l’appel"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour prendre une photo"
@@ -1206,6 +1211,7 @@ msgstr "Annuler la modification de {0}"
 msgid "Cancel queued message"
 msgstr "Annuler le message en attente"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-row.tsx
 msgid "Cancel task"
 msgstr "Annuler la tâche"
@@ -1214,6 +1220,7 @@ msgstr "Annuler la tâche"
 msgid "Cancel this queued message"
 msgstr "Annuler ce message en attente"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
@@ -1595,12 +1602,21 @@ msgstr "Échec de la compaction — touchez pour masquer"
 msgid "Compared with {base}"
 msgstr "Comparé à {base}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Complete task"
+msgstr "Terminer la tâche"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Terminé"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Completion unconfirmed"
+msgstr "Fin non confirmée"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
@@ -1613,6 +1629,7 @@ msgstr "Terminé"
 msgid "Computer"
 msgstr "Ordinateur"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/computer-map/screen.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
@@ -1640,6 +1657,7 @@ msgstr "Ordinateur indisponible"
 
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
@@ -2868,6 +2886,10 @@ msgstr "Tous les écrans de l'app"
 msgid "exit {code}"
 msgstr "sortie {code}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Exit code"
+msgstr "Code de sortie"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2917,6 +2939,7 @@ msgstr "Exporter les couleurs"
 msgid "Export theme"
 msgstr "Exporter le thème"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
@@ -3095,6 +3118,10 @@ msgstr "D’un objectif au travail en cours"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Caméra frontale. Présentez le QR code devant l'écran"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Full content in Details"
+msgstr "Contenu complet dans les détails"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -4172,6 +4199,10 @@ msgstr "Aucune application de ce téléphone n’ouvre les pages web"
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "Aucune application de ce téléphone n’ouvre les pages web. Le guide se trouve sur muqun.dev/support"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "No assigned task"
+msgstr "Aucune tâche attribuée"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Aucune caméra pour scanner"
@@ -4523,6 +4554,7 @@ msgstr "Observation démarrée"
 msgid "Off"
 msgstr "Désactivé"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4565,6 +4597,7 @@ msgstr "Une seule feuille Modifications pour les terminaux et les sessions d’a
 msgid "One computer gathers task updates for your phone."
 msgstr "Un ordinateur rassemble les mises à jour des tâches pour votre téléphone"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4832,6 +4865,7 @@ msgid "Other computers"
 msgstr "Autres ordinateurs"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
@@ -5194,6 +5228,10 @@ msgstr "En file d’attente"
 msgid "queued to upload"
 msgstr "en attente d’envoi"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Queued when checked"
+msgstr "En file lors de la vérification"
+
 #: src/components/agent-composer.tsx
 msgid "Queued: {summary}"
 msgstr "En file d’attente : {summary}"
@@ -5245,6 +5283,10 @@ msgstr "Lire en dehors de l’espace de travail"
 msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
 msgstr "Lisez les notes de version avant le téléchargement. Suivez sa progression réelle, puis redémarrez quand la mise à jour est prête, ou remettez cela à plus tard"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Read task"
+msgstr "Lire la tâche"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Lecture seule : recherche de symboles, découverte de fichiers, suivi des dépendances"
@@ -5289,6 +5331,10 @@ msgstr "Raisonnement"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "Recevez les blocages d’agents et les mises à jour du Gateway"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Received"
+msgstr "Reçu"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
@@ -5584,6 +5630,10 @@ msgstr "Restaurer les commandes par défaut masquées"
 msgid "Restore hidden defaults"
 msgstr "Restaurer les valeurs par défaut masquées"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Result available in Details"
+msgstr "Résultat disponible dans les détails"
+
 #: src/i18n/labels.ts
 msgid "Resume"
 msgstr "Reprendre"
@@ -5722,6 +5772,7 @@ msgstr "Exécuter une commande"
 msgid "Run a terminal command"
 msgstr "Exécuter une commande de terminal"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
@@ -5755,11 +5806,16 @@ msgstr "Exécutez t3 pair sur l’hôte, renseignez le jeton affiché comme t3.p
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "En cours"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Running when checked"
+msgstr "En cours lors de la vérification"
 
 #: src/components/changes-sheet.tsx
 msgid "Same as {base}"
@@ -6454,6 +6510,7 @@ msgstr "Lancez-le sur cette machine, puis touchez Réessayer"
 msgid "Start one there, then tap Retry:"
 msgstr "Lancez-en un sur cette machine, puis touchez Réessayer :"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Démarrer la tâche"
@@ -6466,6 +6523,7 @@ msgstr "Démarrez l’agent sur l’ordinateur, puis vérifiez à nouveau"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Démarrez le service OpenCode sur l’ordinateur, puis vérifiez à nouveau"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Started"
 msgstr "Démarré"
@@ -7183,6 +7241,10 @@ msgstr "Cette application"
 msgid "This cannot be undone."
 msgstr "Cette action est irréversible"
 
+#: src/components/agent-tool-card.tsx
+msgid "This computer"
+msgstr "Cet ordinateur"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This computer cannot run that command yet."
 msgstr "Cet ordinateur ne peut pas encore exécuter cette commande"
@@ -7440,6 +7502,10 @@ msgstr "Via {host}"
 msgid "timed out"
 msgstr "délai dépassé"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Timeline entries"
+msgstr "Entrées de la chronologie"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Aujourd’hui"
@@ -7469,6 +7535,10 @@ msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Appel d’outil"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Toolchains"
+msgstr "Chaînes d’outils"
 
 #: src/components/settings-storage.tsx
 msgid "Total"
@@ -7610,6 +7680,7 @@ msgstr "Annuler jusqu’ici"
 msgid "unknown"
 msgstr "inconnu"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "Inconnu"
@@ -7901,6 +7972,10 @@ msgstr "Attendre"
 msgid "Wait for {duration}"
 msgstr "Attendre {duration}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Wait for task"
+msgstr "Attendre la tâche"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "Attendez la fin du tour avant de choisir un modèle"
@@ -7946,6 +8021,10 @@ msgstr "En attente de votre réponse"
 msgid "Waiting to send"
 msgstr "En attente d’envoi"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Waiting when checked"
+msgstr "En attente lors de la vérification"
+
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Bienvenue dans {agentName}"
@@ -7981,6 +8060,10 @@ msgstr "En cours"
 msgctxt "task state"
 msgid "Working"
 msgstr "En cours"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Working directory"
+msgstr "Dossier de travail"
 
 #: src/components/session-map.tsx
 msgid "Workspace"

@@ -1,0 +1,23 @@
+# Muqun cards show historical task state, not a live invocation spinner.
+# section open
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-${LEAF}"
+wait "id=agent-subagent-detail-transcript" 10000
+wait stable 400 5000
+
+# section inspect
+is visible "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Expand tool call\""
+press "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Expand tool call\""
+wait "id=agent-muqun-body" 5000
+is visible "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Collapse tool call\""
+is visible "text=\"Call duration\""
+is visible "text=\"${EXPECTED}\""
+snapshot
+screenshot "shots/muqun-${LEAF}.png"
+press "id=agent-tool-open-detail"
+wait "id=agent-tool-detail-sheet" 5000
+snapshot
+screenshot "shots/muqun-${LEAF}-details.png"
+back --system
+
+# section close
+back --system

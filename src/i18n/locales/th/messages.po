@@ -678,6 +678,7 @@ msgstr "เปิดพาเนลเอเจนต์ใน"
 msgid "Agent working"
 msgstr "เอเจนต์กำลังทำงาน"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -1161,6 +1162,10 @@ msgstr "เขียนลงแคช"
 msgid "Calculating…"
 msgstr "กำลังคำนวณ…"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Call duration"
+msgstr "ระยะเวลาการเรียก"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "ปิดการเข้าถึงกล้องอยู่ เปิดในหน้าการตั้งค่าเพื่อถ่ายรูป"
@@ -1206,6 +1211,7 @@ msgstr "ยกเลิกการแก้ไข {0}"
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-row.tsx
 msgid "Cancel task"
 msgstr "ยกเลิกงาน"
@@ -1214,6 +1220,7 @@ msgstr "ยกเลิกงาน"
 msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
@@ -1595,12 +1602,21 @@ msgstr "บีบอัดไม่สำเร็จ — แตะเพื่�
 msgid "Compared with {base}"
 msgstr "เทียบกับ {base}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Complete task"
+msgstr "เสร็จสิ้นงาน"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
 msgstr "เสร็จสิ้น"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Completion unconfirmed"
+msgstr "ยังไม่ยืนยันว่าเสร็จสิ้น"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
@@ -1613,6 +1629,7 @@ msgstr "เสร็จสิ้น"
 msgid "Computer"
 msgstr "คอมพิวเตอร์"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/computer-map/screen.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
@@ -1640,6 +1657,7 @@ msgstr "คอมพิวเตอร์ไม่พร้อมใช้งา
 
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
@@ -2868,6 +2886,10 @@ msgstr "ทุกหน้าจอในแอป"
 msgid "exit {code}"
 msgstr "ออก {code}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Exit code"
+msgstr "รหัสออก"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2917,6 +2939,7 @@ msgstr "ส่งออกสี"
 msgid "Export theme"
 msgstr "ส่งออกธีม"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
@@ -3095,6 +3118,10 @@ msgstr "จากเป้าหมายสู่งานที่กำลั
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Full content in Details"
+msgstr "เนื้อหาทั้งหมดอยู่ในรายละเอียด"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -4172,6 +4199,10 @@ msgstr "ไม่มีแอปบนโทรศัพท์นี้ที่
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "ไม่มีแอปบนโทรศัพท์นี้ที่เปิดหน้าเว็บได้ คู่มืออยู่ที่ muqun.dev/support"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "No assigned task"
+msgstr "ไม่มีงานที่ได้รับมอบหมาย"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "ไม่มีกล้องสำหรับสแกน"
@@ -4523,6 +4554,7 @@ msgstr "เริ่มการสังเกตแล้ว"
 msgid "Off"
 msgstr "ปิด"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4565,6 +4597,7 @@ msgstr "ชีตการเปลี่ยนแปลงเดียวสำ
 msgid "One computer gathers task updates for your phone."
 msgstr "ใช้คอมพิวเตอร์หนึ่งเครื่องรวบรวมข้อมูลอัปเดตงานให้โทรศัพท์"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4832,6 +4865,7 @@ msgid "Other computers"
 msgstr "คอมพิวเตอร์เครื่องอื่น"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
@@ -5194,6 +5228,10 @@ msgstr "อยู่ในคิว"
 msgid "queued to upload"
 msgstr "รออัปโหลด"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Queued when checked"
+msgstr "อยู่ในคิวเมื่อตรวจสอบ"
+
 #: src/components/agent-composer.tsx
 msgid "Queued: {summary}"
 msgstr "อยู่ในคิว: {summary}"
@@ -5245,6 +5283,10 @@ msgstr "อ่านนอกพื้นที่ทำงาน"
 msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
 msgstr "อ่านบันทึกประจำรุ่นก่อนดาวน์โหลด ดูความคืบหน้าการดาวน์โหลดจริง แล้วเริ่มใหม่เมื่ออัปเดตพร้อม หรือเก็บไว้ทำภายหลัง"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Read task"
+msgstr "อ่านงาน"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "อ่านอย่างเดียว: ค้นหาสัญลักษณ์ สำรวจไฟล์ และไล่การพึ่งพา"
@@ -5289,6 +5331,10 @@ msgstr "กระบวนการคิด"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "รับแจ้งเมื่อเอเจนต์ติดขัดและเมื่อ Gateway มีอัปเดต"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Received"
+msgstr "ได้รับแล้ว"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
@@ -5584,6 +5630,10 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Result available in Details"
+msgstr "ดูผลลัพธ์ในรายละเอียด"
+
 #: src/i18n/labels.ts
 msgid "Resume"
 msgstr "ดำเนินการต่อ"
@@ -5722,6 +5772,7 @@ msgstr "รันคำสั่ง"
 msgid "Run a terminal command"
 msgstr "เรียกใช้คำสั่งเทอร์มินัล"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
@@ -5755,11 +5806,16 @@ msgstr "รัน t3 pair บนโฮสต์ ตั้งค่าโทเ�
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "กำลังทำงาน"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Running when checked"
+msgstr "กำลังทำงานเมื่อตรวจสอบ"
 
 #: src/components/changes-sheet.tsx
 msgid "Same as {base}"
@@ -6454,6 +6510,7 @@ msgstr "เปิดมันบนเครื่องนั้น แล้�
 msgid "Start one there, then tap Retry:"
 msgstr "เปิดเซิร์ฟเวอร์บนเครื่องนั้น แล้วแตะ ลองอีกครั้ง:"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "เริ่มงาน"
@@ -6466,6 +6523,7 @@ msgstr "เริ่มเอเจนต์บนคอมพิวเตอร
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "เริ่มบริการ OpenCode บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Started"
 msgstr "เริ่มแล้ว"
@@ -7183,6 +7241,10 @@ msgstr "แอปนี้"
 msgid "This cannot be undone."
 msgstr "การดำเนินการนี้ย้อนกลับไม่ได้"
 
+#: src/components/agent-tool-card.tsx
+msgid "This computer"
+msgstr "คอมพิวเตอร์เครื่องนี้"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This computer cannot run that command yet."
 msgstr "คอมพิวเตอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
@@ -7440,6 +7502,10 @@ msgstr "ผ่าน {host}"
 msgid "timed out"
 msgstr "หมดเวลา"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Timeline entries"
+msgstr "รายการไทม์ไลน์"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "วันนี้"
@@ -7469,6 +7535,10 @@ msgstr "มีการเปลี่ยนแปลงมากเกินก
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "การเรียกใช้เครื่องมือ"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Toolchains"
+msgstr "ชุดเครื่องมือ"
 
 #: src/components/settings-storage.tsx
 msgid "Total"
@@ -7610,6 +7680,7 @@ msgstr "เลิกทำถึงตรงนี้"
 msgid "unknown"
 msgstr "ไม่ทราบ"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "ไม่ทราบ"
@@ -7901,6 +7972,10 @@ msgstr "รอ"
 msgid "Wait for {duration}"
 msgstr "รอ {duration}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Wait for task"
+msgstr "รองาน"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "รอให้จบรอบก่อนเลือกโมเดล"
@@ -7946,6 +8021,10 @@ msgstr "รอข้อมูลจากคุณ"
 msgid "Waiting to send"
 msgstr "รอส่ง"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Waiting when checked"
+msgstr "กำลังรอเมื่อตรวจสอบ"
+
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "ยินดีต้อนรับสู่ {agentName}"
@@ -7981,6 +8060,10 @@ msgstr "กำลังทำงาน"
 msgctxt "task state"
 msgid "Working"
 msgstr "กำลังทำงาน"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Working directory"
+msgstr "ไดเรกทอรีทำงาน"
 
 #: src/components/session-map.tsx
 msgid "Workspace"

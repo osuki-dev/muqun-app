@@ -678,6 +678,7 @@ msgstr "에이전트 패널 기본 보기"
 msgid "Agent working"
 msgstr "에이전트 작업 중"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -1161,6 +1162,10 @@ msgstr "캐시 쓰기"
 msgid "Calculating…"
 msgstr "계산 중…"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Call duration"
+msgstr "호출 소요 시간"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정에서 켜 주세요"
@@ -1206,6 +1211,7 @@ msgstr "{0} 편집 취소"
 msgid "Cancel queued message"
 msgstr "대기 중인 메시지 취소"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-row.tsx
 msgid "Cancel task"
 msgstr "작업 취소"
@@ -1214,6 +1220,7 @@ msgstr "작업 취소"
 msgid "Cancel this queued message"
 msgstr "대기 중인 이 메시지 취소"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
@@ -1595,12 +1602,21 @@ msgstr "압축에 실패했습니다 — 탭하여 닫기"
 msgid "Compared with {base}"
 msgstr "{base}와(과) 비교"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Complete task"
+msgstr "작업 완료"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
 msgstr "완료됨"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Completion unconfirmed"
+msgstr "완료 확인 안 됨"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
@@ -1613,6 +1629,7 @@ msgstr "완료됨"
 msgid "Computer"
 msgstr "컴퓨터"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/computer-map/screen.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
@@ -1640,6 +1657,7 @@ msgstr "컴퓨터를 사용할 수 없습니다"
 
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
@@ -2868,6 +2886,10 @@ msgstr "앱의 모든 화면"
 msgid "exit {code}"
 msgstr "종료 {code}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Exit code"
+msgstr "종료 코드"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2917,6 +2939,7 @@ msgstr "색상 내보내기"
 msgid "Export theme"
 msgstr "테마 내보내기"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
@@ -3095,6 +3118,10 @@ msgstr "목표를 보내고, 일을 시작하세요"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Full content in Details"
+msgstr "자세히에서 전체 내용 보기"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -4172,6 +4199,10 @@ msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다"
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다. 안내는 muqun.dev/support 에 있습니다"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "No assigned task"
+msgstr "할당된 작업 없음"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "스캔할 카메라가 없습니다"
@@ -4523,6 +4554,7 @@ msgstr "관찰 시작"
 msgid "Off"
 msgstr "꺼짐"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4565,6 +4597,7 @@ msgstr "터미널과 에이전트 세션이 하나의 변경 사항 시트를 �
 msgid "One computer gathers task updates for your phone."
 msgstr "한 컴퓨터가 작업 업데이트를 모아 휴대폰으로 보냅니다"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4832,6 +4865,7 @@ msgid "Other computers"
 msgstr "다른 컴퓨터"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
@@ -5194,6 +5228,10 @@ msgstr "대기 중"
 msgid "queued to upload"
 msgstr "업로드 대기 중"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Queued when checked"
+msgstr "확인 시 대기열에 있음"
+
 #: src/components/agent-composer.tsx
 msgid "Queued: {summary}"
 msgstr "대기 중: {summary}"
@@ -5245,6 +5283,10 @@ msgstr "워크스페이스 밖의 파일 읽기"
 msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
 msgstr "다운로드 전에 릴리스 노트를 읽어보세요. 실제 다운로드 진행 상황을 확인하고, 준비되면 다시 시작하거나 나중으로 미룰 수 있습니다"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Read task"
+msgstr "작업 읽기"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "읽기 전용: 심볼 검색, 파일 탐색, 의존성 추적"
@@ -5289,6 +5331,10 @@ msgstr "추론 과정"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "에이전트의 응답 대기 알림과 Gateway 소식을 받습니다"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Received"
+msgstr "수신됨"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
@@ -5584,6 +5630,10 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Result available in Details"
+msgstr "자세히에서 결과 보기"
+
 #: src/i18n/labels.ts
 msgid "Resume"
 msgstr "재개"
@@ -5722,6 +5772,7 @@ msgstr "명령 실행"
 msgid "Run a terminal command"
 msgstr "터미널 명령 실행"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
@@ -5755,11 +5806,16 @@ msgstr "호스트에서 t3 pair를 실행하고, 출력된 토큰을 게이트�
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Running when checked"
+msgstr "확인 시 실행 중"
 
 #: src/components/changes-sheet.tsx
 msgid "Same as {base}"
@@ -6454,6 +6510,7 @@ msgstr "그 컴퓨터에서 시작한 다음 재시도를 탭하세요"
 msgid "Start one there, then tap Retry:"
 msgstr "그 컴퓨터에서 하나 시작한 다음 재시도를 탭하세요:"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "작업 시작"
@@ -6466,6 +6523,7 @@ msgstr "컴퓨터에서 에이전트를 시작한 뒤 다시 확인하세요"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "컴퓨터에서 OpenCode 서비스를 시작한 뒤 다시 확인하세요"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Started"
 msgstr "시작됨"
@@ -7183,6 +7241,10 @@ msgstr "이 앱"
 msgid "This cannot be undone."
 msgstr "이 작업은 되돌릴 수 없습니다"
 
+#: src/components/agent-tool-card.tsx
+msgid "This computer"
+msgstr "이 컴퓨터"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This computer cannot run that command yet."
 msgstr "이 컴퓨터는 아직 그 명령을 실행할 수 없습니다"
@@ -7440,6 +7502,10 @@ msgstr "{host} 경유"
 msgid "timed out"
 msgstr "시간 초과"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Timeline entries"
+msgstr "타임라인 항목"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "오늘"
@@ -7469,6 +7535,10 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "도구 호출"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Toolchains"
+msgstr "도구 체인"
 
 #: src/components/settings-storage.tsx
 msgid "Total"
@@ -7610,6 +7680,7 @@ msgstr "여기까지 되돌리기"
 msgid "unknown"
 msgstr "알 수 없음"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "알 수 없음"
@@ -7901,6 +7972,10 @@ msgstr "대기"
 msgid "Wait for {duration}"
 msgstr "{duration} 대기"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Wait for task"
+msgstr "작업 기다리기"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "턴이 끝난 후 모델을 선택하세요"
@@ -7946,6 +8021,10 @@ msgstr "입력을 기다리는 중"
 msgid "Waiting to send"
 msgstr "전송 대기 중"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Waiting when checked"
+msgstr "확인 시 대기 중"
+
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "{agentName}에 오신 것을 환영합니다"
@@ -7981,6 +8060,10 @@ msgstr "작업 중"
 msgctxt "task state"
 msgid "Working"
 msgstr "작업 중"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Working directory"
+msgstr "작업 디렉터리"
 
 #: src/components/session-map.tsx
 msgid "Workspace"

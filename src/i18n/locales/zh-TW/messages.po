@@ -678,6 +678,7 @@ msgstr "代理程式面板的預設檢視"
 msgid "Agent working"
 msgstr "智慧代理執行中"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -1161,6 +1162,10 @@ msgstr "快取寫入"
 msgid "Calculating…"
 msgstr "計算中…"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Call duration"
+msgstr "呼叫耗時"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "相機存取已關閉。請到「設定」開啟後再拍照"
@@ -1206,6 +1211,7 @@ msgstr "取消編輯 {0}"
 msgid "Cancel queued message"
 msgstr "取消排隊訊息"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-row.tsx
 msgid "Cancel task"
 msgstr "取消任務"
@@ -1214,6 +1220,7 @@ msgstr "取消任務"
 msgid "Cancel this queued message"
 msgstr "取消這則排隊的訊息"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
@@ -1595,12 +1602,21 @@ msgstr "壓縮失敗 — 點按關閉"
 msgid "Compared with {base}"
 msgstr "與 {base} 比較"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Complete task"
+msgstr "完成任務"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
 msgstr "已完成"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Completion unconfirmed"
+msgstr "尚未確認完成"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
@@ -1613,6 +1629,7 @@ msgstr "已完成"
 msgid "Computer"
 msgstr "電腦"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/computer-map/screen.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
@@ -1640,6 +1657,7 @@ msgstr "電腦無法使用"
 
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
@@ -2868,6 +2886,10 @@ msgstr "App 的每一個畫面"
 msgid "exit {code}"
 msgstr "結束碼 {code}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Exit code"
+msgstr "結束代碼"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2917,6 +2939,7 @@ msgstr "匯出色彩"
 msgid "Export theme"
 msgstr "匯出主題"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
@@ -3095,6 +3118,10 @@ msgstr "從一個目標，開始推進工作"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Full content in Details"
+msgstr "在詳細資料中查看完整內容"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -4172,6 +4199,10 @@ msgstr "這支手機上沒有可以開啟網頁的應用程式"
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "這支手機上沒有可以開啟網頁的應用程式。指南位於 muqun.dev/support"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "No assigned task"
+msgstr "沒有指派的任務"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "沒有可掃描的相機"
@@ -4523,6 +4554,7 @@ msgstr "開始觀察"
 msgid "Off"
 msgstr "關閉"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4565,6 +4597,7 @@ msgstr "終端機和代理工作階段共用同一個變更面板：變更的檔
 msgid "One computer gathers task updates for your phone."
 msgstr "由一台電腦彙整任務動態，再傳送到手機"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4832,6 +4865,7 @@ msgid "Other computers"
 msgstr "其他電腦"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
@@ -5194,6 +5228,10 @@ msgstr "排隊中"
 msgid "queued to upload"
 msgstr "排隊等待上傳"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Queued when checked"
+msgstr "查詢時排隊中"
+
 #: src/components/agent-composer.tsx
 msgid "Queued: {summary}"
 msgstr "排隊中：{summary}"
@@ -5245,6 +5283,10 @@ msgstr "讀取工作區之外的內容"
 msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
 msgstr "下載前先閱讀更新說明。查看實際下載進度，準備好後重新啟動，也可以留待稍後"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Read task"
+msgstr "讀取任務"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "唯讀：符號搜尋、檔案探索、相依追蹤"
@@ -5289,6 +5331,10 @@ msgstr "思考過程"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "接收代理程式的等待回應事件與 Gateway 更新"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Received"
+msgstr "已收到"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
@@ -5584,6 +5630,10 @@ msgstr "還原隱藏的預設指令"
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Result available in Details"
+msgstr "在詳細資料中查看結果"
+
 #: src/i18n/labels.ts
 msgid "Resume"
 msgstr "恢復"
@@ -5722,6 +5772,7 @@ msgstr "執行指令"
 msgid "Run a terminal command"
 msgstr "執行終端機指令"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
@@ -5755,11 +5806,16 @@ msgstr "請在主機上執行 t3 pair，將輸出的權杖設為閘道設定中�
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。配對資料只留在這台裝置上"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "執行中"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Running when checked"
+msgstr "查詢時執行中"
 
 #: src/components/changes-sheet.tsx
 msgid "Same as {base}"
@@ -6454,6 +6510,7 @@ msgstr "在那台電腦上啟動它，然後點「重試」"
 msgid "Start one there, then tap Retry:"
 msgstr "在那台電腦上啟動一個，然後點「重試」："
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "開始任務"
@@ -6466,6 +6523,7 @@ msgstr "請在電腦上啟動代理程式，然後重新檢查"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "請在電腦上啟動 OpenCode 服務，然後重新檢查"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Started"
 msgstr "已啟動"
@@ -7183,6 +7241,10 @@ msgstr "此應用程式"
 msgid "This cannot be undone."
 msgstr "此操作無法復原"
 
+#: src/components/agent-tool-card.tsx
+msgid "This computer"
+msgstr "本機"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This computer cannot run that command yet."
 msgstr "這台電腦還不能執行該指令"
@@ -7440,6 +7502,10 @@ msgstr "透過 {host}"
 msgid "timed out"
 msgstr "已逾時"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Timeline entries"
+msgstr "時間軸項目"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "今天"
@@ -7469,6 +7535,10 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具呼叫"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Toolchains"
+msgstr "工具鏈"
 
 #: src/components/settings-storage.tsx
 msgid "Total"
@@ -7610,6 +7680,7 @@ msgstr "復原到這裡"
 msgid "unknown"
 msgstr "不明"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "未知"
@@ -7901,6 +7972,10 @@ msgstr "等待"
 msgid "Wait for {duration}"
 msgstr "等待 {duration}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Wait for task"
+msgstr "等待任務"
+
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
 msgstr "請等待本輪結束後再選擇模型"
@@ -7946,6 +8021,10 @@ msgstr "等待你的輸入"
 msgid "Waiting to send"
 msgstr "等待傳送"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Waiting when checked"
+msgstr "查詢時等待中"
+
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "歡迎使用 {agentName}"
@@ -7981,6 +8060,10 @@ msgstr "工作中"
 msgctxt "task state"
 msgid "Working"
 msgstr "執行中"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Working directory"
+msgstr "工作目錄"
 
 #: src/components/session-map.tsx
 msgid "Workspace"
