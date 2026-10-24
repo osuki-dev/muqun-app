@@ -30,6 +30,8 @@ export function startHomeSummary(options: SummaryControllerOptions): () => void 
   let stopped = false;
   let epoch = 0;
   let cancelTimer: (() => void) | undefined;
+  let cancelSourceRetry: (() => void) | undefined;
+  let sourceRetryMs = 30_000;
   let connections: SummaryConnection[] = [];
   const candidates = collectorOrder(options.config, options.pairedIds).filter((candidate) =>
     options.summaryIds.includes(candidate.serverId)
@@ -38,6 +40,8 @@ export function startHomeSummary(options: SummaryControllerOptions): () => void 
     epoch++;
     cancelTimer?.();
     cancelTimer = undefined;
+    cancelSourceRetry?.();
+    cancelSourceRetry = undefined;
     for (const connection of connections) connection.close();
     connections = [];
     options.clear();
@@ -101,8 +105,23 @@ export function startHomeSummary(options: SummaryControllerOptions): () => void 
             next();
             return;
           }
-          if (frame.t === 'home_status') ready.delete(frame.sourceId);
+          if (frame.t === 'home_status') {
+            ready.delete(frame.sourceId);
+            if (
+              frame.status === 'unavailable' &&
+              frame.sourceId !== candidate.serverId &&
+              !cancelSourceRetry
+            ) {
+              cancelSourceRetry = options.schedule(() => attempt(index), sourceRetryMs);
+              sourceRetryMs = Math.min(sourceRetryMs * 2, 120_000);
+            }
+          }
           if (frame.t === 'home' && frame.snapshot) ready.add(frame.sourceId);
+          if (ready.size === allowed.size) {
+            cancelSourceRetry?.();
+            cancelSourceRetry = undefined;
+            sourceRetryMs = 30_000;
+          }
           if (ready.has(candidate.serverId) && (sources.length === 0 || ready.size > 1)) {
             cancelTimer?.();
             cancelTimer = undefined;

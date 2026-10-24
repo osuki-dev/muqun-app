@@ -14,4 +14,16 @@ function project() {
     useHomeTasksStore.setState({ ...direct, index });
 }
 useServerTasksStore.subscribe(project);
-useHomeSummary.subscribe(project);
+useHomeSummary.subscribe((state, previous) => {
+  // Overview freshness must not re-project every computer's task list.
+  if (state.live === previous.live && state.summaries === previous.summaries) return;
+  if (
+    state.live === previous.live &&
+    Object.keys(state.summaries).length === Object.keys(previous.summaries).length &&
+    Object.entries(state.summaries).every(
+      ([id, summary]) => summary.tasks === previous.summaries[id]?.tasks
+    )
+  )
+    return;
+  project();
+});

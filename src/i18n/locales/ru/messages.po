@@ -6114,12 +6114,12 @@ msgid "Shared across sessions. Refresh to update."
 msgstr "Общее для всех сеансов. Обновите для получения новых данных"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
-msgstr "Сводки задач передаются этому и резервным компьютерам. Диалоги остаются подключены напрямую"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "Обзор главной страницы (задачи, сеансы и терминалы) передаётся этому и резервным компьютерам. Диалоги остаются подключёнными напрямую"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer. Conversations stay directly connected."
-msgstr "Сводки задач передаются этому компьютеру. Диалоги остаются подключены напрямую"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "Обзор главной страницы (задачи, сеансы и терминалы) передаётся этому компьютеру. Диалоги остаются подключёнными напрямую"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"

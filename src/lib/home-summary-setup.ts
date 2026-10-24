@@ -9,6 +9,7 @@ import {
   type HomeSummaryConfig,
 } from './home-summary';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { HOME_OVERVIEW_CAPABILITY } from './home-overview';
 
 async function request(
   record: GatewayRecord,
@@ -75,6 +76,11 @@ export async function provisionHomeSummary(
           const response = await request(source, '/api/home/grants', 'POST', {
             collector_server_id: collector.serverId,
             audience: collector.deviceId,
+            ...(useServerCapabilities
+              .getState()
+              .byServer[source.serverId]?.includes(HOME_OVERVIEW_CAPABILITY)
+              ? { overview: true }
+              : {}),
           });
           if (!response.ok) continue;
           const answer = asRecord(await response.json());
@@ -89,7 +95,7 @@ export async function provisionHomeSummary(
         }
       }
   }
-  return { preferred, collectors };
+  return { preferred, collectors, overview: true };
 }
 
 /** Keep failed revocations so the user can retry; stopping collection is immediate. */

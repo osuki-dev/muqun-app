@@ -237,7 +237,10 @@ export class GatewaySocket {
    * `watchTasks` listeners, each with whether its gateway takes
    * `subscribe_tasks`; never reached through `targets`.
    */
-  private readonly homeListeners = new Map<GatewaySocketListener, readonly HomeSource[]>();
+  private readonly homeListeners = new Map<
+    GatewaySocketListener,
+    { sources: readonly HomeSource[]; overview: boolean }
+  >();
   private readonly taskListeners = new Map<GatewaySocketListener, boolean>();
   private readonly stateListeners = new Set<(state: GatewaySocketState) => void>();
   /** Reference counts; `*` is `subscribe_all`, `#tasks` the task listeners. */
@@ -342,8 +345,12 @@ export class GatewaySocket {
     };
   }
 
-  watchHome(sources: readonly HomeSource[], listener: GatewaySocketListener): () => void {
-    this.homeListeners.set(listener, sources);
+  watchHome(
+    sources: readonly HomeSource[],
+    listener: GatewaySocketListener,
+    overview = false
+  ): () => void {
+    this.homeListeners.set(listener, { sources, overview });
     this.want(HOME, this.homeSubscription());
     let released = false;
     return () => {
@@ -358,8 +365,12 @@ export class GatewaySocket {
   private homeSubscription(): AgentSocketClientFrame {
     const sources = new Map<string, HomeSource>();
     for (const list of this.homeListeners.values())
-      for (const source of list) sources.set(source.peer_id, source);
-    return { t: 'subscribe_home', home: { sources: [...sources.values()] } };
+      for (const source of list.sources) sources.set(source.peer_id, source);
+    const overview = [...this.homeListeners.values()].some((item) => item.overview);
+    return {
+      t: 'subscribe_home',
+      home: { sources: [...sources.values()], ...(overview ? { overview: true } : {}) },
+    };
   }
 
   addListener(asid: string, listener: GatewaySocketListener): () => void {
@@ -646,6 +657,7 @@ export class GatewaySocket {
     if (!frame) return;
     switch (frame.t) {
       case 'home':
+      case 'home_overview':
       case 'home_status':
         for (const listener of this.homeListeners.keys()) listener.onHome?.(frame);
         return;

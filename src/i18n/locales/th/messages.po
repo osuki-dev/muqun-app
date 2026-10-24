@@ -6114,12 +6114,12 @@ msgid "Shared across sessions. Refresh to update."
 msgstr "ใช้ร่วมกันระหว่างเซสชัน รีเฟรชเพื่ออัปเดต"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
-msgstr "แชร์สรุปงานกับเครื่องนี้และเครื่องสำรอง การสนทนายังคงเชื่อมต่อโดยตรง"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "แชร์ข้อมูลสรุปหน้าหลัก (งาน เซสชัน และเทอร์มินัล) กับคอมพิวเตอร์นี้และเครื่องสำรอง การสนทนายังคงเชื่อมต่อโดยตรง"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer. Conversations stay directly connected."
-msgstr "แชร์สรุปงานกับเครื่องนี้ การสนทนายังคงเชื่อมต่อโดยตรง"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "แชร์ข้อมูลสรุปหน้าหลัก (งาน เซสชัน และเทอร์มินัล) กับคอมพิวเตอร์นี้ การสนทนายังคงเชื่อมต่อโดยตรง"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"

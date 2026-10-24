@@ -6114,12 +6114,12 @@ msgid "Shared across sessions. Refresh to update."
 msgstr "세션 간 공유됩니다. 새로 고쳐 업데이트하세요"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
-msgstr "이 컴퓨터와 예비 컴퓨터에 작업 요약을 공유합니다. 대화는 직접 연결을 유지합니다"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "이 컴퓨터와 예비 컴퓨터에 홈 요약(작업, 세션, 터미널)을 공유합니다. 대화는 계속 직접 연결됩니다"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer. Conversations stay directly connected."
-msgstr "이 컴퓨터에 작업 요약을 공유합니다. 대화는 직접 연결을 유지합니다"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "이 컴퓨터에 홈 요약(작업, 세션, 터미널)을 공유합니다. 대화는 계속 직접 연결됩니다"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"

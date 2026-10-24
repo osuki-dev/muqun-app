@@ -194,6 +194,24 @@ test('a collector cannot inject a source the App did not request', () => {
   h.stop();
 });
 
+test('a restarted source is retried without immediately dropping the healthy collector', () => {
+  const h = harness();
+  h.calls[0]!.receive(snapshot('a'));
+  h.calls[0]!.receive(snapshot('b'));
+  h.calls[0]!.receive({ t: 'home_status', sourceId: 'b', status: 'unavailable' });
+  expect(h.calls[0]!.closed).toBe(false);
+  h.calls[0]!.receive(snapshot('a'));
+  h.tick(30_000);
+  expect(h.calls[0]!.closed).toBe(true);
+  expect(h.calls[1]!.id).toBe('a');
+  h.calls[1]!.receive(snapshot('a'));
+  h.calls[1]!.receive({ t: 'home_status', sourceId: 'b', status: 'unavailable' });
+  expect(h.timers.some((timer) => !timer.cancelled && timer.ms === 60_000)).toBe(true);
+  h.calls[1]!.receive(snapshot('b'));
+  expect(h.timers.every((timer) => timer.cancelled)).toBe(true);
+  h.stop();
+});
+
 test('Stage subtitles retire finished summary tasks and waiting never fabricates an approval', () => {
   const frame = snapshot();
   const working = {

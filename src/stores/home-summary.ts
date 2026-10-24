@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { createMMKV } from 'react-native-mmkv';
 import {
   applyHomeFrame,
+  applyHomeOverview,
+  type HomeOverviewFrame,
+  type HomeOverviewState,
   NO_HOME_SUMMARY,
   parseHomeSummaryConfig,
   type HomeSummary,
@@ -28,6 +31,8 @@ function initial(): HomeSummaryConfig {
 type State = {
   config: HomeSummaryConfig;
   summaries: Record<string, HomeSummary>;
+  overviews: Record<string, HomeOverviewState>;
+  acceptOverview: (frame: HomeOverviewFrame) => void;
   live: Record<string, boolean>;
   collectorId: string | null;
   configure: (config: HomeSummaryConfig) => void;
@@ -38,10 +43,14 @@ type State = {
 export const useHomeSummary = create<State>((set, get) => ({
   config: initial(),
   summaries: {},
+  overviews: {},
   live: {},
   collectorId: null,
   keepOnly: (serverIds) =>
     set((state) => ({
+      overviews: Object.fromEntries(
+        Object.entries(state.overviews).filter(([id]) => serverIds.includes(id))
+      ),
       summaries: Object.fromEntries(
         Object.entries(state.summaries).filter(([id]) => serverIds.includes(id))
       ),
@@ -49,7 +58,19 @@ export const useHomeSummary = create<State>((set, get) => ({
     })),
   configure: (config) => {
     disk?.set('config', JSON.stringify(config));
-    set({ config, live: {}, collectorId: null });
+    set({ config, live: {}, overviews: {}, collectorId: null });
+  },
+  acceptOverview: (frame) => {
+    const previous = get().overviews[frame.sourceId];
+    const next = applyHomeOverview(previous, frame, Date.now());
+    if (next === previous) return;
+    set((state) => ({
+      overviews: next
+        ? { ...state.overviews, [frame.sourceId]: next }
+        : Object.fromEntries(
+            Object.entries(state.overviews).filter(([id]) => id !== frame.sourceId)
+          ),
+    }));
   },
   accept: (frame) => {
     const previous = get().summaries[frame.sourceId];
@@ -66,8 +87,13 @@ export const useHomeSummary = create<State>((set, get) => ({
     set((state) =>
       serverId
         ? state.live[serverId]
-          ? { live: { ...state.live, [serverId]: false } }
+          ? {
+              live: { ...state.live, [serverId]: false },
+              overviews: Object.fromEntries(
+                Object.entries(state.overviews).filter(([id]) => id !== serverId)
+              ),
+            }
           : state
-        : { live: {}, collectorId: null }
+        : { live: {}, overviews: {}, collectorId: null }
     ),
 }));

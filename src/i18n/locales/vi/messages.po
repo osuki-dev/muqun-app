@@ -6114,12 +6114,12 @@ msgid "Shared across sessions. Refresh to update."
 msgstr "Dùng chung giữa các phiên. Làm mới để cập nhật"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
-msgstr "Chia sẻ tóm tắt tác vụ với máy này và các máy dự phòng. Hội thoại vẫn kết nối trực tiếp"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "Chia sẻ tổng quan Trang chủ (tác vụ, phiên và terminal) với máy tính này và các máy dự phòng. Hội thoại vẫn kết nối trực tiếp"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer. Conversations stay directly connected."
-msgstr "Chia sẻ tóm tắt tác vụ với máy này. Hội thoại vẫn kết nối trực tiếp"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "Chia sẻ tổng quan Trang chủ (tác vụ, phiên và terminal) với máy tính này. Hội thoại vẫn kết nối trực tiếp"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"

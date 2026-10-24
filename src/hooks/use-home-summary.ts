@@ -8,6 +8,8 @@ import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { useHomeSummary } from '@/stores/home-summary';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { publishHomeOverview } from '@/lib/home-overview-sync';
+import { HOME_OVERVIEW_CAPABILITY } from '@/lib/home-overview';
 
 export function useHomeSummarySync(serverIds: readonly string[], enabled: boolean) {
   const config = useHomeSummary((state) => state.config);
@@ -24,6 +26,14 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
     )
   );
   const eligible = JSON.stringify(summaryIds);
+  const overviewIds = useServerCapabilities(
+    useShallow((state) =>
+      records
+        .map((record) => record.serverId)
+        .filter((id) => state.byServer[id]?.includes(HOME_OVERVIEW_CAPABILITY))
+    )
+  );
+  const overviewEligible = JSON.stringify(overviewIds);
   const paired = JSON.stringify(records.map((record) => record.serverId));
   useEffect(() => {
     useHomeSummary.getState().keepOnly(JSON.parse(paired) as string[]);
@@ -52,7 +62,11 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
             )
               lost();
           });
-          const release = socket.watchHome(sources, { onHome: receive, onUnavailable: lost });
+          const release = socket.watchHome(
+            sources,
+            { onHome: receive, onUnavailable: lost },
+            (JSON.parse(overviewEligible) as string[]).includes(id)
+          );
           return {
             close: () => {
               releaseState();
@@ -65,12 +79,18 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
             useHomeSummary.getState().disconnected(frame.sourceId);
             return true;
           }
+          if (frame.t === 'home_overview') {
+            useHomeSummary.getState().acceptOverview(frame);
+            publishHomeOverview(frame.sourceId);
+            return true;
+          }
           const previous = useHomeSummary.getState().summaries[frame.sourceId];
           const accepted = useHomeSummary.getState().accept(frame);
           const advanced =
             previous?.generation !== frame.generation || frame.revision > previous.revision;
           if (accepted && advanced && frame.defaultCwd !== undefined)
             useServerTasksStore.getState().setDefaultCwd(frame.sourceId, frame.defaultCwd);
+          if (accepted && advanced) publishHomeOverview(frame.sourceId);
           return accepted;
         },
         clear: () => useHomeSummary.getState().disconnected(),
@@ -83,6 +103,6 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
       listener.remove();
       close?.();
     };
-  }, [eligible, paired, config, enabled]);
+  }, [eligible, overviewEligible, paired, config, enabled]);
   return useHomeSummary(useShallow((state) => serverIds.filter((id) => !state.live[id])));
 }

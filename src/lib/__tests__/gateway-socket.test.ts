@@ -861,3 +861,22 @@ test('Home summaries share the socket without becoming session subscriptions or 
   expect(h.latest().closed).toBe(false);
   releaseTasks();
 });
+
+test('overview and tasks have independent topics on one socket', () => {
+  const h = harness();
+  const frames: string[] = [];
+  h.socket.watchHome([], { onHome: (frame) => frames.push(frame.t) }, true);
+  h.latest().deliver(hello());
+  expect(h.transports).toHaveLength(1);
+  expect(h.latest().sent.at(-1)).toBe(
+    '{"t":"subscribe_home","home":{"sources":[],"overview":true}}'
+  );
+  h.latest().deliver(
+    '{"t":"home_overview","source_id":"a","generation":"o","revision":1,"snapshot":true,"fresh":true,"overview":{"workspaces":[],"sessions":[]}}'
+  );
+  h.latest().deliver(
+    '{"t":"home","source_id":"a","generation":"t","revision":1,"snapshot":true,"tasks":[],"removed":[]}'
+  );
+  expect(frames).toEqual(['home_overview', 'home']);
+  expect(h.transports).toHaveLength(1);
+});

@@ -6114,12 +6114,12 @@ msgid "Shared across sessions. Refresh to update."
 msgstr "Shared across sessions. Refresh to update"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
-msgstr "Shares task summaries with this computer and backups. Conversations stay directly connected"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected"
 
 #: src/components/settings-home-connections-sheet.tsx
-msgid "Shares task summaries with this computer. Conversations stay directly connected."
-msgstr "Shares task summaries with this computer. Conversations stay directly connected"
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"

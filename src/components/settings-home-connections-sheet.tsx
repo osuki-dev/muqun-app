@@ -39,7 +39,8 @@ export function SettingsHomeConnectionsSheet({ onClose }: { onClose: () => void 
   const [message, setMessage] = useState('');
   const desired = combined ? computer : null;
   const changed =
-    desired !== config.preferred || (combined && backups !== config.collectors.length > 1);
+    desired !== config.preferred ||
+    (combined && (backups !== config.collectors.length > 1 || config.overview !== true));
   const currentName = records.find((record) => record.serverId === collectorId)?.label;
   const unsupported =
     computer !== null &&
@@ -60,6 +61,7 @@ export function SettingsHomeConnectionsSheet({ onClose }: { onClose: () => void 
           async () => {
             if (
               desired &&
+              config.overview === true &&
               config.preferred &&
               backups === config.collectors.length > 1 &&
               config.collectors.some((entry) => entry.serverId === desired)
@@ -154,8 +156,8 @@ export function SettingsHomeConnectionsSheet({ onClose }: { onClose: () => void 
             </View>
             <Text variant="caption" color={colors.textMuted} style={styles.note}>
               {backups
-                ? t`Shares task summaries with this computer and backups. Conversations stay directly connected.`
-                : t`Shares task summaries with this computer. Conversations stay directly connected.`}
+                ? t`Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected.`
+                : t`Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected.`}
             </Text>
           </>
         ) : null}

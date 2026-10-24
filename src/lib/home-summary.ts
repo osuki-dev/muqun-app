@@ -2,6 +2,7 @@ import { asRecord } from './record';
 import { sameData } from './same-data';
 import { parseTaskView, type TaskView } from './task-ledger';
 import type { ServerTasksIndex } from './server-tasks-state';
+import { parseHomeOverview, type HomeOverview } from './home-overview';
 
 export const HOME_SUMMARY_CAPABILITY = 'home_task_summary_v1';
 export const HOME_COLLECTOR_CAPABILITY = 'home_task_collector_v1';
@@ -21,7 +22,22 @@ export type HomeStatusFrame = {
   sourceId: string;
   status: 'unavailable' | 'unsupported';
 };
-export type HomeFrame = HomeSummaryFrame | HomeStatusFrame;
+export type HomeOverviewFrame = {
+  t: 'home_overview';
+  sourceId: string;
+  generation: string;
+  revision: number;
+  snapshot: boolean;
+  fresh: boolean;
+  overview?: HomeOverview | null;
+};
+export type HomeOverviewState = {
+  generation: string;
+  revision: number;
+  overview: HomeOverview | null;
+  overviewAtMs: number;
+};
+export type HomeFrame = HomeSummaryFrame | HomeStatusFrame | HomeOverviewFrame;
 export type HomeSummary = {
   generation: string;
   revision: number;
@@ -38,6 +54,33 @@ export function parseHomeFrame(value: unknown): HomeFrame | null {
     return rec.status === 'unavailable' || rec.status === 'unsupported'
       ? { t: 'home_status', sourceId: rec.source_id, status: rec.status }
       : null;
+  }
+  if (rec.t === 'home_overview') {
+    if (
+      !validId(rec.generation) ||
+      typeof rec.revision !== 'number' ||
+      !Number.isSafeInteger(rec.revision) ||
+      rec.revision < 1 ||
+      typeof rec.snapshot !== 'boolean' ||
+      typeof rec.fresh !== 'boolean'
+    )
+      return null;
+    const overview = 'overview' in rec ? parseHomeOverview(rec.overview) : undefined;
+    if (
+      (rec.overview != null && !overview) ||
+      (rec.snapshot && overview === undefined) ||
+      (rec.fresh && overview === null)
+    )
+      return null;
+    return {
+      t: 'home_overview',
+      sourceId: rec.source_id,
+      generation: rec.generation,
+      revision: rec.revision,
+      snapshot: rec.snapshot,
+      fresh: rec.fresh,
+      ...(overview !== undefined ? { overview } : {}),
+    };
   }
   if (
     rec.t !== 'home' ||
@@ -118,6 +161,26 @@ export function applyHomeFrame(
   };
 }
 
+/** Each topic has its own revision chain; a gap invalidates only this topic. */
+export function applyHomeOverview(
+  previous: HomeOverviewState | undefined,
+  frame: HomeOverviewFrame,
+  nowMs: number
+): HomeOverviewState | null {
+  const sameGeneration = previous?.generation === frame.generation;
+  if (sameGeneration && frame.revision <= previous.revision) return previous;
+  if (!frame.snapshot && (!sameGeneration || frame.revision !== previous.revision + 1)) return null;
+  const incoming = frame.overview === undefined ? (previous?.overview ?? null) : frame.overview;
+  const overview =
+    previous?.overview && sameData(previous.overview, incoming) ? previous.overview : incoming;
+  return {
+    generation: frame.generation,
+    revision: frame.revision,
+    overview,
+    overviewAtMs: frame.fresh && overview ? nowMs : 0,
+  };
+}
+
 /** A Home-only projection. Full task data and detail subscriptions remain untouched. */
 export function projectHomeTasks(
   direct: ServerTasksIndex,
@@ -171,7 +234,11 @@ export function projectHomeTasks(
 }
 
 export type Collector = { serverId: string; sources: Record<string, HomeSource> };
-export type HomeSummaryConfig = { preferred: string | null; collectors: Collector[] };
+export type HomeSummaryConfig = {
+  preferred: string | null;
+  collectors: Collector[];
+  overview?: boolean;
+};
 export const NO_HOME_SUMMARY: HomeSummaryConfig = { preferred: null, collectors: [] };
 export function parseHomeSummaryConfig(value: unknown): HomeSummaryConfig {
   const rec = asRecord(value);
@@ -192,7 +259,7 @@ export function parseHomeSummaryConfig(value: unknown): HomeSummaryConfig {
   }
   return rec.preferred === null ||
     collectors.some((collector) => collector.serverId === rec.preferred)
-    ? { preferred: rec.preferred, collectors }
+    ? { preferred: rec.preferred, collectors, ...(rec.overview === true ? { overview: true } : {}) }
     : NO_HOME_SUMMARY;
 }
 

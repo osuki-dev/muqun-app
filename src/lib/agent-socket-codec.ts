@@ -234,7 +234,7 @@ export type AgentSocketServerFrame =
   | { t: 'error'; code: string };
 
 export type AgentSocketClientFrame =
-  | { t: 'subscribe_home'; home: { sources: readonly HomeSource[] } }
+  | { t: 'subscribe_home'; home: { sources: readonly HomeSource[]; overview?: boolean } }
   | { t: 'unsubscribe_home' }
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
@@ -262,6 +262,7 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
   const rec = value as Record<string, unknown>;
   switch (rec.t) {
     case 'home':
+    case 'home_overview':
     case 'home_status': {
       const frame = parseHomeFrame(rec);
       if (!frame) throw new AgentSocketProtocolError('Invalid Home summary frame.');
