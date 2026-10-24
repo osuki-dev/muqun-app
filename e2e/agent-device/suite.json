@@ -7164,6 +7164,30 @@
     ],
     "subflows/muqun-calling": [
       { "run": "flows/muqun-tools.ad#open" },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Run command · mini · Running · Expand tool call(, busy)?"
+        },
+        "mode": "visible",
+        "run": "flows/muqun-tools.ad#target-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Run command · mini · Running · Expand tool call(, busy)?"
+        },
+        "mode": "press",
+        "run": "flows/muqun-tools.ad#target-press"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle",
+          "text": "Run command · mini · Running · Collapse tool call(, busy)?"
+        },
+        "mode": "visible",
+        "run": "flows/muqun-tools.ad#target-visible"
+      },
       { "run": "flows/muqun-tools.ad#calling" },
       { "run": "flows/muqun-tools.ad#close" }
     ],
