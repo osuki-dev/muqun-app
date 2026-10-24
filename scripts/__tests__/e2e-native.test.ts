@@ -477,6 +477,119 @@ describe('native end-to-end gate', () => {
     expect(await runner.readySnapshot()).toEqual([node]);
     expect(attempts).toBe(2);
   });
+  test('a recovered private AX tree-preparation timeout requires a fresh readable capture', async () => {
+    const calls: string[][] = [];
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        return calls.length === 1
+          ? {
+              nodes: [node],
+              snapshotQuality: {
+                state: 'recovered',
+                backend: 'private-ax',
+                reasonCode: 'capture-failed',
+                reason: 'timed out while preparing tree snapshot on the XCTest main thread',
+              },
+            }
+          : { nodes: [node] };
+      },
+      {}
+    );
+    expect(await runner.readySnapshot()).toEqual([node]);
+    expect(calls).toEqual([['snapshot'], ['snapshot']]);
+  });
+  test('private AX capture timeouts stay fail-closed for negative and optional targets', async () => {
+    for (const targetStep of [
+      { target: { id: 'missing' }, mode: 'hidden' as const },
+      { target: { id: 'missing' }, mode: 'visible' as const, optional: true },
+    ]) {
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        '/unused',
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          return {
+            nodes: [node],
+            snapshotQuality: {
+              state: 'recovered',
+              backend: 'private-ax',
+              reasonCode: 'capture-failed',
+              reason: 'timed out while preparing tree snapshot on the XCTest main thread',
+            },
+          };
+        },
+        {}
+      );
+      await expect(runner.run([targetStep])).rejects.toThrow('does not establish absence');
+      expect(calls).toEqual([['snapshot'], ['snapshot']]);
+    }
+  });
+  test('post-navigation tree-preparation recovery never repeats the press', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-capture-'));
+    try {
+      await writeFile(path.join(directory, 'navigate.ad'), 'press id="open-session"\n');
+      const calls: string[][] = [];
+      let captures = 0;
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          if (args[0] !== 'snapshot') return {};
+          captures++;
+          return captures === 2
+            ? {
+                nodes: [node],
+                snapshotQuality: {
+                  state: 'recovered',
+                  backend: 'private-ax',
+                  reasonCode: 'capture-failed',
+                  reason: 'timed out while preparing tree snapshot on the XCTest main thread',
+                },
+              }
+            : { nodes: [node] };
+        },
+        {}
+      );
+      await runner.runSection('navigate.ad', {});
+      await runner.run([{ target: { id: 'missing' }, mode: 'hidden' }]);
+      expect(calls).toEqual([
+        ['snapshot'],
+        ['press', 'id="open-session"'],
+        ['snapshot'],
+        ['snapshot'],
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('unrelated capture failures are rejected without reacquisition', async () => {
+    for (const quality of [
+      { state: 'recovered', backend: 'tree', reasonCode: 'capture-failed' },
+      { state: 'recovered', backend: 'private-ax', reasonCode: 'capture-failed' },
+    ]) {
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        '/unused',
+        '/unused',
+        async (args) => {
+          calls.push(args);
+          return { nodes: [node], snapshotQuality: quality };
+        },
+        {}
+      );
+      await expect(runner.readySnapshot()).rejects.toThrow('does not establish absence');
+      expect(calls).toEqual([['snapshot']]);
+    }
+  });
   test('a transient bare iOS tree at launch is recaptured before asserting absence', async () => {
     let attempts = 0;
     const runner = new NativeRunner(

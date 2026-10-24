@@ -1191,7 +1191,7 @@
       },
       {
         "target": {
-          "text": "feat/linked-checkout"
+          "id": "changes-worktree-%2FUsers%2Fdemo%2Fcode%2Fmuqun-worktrees%2Flinked-checkout"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s5b"
@@ -1209,7 +1209,7 @@
       },
       {
         "target": {
-          "text": "feat/git-diff"
+          "id": "changes-worktree-current"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s5e"

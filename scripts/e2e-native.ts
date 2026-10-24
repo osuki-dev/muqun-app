@@ -819,10 +819,17 @@ export class NativeRunner {
         quality?.backend === 'private-ax' &&
         quality.state === 'sparse' &&
         /deferred/i.test(quality.reason ?? '');
-      if (!sparseTree && !deferredPrivateAX) return capture;
-      if (attempt >= (sparseTree ? 8 : 2)) return capture;
-      // A relaunch can expose a bare native tree while the first app frame is
-      // still rendering. Repeat only the read; never replay the preceding input.
+      const timedOutPrivateAX =
+        quality?.backend === 'private-ax' &&
+        quality.state === 'recovered' &&
+        quality.reasonCode === 'capture-failed' &&
+        quality.reason === 'timed out while preparing tree snapshot on the XCTest main thread';
+      if (!sparseTree && !deferredPrivateAX && !timedOutPrivateAX) return capture;
+      if (attempt >= (timedOutPrivateAX ? 1 : sparseTree ? 8 : 2)) return capture;
+      // Navigation can stall XCTest's first tree preparation, then produce a
+      // readable capture. Reacquire once; snapshotNodes still rejects exhausted
+      // failures. Sparse launch trees retain their existing settling budget.
+      // Repeat only the read; never replay the preceding input.
       await new Promise((resolve) => setTimeout(resolve, sparseTree ? 500 : 250));
     }
   }
