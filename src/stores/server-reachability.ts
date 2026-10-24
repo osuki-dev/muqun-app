@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 
-import { probeGatewayReachable, type HealthResponse } from '@/lib/gateway-client';
+import {
+  probeGatewayReachable,
+  setGatewayAnswerObserver,
+  type HealthResponse,
+} from '@/lib/gateway-client';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
@@ -14,6 +19,7 @@ import {
   prewarmGate,
   REACHABILITY_FRESH_MS,
   REACHABILITY_TIMEOUT_MS,
+  settleReachabilityProbe,
   statusRefusesPairing,
   type ReachabilityProbe,
 } from '@/lib/server-reachability';
@@ -55,10 +61,10 @@ type ServerReachabilityState = {
    * Probe one server unless a recent enough answer is already on hand.
    * Safe to call on every focus; it is its own rate limiter.
    *
-   * `force` skips that limit and is for a pull-to-refresh and nothing else.
-   * The limiter exists because returning to a screen is not a question; a hand
-   * pulling the list down is, and answering it with a cached probe is how a
-   * refresh control comes to mean nothing.
+   * `force` skips that limit for an explicit refresh or computer selection.
+   * Returning to a screen can reuse a recent answer; choosing a computer or
+   * pulling the list down asks for its current status. In-flight checks are
+   * still shared, including when forced.
    */
   refresh: (
     endpoint: ReachabilityEndpoint,
@@ -139,6 +145,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     if (!options?.force && !needsReachabilityProbe(get().probes[serverId])) return;
 
     const previous = get().probes[serverId];
+    const startedAtMs = Date.now();
     // A re-check is in flight. Subscribers that only care about the answer
     // select it, so marking the probe re-renders nothing that draws a dot.
     if (previous) {
@@ -181,19 +188,23 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
       // does, so an earlier refusal stands until the gateway says otherwise.
       const unauthorized =
         heard.status === null
-          ? (previous?.unauthorized ?? false)
+          ? (get().probes[serverId]?.unauthorized ?? false)
           : statusRefusesPairing(heard.status);
       set((state) => ({
         probes: {
           ...state.probes,
-          [serverId]: {
-            serverId,
-            ok,
-            checkedAtMs: Date.now(),
-            health: ok ? health : null,
-            status: heard.status,
-            ...(unauthorized ? { unauthorized } : {}),
-          },
+          [serverId]: settleReachabilityProbe(
+            state.probes[serverId],
+            {
+              serverId,
+              ok,
+              checkedAtMs: Date.now(),
+              health: ok ? health : null,
+              status: heard.status,
+              ...(unauthorized ? { unauthorized } : {}),
+            },
+            startedAtMs
+          ),
         },
       }));
       // An answer is contact: Continue stops backing off from this computer,
@@ -243,6 +254,29 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     set({ probes });
   },
 }));
+
+// A fresh authenticated response is stronger than a failed health check.
+// Resolve only current pairings, so a response from a removed/replaced token
+// cannot revive a different computer or invent health/capability metadata.
+setGatewayAnswerObserver((endpoint) => {
+  const matches = useGatewayConnectionStore
+    .getState()
+    .records.filter((record) => record.token === endpoint.token);
+  if (matches.length !== 1) return;
+  const { serverId } = matches[0]!;
+  useServerReachability.setState((state) => ({
+    probes: {
+      ...state.probes,
+      [serverId]: {
+        serverId,
+        ok: true,
+        checkedAtMs: Date.now(),
+        health: null,
+        status: null,
+      },
+    },
+  }));
+});
 
 let expiryTimer: ReturnType<typeof setTimeout> | undefined;
 

@@ -1131,6 +1131,15 @@ export function HomeOverview({
   const targetComposer = (serverId: string) => {
     retryHomeRefresh(serverId);
     launchController.choose(serverId);
+    // Swiping to a computer asks for its current status, even if the last
+    // probe just failed. The store joins any check already in flight.
+    const target = records.find((server) => server.serverId === serverId);
+    if (target && !isDemoRecord(target) && !target.sshTunnel) {
+      void refreshReachability(target, {
+        force: true,
+        shouldContinue: () => AppState.currentState === 'active',
+      });
+    }
     void Haptics.selectionAsync();
   };
   // "Reply from Home" (a card's long-press menu): the dock's next message

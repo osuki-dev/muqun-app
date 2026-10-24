@@ -673,6 +673,15 @@ export interface GatewayAuthObserver {
 
 let authObserver: GatewayAuthObserver | null = null;
 
+let answerObserver: ((endpoint: { url: string; token: string }) => void) | null = null;
+
+/** Authenticated contact is also reachability evidence, independent of pairing faults. */
+export function setGatewayAnswerObserver(
+  observer: ((endpoint: { url: string; token: string }) => void) | null
+): void {
+  answerObserver = observer;
+}
+
 export function setGatewayAuthObserver(observer: GatewayAuthObserver | null): void {
   authObserver = observer;
 }
@@ -691,9 +700,10 @@ function noteRefusal(endpoint: { url: string; token: string }, status: number, b
 
 /** The gateway took this token: whatever was held against its pairing is disproved. */
 function noteAccepted(endpoint: { url: string; token: string }) {
-  if (!authObserver || !endpoint.token) return;
+  if (!endpoint.token) return;
   try {
-    authObserver.accepted(endpoint);
+    authObserver?.accepted(endpoint);
+    answerObserver?.(endpoint);
   } catch {
     // Likewise: bookkeeping never changes the answer.
   }
@@ -708,11 +718,11 @@ async function noteRefusedResponse(
   endpoint: { url: string; token: string },
   response: Response
 ): Promise<void> {
-  if (!authObserver) return;
   if (response.ok) {
     noteAccepted(endpoint);
     return;
   }
+  if (!authObserver) return;
   if (!PAIRING_REFUSAL_STATUSES.has(response.status)) return;
   let body = '';
   try {
