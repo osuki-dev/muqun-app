@@ -4,6 +4,8 @@ import type { ServerAgent } from './server-agents';
 
 export const HOME_OVERVIEW_CAPABILITY = 'home_overview_v1';
 export type HomeOverview = {
+  unavailableProviders?: string[];
+  unavailableWorkspaces?: string[];
   workspaces: { sessionId: string; agents: ServerAgent[] }[];
   sessions: GatewayAgentSession[];
 };
@@ -26,6 +28,17 @@ export function parseHomeOverview(value: unknown): HomeOverview | null {
     row.sessions.length > 50
   )
     return null;
+  for (const key of ['unavailableProviders', 'unavailableWorkspaces']) {
+    const values = row[key];
+    if (
+      values !== undefined &&
+      (!Array.isArray(values) ||
+        values.length > 16 ||
+        !values.every(id) ||
+        new Set(values).size !== values.length)
+    )
+      return null;
+  }
   const workspaceIds = new Set<string>();
   for (const value of row.workspaces) {
     const workspace = asRecord(value);

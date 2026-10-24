@@ -205,6 +205,14 @@ export class SealedAgentSocketCodec implements AgentSocketCodec {
 
 export type AgentSocketServerFrame =
   | HomeFrame
+  | {
+      t: 'history_response';
+      requestId: string;
+      sourceId: string;
+      asid: string;
+      status: number;
+      body: unknown;
+    }
   | { t: 'subscribed'; home: true }
   | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
@@ -234,7 +242,21 @@ export type AgentSocketServerFrame =
   | { t: 'error'; code: string };
 
 export type AgentSocketClientFrame =
-  | { t: 'subscribe_home'; home: { sources: readonly HomeSource[]; overview?: boolean } }
+  | {
+      t: 'history_request';
+      request: {
+        request_id: string;
+        asid: string;
+        operation: 'snapshot' | 'earlier' | 'delta';
+        refresh?: boolean;
+        after?: number;
+      };
+    }
+  | { t: 'resync_home_overview'; source_id: string }
+  | {
+      t: 'subscribe_home';
+      home: { sources: readonly HomeSource[]; overview?: boolean; overview_sections?: boolean };
+    }
   | { t: 'unsubscribe_home' }
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
@@ -267,6 +289,23 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
       const frame = parseHomeFrame(rec);
       if (!frame) throw new AgentSocketProtocolError('Invalid Home summary frame.');
       return frame;
+    }
+    case 'history_response': {
+      if (
+        !str(rec.request_id) ||
+        !str(rec.source_id) ||
+        !str(rec.asid) ||
+        !Number.isInteger(rec.status)
+      )
+        throw new AgentSocketProtocolError('Invalid history response.');
+      return {
+        t: 'history_response',
+        requestId: rec.request_id as string,
+        sourceId: rec.source_id as string,
+        asid: rec.asid as string,
+        status: rec.status as number,
+        body: rec.body,
+      };
     }
     case 'hello': {
       const connectionId = str(rec.connection_id);

@@ -880,3 +880,123 @@ test('overview and tasks have independent topics on one socket', () => {
   expect(frames).toEqual(['home_overview', 'home']);
   expect(h.transports).toHaveLength(1);
 });
+
+test('history requests correlate source and session and release the socket lease', async () => {
+  const h = harness();
+  const pending = h.socket.requestHistory('computer', 'session', 'snapshot');
+  h.latest().deliver(hello());
+  const request = h
+    .latest()
+    .sent.map((row) => JSON.parse(row))
+    .find((row) => row.t === 'history_request');
+  expect(request.request.asid).toBe('session');
+  h.latest().deliver(
+    JSON.stringify({
+      t: 'history_response',
+      request_id: request.request.request_id,
+      source_id: 'computer',
+      asid: 'session',
+      status: 200,
+      body: { data: { timeline: [] } },
+    })
+  );
+  expect((await pending).status).toBe(200);
+  h.clock.advance(60_000);
+  expect(h.socket.state).toBe('idle');
+  expect(h.latest().closed).toBe(true);
+});
+
+test('history pages are not replayed after disconnect and foreign responses fail closed', async () => {
+  const h = harness();
+  const pending = h.socket.requestHistory('computer', 'session', 'earlier');
+  const refused = pending.catch((error: Error) => error);
+  h.latest().deliver(hello());
+  h.latest().deliver(
+    JSON.stringify({
+      t: 'history_response',
+      request_id: '1',
+      source_id: 'other',
+      asid: 'session',
+      status: 200,
+      body: {},
+    })
+  );
+  expect((await refused) instanceof Error).toBe(true);
+  expect(String(await refused)).toContain('identity mismatch');
+  const next = h.socket.requestHistory('computer', 'session', 'earlier');
+  const closed = next.catch((error: Error) => error);
+  h.latest().drop();
+  expect(String(await closed)).toContain('closed');
+  h.clock.advance(60_000);
+  expect(h.transports).toHaveLength(1);
+});
+
+test('repeated history requests and disposal leave no demand or retry timers', async () => {
+  const h = harness();
+  for (let i = 0; i < 100; i++) {
+    const pending = h.socket.requestHistory('computer', 'session', 'delta');
+    if (i === 0) h.latest().deliver(hello());
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'history_response',
+        request_id: String(i + 1),
+        source_id: 'computer',
+        asid: 'session',
+        status: 200,
+        body: {},
+      })
+    );
+    await pending;
+  }
+  const pending = h.socket.requestHistory('computer', 'session', 'snapshot');
+  const closed = pending.catch((error: Error) => error);
+  h.socket.dispose();
+  expect(String(await closed)).toContain('closed');
+  h.clock.advance(120_000);
+  expect(h.socket.state).toBe('idle');
+  expect(h.transports).toHaveLength(1);
+  await expect(h.socket.requestHistory('computer', 'session', 'snapshot')).rejects.toThrow(
+    'disposed'
+  );
+});
+
+test('history request budget and timeout release every outstanding lease', async () => {
+  const h = harness();
+  const requests = Array.from({ length: 32 }, (_, index) =>
+    h.socket.requestHistory('computer', String(index), 'snapshot').catch((error: Error) => error)
+  );
+  h.latest().deliver(hello());
+  const overflow = await h.socket
+    .requestHistory('computer', 'session', 'snapshot')
+    .catch((error: Error) => error);
+  expect(String(overflow)).toContain('Too many');
+  h.clock.advance(35_000);
+  const results = await Promise.all(requests);
+  expect(results.every((result) => result instanceof Error)).toBe(true);
+  h.clock.advance(2_000);
+  expect(h.socket.state).toBe('idle');
+  expect(h.latest().closed).toBe(true);
+});
+
+test('simultaneous pulls for one history cursor share one request', async () => {
+  const h = harness();
+  const first = h.socket.requestHistory('computer', 'session', 'earlier');
+  const second = h.socket.requestHistory('computer', 'session', 'earlier');
+  expect(second).toBe(first);
+  h.latest().deliver(hello());
+  expect(h.latest().sent.filter((frame) => JSON.parse(frame).t === 'history_request')).toHaveLength(
+    1
+  );
+  h.latest().deliver(
+    JSON.stringify({
+      t: 'history_response',
+      request_id: '1',
+      source_id: 'computer',
+      asid: 'session',
+      status: 200,
+      body: { items: [], exhausted: false },
+    })
+  );
+  await Promise.all([first, second]);
+  h.socket.dispose();
+});

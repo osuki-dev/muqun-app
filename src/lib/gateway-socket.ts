@@ -200,6 +200,7 @@ const ALL = '*';
 /** The task listeners' demand, apart from any session's. */
 const TASKS = '#tasks';
 const HOME = '#home';
+const RPC = '#rpc';
 
 /** The longest wait between reconnects, before jitter. */
 export const MAX_RECONNECT_DELAY_MS = 30_000;
@@ -239,7 +240,7 @@ export class GatewaySocket {
    */
   private readonly homeListeners = new Map<
     GatewaySocketListener,
-    { sources: readonly HomeSource[]; overview: boolean }
+    { sources: readonly HomeSource[]; overview: boolean; sections: boolean }
   >();
   private readonly taskListeners = new Map<GatewaySocketListener, boolean>();
   private readonly stateListeners = new Set<(state: GatewaySocketState) => void>();
@@ -247,6 +248,18 @@ export class GatewaySocket {
   private readonly wanted = new Map<string, number>();
   private connection: Connection | null = null;
   private preparation = 0;
+  private disposed = false;
+  private requestSequence = 0;
+  private readonly historyFlights = new Map<string, Promise<{ status: number; body: unknown }>>();
+  private readonly historyRequests = new Map<
+    string,
+    {
+      sourceId: string;
+      asid: string;
+      resolve: (value: { status: number; body: unknown }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
   private currentState: GatewaySocketState = 'idle';
   private attempts = 0;
   private failures = 0;
@@ -345,12 +358,75 @@ export class GatewaySocket {
     };
   }
 
+  /** Bounded, one-shot requests. Connection loss rejects; consuming pages are never replayed. */
+  requestHistory(
+    sourceId: string,
+    asid: string,
+    operation: 'snapshot' | 'earlier' | 'delta',
+    options: { refresh?: boolean; after?: number } = {}
+  ): Promise<{ status: number; body: unknown }> {
+    if (this.disposed) return Promise.reject(new Error('Socket disposed'));
+    const flightKey = JSON.stringify([
+      sourceId,
+      asid,
+      operation,
+      options.refresh ?? false,
+      options.after ?? 0,
+    ]);
+    const existing = this.historyFlights.get(flightKey);
+    if (existing) return existing;
+    if (this.historyRequests.size >= 32)
+      return Promise.reject(new Error('Too many history requests'));
+    const requestId = String(++this.requestSequence);
+    let releaseState: () => void = () => {};
+    let cancelDeadline: () => void = () => {};
+    let held = false;
+    let sent = false;
+    const promise = new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+      this.historyRequests.set(requestId, { sourceId, asid, resolve, reject });
+      const send = () => {
+        if (sent || !this.connected) return;
+        sent = true;
+        this.send({
+          t: 'history_request',
+          request: { request_id: requestId, asid, operation, ...options },
+        });
+      };
+      releaseState = this.onStateChange((state) => {
+        if (state === 'open') send();
+        else if (['paused', 'unauthorized', 'unavailable', 'superseded', 'backoff'].includes(state))
+          reject(new Error('History connection interrupted; refresh before retrying'));
+      });
+      cancelDeadline = this.schedule(
+        () => reject(new Error('History request timed out; refresh before retrying')),
+        35_000
+      );
+      held = true;
+      this.want(RPC, { t: 'ping' });
+      send();
+    });
+    const flight = promise.finally(() => {
+      this.historyFlights.delete(flightKey);
+      this.historyRequests.delete(requestId);
+      cancelDeadline();
+      releaseState();
+      if (held) this.release(RPC);
+    });
+    this.historyFlights.set(flightKey, flight);
+    return flight;
+  }
+
+  resyncHomeOverview(sourceId: string): void {
+    if (this.homeListeners.size) this.send({ t: 'resync_home_overview', source_id: sourceId });
+  }
+
   watchHome(
     sources: readonly HomeSource[],
     listener: GatewaySocketListener,
-    overview = false
+    overview = false,
+    sections = false
   ): () => void {
-    this.homeListeners.set(listener, { sources, overview });
+    this.homeListeners.set(listener, { sources, overview, sections });
     this.want(HOME, this.homeSubscription());
     let released = false;
     return () => {
@@ -367,9 +443,14 @@ export class GatewaySocket {
     for (const list of this.homeListeners.values())
       for (const source of list.sources) sources.set(source.peer_id, source);
     const overview = [...this.homeListeners.values()].some((item) => item.overview);
+    const sections = [...this.homeListeners.values()].some((item) => item.sections);
     return {
       t: 'subscribe_home',
-      home: { sources: [...sources.values()], ...(overview ? { overview: true } : {}) },
+      home: {
+        sources: [...sources.values()],
+        ...(overview ? { overview: true } : {}),
+        ...(sections ? { overview_sections: true } : {}),
+      },
     };
   }
 
@@ -435,6 +516,7 @@ export class GatewaySocket {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.releaseAppState?.();
     this.cancelLinger?.();
     this.cancelLinger = null;
@@ -453,7 +535,8 @@ export class GatewaySocket {
   private taskOnly(): boolean {
     if (this.taskListeners.size === 0) return false;
     for (const ok of this.taskListeners.values()) if (!ok) return false;
-    for (const key of this.wanted.keys()) if (key !== TASKS && key !== HOME) return false;
+    for (const key of this.wanted.keys())
+      if (key !== TASKS && key !== HOME && key !== RPC) return false;
     return true;
   }
 
@@ -492,6 +575,7 @@ export class GatewaySocket {
 
   /** Answers whether the last reference went. */
   private release(key: string): boolean {
+    if (this.disposed) return true;
     const count = this.wanted.get(key) ?? 0;
     if (count <= 0) return false;
     if (count > 1) {
@@ -500,6 +584,11 @@ export class GatewaySocket {
     }
     this.wanted.delete(key);
     if (!this.hasDemand()) {
+      if (this.currentState === 'backoff' || this.currentState === 'connecting') {
+        this.drop();
+        this.setState('idle');
+        return true;
+      }
       this.cancelLinger?.();
       this.cancelLinger = this.schedule(() => {
         this.cancelLinger = null;
@@ -646,7 +735,7 @@ export class GatewaySocket {
       } else {
         if (this.wanted.has(ALL) || this.wanted.has(TASKS)) this.send({ t: 'subscribe_all' });
         for (const key of this.wanted.keys()) {
-          if (key !== ALL && key !== TASKS && key !== HOME)
+          if (key !== ALL && key !== TASKS && key !== HOME && key !== RPC)
             this.send({ t: 'subscribe', asid: key });
         }
       }
@@ -656,6 +745,13 @@ export class GatewaySocket {
     }
     if (!frame) return;
     switch (frame.t) {
+      case 'history_response': {
+        const pending = this.historyRequests.get(frame.requestId);
+        if (pending && pending.sourceId === frame.sourceId && pending.asid === frame.asid)
+          pending.resolve({ status: frame.status, body: frame.body });
+        else if (pending) pending.reject(new Error('History response identity mismatch'));
+        return;
+      }
       case 'home':
       case 'home_overview':
       case 'home_status':
@@ -847,6 +943,11 @@ export class GatewaySocket {
 
   /** Close the current connection, if any, without anything reacting to it. */
   private drop(): void {
+    if (this.connection || this.disposed) {
+      for (const pending of this.historyRequests.values())
+        pending.reject(new Error('History connection closed; refresh before retrying'));
+      this.historyRequests.clear();
+    }
     this.preparation++;
     this.clearTimers();
     const connection = this.connection;

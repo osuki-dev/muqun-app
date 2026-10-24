@@ -1,3 +1,4 @@
+import { HOME_AGENT_SESSION_ID } from './home-composer';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeSummary } from '@/stores/home-summary';
@@ -20,28 +21,40 @@ export function publishHomeOverview(serverId: string) {
   if (!overview) return false;
   const preferred = useServerSession.getState().byServer[serverId];
   const workspace =
-    overview.workspaces.find((row) => row.sessionId === preferred) ?? overview.workspaces[0];
-  if (!workspace) return false;
+    overview.workspaces.find((row) => row.sessionId === preferred) ??
+    (preferred && overview.unavailableWorkspaces?.includes(preferred)
+      ? undefined
+      : overview.workspaces[0]);
   // Re-reading the cache is not a new observation; do not wake selectors or
   // rewrite recent-session timestamps on every Home refresh tick.
   const observedAtMs = useHomeSummary.getState().overviews[serverId]?.overviewAtMs;
   if (!observedAtMs) return false;
-  void useServerAgents.getState().record({
-    serverId,
-    sessionId: workspace.sessionId,
-    checkedAtMs: observedAtMs,
-    agents: workspace.agents,
-  });
+  if (workspace || !overview.unavailableWorkspaces?.length)
+    void useServerAgents.getState().record({
+      serverId,
+      sessionId: workspace?.sessionId ?? preferred ?? HOME_AGENT_SESSION_ID,
+      checkedAtMs: observedAtMs,
+      agents: workspace?.agents ?? [],
+    });
   useHomeAgentSessions.getState().record({
     serverId,
-    sessionId: workspace.sessionId,
+    sessionId: workspace?.sessionId ?? preferred ?? HOME_AGENT_SESSION_ID,
     observedAtMs,
-    sessions: overview.sessions.slice(0, HOME_CONTINUE_GATEWAY_SESSION_LIMIT),
+    sessions: [
+      ...overview.sessions,
+      ...(useHomeAgentSessions.getState().byServer[serverId]?.sessions ?? [])
+        .filter((row) => overview.unavailableProviders?.includes(row.agentId))
+        .map((row) => (row.status === 'unknown' ? row : { ...row, status: 'unknown' as const })),
+    ].slice(0, HOME_CONTINUE_GATEWAY_SESSION_LIMIT),
   });
   const recent = useHomeRecentsStore.getState();
   for (const entry of recent.entries) {
     const { target } = entry;
     if (target.kind !== 'agent-session' || target.serverId !== serverId) continue;
+    if (target.agentId && overview.unavailableProviders?.includes(target.agentId)) {
+      void recent.observeSession(target, { status: 'unknown', observedAtMs });
+      continue;
+    }
     const matches = overview.sessions.filter(
       (row) => row.asid === target.asid && (!target.agentId || row.agentId === target.agentId)
     );

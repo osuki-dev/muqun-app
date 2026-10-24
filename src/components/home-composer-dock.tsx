@@ -1753,7 +1753,11 @@ export function HomeComposerDock({
         .records.find((entry) => entry.serverId === item.serverId);
       if (!record) return;
       inFlight.add(item.id);
-      void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, item.asid)
+      void readAgentSessionAt(
+        { ...recordEndpoint(record), serverId: record.serverId },
+        HOME_AGENT_SESSION_ID,
+        item.asid
+      )
         .then((snapshot) => {
           if (!snapshot) return;
           const state = boundSessionState(snapshot);

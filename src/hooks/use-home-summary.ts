@@ -34,6 +34,15 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
     )
   );
   const overviewEligible = JSON.stringify(overviewIds);
+  const advancedFeatures = useServerCapabilities(
+    useShallow((state) =>
+      records.map((record) => {
+        const caps = state.byServer[record.serverId] ?? [];
+        return `${record.serverId}:${caps.includes('home_overview_resync_v1')}:${caps.includes('home_overview_sections_v1')}`;
+      })
+    )
+  );
+  const advancedEligible = JSON.stringify(advancedFeatures);
   const paired = JSON.stringify(records.map((record) => record.serverId));
   useEffect(() => {
     useHomeSummary.getState().keepOnly(JSON.parse(paired) as string[]);
@@ -62,10 +71,29 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
             )
               lost();
           });
+          const resyncAt = new Map<string, number>();
+          const caps = useServerCapabilities.getState().byServer[id] ?? [];
           const release = socket.watchHome(
             sources,
-            { onHome: receive, onUnavailable: lost },
-            (JSON.parse(overviewEligible) as string[]).includes(id)
+            {
+              onHome: (frame) => {
+                receive(frame);
+                if (frame.t === 'home_overview') {
+                  if (frame.snapshot) resyncAt.delete(frame.sourceId);
+                  else if (
+                    !useHomeSummary.getState().overviews[frame.sourceId] &&
+                    caps.includes('home_overview_resync_v1') &&
+                    Date.now() - (resyncAt.get(frame.sourceId) ?? 0) > 30_000
+                  ) {
+                    resyncAt.set(frame.sourceId, Date.now());
+                    socket.resyncHomeOverview(frame.sourceId);
+                  }
+                }
+              },
+              onUnavailable: lost,
+            },
+            (JSON.parse(overviewEligible) as string[]).includes(id),
+            caps.includes('home_overview_sections_v1')
           );
           return {
             close: () => {
@@ -103,6 +131,6 @@ export function useHomeSummarySync(serverIds: readonly string[], enabled: boolea
       listener.remove();
       close?.();
     };
-  }, [eligible, overviewEligible, paired, config, enabled]);
+  }, [eligible, overviewEligible, advancedEligible, paired, config, enabled]);
   return useHomeSummary(useShallow((state) => serverIds.filter((id) => !state.live[id])));
 }
