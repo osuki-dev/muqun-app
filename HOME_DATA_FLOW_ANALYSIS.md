@@ -12,6 +12,15 @@ Date: 2026-10-24. Scope: static analysis of the current App working tree and sib
 
 Computers being mutually reachable is necessary for aggregation, but is not sufficient: the current peer protocol does not authorize a Gateway to read every other computer's sessions. Aggregation needs a new capability and a scoped read permission.
 
+## Follow-up architecture
+
+The Gateway implementation boundary and reusable modules are specified in the
+[Home summary aggregation and failover proposal](../gateway/docs/home-summary-failover.md).
+It includes App-controlled preferred/backup selection and direct fallback.
+Single-computer installations remain direct, using the same local summary model
+without peer connections, summary grants, collector setup, or backup probing.
+Zero, one, partially covered, and fully aggregated fleets use the same App model.
+
 ## Current flow
 
 ```mermaid
