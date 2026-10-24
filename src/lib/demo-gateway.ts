@@ -686,8 +686,34 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   if (!info) return null;
   const muqunFixtures: Record<
     string,
-    { name: string; input: Record<string, unknown>; result: unknown }
+    { name: string; input: Record<string, unknown>; result: unknown; running?: boolean }
   > = {
+    'demo-tree-leaf-9': {
+      name: 'exec.run',
+      input: {
+        command: Array.from({ length: 9 }, (_, index) => `printf 'step ${index + 1}\\n'`).join(
+          '\n'
+        ),
+        cwd: '~/Work/sample',
+        machine: 'mini',
+      },
+      result: {
+        task_id: 'demo-long-build',
+        state: 'done',
+        exit_code: 0,
+        machine: 'mini',
+        stdout_tail: Array.from(
+          { length: 24 },
+          (_, index) => `Build step ${index + 1} completed`
+        ).join('\n'),
+      },
+    },
+    'demo-tree-leaf-10': {
+      name: 'exec.run',
+      input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
+      result: undefined,
+      running: true,
+    },
     'demo-tree-leaf-11': {
       name: 'exec.run',
       input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
@@ -804,11 +830,13 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
           id: 'demo-muqun-call',
           name: `muqun:${muqunFixture.name}`,
           input: muqunFixture.input,
-          output: { content: [{ type: 'text', text: JSON.stringify(muqunFixture.result) }] },
+          output: muqunFixture.running
+            ? undefined
+            : { content: [{ type: 'text', text: JSON.stringify(muqunFixture.result) }] },
           content: [],
           metadata: {},
-          state: 'completed',
-          time: { ran: 1000, completed: 2500 },
+          state: muqunFixture.running ? 'running' : 'completed',
+          time: muqunFixture.running ? { ran: 1000 } : { ran: 1000, completed: 2500 },
         },
         seq: 1,
         updated_ms: 1,

@@ -7150,7 +7150,22 @@
           "STATUS": "Failed",
           "EXPECTED": "Exit code"
         }
-      }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "9",
+          "TITLE": "Run command · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Full content in Details"
+        }
+      },
+      { "include": "subflows/muqun-calling", "env": { "LEAF": "10" } }
+    ],
+    "subflows/muqun-calling": [
+      { "run": "flows/muqun-tools.ad#open" },
+      { "run": "flows/muqun-tools.ad#calling" },
+      { "run": "flows/muqun-tools.ad#close" }
     ],
     "subflows/muqun-tool": [
       {

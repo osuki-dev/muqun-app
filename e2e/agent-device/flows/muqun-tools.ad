@@ -21,3 +21,14 @@ back --system
 
 # section close
 back --system
+
+# section calling
+is visible "id=agent-tool-toggle label=\"Run command · mini · Running · Expand tool call\""
+press "id=agent-tool-toggle label=\"Run command · mini · Running · Expand tool call\""
+wait "id=agent-muqun-body" 5000
+is visible "text=\"bun run build\""
+is hidden "id=agent-muqun-output"
+is hidden "text=\"Call duration\""
+is hidden "text=\"Started\""
+snapshot
+screenshot "shots/muqun-calling.png"
