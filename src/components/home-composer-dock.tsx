@@ -2113,17 +2113,36 @@ export function HomeComposerDock({
       inputAccessibilityLabel={replyContext}
       fieldHeader={
         replyContext ? (
-          <Text
+          <View
             testID="home-composer-reply-target"
-            variant="caption"
-            color={theme.colors.textMuted}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+            accessible
             accessibilityLabel={replyContext}
             accessibilityLiveRegion="polite"
             style={styles.replyContext}>
-            {replyContext}
-          </Text>
+            <Text variant="caption" color={theme.colors.textMuted}>{t`Reply to`}</Text>
+            <View
+              style={[
+                styles.replyTarget,
+                {
+                  borderRadius: profile.chrome.control,
+                  backgroundColor: background(theme.colors.primarySubtle),
+                },
+              ]}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.primary}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {replyTitle}
+              </Text>
+            </View>
+            {replyAgentName ? (
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {replyAgentName}
+              </Text>
+            ) : null}
+          </View>
         ) : undefined
       }
       sessionId={threadSessionId ?? HOME_AGENT_SESSION_ID}
@@ -2238,7 +2257,22 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
-  replyContext: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 },
+  replyContext: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  replyTarget: {
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
   error: { padding: 8, marginBottom: 4, width: '100%' },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
   unsureText: { flexShrink: 1 },

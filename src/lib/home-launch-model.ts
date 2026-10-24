@@ -358,7 +358,9 @@ export function launchRowLayout({
     1,
     Math.min(4, Math.floor((measured + LAUNCH_GRID_GAP) / (136 + LAUNCH_GRID_GAP)))
   );
-  const columns = Math.min(agentCount, maxColumns);
+  // Keep the same cell width when discovery returns one agent or a partial row.
+  // Sparse rows leave empty space instead of turning one action into a banner.
+  const columns = maxColumns;
   for (let index = 0; index < agentCount; index += columns) {
     const cells: LaunchMosaicCell[] = [];
     for (let offset = 0; offset < columns && index + offset < agentCount; offset++) {

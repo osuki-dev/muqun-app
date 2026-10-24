@@ -52,6 +52,7 @@ import {
   padCoverAvailableHeight,
   padCoverKind,
   padHomeColumns,
+  padDockOuterInset,
   padLaunchLayoutEnabled,
 } from '@/lib/home-pad-geometry';
 export {
@@ -660,6 +661,7 @@ export function HomeEditorialLayout({
                   layout={coverLayout}
                   style={[
                     styles.padLaunchSection,
+                    { marginHorizontal: padDockOuterInset(columns.cover) },
                     // Portraits fade into empty space at the foot; bring the entries into it.
                     coverKind === 'artwork' && artworkForeground ? { marginTop: -16 } : null,
                   ]}>
