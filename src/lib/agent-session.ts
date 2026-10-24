@@ -96,6 +96,7 @@ import {
   parseShellList,
   parseShellOutputPage,
   parseTimelineItems,
+  parseEarlierTimelinePage,
   parseRunStatus,
   parseCreatedWorktree,
   parseWorktreeList,
@@ -753,6 +754,7 @@ export async function loadEarlierAgentTimeline(
   asid: string
 ): Promise<{ items: TimelineItem[]; exhausted: boolean; cursorLost?: boolean }> {
   if (usesOfflineDemo()) throw new Error('Agent writes are not available in the offline demo');
+
   const res = await gatewayFetch(
     gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)),
     { method: 'POST', headers: jsonHeaders(), body: '{}' }
@@ -764,16 +766,7 @@ export async function loadEarlierAgentTimeline(
     }
     throw new Error(`Failed to load earlier messages: ${res.status} ${text}`);
   }
-  let data: unknown = null;
-  try {
-    data = envelopeData(await res.json());
-  } catch {
-    data = null;
-  }
-  const record =
-    data && typeof data === 'object' ? (data as { items?: unknown; exhausted?: unknown }) : {};
-  const items = parseTimelineItems(record.items);
-  return { items, exhausted: record.exhausted === true || items.length === 0 };
+  return parseEarlierTimelinePage(envelopeData(await res.json()));
 }
 
 export async function invokeAgentSkill(
