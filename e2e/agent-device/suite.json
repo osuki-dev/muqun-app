@@ -169,15 +169,8 @@
     {
       "name": "home-summary-visibility",
       "program": "flows/home-summary",
-      "tags": [
-        "full",
-        "workspace",
-        "settings"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full", "workspace", "settings"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
