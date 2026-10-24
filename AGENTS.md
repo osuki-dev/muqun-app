@@ -48,9 +48,15 @@ surface coverage to `e2e/agent-device/suite.json` with the `full` tag. Use
 not replace the complete suite. Quote actual results in the PR; reports under
 `dist/e2e-reports/` are uncommitted output.
 
-Use a dedicated, unpaired QA device with the app installed and English selected.
-Never automate a user's device or paired workspace. Reuse available QA devices,
-serialize access, and verify device identity before every run. Pass explicit
+Default to a dedicated, unpaired QA device with the app installed and English
+selected. When the user explicitly authorizes a named device or simulator,
+use that device, including its existing pairings, for the authorized checks;
+do not require a separate QA device or repeat the permission request. Preserve
+pairings, drafts, active sessions and workspace data. Run destructive fixtures
+or flows that reset pairing only on an isolated device unless separately
+authorized. Use isolated sessions for test messages, commands and approvals.
+Reuse available devices, serialize access, and verify device identity before
+every run. Pass explicit
 `--device ID --platform android|ios` to the runner and `--serial` or `--udid` to
 all direct agent-device commands. Run `agent-device --version` and read
 `agent-device help workflow` plus the relevant debugging help first. Resolve

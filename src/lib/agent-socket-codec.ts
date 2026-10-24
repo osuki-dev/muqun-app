@@ -1,3 +1,4 @@
+import { parseHomeFrame, type HomeFrame, type HomeSource } from './home-summary';
 /**
  * The frames of the gateway's event WebSocket (`GET /api/ws`), sealed and not.
  *
@@ -203,6 +204,8 @@ export class SealedAgentSocketCodec implements AgentSocketCodec {
 // ---------------------------------------------------------------------------
 
 export type AgentSocketServerFrame =
+  | HomeFrame
+  | { t: 'subscribed'; home: true }
   | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
   | { t: 'subscribed'; all: true }
@@ -231,6 +234,8 @@ export type AgentSocketServerFrame =
   | { t: 'error'; code: string };
 
 export type AgentSocketClientFrame =
+  | { t: 'subscribe_home'; home: { sources: readonly HomeSource[] } }
+  | { t: 'unsubscribe_home' }
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
   | { t: 'subscribe_all' }
@@ -256,6 +261,12 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const rec = value as Record<string, unknown>;
   switch (rec.t) {
+    case 'home':
+    case 'home_status': {
+      const frame = parseHomeFrame(rec);
+      if (!frame) throw new AgentSocketProtocolError('Invalid Home summary frame.');
+      return frame;
+    }
     case 'hello': {
       const connectionId = str(rec.connection_id);
       if (!connectionId || typeof rec.protocol !== 'number') return null;
@@ -269,6 +280,7 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
       };
     }
     case 'subscribed': {
+      if (rec.home === true) return { t: 'subscribed', home: true };
       if (rec.all === true) return { t: 'subscribed', all: true };
       if (rec.tasks === true) return { t: 'subscribed', tasks: true };
       const asid = str(rec.asid);

@@ -1,3 +1,4 @@
+import type { HomeFrame, HomeSource } from './home-summary';
 /**
  * One event WebSocket per paired gateway, carrying the agent events of every
  * session the app is watching.
@@ -78,6 +79,7 @@ export type GatewaySocketState =
   | 'unavailable';
 
 export interface GatewaySocketListener {
+  onHome?: (frame: HomeFrame) => void;
   /** The subscription is in effect; catch up now. Fires again after every reconnect. */
   onSubscribed?: () => void;
   onEvent?: (event: AgentDomainEvent) => void;
@@ -197,6 +199,7 @@ export function gatewaySocketPath(
 const ALL = '*';
 /** The task listeners' demand, apart from any session's. */
 const TASKS = '#tasks';
+const HOME = '#home';
 
 /** The longest wait between reconnects, before jitter. */
 export const MAX_RECONNECT_DELAY_MS = 30_000;
@@ -234,6 +237,7 @@ export class GatewaySocket {
    * `watchTasks` listeners, each with whether its gateway takes
    * `subscribe_tasks`; never reached through `targets`.
    */
+  private readonly homeListeners = new Map<GatewaySocketListener, readonly HomeSource[]>();
   private readonly taskListeners = new Map<GatewaySocketListener, boolean>();
   private readonly stateListeners = new Set<(state: GatewaySocketState) => void>();
   /** Reference counts; `*` is `subscribe_all`, `#tasks` the task listeners. */
@@ -338,6 +342,26 @@ export class GatewaySocket {
     };
   }
 
+  watchHome(sources: readonly HomeSource[], listener: GatewaySocketListener): () => void {
+    this.homeListeners.set(listener, sources);
+    this.want(HOME, this.homeSubscription());
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.homeListeners.delete(listener);
+      this.release(HOME);
+      this.send(this.homeListeners.size ? this.homeSubscription() : { t: 'unsubscribe_home' });
+    };
+  }
+
+  private homeSubscription(): AgentSocketClientFrame {
+    const sources = new Map<string, HomeSource>();
+    for (const list of this.homeListeners.values())
+      for (const source of list) sources.set(source.peer_id, source);
+    return { t: 'subscribe_home', home: { sources: [...sources.values()] } };
+  }
+
   addListener(asid: string, listener: GatewaySocketListener): () => void {
     let set = this.listeners.get(asid);
     if (!set) {
@@ -406,6 +430,7 @@ export class GatewaySocket {
     this.wanted.clear();
     this.listeners.clear();
     this.taskListeners.clear();
+    this.homeListeners.clear();
     this.drop();
     this.setState('idle');
     this.stateListeners.clear();
@@ -417,7 +442,7 @@ export class GatewaySocket {
   private taskOnly(): boolean {
     if (this.taskListeners.size === 0) return false;
     for (const ok of this.taskListeners.values()) if (!ok) return false;
-    for (const key of this.wanted.keys()) if (key !== TASKS) return false;
+    for (const key of this.wanted.keys()) if (key !== TASKS && key !== HOME) return false;
     return true;
   }
 
@@ -610,15 +635,25 @@ export class GatewaySocket {
       } else {
         if (this.wanted.has(ALL) || this.wanted.has(TASKS)) this.send({ t: 'subscribe_all' });
         for (const key of this.wanted.keys()) {
-          if (key !== ALL && key !== TASKS) this.send({ t: 'subscribe', asid: key });
+          if (key !== ALL && key !== TASKS && key !== HOME)
+            this.send({ t: 'subscribe', asid: key });
         }
       }
+      if (this.homeListeners.size) this.send(this.homeSubscription());
       this.armPing(connection);
       return;
     }
     if (!frame) return;
     switch (frame.t) {
+      case 'home':
+      case 'home_status':
+        for (const listener of this.homeListeners.keys()) listener.onHome?.(frame);
+        return;
       case 'subscribed':
+        if ('home' in frame) {
+          for (const listener of this.homeListeners.keys()) listener.onSubscribed?.();
+          return;
+        }
         if ('asid' in frame) {
           this.notify([frame.asid], (l) => l.onSubscribed?.());
           return;
@@ -677,6 +712,7 @@ export class GatewaySocket {
   private allListeners(call: (listener: GatewaySocketListener) => void): void {
     this.notify([...this.listeners.keys()], call);
     for (const listener of [...this.taskListeners.keys()]) call(listener);
+    for (const listener of [...this.homeListeners.keys()]) call(listener);
   }
 
   private send(frame: AgentSocketClientFrame): void {

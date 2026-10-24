@@ -1,0 +1,11 @@
+# Home summary settings are absent in the unpaired/demo baseline.
+# section settings
+open "muqun:///settings-servers"
+wait stable 400 5000
+
+# section hidden
+is hidden "${TARGET}"
+
+# section home
+open "muqun:///"
+wait stable 300 5000

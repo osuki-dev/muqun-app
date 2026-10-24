@@ -72,7 +72,7 @@ import {
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
 import { boundTask } from '@/lib/home-in-progress';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
 import {
   paneLedgerTask,

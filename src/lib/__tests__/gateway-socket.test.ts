@@ -838,3 +838,26 @@ test('an asynchronous negotiated upgrade opens once ready', async () => {
   h.latest().deliver(hello());
   expect(h.socket.state).toBe('open');
 });
+
+test('Home summaries share the socket without becoming session subscriptions or task acknowledgments', () => {
+  const h = harness();
+  const frames: string[] = [];
+  let taskAcks = 0;
+  const releaseTasks = h.socket.watchTasks({ onSubscribed: () => taskAcks++ }, { tasksOnly: true });
+  const releaseHome = h.socket.watchHome([], { onHome: (frame) => frames.push(frame.sourceId) });
+  h.latest().deliver(hello());
+  expect(h.latest().sent).toEqual([
+    '{"t":"subscribe_tasks"}',
+    '{"t":"subscribe_home","home":{"sources":[]}}',
+  ]);
+  h.latest().deliver('{"t":"subscribed","home":true}');
+  expect(taskAcks).toBe(0);
+  h.latest().deliver(
+    '{"t":"home","source_id":"a","generation":"g","revision":1,"snapshot":true,"tasks":[],"removed":[]}'
+  );
+  expect(frames).toEqual(['a']);
+  releaseHome();
+  expect(h.latest().sent.at(-1)).toBe('{"t":"unsubscribe_home"}');
+  expect(h.latest().closed).toBe(false);
+  releaseTasks();
+});

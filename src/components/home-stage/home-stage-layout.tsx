@@ -54,7 +54,7 @@ import type { ConnectionStatus } from '@/lib/server-reachability';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerAgents } from '@/stores/server-agents';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 import { resolveThemeImage } from '@/theme/resolve';
 import { STAGE_AGENT_ROW_HEIGHT, StageAgentRow } from './stage-agent-row';

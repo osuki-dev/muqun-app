@@ -192,7 +192,7 @@ import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
-import { useConnectionStatuses } from '@/hooks/use-home-reachability';
+import { useHomeConnectionStatuses } from '@/hooks/use-home-reachability';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -291,7 +291,11 @@ export function HomeOverview({
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
   const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
-  const connectionStatuses = useConnectionStatuses(recordIds, record?.serverId, activeConnection);
+  const connectionStatuses = useHomeConnectionStatuses(
+    recordIds,
+    record?.serverId,
+    activeConnection
+  );
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -1319,7 +1323,7 @@ export function HomeOverview({
     // composer, Needs you and Recent are the same pieces every layout gets.
     const stageContent = (
       <View style={styles.page} {...sortHoldTouches}>
-        <HomeTaskSync serverIds={liveTaskServerIds} />
+        <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
         <HomeReplyRecede>
           <HomeStage
             servers={launchController.servers}
@@ -1425,7 +1429,7 @@ export function HomeOverview({
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <HomeReplyRecede enabled={!isPad} holdsDock={padLaunch}>
           <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
-          <HomeTaskSync serverIds={liveTaskServerIds} />
+          <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
           <ComputerCardsPresence
             servers={cardServers}
             reachabilityByServer={padReachabilityByServer}
@@ -1760,7 +1764,7 @@ export function HomeOverview({
       style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <HomeReplyRecede enabled={!isPad}>
         <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
-        <HomeTaskSync serverIds={liveTaskServerIds} />
+        <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
         <ComputerCardsPresence
           servers={cardServers}
           reachabilityByServer={padReachabilityByServer}

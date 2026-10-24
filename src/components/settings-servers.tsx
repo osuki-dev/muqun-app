@@ -1,3 +1,4 @@
+import { SettingsHomeSummary } from '@/components/settings-home-summary';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Input, Spinner, useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -41,7 +42,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
-import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
+import { DEMO_SERVER_ID, isDemoRecord } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -155,6 +156,9 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
 
   return (
     <SettingsCard flush reflow>
+      {records.filter((entry) => !isDemoRecord(entry)).length > 1 ? (
+        <SettingsHomeSummary records={records.filter((entry) => !isDemoRecord(entry))} />
+      ) : null}
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (

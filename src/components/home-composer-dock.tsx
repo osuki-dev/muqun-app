@@ -112,7 +112,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
 import { mentionedComputers, taskMentions, type MentionComputer } from '@/lib/composer-mentions';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
