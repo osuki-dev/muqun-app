@@ -3524,10 +3524,6 @@ msgstr "Ses informations n’ont pas pu être retirées du stockage sécurisé"
 msgid "Its details could not be written to secure storage."
 msgstr "Ses informations n’ont pas pu être écrites dans le stockage sécurisé"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "Ses appareils appairés apparaissent une fois qu’il est l’ordinateur utilisé"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Aller à la dernière sortie"
@@ -7800,11 +7796,6 @@ msgstr "envoi en cours"
 msgid "Usage snapshot is stale"
 msgstr "Les données d’utilisation sont obsolètes"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "Utiliser {0}"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "Utiliser un autre ordinateur si celui-ci se déconnecte"
@@ -7836,10 +7827,6 @@ msgstr "Utilisez l’URL du dépôt, puis indiquez sa branche et le fichier du t
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "Utiliser les valeurs par défaut du thème"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "Utiliser cet ordinateur"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."

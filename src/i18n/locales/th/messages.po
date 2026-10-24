@@ -3524,10 +3524,6 @@ msgstr "ลบรายละเอียดจากที่เก็บข้
 msgid "Its details could not be written to secure storage."
 msgstr "เขียนรายละเอียดลงที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้คอมพิวเตอร์นี้"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
@@ -7800,11 +7796,6 @@ msgstr "กำลังอัปโหลด"
 msgid "Usage snapshot is stale"
 msgstr "ข้อมูลการใช้งานล้าสมัยแล้ว"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "ใช้ {0}"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "ใช้เครื่องอื่นเมื่อเครื่องนี้ขาดการเชื่อมต่อ"
@@ -7836,10 +7827,6 @@ msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อน
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "ใช้ค่าเริ่มต้นของธีม"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "ใช้คอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."

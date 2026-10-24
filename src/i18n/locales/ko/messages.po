@@ -3524,10 +3524,6 @@ msgstr "해당 정보를 보안 저장소에서 제거할 수 없었습니다"
 msgid "Its details could not be written to secure storage."
 msgstr "해당 정보를 보안 저장소에 쓸 수 없었습니다"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "사용 중인 컴퓨터가 되면 페어링된 기기가 목록에 표시됩니다"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "최신 출력으로 이동"
@@ -7800,11 +7796,6 @@ msgstr "업로드 중"
 msgid "Usage snapshot is stale"
 msgstr "사용량 정보가 오래됨"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "{0} 사용"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "연결이 끊기면 다른 컴퓨터를 사용합니다"
@@ -7836,10 +7827,6 @@ msgstr "저장소 URL을 사용하고 아래에 브랜치와 테마 파일을 �
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "테마 기본값 사용"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "이 컴퓨터 사용"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."

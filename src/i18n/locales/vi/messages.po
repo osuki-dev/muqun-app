@@ -3524,10 +3524,6 @@ msgstr "Không thể xóa thông tin của nó khỏi bộ nhớ an toàn"
 msgid "Its details could not be written to secure storage."
 msgstr "Không thể ghi thông tin của nó vào bộ nhớ an toàn"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê khi nó là máy tính đang dùng"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Nhảy đến đầu ra mới nhất"
@@ -7800,11 +7796,6 @@ msgstr "đang tải lên"
 msgid "Usage snapshot is stale"
 msgstr "Dữ liệu sử dụng đã cũ"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "Dùng {0}"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "Dùng máy khác khi máy này mất kết nối"
@@ -7836,10 +7827,6 @@ msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dướ
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "Dùng thiết lập mặc định của giao diện"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "Dùng máy tính này"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."

@@ -3524,10 +3524,6 @@ msgstr "无法从安全存储中移除它的信息"
 msgid "Its details could not be written to secure storage."
 msgstr "无法将它的信息写入安全存储"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "等它成为正在使用的电脑后，就会列出它已配对的设备"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "跳到最新输出"
@@ -7800,11 +7796,6 @@ msgstr "上传中"
 msgid "Usage snapshot is stale"
 msgstr "用量快照已过期"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "使用 {0}"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "这台电脑断线时，自动换一台"
@@ -7836,10 +7827,6 @@ msgstr "请使用仓库链接，并在下方填写分支和主题文件"
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "使用主题默认设置"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "使用这台电脑"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."

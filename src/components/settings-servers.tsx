@@ -9,7 +9,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import {
   AgentIcon,
-  DoneIcon,
   DisclosureDownIcon,
   NextIcon,
   CopyIcon,
@@ -79,7 +78,7 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
 
   const theme = useThemeTokens();
   const { showToast } = useToast();
-  const { record, records, loading, hydrationError, retryHydration, selectRecord, removeRecord } =
+  const { record, records, loading, hydrationError, retryHydration, removeRecord } =
     useGatewayRecord();
   // Every row's status, re-rendering this page only when one changes (a
   // probe landing or going stale), not on every probe write.
@@ -130,12 +129,6 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
       });
     }, [record?.serverId, records, refreshReachabilityMany])
   );
-
-  async function use(server: GatewayRecord) {
-    if (server.serverId === record?.serverId) return;
-    await selectRecord(server.serverId);
-    await feedback('selection');
-  }
 
   async function unpair(server: GatewayRecord) {
     try {
@@ -199,7 +192,6 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
                   onToggle={() =>
                     setOpenId((id) => (id === server.serverId ? null : server.serverId))
                   }
-                  onUse={() => void use(server)}
                   onUnpair={() => unpair(server)}
                 />
               </Fragment>
@@ -271,7 +263,6 @@ function ServerRow({
   lastConnected,
   open,
   onToggle,
-  onUse,
   onUnpair,
 }: {
   server: GatewayRecord;
@@ -285,7 +276,6 @@ function ServerRow({
   lastConnected: ServerAgentsSnapshot | undefined;
   open: boolean;
   onToggle: () => void;
-  onUse: () => void;
   onUnpair: () => Promise<void>;
 }) {
   const { t } = useLingui();
@@ -441,40 +431,14 @@ function ServerRow({
               <CopyIcon size={18} color={theme.colors.textMuted} />
             </PressableScale>
           </View>
+          <HomeAgentNavRow serverId={server.serverId} />
+          <FleetPeersSection server={server} />
           {current ? (
             <>
-              <HomeAgentNavRow serverId={server.serverId} />
-              <FleetPeersSection server={server} />
               <PairedDevices server={server} />
               <ServerCapabilities serverId={server.serverId} />
             </>
-          ) : (
-            <>
-              <HomeAgentNavRow serverId={server.serverId} />
-              <FleetPeersSection server={server} />
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Use ${server.label}`}
-                feedback="selection"
-                onPress={onUse}
-                style={[
-                  styles.action,
-                  { borderRadius: profile.chrome.control },
-                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-                ]}>
-                <DoneIcon size={16} color={theme.colors.primary} />
-                <Text variant="caption" color={theme.colors.primary}>
-                  <Trans>Use this computer</Trans>
-                </Text>
-              </PressableScale>
-              {/* Said rather than hidden: the device list is missing for a
-                  reason, and a row that silently offers one server more than
-                  another is a bug the reader has to guess at. */}
-              <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Its paired devices are listed once it is the computer in use.</Trans>
-              </Text>
-            </>
-          )}
+          ) : null}
           <ServerRowEditor server={server} onUnpair={onUnpair} />
         </Animated.View>
       ) : null}

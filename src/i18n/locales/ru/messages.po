@@ -3524,10 +3524,6 @@ msgstr "Не удалось удалить его данные из защищё
 msgid "Its details could not be written to secure storage."
 msgstr "Не удалось записать его данные в защищённое хранилище"
 
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "Его привязанные устройства появятся, когда он станет используемым компьютером"
-
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "К последнему выводу"
@@ -7800,11 +7796,6 @@ msgstr "загружается"
 msgid "Usage snapshot is stale"
 msgstr "Данные об использовании устарели"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "Использовать {0}"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Use another computer if this one disconnects."
 msgstr "Использовать другой компьютер, если этот отключится"
@@ -7836,10 +7827,6 @@ msgstr "Используйте URL репозитория, а ниже укаж�
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "Использовать настройки темы по умолчанию"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "Использовать этот компьютер"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
