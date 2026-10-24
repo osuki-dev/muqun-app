@@ -373,9 +373,15 @@ export function isLedgerTaskRejection(failure: unknown): boolean {
   const message = failure instanceof Error ? failure.message : '';
   const match = message.match(/^Open task: (\d{3}) (.*)$/s);
   const status = Number(match?.[1]);
-  if (!match || status < 400 || status === 408) return false;
+  if (!match || status < 400 || status > 599) return false;
   try {
-    const code = asString(asRecord(asRecord(JSON.parse(match[2] ?? ''))?.error)?.code);
+    const error = asRecord(asRecord(JSON.parse(match[2] ?? ''))?.error);
+    // A version-independent Gateway guarantee: no task or prompt was dispatched.
+    // This only clears the uncertain delivery record. The user still decides
+    // whether to submit again; the client never retries a mutation here.
+    if (error?.delivery === 'not_sent') return true;
+    if (status === 408) return false;
+    const code = asString(error?.code);
     // These task-create readiness checks happen before a task or session exists.
     // A generic 503 (or an engine failure after dispatch) remains uncertain.
     if (status === 503) return code === 'no_terminal' || code === 'agent_unavailable';

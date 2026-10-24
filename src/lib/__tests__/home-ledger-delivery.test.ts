@@ -52,6 +52,28 @@ test('a pre-creation readiness refusal allows the same goal after the computer r
   }
 });
 
+test('a future Gateway preflight refusal remains actionable without automatically resending', async () => {
+  let posts = 0;
+  const home = caller({
+    create: async () => {
+      posts++;
+      throw new Error(
+        'Open task: 503 {"error":{"code":"future_provider_not_ready","delivery":"not_sent"}}'
+      );
+    },
+  });
+  expect((await home.send()).kind).toBe('rejected');
+  expect(home.pending()).toEqual([]);
+  expect(posts).toBe(1);
+  for (const delivery of [undefined, 'unknown', 'accepted', false, { status: 'not_sent' }]) {
+    expect(
+      isLedgerTaskRejection(
+        new Error(`Open task: 503 ${JSON.stringify({ error: { code: 'future', delivery } })}`)
+      )
+    ).toBe(false);
+  }
+});
+
 const task = (clientRef: string, state = 'working', deviceId = 'phone-a'): CreatedLedgerTask => {
   const created = parseCreatedLedgerTask({
     task_id: 'task-a',

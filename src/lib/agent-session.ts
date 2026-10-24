@@ -740,12 +740,15 @@ export async function sendAgentPrompt(
     text: string;
     attachments?: string[];
     computerIds?: string[];
+    /** Correlates this submission; it does not authorize retry or promise deduplication. */
+    clientRef?: string;
     delivery?: AgentDelivery;
   }
 ): Promise<void> {
   // There is no model or agent field on a prompt: both are session state in
   // v2. Switch first, then prompt.
   const body: Record<string, unknown> = { text: params.text };
+  if (params.clientRef !== undefined) body.client_ref = params.clientRef;
   if (params.attachments && params.attachments.length > 0) body.attachments = params.attachments;
   if (params.computerIds?.length) body.computer_ids = params.computerIds;
   if (params.delivery) body.delivery = params.delivery;
