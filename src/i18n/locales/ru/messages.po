@@ -5029,6 +5029,7 @@ msgstr "Период не указан"
 msgid "Permission"
 msgstr "Разрешение"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "Сохранённые команды"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Сохранённая история · Текущий статус недоступен"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "Сохранённая история · Отправьте сообщение, чтобы продолжить"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

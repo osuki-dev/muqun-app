@@ -5029,6 +5029,7 @@ msgstr "Zeitraum nicht gemeldet"
 msgid "Permission"
 msgstr "Berechtigung"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "Gespeicherte Befehle"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Gespeicherter Verlauf · Live-Status nicht verfügbar"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "Gespeicherter Verlauf · Zum Fortsetzen eine Nachricht senden"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

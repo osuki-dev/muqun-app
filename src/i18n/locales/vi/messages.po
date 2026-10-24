@@ -5029,6 +5029,7 @@ msgstr "Chưa báo cáo chu kỳ"
 msgid "Permission"
 msgstr "Quyền"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "Lệnh đã lưu"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Lịch sử đã lưu · Không có trạng thái trực tiếp"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "Lịch sử đã lưu · Gửi tin nhắn để tiếp tục"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

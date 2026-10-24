@@ -5029,6 +5029,7 @@ msgstr "Período no indicado"
 msgid "Permission"
 msgstr "Permiso"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "Comandos guardados"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Historial guardado · Estado en vivo no disponible"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "Historial guardado · Envía un mensaje para continuar"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

@@ -5029,6 +5029,7 @@ msgstr "ไม่ได้รายงานรอบเวลา"
 msgid "Permission"
 msgstr "สิทธิ์"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "คำสั่งที่บันทึกไว้"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "ประวัติที่บันทึกไว้ · ไม่สามารถดูสถานะสดได้"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "ประวัติที่บันทึกไว้ · ส่งข้อความเพื่อดำเนินการต่อ"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

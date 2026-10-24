@@ -5029,6 +5029,7 @@ msgstr "未提供週期"
 msgid "Permission"
 msgstr "權限"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "已儲存的指令"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "已儲存的歷史記錄 · 無法取得即時狀態"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "已儲存的歷史 · 傳送訊息以繼續"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

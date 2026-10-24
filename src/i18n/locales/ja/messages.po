@@ -5029,6 +5029,7 @@ msgstr "期間は未報告"
 msgid "Permission"
 msgstr "権限"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5883,6 +5884,10 @@ msgstr "保存したコマンド"
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "保存済み履歴 · 現在の状態は取得できません"
+
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "保存済みの履歴 · メッセージを送信して再開"
 
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"

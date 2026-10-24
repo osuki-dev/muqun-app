@@ -34,7 +34,9 @@ export function AgentRuntimeNotice({
       <Text variant="caption" color={theme.colors.textMuted}>
         {runtime.source === 'terminal'
           ? terminalStatus
-          : t`Saved history · Live status unavailable`}
+          : !offline && runtime.interaction === 'native'
+            ? t`Saved history · Send a message to resume`
+            : t`Saved history · Live status unavailable`}
       </Text>
       <View style={styles.actions}>
         {onOpenTerminal ? (
