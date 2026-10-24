@@ -1,3 +1,4 @@
+import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
@@ -803,11 +804,7 @@ export function HomeReplyDrawer({
       cancelAnimationFrame(frame);
     };
   }, [shootToken, size, onShot]);
-  const key = homeThreadKey(target);
-  const liveTitle = useHomeThreadLive((state) =>
-    state.key === key ? state.live.title : undefined
-  );
-  const title = liveTitle || target.title || t`Conversation`;
+  const title = useHomeThreadTitle(target) || t`Conversation`;
 
   // Back closes the drawer before it leaves Home.
   useEffect(() => {

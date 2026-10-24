@@ -1,3 +1,4 @@
+import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import type { SideInsets } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
@@ -472,13 +473,16 @@ export function HomeComposerDock({
   // there by themselves.
   const [dockClip, setDockClip] = useState(0);
   const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
-  const conversation = thread && thread.kind !== 'task' ? thread : undefined;
+  const replyTitle = useHomeThreadTitle(thread);
+  const conversation =
+    thread && thread.kind !== 'task'
+      ? replyTitle && replyTitle !== thread.title
+        ? { ...thread, title: replyTitle }
+        : thread
+      : undefined;
   const drawerAllowed = Boolean(conversation) && focused;
   const closeDrawer = drawer.close;
   const drawerOpen = drawer.open;
-  const liveThreadTitle = useHomeThreadLive((state) =>
-    threadKey && state.key === threadKey ? state.live.title : undefined
-  );
   const drawerKey = useRef(threadKey);
   useEffect(() => {
     const changed = drawerKey.current !== threadKey;
@@ -1843,15 +1847,6 @@ export function HomeComposerDock({
   // This is the same server-scoped thread Send follows, never the agent picker.
   // Live titles already passed the thread-key check above. Keep the recipient
   // visible after typing has replaced the placeholder.
-  const replyTitle = thread
-    ? liveThreadTitle?.trim() ||
-      thread.title.trim() ||
-      (thread.kind === 'session'
-        ? thread.asid
-        : thread.kind === 'pane'
-          ? thread.paneId
-          : thread.taskId)
-    : undefined;
   const replyAgentId =
     thread?.kind === 'session'
       ? thread.agentId

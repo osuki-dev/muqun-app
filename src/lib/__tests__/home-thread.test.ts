@@ -3,6 +3,8 @@ import { describe, expect, test } from 'bun:test';
 import type { HomeContinueEntry } from '@/lib/home-continue';
 import {
   applyHomeThreadEvent,
+  homeThreadTitle,
+  homeThreadKey,
   EMPTY_HOME_THREAD_LIVE,
   homeThreadEnded,
   homeThreadPaneAnswers,
@@ -40,6 +42,36 @@ const PANE: HomeThreadPane = {
   setAtMs: 100,
 };
 const NO_FEATURES = { inbox: false, steering: false };
+
+test('reply titles follow newer metadata without changing the recipient or crossing owners', () => {
+  const row = {
+    asid: SESSION.asid,
+    agentId: 'opencode',
+    title: 'Renamed',
+    status: 'idle' as const,
+    directory: '',
+    updatedMs: 200,
+  };
+  const listing = { serverId: 'a', sessionId: 'herdr', observedAtMs: 210, sessions: [row] };
+  const old = { title: 'Old live title', titleUpdatedMs: 100 };
+  expect(homeThreadTitle(SESSION, old, listing)).toBe('Renamed');
+  expect(homeThreadTitle(SESSION, { title: 'Newest', titleUpdatedMs: 300 }, listing)).toBe(
+    'Newest'
+  );
+  expect(homeThreadTitle(SESSION, old, { ...listing, serverId: 'other' })).toBe('Old live title');
+  expect(
+    homeThreadTitle(SESSION, old, { ...listing, sessions: [{ ...row, agentId: 'codex' }] })
+  ).toBe('Old live title');
+  expect(
+    homeThreadTitle({ ...SESSION, agentId: undefined }, old, {
+      ...listing,
+      sessions: [row, { ...row, agentId: 'codex' }],
+    })
+  ).toBe('Old live title');
+  expect(homeThreadKey(SESSION)).not.toBe(homeThreadKey({ ...SESSION, agentId: 'codex' }));
+  expect(SESSION.title).toBe('Review');
+  expect(SESSION.asid).toBe('ses_1');
+});
 
 function task(overrides: Partial<TaskView>): TaskView {
   return {
