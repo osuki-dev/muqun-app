@@ -10,9 +10,11 @@ press "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Expand tool call\""
 wait "id=agent-muqun-body" 5000
 is visible "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Collapse tool call\""
 is visible "text=\"Call duration\""
+scroll down --until "text=\"${EXPECTED}\""
 is visible "text=\"${EXPECTED}\""
 snapshot
 screenshot "shots/muqun-${LEAF}.png"
+scroll up --until "id=agent-tool-open-detail"
 press "id=agent-tool-open-detail"
 wait "id=agent-tool-detail-sheet" 5000
 snapshot

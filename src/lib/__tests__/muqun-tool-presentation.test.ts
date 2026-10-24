@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import type { ToolPart } from '../agent-protocol';
+import type { TimelineItem, ToolPart } from '../agent-protocol';
 import { muqunToolPresentation } from '../muqun-tool-presentation';
+import { withoutTaskPlumbing } from '../task-plumbing';
+import { executeToolCalls } from '../agent-tool-output';
+import { sessionActivity } from '../stage-overlay';
+import { muqunOperation } from '../internal-muqun-tools';
 
 function call(name: string, output: unknown, extra: Partial<ToolPart> = {}): ToolPart {
   return {
@@ -17,6 +21,98 @@ function call(name: string, output: unknown, extra: Partial<ToolPart> = {}): Too
 }
 
 describe('Muqun MCP result snapshots', () => {
+  test('qualified operation identities support provider encodings without claiming other tools', () => {
+    for (const operation of [
+      'exec.run',
+      'tasks.delegate',
+      'tasks.wait',
+      'tasks.read',
+      'tasks.cancel',
+      'tasks.complete',
+      'fleet.list',
+      'fleet.describe',
+    ] as const) {
+      for (const prefix of ['muqun:', 'muqun_', 'muqun__', 'muqun.', 'mcp__muqun__']) {
+        expect(muqunOperation(`${prefix}${operation}`)).toBe(operation);
+        expect(muqunOperation(`${prefix}${operation.replace('.', '_')}`)).toBe(operation);
+      }
+      for (const name of [operation, `other:${operation}`, `mcp__other__${operation}`]) {
+        expect(muqunOperation(name)).toBeUndefined();
+      }
+    }
+    for (const name of [
+      'muqun:exec.runner',
+      'muqun_exec_run_extra',
+      'mcp__muqun__tasks.waiting',
+      'other_muqun_exec_run',
+    ]) {
+      expect(muqunOperation(name)).toBeUndefined();
+    }
+  });
+
+  test('provider-qualified MCP lifecycle rows survive transcript and activity projection', () => {
+    for (const name of [
+      'muqun:exec.run',
+      'muqun_exec_run',
+      'muqun__exec.run',
+      'muqun.exec.run',
+      'mcp__muqun__exec.run',
+      'mcp__muqun__exec_run',
+    ]) {
+      for (const state of ['running', 'completed', 'failed'] as const) {
+        const part = call(
+          'exec.run',
+          { state: state === 'running' ? 'working' : state === 'failed' ? 'failed' : 'done' },
+          { name, state, input: { command: 'bun run build' } }
+        );
+        const item: TimelineItem = {
+          id: 'item',
+          message_id: 'message',
+          role: 'assistant',
+          ordinal: 0,
+          seq: 1,
+          updated_ms: 1000,
+          part,
+        };
+        expect(withoutTaskPlumbing(item)).toBe(item);
+        expect(sessionActivity([item])?.atMs).toBe(1000);
+        expect(muqunToolPresentation(part)?.status).toBe(
+          state === 'running' ? 'calling' : state === 'failed' ? 'failed' : 'done'
+        );
+      }
+    }
+  });
+
+  test('Code Mode retains Muqun child calls and wrapper output, including failures', () => {
+    const metadata = {
+      toolCalls: [
+        { tool: 'muqun_exec_run', status: 'running', input: { command: 'bun run build' } },
+        { tool: 'muqun_tasks_wait', status: 'error', input: { task_id: 't1' } },
+        { tool: 'other_task', status: 'completed' },
+      ],
+    };
+    const part = call('exec.run', 'Build failed', {
+      name: 'execute',
+      input: { code: 'return await tools.muqun_exec_run({command:"bun run build"});' },
+      metadata,
+    });
+    const item: TimelineItem = {
+      id: 'wrapper',
+      message_id: 'message',
+      role: 'assistant',
+      ordinal: 0,
+      seq: 1,
+      updated_ms: 1000,
+      part,
+    };
+    expect(withoutTaskPlumbing(item)).toBe(item);
+    expect(executeToolCalls(metadata).map(({ name, status }) => ({ name, status }))).toEqual([
+      { name: 'muqun_exec_run', status: 'running' },
+      { name: 'muqun_tasks_wait', status: 'error' },
+      { name: 'other_task', status: 'completed' },
+    ]);
+  });
+
   test.each([
     ['exec.run', { task_id: 't1', state: 'working', stdout_tail: 'building' }, 'started'],
     [

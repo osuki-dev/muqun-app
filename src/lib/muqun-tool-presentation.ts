@@ -1,17 +1,8 @@
 import { asRecord, type ToolPart } from './agent-protocol';
 import { TOOL_OUTPUT_BYTE_CAP, toolInputRecord } from './agent-tool-output';
 
-const OPERATIONS = [
-  'exec.run',
-  'tasks.delegate',
-  'tasks.wait',
-  'tasks.read',
-  'tasks.cancel',
-  'tasks.complete',
-  'fleet.list',
-  'fleet.describe',
-] as const;
-export type MuqunOperation = (typeof OPERATIONS)[number];
+import { muqunOperation, type MuqunOperation } from './internal-muqun-tools';
+export type { MuqunOperation } from './internal-muqun-tools';
 export type MuqunToolStatus =
   | 'calling'
   | 'started'
@@ -50,16 +41,6 @@ function text(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim()
     ? value.slice(0, TOOL_OUTPUT_BYTE_CAP)
     : undefined;
-}
-
-/** Match only qualified names emitted by the supported MCP providers. */
-export function muqunOperation(name: string): MuqunOperation | undefined {
-  return OPERATIONS.find(
-    (operation) =>
-      name === `muqun:${operation}` ||
-      name === `mcp__muqun__${operation.replace('.', '_')}` ||
-      name === `muqun_${operation.replace('.', '_')}`
-  );
 }
 
 /** Bounded transport unwrapping, never evaluation of tool-provided text. */

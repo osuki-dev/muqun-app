@@ -16,7 +16,6 @@ import type {
 } from './agent-protocol';
 import { toolInputRecord } from './agent-tool-output';
 import type { GatewayAgentSessionsSnapshot } from './home-continue';
-import { isHiddenMuqunTool } from './internal-muqun-tools';
 import type { HomeAttentionSnapshot } from './home-attention';
 import { homeTargetAgentId } from './home-recents';
 import {
@@ -739,7 +738,7 @@ function capped(text: string): string {
 /**
  * What a session agent is doing now, from its timeline: its newest assistant
  * part -- a tool call as "Bash: bun test src", or its words as their last
- * line. Reasoning, internal tools and empty parts say nothing; the newest
+ * line. Reasoning and empty parts say nothing; the newest
  * part that says something wins (by update time, then order).
  */
 export function sessionActivity(
@@ -752,7 +751,6 @@ export function sessionActivity(
     const { part } = item;
     let text: string | undefined;
     if (part.type === 'tool') {
-      if (isHiddenMuqunTool(part)) continue;
       const argument = toolArgument(part);
       text = argument ? `${capitalized(part.name)}: ${argument}` : capitalized(part.name);
     } else if (part.type === 'text') {

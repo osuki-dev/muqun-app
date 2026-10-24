@@ -686,7 +686,13 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   if (!info) return null;
   const muqunFixtures: Record<
     string,
-    { name: string; input: Record<string, unknown>; result: unknown; running?: boolean }
+    {
+      name: string;
+      input: Record<string, unknown>;
+      result: unknown;
+      running?: boolean;
+      toolName?: string;
+    }
   > = {
     'demo-tree-leaf-9': {
       name: 'exec.run',
@@ -716,6 +722,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
     },
     'demo-tree-leaf-11': {
       name: 'exec.run',
+      toolName: 'muqun_exec_run',
       input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
       result: {
         task_id: 'demo-build',
@@ -726,6 +733,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
     },
     'demo-tree-leaf-12': {
       name: 'tasks.delegate',
+      toolName: 'muqun__tasks.delegate',
       input: { goal: 'Review the build output', machine: 'mini' },
       result: {
         task_id: 'demo-review',
@@ -736,6 +744,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
     },
     'demo-tree-leaf-13': {
       name: 'tasks.wait',
+      toolName: 'mcp__muqun__tasks.wait',
       input: { task_id: 'demo-build' },
       result: {
         task_id: 'demo-build',
@@ -828,7 +837,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         part: {
           type: 'tool',
           id: 'demo-muqun-call',
-          name: `muqun:${muqunFixture.name}`,
+          name: muqunFixture.toolName ?? `muqun:${muqunFixture.name}`,
           input: muqunFixture.input,
           output: muqunFixture.running
             ? undefined
