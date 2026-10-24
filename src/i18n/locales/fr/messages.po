@@ -7723,6 +7723,10 @@ msgstr "Mettez d’abord à jour Gateway sur cet ordinateur"
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "Mettez à jour Gateway sur cet ordinateur, puis reconnectez-vous pour pouvoir supprimer des sessions depuis l’accueil"
 
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "Mettez Gateway à jour pour mentionner des ordinateurs dans cette conversation"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "Mettez à jour Herdr sur l’ordinateur en 0.9.0 ou plus récent, puis redémarrez la session, pour confier une tâche à un autre assistant"

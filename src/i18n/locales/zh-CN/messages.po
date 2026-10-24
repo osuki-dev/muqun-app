@@ -7723,6 +7723,10 @@ msgstr "请先更新这台电脑的 Gateway"
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "请更新此电脑上的 Gateway，再重新连接，即可从首页删除会话"
 
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "更新 Gateway 后即可在此会话中引用电脑"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "请将电脑上的 Herdr 更新到 0.9.0 或更高版本并重启会话，才能把任务交给其他助手"

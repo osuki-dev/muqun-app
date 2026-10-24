@@ -1,18 +1,13 @@
 import { expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
 import { declaration, transpile } from '../../test-support/production-source';
-import {
-  isMentionsRefusal,
-  ledgerTaskBody,
-  parseCreatedLedgerTask,
-  type createLedgerTask,
-} from '../task-ledger';
+import { ledgerTaskBody, parseCreatedLedgerTask, type createLedgerTask } from '../task-ledger';
 
 type Body = Record<string, string | string[]>;
 function ledgerCaller(
   loadGateway: () => Promise<{ postLedgerTask: (body: Body) => Promise<unknown> }>
 ) {
-  // Execute the production async dispatch/retry body. Only the native client's
+  // Execute the production async dispatch body. Only the native client's
   // dynamic import is substituted, so tests can move the selected destination.
   const source = declaration('src/lib/task-ledger.ts', 'createLedgerTask').replace(
     "await import('./gateway-client')",
@@ -22,7 +17,6 @@ function ledgerCaller(
     loadGateway,
     ledgerTaskBody,
     parseCreatedLedgerTask,
-    isMentionsRefusal,
   }) as typeof createLedgerTask;
 }
 
@@ -59,28 +53,23 @@ test('a mentions refusal cannot retry uploaded host paths on another computer', 
       throw refusal();
     },
   }));
-  expect(await create(request, () => selected === 'computer-a')).toBeNull();
+  await expect(create(request, () => selected === 'computer-a')).rejects.toThrow(
+    'invalid_mentions'
+  );
   expect(posts).toEqual([{ destination: 'computer-a', body: ledgerTaskBody(request) }]);
 });
 
-test('the owning computer still gets exactly one retry without mentions', async () => {
+test.each<[string, Error]>([
+  ['rejected computer context', refusal()],
+  ['ambiguous delivery', new Error('Request timed out')],
+])('%s is surfaced without a second submission', async (_label, error) => {
   const posts: Body[] = [];
   const create = ledgerCaller(async () => ({
     postLedgerTask: async (body) => {
       posts.push(body);
-      if (posts.length === 1) throw refusal();
-      return {
-        task_id: 'task-a',
-        kind: 'delegation',
-        state: 'working',
-        goal: request.goal,
-        updated_ms: 1,
-      };
+      throw error;
     },
   }));
-  expect((await create(request, () => true))?.task.taskId).toBe('task-a');
-  expect(posts).toEqual([
-    ledgerTaskBody(request),
-    ledgerTaskBody({ goal: request.goal, agentId: request.agentId }),
-  ]);
+  await expect(create(request, () => true)).rejects.toThrow(error.message);
+  expect(posts).toEqual([ledgerTaskBody(request)]);
 });

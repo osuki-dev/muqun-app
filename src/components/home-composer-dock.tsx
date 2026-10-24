@@ -347,22 +347,35 @@ export function HomeComposerDock({
   /**
    * The task's `mentions`: the computers the draft names, checked against the
    * target's own linked peers read just now (`taskMentions`). Nothing when the
-   * draft names none, the target cannot link, or it did not answer.
+   * draft names none. A failed resolution preserves the draft.
    */
-  const mentionsIn = async (goal: string, serverId: string): Promise<string[]> => {
+  const mentionsIn = async (
+    goal: string,
+    serverId: string
+  ): Promise<{ mentions: string[]; computerIds: string[] }> => {
     // Only a draft that names a computer (`@src/…` is a file) asks, and
     // briefly: Send does not wait long on a slow computer for this.
     const named = mentionedComputers(
       goal,
       mentionComputers.map((computer) => computer.name)
     );
-    if (!fleetCapable || named.length === 0) return [];
+    if (named.length === 0) return { mentions: [], computerIds: [] };
     const target = servers.find((server) => server.serverId === serverId);
-    if (!target || target.sshTunnel) return [];
+    if (!fleetCapable || !target || target.sshTunnel) throw new Error(t`Computer unavailable.`);
     const answer = await fetchFleetPeers(recordEndpoint(target), MENTIONS_READ_TIMEOUT_MS);
     // What the target said about its links is news for the fleet store too.
     useFleetPeers.getState().record(serverId, answer);
-    return answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : [];
+    const mentions = answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : null;
+    if (!mentions) throw new Error(t`Computer unavailable.`);
+    if (
+      !useServerCapabilities.getState().byServer[serverId]?.includes('agent_computer_context_v1')
+    ) {
+      throw new Error(t`Update Gateway to use computer references in this conversation.`);
+    }
+    const computerIds = named.map(
+      (name) => mentionComputers.find((computer) => computer.name === name)!.serverId
+    );
+    return { mentions, computerIds };
   };
 
   // One connection at a time: the computer Send goes to is the one selected,
@@ -918,6 +931,8 @@ export function HomeComposerDock({
               return false;
             }
             if (plan.kind === 'session') {
+              const { computerIds } = await mentionsIn(text, serverId);
+              if (!owns()) throw new Error(t`Computer unavailable.`);
               if (plan.switchMode) await switchAgentMode(plan.asid, plan.switchMode);
               if (plan.switchModel)
                 await switchAgentModel(plan.sessionId, plan.asid, plan.switchModel);
@@ -925,6 +940,7 @@ export function HomeComposerDock({
               await sendAgentPrompt(plan.sessionId, plan.asid, {
                 text,
                 attachments,
+                computerIds,
                 ...(plan.delivery ? { delivery: plan.delivery } : {}),
               });
             } else {
@@ -1305,12 +1321,12 @@ export function HomeComposerDock({
               return false;
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
-            const mentions = await mentionsIn(text, serverId);
+            const { mentions, computerIds } = await mentionsIn(text, serverId);
             const created = await sendHomeLedger(
               serverId,
               {
                 goal: text,
-                ...(mentions.length ? { mentions } : {}),
+                ...(mentions.length ? { mentions, computerIds } : {}),
                 ...(carried?.agentId
                   ? { agentId: carried.agentId }
                   : params.agentId
@@ -1458,7 +1474,7 @@ export function HomeComposerDock({
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             if (viaLedger) {
-              const mentions = await mentionsIn(text, serverId);
+              const { mentions, computerIds } = await mentionsIn(text, serverId);
               if (!owns()) {
                 setError(t`Computer unavailable.`);
                 return false;
@@ -1467,7 +1483,7 @@ export function HomeComposerDock({
                 serverId,
                 {
                   goal: text,
-                  ...(mentions.length ? { mentions } : {}),
+                  ...(mentions.length ? { mentions, computerIds } : {}),
                   agentId: kind,
                   ...(cwd ? { cwd } : {}),
                 },
@@ -2101,7 +2117,15 @@ export function HomeComposerDock({
         shown.mode,
         selectedModel,
       ])}
-      mentionComputers={mentionComputers}
+      mentionComputers={
+        thread
+          ? thread.kind === 'pane' || threadFeatures.extra.computerTools === true
+            ? mentionComputers
+            : []
+          : agent?.kind === 'terminal' || features.extra.computerTools === true
+            ? mentionComputers
+            : []
+      }
       inputTestID="home-composer-input"
       sendTestID="home-composer-send"
       running={false}

@@ -739,6 +739,7 @@ export async function sendAgentPrompt(
   params: {
     text: string;
     attachments?: string[];
+    computerIds?: string[];
     delivery?: AgentDelivery;
   }
 ): Promise<void> {
@@ -746,6 +747,7 @@ export async function sendAgentPrompt(
   // v2. Switch first, then prompt.
   const body: Record<string, unknown> = { text: params.text };
   if (params.attachments && params.attachments.length > 0) body.attachments = params.attachments;
+  if (params.computerIds?.length) body.computer_ids = params.computerIds;
   if (params.delivery) body.delivery = params.delivery;
   await writeJson(sessionRoute(asid, '/prompt', sessionId, true), 'Failed to send prompt', body);
 }

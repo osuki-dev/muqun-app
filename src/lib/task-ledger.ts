@@ -336,6 +336,7 @@ export interface LedgerTaskRequest {
    * its agent; sent only to a computer that advertises `fleet_peers`.
    */
   mentions?: string[];
+  computerIds?: string[];
   /**
    * How the task is carried out, as the reader picked it: the provider's
    * session entry or its terminal entry. Sent only to a gateway that
@@ -354,6 +355,7 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
     ...(request.model ? { model: request.model } : {}),
     ...(request.model && request.variant ? { variant: request.variant } : {}),
     ...(request.label?.trim() ? { label: request.label.trim() } : {}),
+    ...(request.computerIds?.length ? { computer_ids: request.computerIds } : {}),
     ...(request.mentions?.length ? { mentions: request.mentions } : {}),
     ...(request.delivery ? { delivery: request.delivery } : {}),
   };
@@ -546,36 +548,11 @@ export async function createLedgerTask(
   isCurrent?: () => boolean
 ): Promise<CreatedLedgerTask | null> {
   const { postLedgerTask } = await import('./gateway-client');
-  // The client reads the currently selected connection for each post. Loading
-  // it, and a mentions-refusal response, both give that selection time to move.
+  // Keep the destination fence after loading the native client. A refusal is
+  // returned to the composer unchanged: dropping computer context and retrying
+  // would silently change the user's request.
   if (isCurrent && !isCurrent()) return null;
-  try {
-    return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
-  } catch (error) {
-    // The goal outranks the names in it: a computer that refuses the
-    // mentions still gets the task, once, without them.
-    if (!request.mentions?.length || !isMentionsRefusal(error)) throw error;
-    const { mentions: _dropped, ...withoutMentions } = request;
-    if (isCurrent && !isCurrent()) return null;
-    return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(withoutMentions)));
-  }
-}
-
-/**
- * Whether `POST /api/tasks` refused the request for its `mentions`: a 400
- * whose error code is `invalid_mentions`. The code, never the message, which
- * the gateway words in the request's language.
- */
-export function isMentionsRefusal(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : '';
-  const prefix = 'Open task: 400 ';
-  if (!message.startsWith(prefix)) return false;
-  try {
-    const body = asRecord(JSON.parse(message.slice(prefix.length)));
-    return asString(asRecord(body?.error)?.code) === 'invalid_mentions';
-  } catch {
-    return false;
-  }
+  return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
 }
 
 /**

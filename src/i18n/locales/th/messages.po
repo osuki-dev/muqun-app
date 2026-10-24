@@ -7723,6 +7723,10 @@ msgstr "โปรดอัปเดต Gateway บนเครื่องนี
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "อัปเดต Gateway บนคอมพิวเตอร์นี้แล้วเชื่อมต่ออีกครั้งเพื่อเปิดใช้การลบเซสชันจากหน้าหลัก"
 
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "อัปเดต Gateway เพื่ออ้างอิงคอมพิวเตอร์ในการสนทนานี้"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
 msgstr "อัปเดต Herdr บนคอมพิวเตอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
