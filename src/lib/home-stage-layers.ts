@@ -44,9 +44,11 @@ export type StageFit = 'cover' | 'contain' | 'tile';
  * A theme picture as the Stage receives it: the resolved slot (asset, fit,
  * focal point, opacity) and what measuring it found -- its clear share and
  * shape, `null` while it is still being measured. A picture that failed to
- * load is passed as absent.
+ * decode retains its URI for the native-image fallback.
  */
 export type StageMeasuredImage = {
+  /** Measurement decoding failed; retain the asset and use native images. */
+  decodeFailed?: boolean;
   uri: string;
   clear: number | null;
   /** Width over height; 1 until measured. */
@@ -87,6 +89,8 @@ export type StageHeroLayer = StageLayer & {
 };
 
 export type StageComposition = {
+  /** A retained asset needs the native-image fallback instead of the GPU path. */
+  nativeImages?: boolean;
   /** False while a picture that might be used has not been measured yet. */
   ready: boolean;
   role: StageRole;
@@ -140,6 +144,7 @@ export function stageComposition({
   const artLayer = art ? layerOf(art) : null;
   return {
     ready: true,
+    ...(art?.decodeFailed || wall?.decodeFailed ? { nativeImages: true } : {}),
     role,
     backdrop: wall && !edges ? layerOf(wall) : null,
     painting: role === 'sky' ? artLayer : null,
