@@ -156,9 +156,6 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
 
   return (
     <SettingsCard flush reflow>
-      {records.filter((entry) => !isDemoRecord(entry)).length > 1 ? (
-        <SettingsHomeSummary records={records.filter((entry) => !isDemoRecord(entry))} />
-      ) : null}
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (
@@ -213,6 +210,9 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
 
       <View style={styles.managementGroup}>
         <SectionLabel title={t`Connections`} />
+        {records.filter((entry) => !isDemoRecord(entry)).length > 1 ? (
+          <SettingsHomeSummary records={records.filter((entry) => !isDemoRecord(entry))} />
+        ) : null}
         <SettingsNavRow
           icon={PairScanIcon}
           label={t`Pair a computer`}

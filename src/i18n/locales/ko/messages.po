@@ -872,6 +872,10 @@ msgstr "외관"
 msgid "Appearance, terminal, security"
 msgstr "외관, 터미널, 보안"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "적용"
+
 #: src/i18n/labels.ts
 msgid "Apply a patch"
 msgstr "패치 적용"
@@ -1365,6 +1369,10 @@ msgstr "파일 선택"
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테마를 따릅니다"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "홈에서 컴퓨터의 업데이트를 받는 방법을 선택하세요"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "프로젝트 선택"
@@ -1699,6 +1707,11 @@ msgstr "충돌"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "연결"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "각각 연결"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2357,10 @@ msgstr "설정을 저장하지 못했습니다. 다시 시도하세요"
 msgid "Could not save voice settings. Please try again."
 msgstr "음성 설정을 저장할 수 없습니다. 다시 시도하세요"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "저장하지 못했습니다. 컴퓨터가 온라인이고 Gateway가 최신인지 확인하세요"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2376,7 @@ msgstr "명령을 보내지 못했습니다"
 msgid "Could not send input."
 msgstr "입력을 보내지 못했습니다"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "키를 보내지 못했습니다"
@@ -2476,6 +2494,10 @@ msgstr "현재 경로"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "현재 테마"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "현재 {currentName} 사용 중"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2696,7 @@ msgstr "자리를 비운 사이의 변화 닫기"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "완료"
@@ -3261,6 +3284,11 @@ msgstr "홈"
 msgid "Home agent"
 msgstr "홈 에이전트"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "홈 연결"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3390,7 @@ msgstr "파일 가져오기"
 msgid "Import link"
 msgstr "링크로 가져오기"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "테마 가져오기"
@@ -4535,6 +4564,10 @@ msgstr "태블릿에서는 홈이 두 페이지로 펼쳐지고, 작업 시트�
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "터미널과 에이전트 세션이 하나의 변경 사항 시트를 함께 씁니다. 변경된 파일은 줄 수와 함께 트리로, 제목 아래에는 브랜치가, 파일 메뉴에는 버리기가 있습니다"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "한 컴퓨터가 작업 업데이트를 모아 휴대폰으로 보냅니다"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -5821,6 +5854,7 @@ msgstr "저장된 SSH 호스트"
 msgid "Saved terminal history"
 msgstr "저장된 터미널 기록"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +5965,8 @@ msgstr "선택됨"
 msgid "Send"
 msgstr "보내기"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "{spoken} 보내기"
 
@@ -6082,6 +6116,14 @@ msgstr "이 세션의 기록 공유"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "세션 간 공유됩니다. 새로 고쳐 업데이트하세요"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
+msgstr "이 컴퓨터와 예비 컴퓨터에 작업 요약을 공유합니다. 대화는 직접 연결을 유지합니다"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares task summaries with this computer. Conversations stay directly connected."
+msgstr "이 컴퓨터에 작업 요약을 공유합니다. 대화는 직접 연결을 유지합니다"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6542,6 +6584,10 @@ msgstr "이 명령 중지"
 msgid "Stopped"
 msgstr "중지됨"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "공유를 중지했습니다. 컴퓨터를 다시 연결하고 재시도하여 접근 권한을 제거하세요"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6624,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "기록을 요약하고 그 요약으로 작업을 이어갑니다"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "작업 요약 연결됨"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "일시 중단"
@@ -6598,6 +6648,10 @@ msgstr "에이전트 모드 전환"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "앱 전환"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "자동 전환"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7128,7 @@ msgstr "테마"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "테마 작업 실패"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7665,6 +7719,10 @@ msgstr "업데이트"
 msgid "Update download failed. Try again."
 msgstr "업데이트 다운로드에 실패했습니다. 다시 시도하세요"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "먼저 이 컴퓨터의 Gateway를 업데이트하세요"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "이 컴퓨터의 Gateway를 업데이트하고 다시 연결하면 홈에서 세션을 삭제할 수 있습니다"
@@ -7747,9 +7805,17 @@ msgstr "사용량 정보가 오래됨"
 msgid "Use {0}"
 msgstr "{0} 사용"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "연결이 끊기면 다른 컴퓨터를 사용합니다"
+
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "기기 암호 사용"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "한 컴퓨터로 모으기"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7796,6 +7862,10 @@ msgstr "가변 · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "버전 {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "{name} 경유"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7901,6 +7971,10 @@ msgstr "실행 중인 것"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "새로운 기능"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "어느 컴퓨터를 사용할까요?"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -8009,6 +8083,10 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "페어링된 컴퓨터"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "휴대폰이 각 컴퓨터에 직접 연결합니다"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."

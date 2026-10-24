@@ -872,6 +872,10 @@ msgstr "Apparence"
 msgid "Appearance, terminal, security"
 msgstr "Apparence, terminal, sécurité"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "Appliquer"
+
 #: src/i18n/labels.ts
 msgid "Apply a patch"
 msgstr "Appliquer un correctif"
@@ -1365,6 +1369,10 @@ msgstr "Choisir des fichiers"
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs restent celles du thème"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "Choisissez comment l’accueil reçoit les mises à jour de vos ordinateurs"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Choisir un projet"
@@ -1699,6 +1707,11 @@ msgstr "Conflits"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "Se connecter"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "Connecter séparément"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2357,10 @@ msgstr "Impossible d’enregistrer ce réglage. Réessayez"
 msgid "Could not save voice settings. Please try again."
 msgstr "Impossible d’enregistrer les paramètres vocaux. Réessayez"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "Enregistrement impossible. Vérifiez que vos ordinateurs sont en ligne et leurs Gateways à jour"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2376,7 @@ msgstr "Impossible d’envoyer la commande"
 msgid "Could not send input."
 msgstr "Impossible d’envoyer la saisie"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "Impossible d’envoyer la touche"
@@ -2476,6 +2494,10 @@ msgstr "Chemin actuel"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "Thème actuel"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "Actuellement via {currentName}"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2696,7 @@ msgstr "Masquer ce qui s’est passé pendant votre absence"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Terminé"
@@ -3261,6 +3284,11 @@ msgstr "Accueil"
 msgid "Home agent"
 msgstr "Agent de l’accueil"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "Connexions de l’accueil"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3390,7 @@ msgstr "Importer un fichier"
 msgid "Import link"
 msgstr "Importer un lien"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "Importer un thème"
@@ -4535,6 +4564,10 @@ msgstr "Sur tablette, l’accueil est une double page, les feuilles de travail o
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Une seule feuille Modifications pour les terminaux et les sessions d’agent : les fichiers modifiés en arbre avec le total des lignes, la branche sous le titre et Rejeter dans le menu d’un fichier"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "Un ordinateur rassemble les mises à jour des tâches pour votre téléphone"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -5821,6 +5854,7 @@ msgstr "Hôte SSH enregistré"
 msgid "Saved terminal history"
 msgstr "Historique enregistré du terminal"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +5965,8 @@ msgstr "Sélectionné"
 msgid "Send"
 msgstr "Envoyer"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "Envoyer {spoken}"
 
@@ -6082,6 +6116,14 @@ msgstr "Partager la transcription de cette session"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "Partagé entre les sessions. Actualisez pour mettre à jour"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares task summaries with this computer and backups. Conversations stay directly connected."
+msgstr "Partage les résumés des tâches avec cet ordinateur et les ordinateurs de secours. Les conversations restent en connexion directe"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares task summaries with this computer. Conversations stay directly connected."
+msgstr "Partage les résumés des tâches avec cet ordinateur. Les conversations restent en connexion directe"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6542,6 +6584,10 @@ msgstr "Arrêter cette commande"
 msgid "Stopped"
 msgstr "Arrêté"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "Partage arrêté. Reconnectez vos ordinateurs et réessayez pour supprimer les accès restants"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6624,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "Résumer l'historique et continuer à partir du résumé"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "Résumés des tâches connectés"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Suspendre"
@@ -6598,6 +6648,10 @@ msgstr "Changer de mode d'agent"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "Changer d'app"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "Basculer automatiquement"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7128,7 @@ msgstr "Thème"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "Échec de l’action du thème"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7665,6 +7719,10 @@ msgstr "Mettre à jour"
 msgid "Update download failed. Try again."
 msgstr "Le téléchargement de la mise à jour a échoué. Réessayez"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "Mettez d’abord à jour Gateway sur cet ordinateur"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "Mettez à jour Gateway sur cet ordinateur, puis reconnectez-vous pour pouvoir supprimer des sessions depuis l’accueil"
@@ -7747,9 +7805,17 @@ msgstr "Les données d’utilisation sont obsolètes"
 msgid "Use {0}"
 msgstr "Utiliser {0}"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "Utiliser un autre ordinateur si celui-ci se déconnecte"
+
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Utiliser le code de l’appareil"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "Passer par un ordinateur"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7796,6 +7862,10 @@ msgstr "Variable · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "Via {name}"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7901,6 +7971,10 @@ msgstr "Ce qui tourne"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Nouveautés"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "Quel ordinateur ?"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -8009,6 +8083,10 @@ msgstr "Votre message"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Vos ordinateurs appairés"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "Votre téléphone se connecte à chaque ordinateur séparément"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."

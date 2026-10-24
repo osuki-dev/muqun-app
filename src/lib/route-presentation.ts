@@ -59,6 +59,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'settings-about': 'sheet',
   'settings-stage-diagnostics': 'sheet',
   'settings-language': 'sheet',
+  'settings-home-connections': 'sheet',
   'settings-home-layout': 'sheet',
   'web-service': 'sheet',
   'settings-theme': 'sheet',
@@ -162,6 +163,7 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'settings-stage-diagnostics': 'picker',
   'settings-font': 'picker',
   'settings-language': 'picker',
+  'settings-home-connections': 'picker',
   'settings-home-layout': 'picker',
   'home-target': 'picker',
   'home-agents': 'picker',
@@ -247,6 +249,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
+  'settings-home-connections': 'fitToContents',
   // Three layout previews and their descriptions, sized to what it holds.
   'settings-home-layout': 'fitToContents',
   // Full height leaves room for the composer and keyboard.
@@ -386,6 +389,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',
+  'settings-home-connections': 'short',
   'agent-guide': 'list',
 
   // A short form and nothing else, which opens where it always has. A sheet
