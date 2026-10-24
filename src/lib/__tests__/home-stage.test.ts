@@ -1016,3 +1016,22 @@ describe("the HUD's agents' row", () => {
     expect(stageAgentRow({ tone: 'unknown', agents: [line('a', 'idle')] }).kind).toBe('agents');
   });
 });
+
+test('failed artwork measurement retains the original asset for native fallback', () => {
+  const composition = stageComposition({
+    coverHeader: true,
+    artwork: { uri: 'art.webp', clear: 0, aspect: 1, decodeFailed: true },
+    wallpaper: { uri: 'wall.webp', clear: 0, aspect: 0.5 },
+  });
+  expect(composition.ready).toBe(true);
+  expect(composition.nativeImages).toBe(true);
+  expect(composition.painting?.uri).toBe('art.webp');
+  expect(composition.backdrop?.uri).toBe('wall.webp');
+  const recovered = stageComposition({
+    coverHeader: true,
+    artwork: { uri: 'art.webp', clear: 0.7, aspect: 1.5 },
+    wallpaper: { uri: 'wall.webp', clear: 0, aspect: 0.5 },
+  });
+  expect(recovered.nativeImages).toBeUndefined();
+  expect(recovered.hero?.uri).toBe('art.webp');
+});

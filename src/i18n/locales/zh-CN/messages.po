@@ -872,6 +872,10 @@ msgstr "外观"
 msgid "Appearance, terminal, security"
 msgstr "外观、终端、安全"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "应用"
+
 #: src/i18n/labels.ts
 msgid "Apply a patch"
 msgstr "应用补丁"
@@ -1365,6 +1369,10 @@ msgstr "选择文件"
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "选择主页和应用界面样式。配色仍由主题决定"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "选择首页获取电脑动态的方式"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "选择项目"
@@ -1699,6 +1707,11 @@ msgstr "冲突"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "连接"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "分别连接"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2357,10 @@ msgstr "无法保存此设置，请重试"
 msgid "Could not save voice settings. Please try again."
 msgstr "无法保存语音设置，请重试"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "保存失败，请确认电脑在线且 Gateway 已更新"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2376,7 @@ msgstr "无法发送命令"
 msgid "Could not send input."
 msgstr "无法发送输入"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "无法发送按键"
@@ -2476,6 +2494,10 @@ msgstr "当前路径"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "当前主题"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "当前通过 {currentName} 获取动态"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2696,7 @@ msgstr "关闭离开期间的摘要"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "完成"
@@ -3261,6 +3284,11 @@ msgstr "主页"
 msgid "Home agent"
 msgstr "主页智能体"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "首页连接"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3390,7 @@ msgstr "导入文件"
 msgid "Import link"
 msgstr "从链接导入"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "导入主题"
@@ -3494,10 +3523,6 @@ msgstr "无法从安全存储中移除它的信息"
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be written to secure storage."
 msgstr "无法将它的信息写入安全存储"
-
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "等它成为正在使用的电脑后，就会列出它已配对的设备"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -4535,6 +4560,10 @@ msgstr "在平板上，主页以双页展开，工作面板铺满全屏，屏幕
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "由一台电脑汇总任务动态，再发送到手机"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -5821,6 +5850,7 @@ msgstr "已保存的 SSH 主机"
 msgid "Saved terminal history"
 msgstr "已保存的终端历史记录"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +5961,8 @@ msgstr "已选择"
 msgid "Send"
 msgstr "发送"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "发送 {spoken}"
 
@@ -6082,6 +6112,14 @@ msgstr "分享这个会话的记录"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "各会话共享，刷新以更新"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "与这台电脑及备用电脑共享首页概况（任务、会话和终端）。对话仍直接连接"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "与这台电脑共享首页概况（任务、会话和终端）。对话仍直接连接"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6542,6 +6580,10 @@ msgstr "停止这条命令"
 msgid "Stopped"
 msgstr "已停止"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "已停止共享，请连接相关电脑后重试，完成权限移除"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6620,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "把历史总结成摘要，并基于摘要继续工作"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "任务摘要已连接"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "挂起"
@@ -6598,6 +6644,10 @@ msgstr "切换 Agent 模式"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "切换应用"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "断线自动切换"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7124,7 @@ msgstr "主题"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "主题操作失败"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7665,9 +7715,17 @@ msgstr "更新"
 msgid "Update download failed. Try again."
 msgstr "更新下载失败，请重试"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "请先更新这台电脑的 Gateway"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "请更新此电脑上的 Gateway，再重新连接，即可从首页删除会话"
+
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "更新 Gateway 后即可在此会话中引用电脑"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -7742,14 +7800,17 @@ msgstr "上传中"
 msgid "Usage snapshot is stale"
 msgstr "用量快照已过期"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "使用 {0}"
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "这台电脑断线时，自动换一台"
 
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "使用设备密码"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "通过一台电脑汇总"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7770,10 +7831,6 @@ msgstr "请使用仓库链接，并在下方填写分支和主题文件"
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "使用主题默认设置"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "使用这台电脑"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -7796,6 +7853,10 @@ msgstr "可变 · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "版本 {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "通过 {name} 汇总"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7901,6 +7962,10 @@ msgstr "正在运行的项目"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "由哪台电脑汇总？"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -8009,6 +8074,10 @@ msgstr "你的消息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配对的电脑"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "手机分别连接每台电脑"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."

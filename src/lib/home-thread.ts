@@ -19,7 +19,7 @@ import type {
   PermissionRequest,
 } from '@/lib/agent-protocol';
 import type { AgentSessionRuntime } from '@/lib/agent-session-runtime';
-import type { HomeContinueEntry } from '@/lib/home-continue';
+import type { HomeContinueEntry, GatewayAgentSessionsSnapshot } from '@/lib/home-continue';
 import {
   HOME_AGENT_SESSION_ID,
   homeSessionSwitches,
@@ -79,7 +79,7 @@ export type HomeThreadTarget = HomeThreadSession | HomeThreadPane | HomeThreadTa
 export function homeThreadKey(target: HomeThreadTarget): string {
   switch (target.kind) {
     case 'session':
-      return `${target.serverId}\u0000s\u0000${target.asid}`;
+      return `${target.serverId}\u0000s\u0000${target.agentId ?? ''}\u0000${target.asid}`;
     case 'pane':
       return `${target.serverId}\u0000p\u0000${target.paneId}`;
     case 'task':
@@ -421,6 +421,7 @@ export type HomeThreadLive = {
   status?: AgentRunStatus;
   interaction?: AgentSessionRuntime['interaction'];
   title?: string;
+  titleUpdatedMs?: number;
   /** The session reported itself deleted. */
   deleted?: boolean;
   permissions: readonly PermissionRequest[];
@@ -436,11 +437,41 @@ export type HomeThreadLive = {
 
 export const EMPTY_HOME_THREAD_LIVE: HomeThreadLive = { permissions: [], forms: [] };
 
+/** Display metadata must never select or change the recipient of a reply. */
+export function homeThreadTitle(
+  target: HomeThreadTarget | undefined,
+  live: Pick<HomeThreadLive, 'title' | 'titleUpdatedMs'> | undefined,
+  listing: GatewayAgentSessionsSnapshot | undefined
+): string | undefined {
+  if (!target) return undefined;
+  const matches =
+    target.kind === 'session' && listing?.serverId === target.serverId
+      ? listing.sessions.filter(
+          (row) => row.asid === target.asid && (!target.agentId || row.agentId === target.agentId)
+        )
+      : [];
+  const listed = matches.length === 1 ? matches[0] : undefined;
+  if (
+    listed?.title.trim() &&
+    (!live?.title?.trim() || listed.updatedMs >= (live.titleUpdatedMs ?? 0))
+  )
+    return listed.title.trim();
+  return (
+    live?.title?.trim() ||
+    target.title.trim() ||
+    (target.kind === 'session'
+      ? target.asid
+      : target.kind === 'pane'
+        ? target.paneId
+        : target.taskId)
+  );
+}
+
 /** The live state from a snapshot read (on subscribe, resync and reconnect). */
 export function homeThreadLiveFromSnapshot(snapshot: AgentSessionSnapshot): HomeThreadLive {
   const info = snapshot.info;
   return {
-    ...(info ? { status: info.status, title: info.title } : {}),
+    ...(info ? { status: info.status, title: info.title, titleUpdatedMs: info.updated_ms } : {}),
     ...(info?.runtime ? { interaction: info.runtime.interaction } : {}),
     ...(info?.deleted ? { deleted: true } : {}),
     permissions: snapshot.permissions,
@@ -465,6 +496,7 @@ export function applyHomeThreadEvent(
         ...live,
         status: info.status,
         title: info.title,
+        titleUpdatedMs: info.updated_ms,
         ...(info.runtime ? { interaction: info.runtime.interaction } : {}),
         ...(info.deleted ? { deleted: true } : {}),
       };

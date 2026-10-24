@@ -603,6 +603,10 @@ function RootContent() {
                   name="settings-home-layout"
                   options={sheetRouteOptions('settings-home-layout')}
                 />
+                <Stack.Screen
+                  name="settings-home-connections"
+                  options={sheetRouteOptions('settings-home-connections')}
+                />
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
                 <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
                 <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />

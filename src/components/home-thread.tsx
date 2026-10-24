@@ -36,7 +36,7 @@ import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useHomeThreadLive, useHomeThreads } from '@/stores/home-thread';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 
 /**
  * At most four store updates a second while a reply streams: the dock reads

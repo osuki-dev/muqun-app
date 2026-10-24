@@ -41,6 +41,7 @@ export function useStageComposition({
             opacity: input.opacity,
             clear: facts?.clear ?? null,
             aspect: facts?.aspect,
+            decodeFailed: facts?.decodeFailed,
           }
         : null;
     return stageComposition({

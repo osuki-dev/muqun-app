@@ -7,6 +7,11 @@
 - Work on a branch. Complete development and the checks below before opening a
   ready pull request; report failures or unavailable checks accurately.
 - Never commit credentials, private logs, personal paths, or workstation setup.
+- Use the latest stable Bun; do not pin an older tool version in `package.json`
+  or `eas.json`. Use the installed toolchain without automatically upgrading it
+  during installation, builds, tests, or deployment. EAS uses its environment's
+  Bun version; update toolchains separately when requested.
+  Keep dependency versions governed by the committed `bun.lock`.
 
 ## Validation
 
@@ -33,20 +38,30 @@ constants, layout numbers, labels, one-line helpers, rendering or catalogs;
 the end-to-end suite is the device acceptance for those. A reviewer may delete
 a test that does not meet this rule.
 
-Native tests use agent-device 0.21.12 and the existing `.ad` runner. Add new
+Native tests use the latest stable agent-device and the existing `.ad` runner.
+Do not require an exact agent-device version or reject newer releases solely
+because their version differs. Record the actual version in test reports and
+validate command/output compatibility with the runner. Add new
 surface coverage to `e2e/agent-device/suite.json` with the `full` tag. Use
 `bash scripts/e2e.sh --check` for syntax validation, `--list` for flows, and
 `--tag <domain>` or `--flow <name>` for focused runs. A smoke or domain run does
 not replace the complete suite. Quote actual results in the PR; reports under
 `dist/e2e-reports/` are uncommitted output.
 
-Use a dedicated, unpaired QA device with the app installed and English selected.
-Never automate a user's device or paired workspace. Reuse available QA devices,
-serialize access, and verify device identity before every run. Pass explicit
+Default to a dedicated, unpaired QA device with the app installed and English
+selected. When the user explicitly authorizes a named device or simulator,
+use that device, including its existing pairings, for the authorized checks;
+do not require a separate QA device or repeat the permission request. Preserve
+pairings, drafts, active sessions and workspace data. Run destructive fixtures
+or flows that reset pairing only on an isolated device unless separately
+authorized. Use isolated sessions for test messages, commands and approvals.
+Reuse available devices, serialize access, and verify device identity before
+every run. Pass explicit
 `--device ID --platform android|ios` to the runner and `--serial` or `--udid` to
 all direct agent-device commands. Run `agent-device --version` and read
 `agent-device help workflow` plus the relevant debugging help first. Resolve
-installed tooling rather than silently installing an unpinned version. For
+installed tooling first; installing or updating to the latest stable release is
+allowed when needed. Do not downgrade solely to match an old version pin. For
 React Native development builds, set `E2E_AD_METRO_HOST` and
 `E2E_AD_METRO_PORT` as needed. Claim platform coverage only for tested platforms.
 

@@ -618,6 +618,12 @@ function rankedStageActivitySubjects(input: StageActivitySubjectsInput) {
       session.terminal &&
       input.panes?.serverId === serverId &&
       session.terminal.sessionId === input.panes.sessionId &&
+      (!session.terminal.instanceId ||
+        input.panes.agents.some(
+          (pane) =>
+            pane.paneId === session.terminal?.paneId &&
+            pane.instanceId === session.terminal?.instanceId
+        )) &&
       Math.max(sessions!.observedAtMs, input.sessionsSeenAtMs ?? sessions!.observedAtMs) >=
         input.panes.checkedAtMs
     )

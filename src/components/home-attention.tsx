@@ -39,7 +39,7 @@ import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
 import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerAgents } from '@/stores/server-agents';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import type { ServerAgentsIndex } from '@/lib/server-agents';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {

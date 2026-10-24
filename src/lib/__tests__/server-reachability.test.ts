@@ -20,6 +20,7 @@ import {
   reachabilityOfStatus,
   resolveConnectionStatus,
   resolveServerReachability,
+  settleReachabilityProbe,
   serversToProbe,
   statusNeedsPairing,
   type ReachabilityProbe,
@@ -30,6 +31,42 @@ const NOW = 1_700_000_000_000;
 function probe(ok: boolean, checkedAtMs = NOW): ReachabilityProbe {
   return { serverId: 's1', ok, checkedAtMs };
 }
+
+describe('authenticated contact during a health check', () => {
+  test('a late failed probe cannot replace a successful response received during the check', () => {
+    const contact = probe(true, NOW + 100);
+    const settled = settleReachabilityProbe(contact, probe(false, NOW + 4000), NOW);
+    expect(settled.ok).toBe(true);
+    expect(settled.checkedAtMs).toBe(NOW + 100);
+    expect(settled.rechecking).toBe(false);
+    expect(resolveConnectionStatus({ serverId: 's1', probe: settled, nowMs: NOW + 4000 })).toBe(
+      'live'
+    );
+    expect(reachabilityFromProbe(settled, NOW + 100 + REACHABILITY_FRESH_MS + 1)).toBe('unknown');
+  });
+
+  test('a later check can supersede older contact and an explicit refusal still applies', () => {
+    const contact = probe(true, NOW - 100);
+    const failed = probe(false, NOW + 4000);
+    expect(settleReachabilityProbe(contact, failed, NOW)).toBe(failed);
+    const refused = { ...failed, unauthorized: true, status: 401 };
+    expect(settleReachabilityProbe(probe(true, NOW + 100), refused, NOW)).toBe(refused);
+  });
+
+  test('another computer and a failed earlier check cannot supply live evidence', () => {
+    const failed = probe(false, NOW + 4000);
+    expect(
+      settleReachabilityProbe({ ...probe(true, NOW + 100), serverId: 'other' }, failed, NOW)
+    ).toBe(failed);
+    expect(settleReachabilityProbe(probe(false, NOW + 100), failed, NOW)).toBe(failed);
+    expect(settleReachabilityProbe(undefined, failed, NOW)).toBe(failed);
+  });
+
+  test('a successful health check retains its own health metadata', () => {
+    const answer = { ...probe(true, NOW + 400), health: { capabilities: [] }, status: 200 };
+    expect(settleReachabilityProbe(probe(true, NOW + 100), answer, NOW)).toBe(answer);
+  });
+});
 
 test('a computer that refused our token is not down; one that did not answer is', () => {
   const cases: [ReachabilityProbe | undefined, boolean][] = [

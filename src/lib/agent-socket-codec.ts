@@ -1,3 +1,4 @@
+import { parseHomeFrame, type HomeFrame, type HomeSource } from './home-summary';
 /**
  * The frames of the gateway's event WebSocket (`GET /api/ws`), sealed and not.
  *
@@ -203,6 +204,16 @@ export class SealedAgentSocketCodec implements AgentSocketCodec {
 // ---------------------------------------------------------------------------
 
 export type AgentSocketServerFrame =
+  | HomeFrame
+  | {
+      t: 'history_response';
+      requestId: string;
+      sourceId: string;
+      asid: string;
+      status: number;
+      body: unknown;
+    }
+  | { t: 'subscribed'; home: true }
   | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
   | { t: 'subscribed'; all: true }
@@ -231,6 +242,22 @@ export type AgentSocketServerFrame =
   | { t: 'error'; code: string };
 
 export type AgentSocketClientFrame =
+  | {
+      t: 'history_request';
+      request: {
+        request_id: string;
+        asid: string;
+        operation: 'snapshot' | 'earlier' | 'delta';
+        refresh?: boolean;
+        after?: number;
+      };
+    }
+  | { t: 'resync_home_overview'; source_id: string }
+  | {
+      t: 'subscribe_home';
+      home: { sources: readonly HomeSource[]; overview?: boolean; overview_sections?: boolean };
+    }
+  | { t: 'unsubscribe_home' }
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
   | { t: 'subscribe_all' }
@@ -256,6 +283,30 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const rec = value as Record<string, unknown>;
   switch (rec.t) {
+    case 'home':
+    case 'home_overview':
+    case 'home_status': {
+      const frame = parseHomeFrame(rec);
+      if (!frame) throw new AgentSocketProtocolError('Invalid Home summary frame.');
+      return frame;
+    }
+    case 'history_response': {
+      if (
+        !str(rec.request_id) ||
+        !str(rec.source_id) ||
+        !str(rec.asid) ||
+        !Number.isInteger(rec.status)
+      )
+        throw new AgentSocketProtocolError('Invalid history response.');
+      return {
+        t: 'history_response',
+        requestId: rec.request_id as string,
+        sourceId: rec.source_id as string,
+        asid: rec.asid as string,
+        status: rec.status as number,
+        body: rec.body,
+      };
+    }
     case 'hello': {
       const connectionId = str(rec.connection_id);
       if (!connectionId || typeof rec.protocol !== 'number') return null;
@@ -269,6 +320,7 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
       };
     }
     case 'subscribed': {
+      if (rec.home === true) return { t: 'subscribed', home: true };
       if (rec.all === true) return { t: 'subscribed', all: true };
       if (rec.tasks === true) return { t: 'subscribed', tasks: true };
       const asid = str(rec.asid);

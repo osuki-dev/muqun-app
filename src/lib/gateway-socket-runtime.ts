@@ -274,6 +274,15 @@ let watchingProbes = false;
 function watchProbesForRecovery(): void {
   if (watchingProbes) return;
   watchingProbes = true;
+  useGatewayConnectionStore.subscribe((state, previous) => {
+    if (state.records === previous.records) return;
+    const retained = new Set(state.records.map((record) => record.serverId));
+    for (const record of previous.records) {
+      if (retained.has(record.serverId)) continue;
+      sockets.get(record.serverId)?.dispose();
+      sockets.delete(record.serverId);
+    }
+  });
   useServerReachability.subscribe((state, previous) => {
     for (const [serverId, socket] of sockets) {
       const probe = state.probes[serverId];

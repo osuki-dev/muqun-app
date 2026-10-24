@@ -1330,6 +1330,18 @@ export function parseTimelineItems(value: unknown): TimelineItem[] {
   return out;
 }
 
+/** A filtered page may be empty without reaching the beginning of history. */
+export function parseEarlierTimelinePage(value: unknown): {
+  items: TimelineItem[];
+  exhausted: boolean;
+} {
+  const record = asRecord(value);
+  if (!record || !Array.isArray(record.items) || typeof record.exhausted !== 'boolean') {
+    throw new Error('Invalid earlier history page');
+  }
+  return { items: parseTimelineItems(record.items), exhausted: record.exhausted };
+}
+
 /** Where a row sorts: its own key when it has one, its message id otherwise. */
 export function timelineOrderKey(item: TimelineItem): string {
   return item.order ?? item.message_id;

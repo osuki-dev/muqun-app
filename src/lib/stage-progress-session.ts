@@ -54,6 +54,7 @@ export function stageProgressSession({
       (session) =>
         session.terminal?.sessionId === terminal.sessionId &&
         session.terminal.paneId === id &&
+        (!session.terminal.instanceId || session.terminal.instanceId === pane.instanceId) &&
         (!agentId || session.agentId === agentId)
     );
     // Several histories can mention the same terminal. Never choose by title or recency.

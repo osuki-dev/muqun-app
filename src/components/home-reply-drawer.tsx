@@ -1,17 +1,17 @@
+import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
 import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated as NativeAnimated,
   AppState,
   BackHandler,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
-  type ScrollViewProps,
+  RefreshControl,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -78,6 +78,10 @@ import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneEvents } from '@/hooks/use-pane-events';
+import { canLoadEarlierAgentTimeline } from '@/lib/agent-discovery';
+import { getAgentSessionSnapshot, loadEarlierAgentTimeline } from '@/lib/agent-session';
+import { useAgentFeatures } from '@/hooks/use-agent-features';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { removeTimelineItems } from '@/lib/agent-revert';
 import { canReplyAgentForm } from '@/lib/agent-runtime-controls';
 import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-session-runtime';
@@ -193,7 +197,6 @@ export const homeReplyDrawerProgress = makeMutable(0);
  */
 export const useHomeReplyDrawerActive = create<{ active: boolean }>(() => ({ active: false }));
 /** How far the finger travels before the content decides between scrolling and dragging. */
-const CONTENT_DRAG_SLOP = 8;
 
 export type HomeReplyDrawerController = ReturnType<typeof useHomeReplyDrawer>;
 
@@ -226,10 +229,6 @@ export function useHomeReplyDrawer({
   const full = useSharedValue(heights.full);
   const dragFrom = useSharedValue(0);
   const dragging = useSharedValue(false);
-  /** The transcript is scrolled to its top: a pull down there drags the drawer. */
-  const contentAtTop = useSharedValue(false);
-  /** The content is dragging the drawer: the transcript holds still meanwhile. */
-  const contentDragging = useSharedValue(false);
   useEffect(() => {
     peek.set(heights.peek);
     full.set(heights.full);
@@ -448,33 +447,24 @@ export function useHomeReplyDrawer({
     setMounted(true);
     if (snap === 'closed') setSnap(REPLY_DRAWER_OPEN_SNAP);
   });
-  // The drawer's grabber and header always drag it. Its transcript scrolls
-  // first (`scroll`, the list's own native scroll); `content` drags the drawer
-  // only from a list at its top with the finger moving down, as a bottom sheet
-  // does. The two run simultaneously so the scroll never waits on the pull.
-  const gestures = useMemo(() => {
-    const input = { begin, settle, dragFrom, dragging, dust, fade, full, height, peek, veil };
-    const scroll = Gesture.Native();
-    const content = createContentPan({
-      ...input,
-      contentAtTop,
-      contentDragging,
-    }).simultaneousWithExternalGesture(scroll);
-    return { header: createDrawerPan(input), scroll, content };
-  }, [
-    begin,
-    settle,
-    dragFrom,
-    dragging,
-    dust,
-    fade,
-    full,
-    height,
-    peek,
-    veil,
-    contentAtTop,
-    contentDragging,
-  ]);
+  // The header drags the drawer; transcript pulls belong to history paging.
+  const gestures = useMemo(
+    () => ({
+      header: createDrawerPan({
+        begin,
+        settle,
+        dragFrom,
+        dragging,
+        dust,
+        fade,
+        full,
+        height,
+        peek,
+        veil,
+      }),
+    }),
+    [begin, settle, dragFrom, dragging, dust, fade, full, height, peek, veil]
+  );
 
   return {
     snap,
@@ -492,8 +482,6 @@ export function useHomeReplyDrawer({
     shot,
     drawn,
     gestures,
-    contentAtTop,
-    contentDragging,
     /** Opens straight to full height; the peek is only a rest on a drag down. */
     show: () => settle(REPLY_DRAWER_OPEN_SNAP, undefined, true),
     close: (after?: () => void) => {
@@ -586,54 +574,6 @@ function createDrawerPan(input: DrawerPanInput) {
       });
       scheduleOnRN(settle, next, event.velocityY, next === 'closed');
     });
-}
-
-/** A pan on the drawer's content: it activates only on a pull down from the list's top. */
-function createContentPan(
-  input: DrawerPanInput & {
-    contentAtTop: SharedValue<boolean>;
-    contentDragging: SharedValue<boolean>;
-  }
-) {
-  const { contentAtTop, contentDragging } = input;
-  const startX = makeMutable(0);
-  const startY = makeMutable(0);
-  return (
-    createDrawerPan(input)
-      .manualActivation(true)
-      // Chained after `createDrawerPan`, these are out of the Reanimated
-      // plugin's sight, so they say they are worklets themselves; mixed
-      // callbacks make the handler run them all on the JS thread and warn.
-      .onTouchesDown((event) => {
-        'worklet';
-        const touch = event.allTouches[0];
-        if (!touch) return;
-        startX.set(touch.absoluteX);
-        startY.set(touch.absoluteY);
-      })
-      .onTouchesMove((event, manager) => {
-        'worklet';
-        const touch = event.allTouches[0];
-        if (!touch || event.numberOfTouches > 1) {
-          manager.fail();
-          return;
-        }
-        const dx = touch.absoluteX - startX.get();
-        const dy = touch.absoluteY - startY.get();
-        if (Math.abs(dx) < CONTENT_DRAG_SLOP && Math.abs(dy) < CONTENT_DRAG_SLOP) return;
-        // Sideways, upwards, or down a list with rows above: the list's own.
-        if (Math.abs(dx) >= Math.abs(dy) || dy < 0 || !contentAtTop.get()) {
-          manager.fail();
-          return;
-        }
-        contentDragging.set(true);
-        manager.activate();
-      })
-      .onFinalize(() => {
-        'worklet';
-        contentDragging.set(false);
-      })
-  );
 }
 
 /** Home behind the drawer: it recedes a little and dims as the drawer rises. */
@@ -803,11 +743,7 @@ export function HomeReplyDrawer({
       cancelAnimationFrame(frame);
     };
   }, [shootToken, size, onShot]);
-  const key = homeThreadKey(target);
-  const liveTitle = useHomeThreadLive((state) =>
-    state.key === key ? state.live.title : undefined
-  );
-  const title = liveTitle || target.title || t`Conversation`;
+  const title = useHomeThreadTitle(target) || t`Conversation`;
 
   // Back closes the drawer before it leaves Home.
   useEffect(() => {
@@ -970,16 +906,7 @@ export function HomeReplyDrawer({
                 </GestureDetector>
                 <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
                   {target.kind === 'session' ? (
-                    <GestureDetector gesture={controller.gestures.content}>
-                      <View collapsable={false} style={styles.fill}>
-                        <DrawerSession
-                          target={target}
-                          scrollGesture={controller.gestures.scroll}
-                          atTop={controller.contentAtTop}
-                          dragging={controller.contentDragging}
-                        />
-                      </View>
-                    </GestureDetector>
+                    <DrawerSession key={homeThreadKey(target)} target={target} />
                   ) : target.kind === 'pane' ? (
                     // The terminal's own gestures own its bounds: no drawer gesture
                     // wraps it, so its scrollback pans and pinches win there.
@@ -1022,18 +949,7 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
  * where they are when output lands under them, with the session screen's
  * "Latest" to come back down; their own send takes them to the end.
  */
-function DrawerSession({
-  target,
-  scrollGesture,
-  atTop,
-  dragging,
-}: {
-  target: Extract<HomeThreadTarget, { kind: 'session' }>;
-  /** The list's native scroll, which the drawer's content pull runs alongside. */
-  scrollGesture: ReturnType<typeof Gesture.Native>;
-  atTop: SharedValue<boolean>;
-  dragging: SharedValue<boolean>;
-}) {
+function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
@@ -1047,36 +963,89 @@ function DrawerSession({
   const { serverId, sessionId, asid } = target;
   const key = homeThreadKey(target);
   const readRuntime = useLatestReader(runtime);
-  // The list holds still while the finger drags the drawer from its top.
-  const [locked, setLocked] = useState(false);
-  useAnimatedReaction(
-    () => dragging.get(),
-    (next, previous) => {
-      if (next !== previous) scheduleOnRN(setLocked, next);
-    }
-  );
-  // It opens at its end, so it is not at its top until it says so.
-  useEffect(() => atTop.set(false), [atTop]);
-  const renderScroll = useMemo(
-    () => (props: ScrollViewProps) => (
-      <GestureDetector gesture={scrollGesture}>
-        <NativeAnimated.ScrollView {...props} />
-      </GestureDetector>
-    ),
-    [scrollGesture]
-  );
+  const [agentId, setAgentId] = useState(target.agentId);
+  const features = useAgentFeatures(serverId, agentId);
+  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const supportsEarlier = canLoadEarlierAgentTimeline(capabilities, features);
+  const readSupportsEarlier = useLatestReader(supportsEarlier);
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
+  const [earlierExhausted, setEarlierExhausted] = useState(false);
+  const [historyFailed, setHistoryFailed] = useState(false);
+  const windowStart = useStore(store, (state) => state.config.windowStart);
+  const loadEarlier = useRef<(() => void) | null>(null);
+  const handleLoadEarlier = useStableHandler(() => loadEarlier.current?.());
 
   useEffect(() => {
     let windowStart = 0;
-    return followHomeSession({
+    let initialized = false;
+    let active = true;
+    let paging = false;
+    let exhausted = false;
+    const owner = useGatewayConnectionStore.getState().record;
+    const owns = () => {
+      const current = useGatewayConnectionStore.getState().record;
+      return (
+        active &&
+        current?.serverId === serverId &&
+        sameComputer(current, owner) &&
+        current?.deviceId === owner?.deviceId
+      );
+    };
+    loadEarlier.current = () => {
+      if (!owns() || !initialized || paging) return;
+      setHistoryFailed(false);
+      if (windowStart > 0) {
+        windowStart = Math.max(0, windowStart - HISTORY_PAGE_SIZE);
+        const transcript = store.getState();
+        transcript.configure({ ...transcript.config, windowStart });
+        return;
+      }
+      if (exhausted || !readSupportsEarlier()) return;
+      paging = true;
+      setLoadingEarlier(true);
+      void (async () => {
+        let page = await loadEarlierAgentTimeline(sessionId, asid);
+        if (!owns()) return;
+        if (page.cursorLost) {
+          const snapshot = await getAgentSessionSnapshot(sessionId, asid, { refresh: true });
+          if (!owns()) return;
+          store
+            .getState()
+            .setTimeline((previous) => upsertTimelineItems(previous, snapshot.timeline));
+          page = await loadEarlierAgentTimeline(sessionId, asid);
+          if (!owns()) return;
+        }
+        if (page.cursorLost) throw new Error('History cursor could not be restored');
+        exhausted = page.exhausted;
+        setEarlierExhausted(exhausted);
+        store.getState().setTimeline((previous) => upsertTimelineItems(previous, page.items));
+      })()
+        .catch(() => {
+          if (owns()) setHistoryFailed(true);
+        })
+        .finally(() => {
+          paging = false;
+          if (active) setLoadingEarlier(false);
+        });
+    };
+    const stop = followHomeSession({
       serverId,
       sessionId,
       asid,
       onSnapshot: (snapshot) => {
         const transcript = store.getState();
-        windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
+        if (!initialized) {
+          windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
+          transcript.setTimeline(snapshot.timeline, windowStart);
+          initialized = true;
+        } else {
+          // Reconnects must not discard history the reader already pulled in.
+          transcript.setTimeline((previous) => upsertTimelineItems(previous, snapshot.timeline));
+        }
+        exhausted = false;
+        setEarlierExhausted(false);
         transcript.configure({ windowStart, status: snapshot.info?.status });
-        transcript.setTimeline(snapshot.timeline, windowStart);
+        setAgentId(snapshot.info?.agent_id ?? target.agentId);
         transcript.setInbox(snapshot.inbox);
         setRuntime(snapshot.info?.runtime);
         setLoaded(true);
@@ -1119,7 +1088,12 @@ function DrawerSession({
         setLoaded(true);
       },
     });
-  }, [serverId, sessionId, asid, store, readRuntime]);
+    return () => {
+      active = false;
+      loadEarlier.current = null;
+      stop();
+    };
+  }, [serverId, sessionId, asid, store, readRuntime, readSupportsEarlier, target.agentId]);
 
   useEffect(() => {
     const mark = () => {
@@ -1182,7 +1156,6 @@ function DrawerSession({
   const maintainEnd = useMemo(() => ({ animated: !reduced }), [reduced]);
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    atTop.set(contentOffset.y <= 1);
     if (contentSize.height <= 0) return;
     follow.setGeometry({
       offset: contentOffset.y,
@@ -1211,10 +1184,25 @@ function DrawerSession({
         ref={listRef}
         keyboardAware={false}
         nestedScrollEnabled
-        renderScrollComponent={renderScroll}
-        scrollEnabled={!locked}
-        bounces={false}
-        overScrollMode="never"
+        refreshControl={
+          <RefreshControl
+            refreshing={loadingEarlier}
+            enabled={windowStart > 0 || (supportsEarlier && !earlierExhausted)}
+            onRefresh={handleLoadEarlier}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.textMuted}
+            progressBackgroundColor={theme.colors.surfaceRaised}
+          />
+        }
+        ListHeaderComponent={
+          historyFailed ? (
+            <Pressable onPress={handleLoadEarlier} accessibilityRole="button">
+              <Text variant="bodySmall" color={theme.colors.textMuted}>
+                {t`Could not load the session`}
+              </Text>
+            </Pressable>
+          ) : null
+        }
         testID="home-reply-transcript"
         store={store}
         rowProps={rowProps}

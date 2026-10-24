@@ -28,7 +28,6 @@ import { useAppActive } from '@/hooks/use-app-active';
 import { markLaunchIntroSeen } from '@/lib/launch-intro-seen';
 import { DURATION, timing } from '@/lib/motion';
 
-const HEADER_MARK_SIZE = 40;
 const GUTTER = 24;
 /** The compact page's header, footer and copy, which the art leaves room for. */
 const COMPACT_COPY_BUDGET = 440;
@@ -38,8 +37,8 @@ const ART_MIN_HEIGHT = 160;
  * The 4.0 release introduction. Home mounts underneath it as usual; only the
  * reader's Skip or final Continue marks this edition as seen. Nothing advances
  * on a timer, and the decorative renderer never owns navigation or readiness.
- * The first frame still mirrors the native splash before the mark moves into
- * the header. Text and controls remain ordinary native, scrollable content.
+ * The first frame still mirrors the native splash before its picture fades out.
+ * Text and controls remain ordinary native, scrollable content.
  */
 export function LaunchIntro({
   phase,
@@ -51,8 +50,7 @@ export function LaunchIntro({
   const mirror = useSplashMirror();
   const active = useAppActive();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
-  const [sheetHeight, setSheetHeight] = useState(height);
+  const { width, height, fontScale } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const scroll = useRef<ScrollViewInstance>(null);
   useEffect(() => {
@@ -79,25 +77,20 @@ export function LaunchIntro({
   const position = index + 1;
   const count = pages.length;
   const last = position === count;
-  const spread = width >= 768;
   // The page is measured inside the side safe area: iPhone Duo stacks its
   // camera, clock and status icons down the right edge, so Skip and the copy
   // must not reach under them. The splash ground stays full-bleed.
   const safeWidth = width - insets.left - insets.right;
+  // Keep the copy readable in portrait, Split View and larger accessibility text.
+  const spread = safeWidth >= 900 && fontScale < 1.35;
   const pageWidth = Math.min(safeWidth - GUTTER * 2, spread ? 1040 : 560);
   const pageInset = (safeWidth - pageWidth) / 2;
-  const pageLeft = insets.left + pageInset;
   // A short window (the Duo's outer display) cannot hold the full-width art
   // and the copy, so the art gives way first and the copy stays readable
   // without scrolling. Taller phones keep the art at its natural size.
   const artMaxHeight = spread
     ? undefined
     : Math.max(ART_MIN_HEIGHT, height - insets.top - insets.bottom - COMPACT_COPY_BUDGET);
-  const logoHeight = mirror.logo.style.height;
-  const markScale =
-    typeof logoHeight === 'number' && logoHeight > 0 ? HEADER_MARK_SIZE / logoHeight : 1;
-  const markShiftX = pageLeft + HEADER_MARK_SIZE / 2 - width / 2;
-  const markShiftY = insets.top + GUTTER + HEADER_MARK_SIZE / 2 - sheetHeight / 2;
   const reveal = useSharedValue(0);
   const exit = useSharedValue(0);
   const followPhase = useEffectEvent(() => {
@@ -144,12 +137,8 @@ export function LaunchIntro({
     onDone();
   };
   const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.get() }));
-  const markStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(reveal.get(), [0, 1], [0, markShiftX]) },
-      { translateY: interpolate(reveal.get(), [0, 1], [0, markShiftY]) },
-      { scale: interpolate(reveal.get(), [0, 1], [1, markScale]) },
-    ],
+  const pictureStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(reveal.get(), [0, 0.2], [1, 0], Extrapolation.CLAMP),
   }));
   const pageStyle = useAnimatedStyle(() => ({
     opacity: interpolate(reveal.get(), [0.2, 1], [0, 1], Extrapolation.CLAMP),
@@ -175,7 +164,9 @@ export function LaunchIntro({
     </View>
   );
   const copy = (
-    <View style={styles.copy} testID={`launch-intro-feature-${page.key}`}>
+    <View
+      style={[styles.copy, spread && styles.spreadCopy]}
+      testID={`launch-intro-feature-${page.key}`}>
       <View style={styles.eyebrow}>
         <Text variant="label" color={theme.colors.primary}>{t`New in 4.0`}</Text>
         <Text
@@ -219,11 +210,9 @@ export function LaunchIntro({
   );
 
   return (
-    <Animated.View
-      style={[mirror.container.style, sheetStyle]}
-      onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}>
+    <Animated.View style={[mirror.container.style, sheetStyle]}>
       {mirror.hasLogo ? (
-        <Animated.Image {...mirror.logo} style={[mirror.logo.style, markStyle]} />
+        <Animated.Image {...mirror.logo} style={[mirror.logo.style, pictureStyle]} />
       ) : null}
       <Animated.View
         pointerEvents={phase === 'visible' ? 'auto' : 'none'}
@@ -240,7 +229,6 @@ export function LaunchIntro({
           pageStyle,
         ]}>
         <View style={[styles.header, { width: pageWidth }]}>
-          <View style={styles.markSlot} />
           <Pressable
             onPress={done}
             accessibilityRole="button"
@@ -275,12 +263,11 @@ export function LaunchIntro({
 const styles = StyleSheet.create({
   page: { ...StyleSheet.absoluteFill, alignItems: 'center' },
   header: {
-    minHeight: HEADER_MARK_SIZE,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
-  markSlot: { width: HEADER_MARK_SIZE, height: HEADER_MARK_SIZE },
   skipButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
   pressed: { opacity: 0.6 },
   scroller: { alignSelf: 'stretch', flex: 1 },
@@ -292,8 +279,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   spread: { flexDirection: 'row', alignItems: 'center', gap: 48 },
-  spreadArt: { flex: 1 },
-  copy: { flex: 1, gap: 16 },
+  spreadArt: { flex: 1, minWidth: 0 },
+  copy: { minWidth: 0, gap: 16 },
+  spreadCopy: { flex: 1 },
   eyebrow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

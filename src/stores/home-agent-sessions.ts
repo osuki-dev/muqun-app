@@ -54,7 +54,8 @@ function sameAgentSessions(
         session.status === other.status &&
         session.updatedMs === other.updatedMs &&
         session.terminal?.sessionId === other.terminal?.sessionId &&
-        session.terminal?.paneId === other.terminal?.paneId
+        session.terminal?.paneId === other.terminal?.paneId &&
+        session.terminal?.instanceId === other.terminal?.instanceId
       );
     })
   );

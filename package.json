@@ -143,7 +143,6 @@
   "overrides": {
     "react-native-screens": "4.30.0"
   },
-  "packageManager": "bun@1.4.2",
   "enriched-markdown": {
     "enableMath": true
   },

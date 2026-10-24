@@ -872,6 +872,10 @@ msgstr "รูปลักษณ์"
 msgid "Appearance, terminal, security"
 msgstr "รูปลักษณ์ เทอร์มินัล ความปลอดภัย"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "ใช้การตั้งค่า"
+
 #: src/i18n/labels.ts
 msgid "Apply a patch"
 msgstr "ใช้แพตช์"
@@ -1365,6 +1369,10 @@ msgstr "เลือกไฟล์"
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "เลือกสไตล์หน้าแรกและส่วนติดต่อแอป สีจะยังคงตามธีมของคุณ"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "เลือกวิธีที่หน้าหลักรับข้อมูลอัปเดตจากคอมพิวเตอร์"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
@@ -1699,6 +1707,11 @@ msgstr "ขัดแย้ง"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "เชื่อมต่อ"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "เชื่อมต่อแยกแต่ละเครื่อง"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2357,10 @@ msgstr "บันทึกการตั้งค่านี้ไม่ได
 msgid "Could not save voice settings. Please try again."
 msgstr "ไม่สามารถบันทึกการตั้งค่าเสียงได้ โปรดลองอีกครั้ง"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "บันทึกไม่ได้ โปรดตรวจสอบว่าคอมพิวเตอร์ออนไลน์และอัปเดต Gateway แล้ว"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2376,7 @@ msgstr "ส่งคำสั่งไม่ได้"
 msgid "Could not send input."
 msgstr "ส่งอินพุตไม่ได้"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "ส่งปุ่มไม่ได้"
@@ -2476,6 +2494,10 @@ msgstr "พาธปัจจุบัน"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "ธีมปัจจุบัน"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "ขณะนี้ใช้ {currentName}"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2696,7 @@ msgstr "ปิดสรุปเหตุการณ์ขณะที่คุ
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "เสร็จสิ้น"
@@ -3261,6 +3284,11 @@ msgstr "หน้าแรก"
 msgid "Home agent"
 msgstr "เอเจนต์ของหน้าแรก"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "การเชื่อมต่อหน้าหลัก"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3390,7 @@ msgstr "นำเข้าไฟล์"
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "นำเข้าธีม"
@@ -3494,10 +3523,6 @@ msgstr "ลบรายละเอียดจากที่เก็บข้
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be written to secure storage."
 msgstr "เขียนรายละเอียดลงที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
-
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้คอมพิวเตอร์นี้"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -4535,6 +4560,10 @@ msgstr "บนแท็บเล็ต หน้าแรกเป็นหน�
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "ใช้คอมพิวเตอร์หนึ่งเครื่องรวบรวมข้อมูลอัปเดตงานให้โทรศัพท์"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -5821,6 +5850,7 @@ msgstr "โฮสต์ SSH ที่บันทึกไว้"
 msgid "Saved terminal history"
 msgstr "ประวัติเทอร์มินัลที่บันทึกไว้"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +5961,8 @@ msgstr "เลือกแล้ว"
 msgid "Send"
 msgstr "ส่ง"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "ส่ง {spoken}"
 
@@ -6082,6 +6112,14 @@ msgstr "แชร์บันทึกของเซสชันนี้"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "ใช้ร่วมกันระหว่างเซสชัน รีเฟรชเพื่ออัปเดต"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "แชร์ข้อมูลสรุปหน้าหลัก (งาน เซสชัน และเทอร์มินัล) กับคอมพิวเตอร์นี้และเครื่องสำรอง การสนทนายังคงเชื่อมต่อโดยตรง"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "แชร์ข้อมูลสรุปหน้าหลัก (งาน เซสชัน และเทอร์มินัล) กับคอมพิวเตอร์นี้ การสนทนายังคงเชื่อมต่อโดยตรง"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6542,6 +6580,10 @@ msgstr "หยุดคำสั่งนี้"
 msgid "Stopped"
 msgstr "หยุดแล้ว"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "หยุดแชร์แล้ว โปรดเชื่อมต่อคอมพิวเตอร์อีกครั้งแล้วลองใหม่เพื่อลบสิทธิ์ที่เหลือ"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6620,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "สรุปประวัติแล้วทำงานต่อจากบทสรุป"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "เชื่อมต่อสรุปงานแล้ว"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "พักกระบวนการ"
@@ -6598,6 +6644,10 @@ msgstr "สลับโหมดเอเจนต์"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "สลับแอป"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "สลับเครื่องอัตโนมัติ"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7124,7 @@ msgstr "ธีม"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "ดำเนินการกับธีมไม่สำเร็จ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7665,9 +7715,17 @@ msgstr "อัปเดต"
 msgid "Update download failed. Try again."
 msgstr "ดาวน์โหลดอัปเดตไม่สำเร็จ โปรดลองอีกครั้ง"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "โปรดอัปเดต Gateway บนเครื่องนี้ก่อน"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "อัปเดต Gateway บนคอมพิวเตอร์นี้แล้วเชื่อมต่ออีกครั้งเพื่อเปิดใช้การลบเซสชันจากหน้าหลัก"
+
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "อัปเดต Gateway เพื่ออ้างอิงคอมพิวเตอร์ในการสนทนานี้"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -7742,14 +7800,17 @@ msgstr "กำลังอัปโหลด"
 msgid "Usage snapshot is stale"
 msgstr "ข้อมูลการใช้งานล้าสมัยแล้ว"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "ใช้ {0}"
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "ใช้เครื่องอื่นเมื่อเครื่องนี้ขาดการเชื่อมต่อ"
 
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "ใช้รหัสผ่านอุปกรณ์"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "ใช้คอมพิวเตอร์หนึ่งเครื่อง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7770,10 +7831,6 @@ msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อน
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "ใช้ค่าเริ่มต้นของธีม"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "ใช้คอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -7796,6 +7853,10 @@ msgstr "แปรผันได้ · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "เวอร์ชัน {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "ผ่าน {name}"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7901,6 +7962,10 @@ msgstr "สิ่งที่กำลังทำงาน"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "มีอะไรใหม่"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "ใช้คอมพิวเตอร์เครื่องไหน?"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -8009,6 +8074,10 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "โทรศัพท์เชื่อมต่อกับคอมพิวเตอร์แต่ละเครื่องแยกกัน"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."

@@ -165,6 +165,12 @@
       "tags": ["full", "agents", "workspace"],
       "platforms": ["ios", "android"],
       "devices": ["iphone", "android-phone"]
+    },
+    {
+      "name": "home-summary-visibility",
+      "program": "flows/home-summary",
+      "tags": ["full", "workspace", "settings"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
@@ -7426,6 +7432,24 @@
         "mode": "hidden",
         "timeout": 15000,
         "run": "flows/settings-sheets.ad#hidden"
+      }
+    ],
+    "flows/home-summary": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/home-summary.ad#settings"
+      },
+      {
+        "target": {
+          "id": "home-summary-settings"
+        },
+        "mode": "hidden",
+        "run": "flows/home-summary.ad#hidden"
+      },
+      {
+        "run": "flows/home-summary.ad#home"
       }
     ]
   }

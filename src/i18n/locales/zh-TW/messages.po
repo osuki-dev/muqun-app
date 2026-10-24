@@ -872,6 +872,10 @@ msgstr "外觀"
 msgid "Appearance, terminal, security"
 msgstr "外觀、終端機、安全性"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "套用"
+
 #: src/i18n/labels.ts
 msgid "Apply a patch"
 msgstr "套用修補檔"
@@ -1365,6 +1369,10 @@ msgstr "選擇檔案"
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "選擇首頁與應用程式介面樣式。配色仍由主題決定"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "選擇首頁取得電腦動態的方式"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "選擇專案"
@@ -1699,6 +1707,11 @@ msgstr "衝突"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "連線"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "分別連線"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2357,10 @@ msgstr "無法儲存此設定，請重試"
 msgid "Could not save voice settings. Please try again."
 msgstr "無法儲存語音設定，請重試"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "儲存失敗，請確認電腦在線且 Gateway 已更新"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2376,7 @@ msgstr "無法傳送指令"
 msgid "Could not send input."
 msgstr "無法送出輸入"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "無法送出按鍵"
@@ -2476,6 +2494,10 @@ msgstr "目前路徑"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "目前主題"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "目前透過 {currentName} 取得動態"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2696,7 @@ msgstr "關閉離開期間的摘要"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "完成"
@@ -3261,6 +3284,11 @@ msgstr "主畫面"
 msgid "Home agent"
 msgstr "主畫面代理程式"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "首頁連線"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3390,7 @@ msgstr "匯入檔案"
 msgid "Import link"
 msgstr "從連結匯入"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "匯入主題"
@@ -3494,10 +3523,6 @@ msgstr "無法從安全儲存空間移除其資料"
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be written to secure storage."
 msgstr "無法將其資料寫入安全儲存空間"
-
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "等它成為使用中的電腦後，就會列出它已配對的裝置"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -4535,6 +4560,10 @@ msgstr "在平板上，主畫面以雙頁展開，工作面板鋪滿全螢幕，
 #: src/lib/release-notes.ts
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "終端機和代理工作階段共用同一個變更面板：變更的檔案以目錄樹呈現並附帶行數，標題下顯示分支，檔案選單裡可以捨棄變更"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "由一台電腦彙整任務動態，再傳送到手機"
 
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -5821,6 +5850,7 @@ msgstr "已儲存的 SSH 主機"
 msgid "Saved terminal history"
 msgstr "已儲存的終端機歷史記錄"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +5961,8 @@ msgstr "已選取"
 msgid "Send"
 msgstr "傳送"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "送出 {spoken}"
 
@@ -6082,6 +6112,14 @@ msgstr "分享這個工作階段的記錄"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "各工作階段共用，重新整理以更新"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "與這台電腦及備用電腦分享首頁概況（任務、對話和終端機）。對話仍直接連線"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "與這台電腦分享首頁概況（任務、對話和終端機）。對話仍直接連線"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6542,6 +6580,10 @@ msgstr "停止這條命令"
 msgid "Stopped"
 msgstr "已停止"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "已停止分享，請連線至相關電腦後重試，完成權限移除"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6620,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "把歷史整理成摘要，並依摘要繼續工作"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "任務摘要已連線"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "暫停"
@@ -6598,6 +6644,10 @@ msgstr "切換 Agent 模式"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "切換 App"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "斷線自動切換"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7124,7 @@ msgstr "主題"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "主題操作失敗"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7665,9 +7715,17 @@ msgstr "更新"
 msgid "Update download failed. Try again."
 msgstr "更新下載失敗，請重試"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "請先更新這台電腦的 Gateway"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "請更新此電腦上的 Gateway，再重新連線，即可從首頁刪除工作階段"
+
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "更新 Gateway 後即可在此對話中引用電腦"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -7742,14 +7800,17 @@ msgstr "上傳中"
 msgid "Usage snapshot is stale"
 msgstr "用量快照已過期"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "使用 {0}"
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "這台電腦斷線時，自動換一台"
 
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "使用裝置密碼"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "透過一台電腦彙整"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7770,10 +7831,6 @@ msgstr "請使用儲存庫網址，並在下方填寫分支和主題檔案"
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "使用主題預設值"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "使用這台電腦"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -7796,6 +7853,10 @@ msgstr "可變 · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "版本 {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "透過 {name} 彙整"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7901,6 +7962,10 @@ msgstr "正在執行的項目"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "由哪台電腦彙整？"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
@@ -8009,6 +8074,10 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "你已配對的電腦"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "手機分別連線至每台電腦"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."
