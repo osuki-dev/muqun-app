@@ -221,7 +221,7 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
         return;
       }
       // Lazy: the handle is made here, the JPEG is decoded where it is drawn.
-      const decoded = Skia.Image.MakeImageFromEncoded(Skia.Data.fromBytes(payload));
+      const decoded = Skia.Image.MakeFromEncoded(Skia.Data.fromBytes(payload));
       if (decoded === null) return;
       const stale = ring.push(decoded);
       scheduleOnUI(() => {

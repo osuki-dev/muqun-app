@@ -203,7 +203,7 @@ async function measureHeroEdge(
     // File IO is async; decode/readback below are synchronous JS work. A
     // cancelled pre-handoff measurement must not stall the Home that replaced it.
     if (cancelled()) return null;
-    image = Skia.Image.MakeImageFromEncoded(data);
+    image = Skia.Image.MakeFromEncoded(data);
     if (!image) return null;
     const width = image.width();
     const height = image.height();

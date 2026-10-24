@@ -9,7 +9,7 @@ import { createRefCountedCache } from '@/lib/ref-counted-cache';
  * The launch opening and Home draw the same files -- the pack's hero, its
  * wallpaper -- and at the launch's exit they are on screen at the same time:
  * the snap carries the opening's copy away over Home's. `useImage` gave each
- * its own `SkImage`, and a Skia image straight from `MakeImageFromEncoded` is
+ * its own `SkImage`, and a Skia image straight from `MakeFromEncoded` is
  * lazy, so every canvas that drew one decoded it again. Here a picture is read
  * and decoded once, into a raster image, and that one instance is what every
  * caller gets: the tiles and the page under them are the same pixels.
@@ -47,7 +47,7 @@ async function decodeOnce(uri: string): Promise<SkImage | null> {
 
 async function decode(uri: string): Promise<SkImage | null> {
   const data = await Skia.Data.fromURI(uri);
-  const lazy = Skia.Image.MakeImageFromEncoded(data);
+  const lazy = Skia.Image.MakeFromEncoded(data);
   if (!lazy) return null;
   let raster: SkImage | null | undefined;
   try {
