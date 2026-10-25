@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, PressableScale } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   type AccessibilityActionEvent,
@@ -116,6 +116,7 @@ export function AgentTitlePill({
   children,
 }: AgentTitlePillProps) {
   const { t } = useLingui();
+  const { motion } = useThemeTokens();
   const reduceMotion = useReducedMotion();
   const sessionOrder = useAgentSessionState((s) => s.sessionOrder);
   const activeAsid = useAgentSessionState((s) => s.activeAsid);
@@ -130,6 +131,7 @@ export function AgentTitlePill({
 
   const slide = useSharedValue(0);
   const fade = useSharedValue(1);
+  const pressScale = useSharedValue(1);
   /**
    * The pill's measured width, for the clamp on how far the title may travel.
    * A shared value, because the clamp is applied on the UI thread while the
@@ -215,6 +217,10 @@ export function AgentTitlePill({
   // body does -- drops and re-registers the native handler on every state
   // change, including the ones a switch itself causes.
   const commitFromGesture = useStableHandler(commit);
+  const openFromGesture = useStableHandler(() => {
+    void feedback('selection');
+    onPress();
+  });
 
   // Read on the UI thread while the finger is down, so the drag can resist in
   // the direction that has nothing behind it without a round trip to JS.
@@ -225,55 +231,87 @@ export function AgentTitlePill({
     hasNext.set(neighbours.next !== undefined);
   }, [hasNext, hasPrevious, neighbours]);
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .enabled(enabled)
-        // Committed to only once the drag is clearly sideways. The transcript
-        // scrolls directly underneath this pill, so a vertical drag has to
-        // reach it: past `failOffsetY` the recogniser fails outright and the
-        // touch is the list's. A tap -- the pill's other job -- never travels
-        // far enough to start a pan at all.
-        .activeOffsetX([...SESSION_SWIPE.activeOffsetX])
-        .failOffsetY([...SESSION_SWIPE.failOffsetY])
-        .onUpdate((event) => {
-          // The title follows the finger, damped and clamped. Without it a
-          // swipe is a command rather than a drag: no sign the gesture was
-          // recognised, no sense of how far it has to go, and nothing to
-          // abandon by dragging back.
-          const forward = event.translationX < 0;
-          const available = forward ? hasNext.get() : hasPrevious.get();
-          slide.set(sessionSwipeFollow(event.translationX, pillWidth.get(), available));
-        })
-        // `commitFromGesture` never changes identity and always reaches the
-        // newest `commit` (see `useStableHandler`), which is what keeps the
-        // gesture built once instead of re-registered on every state change.
-        .onEnd((event) => {
-          const direction = sessionSwipeDirection(
-            event.translationX,
-            event.translationY,
-            event.velocityX
-          );
-          const available = direction === 'next' ? hasNext.get() : hasPrevious.get();
-          if (direction && available) {
-            // `playSwitch` puts the title where the carousel wants it, so the
-            // drag's own offset is cleared here rather than settled.
-            slide.set(0);
-            scheduleOnRN(commitFromGesture, direction);
-            return;
-          }
-          // Not a swipe, or the end of the list: the title goes back where it
-          // was, carrying the throw's own velocity into its rest rather than
-          // being picked up and put down by the app.
-          settleTo(slide, 0, event.velocityX * SESSION_SWIPE.followRatio);
-        })
-        // A gesture the system takes away -- a navigation pop, another
-        // recogniser winning -- still has to put the title back.
-        .onFinalize((_event, success) => {
-          if (!success) slide.set(withTiming(0, timing('short')));
-        }),
-    [commitFromGesture, enabled, hasNext, hasPrevious, pillWidth, slide]
-  );
+  const gesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .enabled(enabled)
+      // Committed to only once the drag is clearly sideways. The transcript
+      // scrolls directly underneath this pill, so a vertical drag has to
+      // reach it: past `failOffsetY` the recogniser fails outright and the
+      // touch is the list's. A tap -- the pill's other job -- never travels
+      // far enough to start a pan at all.
+      .activeOffsetX([...SESSION_SWIPE.activeOffsetX])
+      .failOffsetY([...SESSION_SWIPE.failOffsetY])
+      .onUpdate((event) => {
+        // The title follows the finger, damped and clamped. Without it a
+        // swipe is a command rather than a drag: no sign the gesture was
+        // recognised, no sense of how far it has to go, and nothing to
+        // abandon by dragging back.
+        const forward = event.translationX < 0;
+        const available = forward ? hasNext.get() : hasPrevious.get();
+        slide.set(sessionSwipeFollow(event.translationX, pillWidth.get(), available));
+      })
+      // `commitFromGesture` never changes identity and always reaches the
+      // newest `commit` (see `useStableHandler`), which is what keeps the
+      // gesture built once instead of re-registered on every state change.
+      .onEnd((event) => {
+        const direction = sessionSwipeDirection(
+          event.translationX,
+          event.translationY,
+          event.velocityX
+        );
+        const available = direction === 'next' ? hasNext.get() : hasPrevious.get();
+        if (direction && available) {
+          // `playSwitch` puts the title where the carousel wants it, so the
+          // drag's own offset is cleared here rather than settled.
+          slide.set(0);
+          scheduleOnRN(commitFromGesture, direction);
+          return;
+        }
+        // Not a swipe, or the end of the list: the title goes back where it
+        // was, carrying the throw's own velocity into its rest rather than
+        // being picked up and put down by the app.
+        settleTo(slide, 0, event.velocityX * SESSION_SWIPE.followRatio);
+      })
+      // A gesture the system takes away -- a navigation pop, another
+      // recogniser winning -- still has to put the title back.
+      .onFinalize((_event, success) => {
+        if (!success) slide.set(withTiming(0, timing('short')));
+      });
+    const tap = Gesture.Tap()
+      .maxDistance(SESSION_SWIPE.activeOffsetX[1])
+      .onBegin(() => {
+        pressScale.set(
+          withTiming(reduceMotion ? 1 : motion.press.surface, {
+            duration: motion.press.inMs,
+            easing: motion.press.easing,
+          })
+        );
+      })
+      .onEnd((_event, success) => {
+        if (success) scheduleOnRN(openFromGesture);
+      })
+      .onFinalize(() => {
+        pressScale.set(
+          withTiming(1, { duration: motion.press.outMs, easing: motion.press.easing })
+        );
+      });
+    // One recognizer owns each touch. A completed or cancelled swipe cannot
+    // fall through to a separate iOS responder press and open the session list.
+    return Gesture.Exclusive(pan, tap);
+  }, [
+    commitFromGesture,
+    enabled,
+    hasNext,
+    hasPrevious,
+    motion.press,
+    openFromGesture,
+    pillWidth,
+    pressScale,
+    reduceMotion,
+    slide,
+  ]);
+
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: pressScale.get() }] }));
 
   const titleStyle = useAnimatedStyle(() => ({
     opacity: fade.get(),
@@ -286,37 +324,40 @@ export function AgentTitlePill({
         ? [
             { name: 'increment', label: t`Next session` },
             { name: 'decrement', label: t`Previous session` },
+            { name: 'activate' },
           ]
-        : undefined,
+        : [{ name: 'activate' }],
     [enabled, t]
   );
 
   const onAccessibilityAction = useCallback(
     (event: AccessibilityActionEvent) => {
+      if (event.nativeEvent.actionName === 'activate') {
+        openFromGesture();
+        return;
+      }
       const direction = sessionSwipeActionDirection(event.nativeEvent.actionName);
       if (direction) commit(direction);
     },
-    [commit]
+    [commit, openFromGesture]
   );
 
   return (
     <View style={styles.wrap} onLayout={onLayout}>
       <GestureDetector gesture={gesture}>
-        {/* A plain view for the detector to attach to, so the gesture does not
-            depend on what the pressable happens to render into. */}
-        <View collapsable={false}>
-          <PressableScale
-            testID={testID}
-            onPress={onPress}
-            accessibilityRole="button"
-            accessibilityLabel={accessibilityLabel}
-            accessibilityHint={enabled ? t`Swipe left or right to switch session` : undefined}
-            accessibilityActions={accessibilityActions}
-            onAccessibilityAction={enabled ? onAccessibilityAction : undefined}
-            style={style}>
-            <Animated.View style={[styles.title, titleStyle]}>{children}</Animated.View>
-          </PressableScale>
-        </View>
+        <Animated.View
+          collapsable={false}
+          accessible
+          testID={testID}
+          onAccessibilityTap={openFromGesture}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={enabled ? t`Swipe left or right to switch session` : undefined}
+          accessibilityActions={accessibilityActions}
+          onAccessibilityAction={onAccessibilityAction}
+          style={[style, pressStyle]}>
+          <Animated.View style={[styles.title, titleStyle]}>{children}</Animated.View>
+        </Animated.View>
       </GestureDetector>
       {/* Drawn over the title rather than beside it: the pill is a fixed slot
           in the header and the marks must not take width from the name. They

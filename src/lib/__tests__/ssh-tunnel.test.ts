@@ -23,6 +23,13 @@ class FakeSsh {
   dialCount = 0;
   disconnectCount = 0;
   nextPort = 40000;
+  readonly dropCallbacks: ((reason: string) => void)[] = [];
+  readonly forwardCloseCallbacks: ((reason: string) => void)[] = [];
+  readonly disconnectedConnections: number[] = [];
+  readonly closedPorts: number[] = [];
+  nextConnectGate: Promise<void> | null = null;
+  /** Pause one forward so its completion can arrive after a replacement opens. */
+  nextForwardGate: Promise<void> | null = null;
   /** hostId -> the live connection's drop trigger. */
   private dropped = new Map<string, (reason: string) => void>();
   /** serverId -> the live forward's close trigger. */
@@ -40,28 +47,39 @@ class FakeSsh {
           return Promise.reject(typeof reason === 'string' ? new Error(reason) : reason);
         }
         this.connectCount += 1;
+        const connectionId = this.connectCount;
+        const connectGate = this.nextConnectGate;
+        this.nextConnectGate = null;
         this.dropped.set(hostId, events.onDropped);
+        this.dropCallbacks.push(events.onDropped);
         const handle: TunnelConnectionHandle = {
-          forwardLocal: (
+          forwardLocal: async (
             opts: { remoteHost: string; remotePort: number },
             fwEvents: { onClosed?: (reason: string) => void }
           ) => {
+            this.forwardCloseCallbacks.push(fwEvents.onClosed ?? (() => {}));
+            const gate = this.nextForwardGate;
+            this.nextForwardGate = null;
+            if (gate) await gate;
             const port = this.nextPort++;
             // Key the close trigger by the port so two forwards on one host stay distinct.
             const forward: TunnelForwardHandle = {
               localPort: port,
-              close: () => Promise.resolve(),
+              close: async () => {
+                this.closedPorts.push(port);
+              },
             };
             (forward as unknown as { remotePort: number }).remotePort = opts.remotePort;
             this.forwardClosed.set(`${hostId}:${opts.remotePort}`, fwEvents.onClosed ?? (() => {}));
-            return Promise.resolve(forward);
+            return forward;
           },
           disconnect: () => {
             this.disconnectCount += 1;
+            this.disconnectedConnections.push(connectionId);
             return Promise.resolve();
           },
         };
-        return Promise.resolve(handle);
+        return connectGate ? connectGate.then(() => handle) : Promise.resolve(handle);
       },
       describeFailure: (error) => (error instanceof Error ? error.message : String(error)),
     };
@@ -139,6 +157,27 @@ describe('teardown', () => {
     expect(manager.baseUrl('s1')).toBeNull();
     expect(ssh.disconnectCount).toBe(1);
   });
+
+  test('a dial resolving after release disposes only its own connection once', async () => {
+    const gate = Promise.withResolvers<void>();
+    ssh.nextConnectGate = gate.promise;
+    manager.hold(record('s1'));
+    manager.release('s1');
+    manager.hold(record('s1'));
+    await tick();
+    const replacementUrl = manager.baseUrl('s1');
+    try {
+      expect(manager.state('s1').phase).toBe('open');
+      gate.resolve();
+      await tick();
+      expect(ssh.disconnectedConnections).toEqual([1]);
+      expect(manager.baseUrl('s1')).toBe(replacementUrl);
+    } finally {
+      manager.release('s1');
+    }
+    await tick();
+    expect(ssh.disconnectedConnections).toEqual([1, 2]);
+  });
 });
 
 describe('one host, two gateways', () => {
@@ -169,6 +208,85 @@ describe('one host, two gateways', () => {
 });
 
 describe('reconnect', () => {
+  test('a forward closed before its open settles cannot be reported as open', async () => {
+    const gate = Promise.withResolvers<void>();
+    ssh.nextForwardGate = gate.promise;
+    manager.hold(record('s1'));
+    await tick();
+    try {
+      ssh.forwardCloseCallbacks[0]?.('listener closed before opening settled');
+      expect(manager.state('s1').phase).toBe('down');
+      gate.resolve();
+      await tick();
+      expect(manager.state('s1').phase).toBe('down');
+      expect(manager.baseUrl('s1')).toBeNull();
+      expect(ssh.closedPorts).toEqual([40000]);
+    } finally {
+      manager.release('s1');
+    }
+  });
+
+  test('a late disconnect from a released connection leaves its replacement open', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    const oldDropped = ssh.dropCallbacks[0];
+    manager.release('s1');
+    manager.hold(record('s1'));
+    await tick();
+    const replacementUrl = manager.baseUrl('s1');
+    try {
+      expect(manager.state('s1').phase).toBe('open');
+      oldDropped?.('old connection disconnected');
+      expect(manager.state('s1').phase).toBe('open');
+      expect(manager.baseUrl('s1')).toBe(replacementUrl);
+    } finally {
+      manager.release('s1');
+    }
+  });
+
+  test('a stale forward completion cannot disconnect the replacement connection', async () => {
+    const gate = Promise.withResolvers<void>();
+    ssh.nextForwardGate = gate.promise;
+    manager.hold(record('s1'));
+    await tick();
+    ssh.dropHost('host-a');
+    manager.retry('s1');
+    await tick();
+    const replacementUrl = manager.baseUrl('s1');
+    try {
+      expect(manager.state('s1').phase).toBe('open');
+      gate.resolve();
+      await tick();
+      expect(ssh.disconnectCount).toBe(0);
+      expect(ssh.closedPorts).toEqual([40001]);
+      expect(manager.baseUrl('s1')).toBe(replacementUrl);
+    } finally {
+      manager.release('s1');
+    }
+  });
+
+  test('a late forward close from a released record leaves its replacement open', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    const oldClosed = ssh.forwardCloseCallbacks[0];
+    manager.release('s1');
+    manager.hold(record('s1'));
+    await tick();
+    const replacementUrl = manager.baseUrl('s1');
+    try {
+      oldClosed?.('old forward closed');
+      expect(manager.state('s1').phase).toBe('open');
+      expect(manager.baseUrl('s1')).toBe(replacementUrl);
+      expect(ssh.disconnectedConnections).toEqual([1]);
+      expect(ssh.closedPorts).toEqual([40000]);
+    } finally {
+      manager.release('s1');
+    }
+    await tick();
+    expect(ssh.disconnectedConnections).toEqual([1, 2]);
+    expect(ssh.closedPorts).toEqual([40000, 40001]);
+  });
+
   test('a forward that closes under a holder goes down, and retry reopens it', async () => {
     manager.hold(record('s1', 'host-a', 23847));
     await tick();
