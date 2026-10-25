@@ -1138,12 +1138,12 @@ export const AgentComposer = memo(function AgentComposer({
     heldCaret && heldCaret.draft === text
       ? { start: heldCaret.caret, end: heldCaret.caret }
       : (skillPopup.inputProps.selection ?? slashPopup.inputProps.selection);
-  // Span mode starts as soon as a mention can appear (an `@` or a token in the
-  // draft), so the field switches from `value` to spans on a keystroke rather
+  // Span mode starts as soon as a trigger or mention can appear in the
+  // draft, so the field switches from `value` to spans on a keystroke rather
   // than in the same commit as a pick -- Android drops the first colouring
   // otherwise.
   const spans =
-    ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
+    /^[@$/]/.test(text) || ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
       <MentionSpans text={text} ranges={ranges} />
     ) : undefined;
 
