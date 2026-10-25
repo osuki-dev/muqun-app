@@ -1608,7 +1608,7 @@ export const AgentComposer = memo(function AgentComposer({
     if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
   }, [surfaceHeight, dockHeight, dockClipHeight, decorationClearance, compactionClearance]);
   const popupMaxHeight = Math.max(
-    POPUP_MIN_HEIGHT,
+    0,
     windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
   );
   // The compact dock's second line holds the two choices that define a new

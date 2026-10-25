@@ -1820,11 +1820,23 @@
         "run": "flows/file-mentions.ad#s4"
       },
       {
+        "target": { "id": "file-mention-app.json" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
+      },
+      {
         "target": {
           "text": "Mention app.json"
         },
         "mode": "visible",
         "run": "flows/file-mentions.ad#s5"
+      },
+      {
+        "target": { "id": "file-mention-package.json" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
       },
       {
         "target": {
@@ -1840,11 +1852,23 @@
         "run": "flows/file-mentions.ad#s8"
       },
       {
+        "target": { "id": "file-mention-src/theme.ts" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/file-mentions.ad#seek-up"
+      },
+      {
         "target": {
           "text": "Mention src/theme.ts"
         },
         "mode": "visible",
         "run": "flows/file-mentions.ad#s9"
+      },
+      {
+        "target": { "id": "file-mention-docs/theming.md" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
       },
       {
         "target": {
@@ -1866,6 +1890,12 @@
         },
         "mode": "hidden",
         "run": "flows/file-mentions.ad#s12"
+      },
+      {
+        "target": { "id": "file-mention-src/theme.ts" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/file-mentions.ad#seek-up"
       },
       {
         "target": {

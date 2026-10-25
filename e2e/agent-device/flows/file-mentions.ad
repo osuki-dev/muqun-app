@@ -16,6 +16,12 @@ is visible "${TARGET}"
 # section s6
 is visible "${TARGET}"
 
+# section seek-down
+scroll down 0.2
+
+# section seek-up
+scroll up 0.2
+
 # section s7
 fill id="terminal-composer-input" "@the"
 

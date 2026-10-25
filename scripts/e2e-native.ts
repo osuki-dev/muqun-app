@@ -92,6 +92,7 @@ type Node = {
   parentIndex?: number;
   ref: string;
   type?: string;
+  kind?: string;
   role?: string;
   identifier?: string;
   label?: string;
@@ -301,7 +302,7 @@ export function appViewport(nodes: Node[]): NonNullable<Node['rect']> {
 }
 
 function nodeRole(node: Node): string {
-  const source = node.role ?? node.type ?? '';
+  const source = node.kind ?? node.role ?? node.type ?? '';
   const role = source
     .replace(/^XCUIElementType/, '')
     .split('.')
@@ -343,7 +344,7 @@ function nodeRole(node: Node): string {
   return aliases[role] ?? role;
 }
 
-/** Native iOS visibility can include rows clipped below a form sheet's list. */
+/** Native iOS visibility can include rows outside a list or behind the keyboard. */
 export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
   if (!node.rect) return true;
   const { x, y, width, height } = node.rect;
@@ -372,6 +373,37 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
     }
     parentIndex = parent.parentIndex;
   }
+  // The placeholder includes the assistant band above the keys. Preserve
+  // native keyboard controls while refusing app controls covered by either.
+  const keyboards = nodes.filter(
+    (candidate) =>
+      candidate.visibleToUser !== false &&
+      (candidate.type === 'Keyboard' ||
+        (candidate.identifier === 'inputView' &&
+          candidate.role === '_UIRemoteKeyboardPlaceholderView') ||
+        (candidate.identifier === 'SystemInputAssistantView' &&
+          candidate.role === 'TUISystemInputAssistantView'))
+  );
+  const keyboardTarget = keyboards.some(
+    (candidate) => candidate.index === node.index || seen.has(candidate.index)
+  );
+  if (
+    !keyboardTarget &&
+    keyboards.some((candidate) => {
+      const rect = candidate.rect;
+      if (!rect) return false;
+      return actionable
+        ? centerX >= rect.x &&
+            centerX < rect.x + rect.width &&
+            centerY >= rect.y &&
+            centerY < rect.y + rect.height
+        : x >= rect.x &&
+            x + width <= rect.x + rect.width &&
+            y >= rect.y &&
+            y + height <= rect.y + rect.height;
+    })
+  )
+    return false;
   return true;
 }
 

@@ -77,7 +77,11 @@ export function FileMentionPanel({
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const floatingBackground = useFloatingSurfaceBackground();
-  if (hits.length === 0 && computers.length === 0) return null;
+  if (
+    (hits.length === 0 && computers.length === 0) ||
+    (maxHeight !== undefined && maxHeight <= styles.panel.paddingVertical * 2)
+  )
+    return null;
 
   return (
     <View

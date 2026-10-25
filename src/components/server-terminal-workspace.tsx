@@ -1411,7 +1411,7 @@ export function ServerTerminalWorkspace({
    */
   const keyboardHeight = useKeyboardState((state) => state.height);
   const commandPopupMaxHeight = Math.max(
-    120,
+    0,
     Math.min(
       windowHeight * 0.45,
       windowHeight - insets.top - DETAIL_HEADER_HEIGHT - keyboardHeight - composerHeight - 24

@@ -213,6 +213,121 @@ describe('native end-to-end gate', () => {
     };
     expect(withinScrollViewport(source, [app, list, source])).toBe(true);
   });
+  test('a Home result covered by the native keyboard assistant is not a reachable target', () => {
+    const row = {
+      ...node,
+      type: 'Button',
+      kind: 'button',
+      role: 'RCTViewComponentView',
+      rect: { x: 12, y: 376, width: 358, height: 66 },
+    };
+    const keyboardPlaceholder = {
+      ...node,
+      index: 28,
+      ref: 'e28',
+      type: 'Other',
+      role: '_UIRemoteKeyboardPlaceholderView',
+      identifier: 'inputView',
+      rect: { x: 0, y: 374, width: 466, height: 304 },
+    };
+    const keyboard = {
+      ...node,
+      index: 36,
+      ref: 'e36',
+      type: 'Keyboard',
+      role: 'UIKeyboardAutomatic',
+      rect: { x: 0, y: 418, width: 466, height: 245 },
+    };
+    expect(withinScrollViewport(row, [row, keyboard])).toBe(true);
+    expect(withinScrollViewport(row, [row, keyboardPlaceholder, keyboard])).toBe(false);
+    expect(
+      withinScrollViewport({ ...row, rect: { ...row.rect, y: 280 } }, [keyboardPlaceholder])
+    ).toBe(true);
+    expect(
+      withinScrollViewport(row, [{ ...keyboardPlaceholder, visibleToUser: false }, keyboard])
+    ).toBe(true);
+    expect(withinScrollViewport({ ...row, rect: { ...row.rect, y: 440 } }, [keyboard])).toBe(false);
+    const keyboardButton = { ...row, index: 37, parentIndex: 36, rect: { ...row.rect, y: 440 } };
+    expect(withinScrollViewport(keyboardButton, [keyboardPlaceholder, keyboard])).toBe(true);
+    const assistant = {
+      ...keyboardPlaceholder,
+      index: 29,
+      identifier: 'SystemInputAssistantView',
+      role: 'TUISystemInputAssistantView',
+      rect: { x: 0, y: 374, width: 466, height: 44 },
+    };
+    const assistantButton = {
+      ...row,
+      index: 30,
+      parentIndex: 29,
+      rect: { ...row.rect, height: 22 },
+    };
+    expect(withinScrollViewport(assistantButton, [keyboardPlaceholder, assistant, keyboard])).toBe(
+      true
+    );
+    const text = { ...row, type: 'StaticText', kind: 'text', role: 'RCTParagraphComponentView' };
+    expect(withinScrollViewport(text, [keyboardPlaceholder])).toBe(false);
+    expect(
+      withinScrollViewport({ ...text, rect: { ...text.rect, y: 350 } }, [keyboardPlaceholder])
+    ).toBe(true);
+  });
+  test('a keyboard-covered Home result scrolls into reach before its one menu gesture', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-keyboard-scroll-'));
+    try {
+      await writeFile(
+        path.join(directory, 'search.ad'),
+        '# section seek\nscroll down 0.2\n# section menu\nlongpress "${TARGET}" 700\n'
+      );
+      const calls: string[][] = [];
+      let scrolled = false;
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                {
+                  ...node,
+                  type: 'Button',
+                  kind: 'button',
+                  role: 'RCTViewComponentView',
+                  identifier: 'home-result',
+                  rect: { x: 12, y: scrolled ? 280 : 376, width: 358, height: 66 },
+                },
+                {
+                  ...node,
+                  index: 28,
+                  ref: 'e28',
+                  type: 'Other',
+                  role: '_UIRemoteKeyboardPlaceholderView',
+                  identifier: 'inputView',
+                  rect: { x: 0, y: 374, width: 466, height: 304 },
+                },
+              ],
+            };
+          if (args[0] === 'scroll') scrolled = true;
+          return { pass: true };
+        },
+        {}
+      );
+      await runner.run([
+        { target: { id: 'home-result' }, mode: 'scroll', run: 'search.ad#seek' },
+        { target: { id: 'home-result' }, mode: 'press', run: 'search.ad#menu' },
+      ]);
+      expect(calls.filter((args) => ['scroll', 'longpress'].includes(args[0]))).toEqual([
+        ['scroll', 'down', '0.2'],
+        ['longpress', 'role="button" id="home-result"', '700'],
+      ]);
+      expect(calls.findIndex((args) => args[0] === 'is')).toBeGreaterThan(
+        calls.findIndex((args) => args[0] === 'scroll')
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test('flow cleanup follows failure evidence, always closes, and preserves original failure', async () => {
     const order: string[] = [];
     const failure = await runWithCleanup({

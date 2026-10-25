@@ -138,6 +138,7 @@ is visible "${TARGET}"
 # section opacity-reset
 press "id=theme-appearance-reset"
 wait stable 400 5000
+scroll up 0.2 --until "id=theme-terminal-opacity-value"
 is visible "text=100%"
 
 # section home-visibility
@@ -167,10 +168,9 @@ back --in-app
 wait "id=settings-theme-row" 10000
 
 # section settings-scroll-up
-# Storage is near the end of the full Settings document. Use a viewport-sized
-# gesture inside the content: a generic scroll starts on the pinned header on
-# iOS and leaves the Settings list at the bottom.
-gesture pan 270 320 0 430 400
+# The manifest keeps seeking the same row; stay inside the current viewport
+# and use the form sheet's scroll surface on iPad.
+scroll up 0.2 --in-sheet
 wait stable 300 5000
 
 # section settings-scroll-up-android
