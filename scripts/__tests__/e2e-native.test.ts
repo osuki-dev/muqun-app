@@ -153,12 +153,42 @@ function gitSheetCapture(duo: boolean) {
   }
   return { ...capture, name: duo ? 'Duo Git' : 'iPhone Git', x: duo ? 233 : 201, y: 92 + offset };
 }
+
+function scrollRootSheetCapture() {
+  const capture = coverSheetCapture(false, true);
+  const bounds = { x: 8, y: 8, width: 450, height: 670 };
+  for (const node of capture.nodes) {
+    if (node.index === 7) node.identifier = 'new-task-sheet';
+    if ([7, 8, 9].includes(node.index)) node.parentIndex = 11;
+    if (node.index === 10 || node.index === 11) node.rect = { ...bounds };
+  }
+  capture.nodes.push(
+    {
+      index: 12,
+      parentIndex: 11,
+      ref: 'e13',
+      kind: 'text',
+      label: 'Agent',
+      rect: { x: 28, y: 86.66666412353516, width: 342, height: 17 },
+    },
+    {
+      index: 13,
+      parentIndex: 11,
+      ref: 'e14',
+      kind: 'scroll-area',
+      type: 'ScrollView',
+      rect: { x: 28, y: 107.66666412353516, width: 410, height: 44 },
+    }
+  );
+  return { ...capture, name: 'scroll-root New task', y: 106 };
+}
 const coverSheetCaptures = [
   coverSheetCapture(false),
   coverSheetCapture(true),
   coverSheetCapture(true, true),
   gitSheetCapture(false),
   gitSheetCapture(true),
+  scrollRootSheetCapture(),
 ];
 
 describe('native end-to-end gate', () => {

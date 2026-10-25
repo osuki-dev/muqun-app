@@ -488,10 +488,30 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
       (!container || descendsFrom(node, container.index))
     );
   });
+  // A scroll-root form puts the heading inside the sheet's outer scroller.
+  // Treat that observed ancestor as the sheet viewport, not its first list.
+  // The visible heading still has to leave an uncovered gap before a nested
+  // list; an offscreen heading or an unsafe touch point continues to fail.
+  const rootScrollers = new Set(
+    scoped
+      .filter(
+        (node) =>
+          nodeRole(node) === 'scroll-area' &&
+          sheet &&
+          descendsFrom(sheet, node.index) &&
+          (['x', 'y', 'width', 'height'] as const).every(
+            (key) => Math.abs(node.rect![key] - bounds[key]) <= 1
+          )
+      )
+      .map((node) => node.index)
+  );
   const scroller = scoped
     .filter(
       (node) =>
-        nodeRole(node) === 'scroll-area' && node.rect!.x <= x && x < node.rect!.x + node.rect!.width
+        nodeRole(node) === 'scroll-area' &&
+        !rootScrollers.has(node.index) &&
+        node.rect!.x <= x &&
+        x < node.rect!.x + node.rect!.width
     )
     .sort((a, b) => a.rect!.y - b.rect!.y)[0];
   const y = scroller ? Math.floor(scroller.rect!.y - 1) : NaN;
@@ -500,7 +520,10 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
       nodeRole(node) === 'text' &&
       node.rect!.y < (scroller?.rect!.y ?? 0) &&
       !scoped.some(
-        (candidate) => nodeRole(candidate) === 'scroll-area' && descendsFrom(node, candidate.index)
+        (candidate) =>
+          nodeRole(candidate) === 'scroll-area' &&
+          !rootScrollers.has(candidate.index) &&
+          descendsFrom(node, candidate.index)
       )
   );
   const covered = scoped.some(
