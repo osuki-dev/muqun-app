@@ -32,6 +32,7 @@ press "id=agent-tool-toggle"
 wait "text=\"QA_SUBAGENT_RESULT: The parser review found an ordering issue.\"" 5000
 is hidden "id=agent-subagent-activity-body"
 back --system
+wait absent "id=agent-subagent-detail-sheet" 10000
 wait "id=agent-session-tree-row-demo-tree-branch" 10000
 is visible "id=agent-session-tree-row-demo-tree-root"
 is visible "id=agent-session-tree-row-demo-tree-branch"
@@ -58,12 +59,16 @@ is visible "${TARGET}"
 
 # section close-detail
 back --system
+wait absent "id=agent-subagent-detail-sheet" 10000
+wait "id=agent-session-tree-sheet" 10000
 
 # section tree-restored
 is visible "${TARGET}"
 
 # section close-tree
 back --system
+wait absent "id=agent-session-tree-sheet" 10000
+wait "id=terminal-composer-input" 10000
 
 # section closed
 is hidden "${TARGET}"
