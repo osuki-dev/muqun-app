@@ -417,6 +417,105 @@ export function sheetGrabber(nodes: Node[]): Node | undefined {
   return grabbers.find((node) => nodeRole(node) === 'button') ?? grabbers[0];
 }
 
+/** Native grabbers can overlap the OS top-edge gesture region. Dismiss from
+ * observed fixed-header padding instead, before the sheet's first scroller.
+ * Private AX flattens that header and scroller beside the sheet root, so use
+ * the observed sheet bounds as well as native ancestry when it is available.
+ */
+function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number } {
+  const viewport = appViewport(nodes);
+  const control = grabber.rect!;
+  const x = Math.round(control.x + control.width / 2);
+  const ancestors = new Set<number>();
+  let parentIndex = grabber.parentIndex;
+  while (parentIndex !== undefined && !ancestors.has(parentIndex)) {
+    ancestors.add(parentIndex);
+    parentIndex = nodes.find((node) => node.index === parentIndex)?.parentIndex;
+  }
+  const container = nodes.find(
+    (node) =>
+      ancestors.has(node.index) &&
+      node.label === 'Sheet Grabber' &&
+      node.rect &&
+      node.rect.height > control.height
+  );
+  const sheet =
+    container ??
+    nodes.find(
+      (node) =>
+        node.identifier?.endsWith('-sheet') &&
+        node.visibleToUser !== false &&
+        node.rect &&
+        node.rect.x <= x &&
+        x < node.rect.x + node.rect.width &&
+        node.rect.y <= control.y + control.height &&
+        node.rect.height > control.height
+    );
+  const bounds = sheet?.rect;
+  if (!bounds) throw new Error('Cannot dismiss sheet without observed fixed-header bounds');
+  const descendsFrom = (node: Node, index: number): boolean => {
+    const seen = new Set<number>();
+    let parent = node.parentIndex;
+    while (parent !== undefined && !seen.has(parent)) {
+      if (parent === index) return true;
+      seen.add(parent);
+      parent = nodes.find((candidate) => candidate.index === parent)?.parentIndex;
+    }
+    return false;
+  };
+  const scoped = nodes.filter((node) => {
+    const rect = node.rect;
+    return (
+      rect &&
+      node.visibleToUser !== false &&
+      rect.x >= bounds.x &&
+      rect.x + rect.width <= bounds.x + bounds.width &&
+      rect.y >= bounds.y &&
+      rect.y + rect.height <= bounds.y + bounds.height + 1 &&
+      (!container || descendsFrom(node, container.index))
+    );
+  });
+  const scroller = scoped
+    .filter(
+      (node) =>
+        nodeRole(node) === 'scroll-area' && node.rect!.x <= x && x < node.rect!.x + node.rect!.width
+    )
+    .sort((a, b) => a.rect!.y - b.rect!.y)[0];
+  const y = scroller ? Math.floor(scroller.rect!.y - 1) : NaN;
+  const header = scoped.filter(
+    (node) =>
+      nodeRole(node) === 'text' &&
+      node.rect!.y < (scroller?.rect!.y ?? 0) &&
+      !scoped.some(
+        (candidate) => nodeRole(candidate) === 'scroll-area' && descendsFrom(node, candidate.index)
+      )
+  );
+  const covered = scoped.some(
+    (node) =>
+      actionableRoles.has(nodeRole(node)) &&
+      node.rect!.x <= x &&
+      x < node.rect!.x + node.rect!.width &&
+      node.rect!.y <= y &&
+      y < node.rect!.y + node.rect!.height
+  );
+  if (
+    !header.length ||
+    covered ||
+    y <=
+      Math.max(
+        control.y + control.height,
+        ...header.map((node) => node.rect!.y + node.rect!.height)
+      ) ||
+    x < viewport.x ||
+    x >= viewport.x + viewport.width ||
+    y < viewport.y ||
+    y >= viewport.y + viewport.height - 24
+  ) {
+    throw new Error('Cannot dismiss sheet without safe observed fixed-header padding');
+  }
+  return { x, y };
+}
+
 function hasAlert(nodes: Node[]): boolean {
   return nodes.some(
     (node) =>
@@ -1180,13 +1279,8 @@ export class NativeRunner {
         }
         const grabber = guardedNodes && sheetGrabber(guardedNodes);
         if (grabber?.rect && guardedNodes) {
-          const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
+          const { x, y } = sheetDismissStart(guardedNodes, grabber);
           const viewport = appViewport(guardedNodes);
-          // A near-top grabber's centre can start an OS gesture. Use its lower
-          // interior, retaining room for the existing viewport distance fence.
-          const y = Math.round(
-            Math.min(grabber.rect.y + grabber.rect.height - 1, viewport.y + viewport.height - 25)
-          );
           const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
           await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);
           continue;

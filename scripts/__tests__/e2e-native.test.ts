@@ -37,6 +37,99 @@ const suite: Suite = {
 };
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
+// Sanitized UIKit/private-AX capture geometry, including the flattened header.
+function coverSheetCapture(subagent: boolean, flat = false) {
+  type CaptureNode = Parameters<typeof withinScrollViewport>[0] & {
+    rect: { x: number; y: number; width: number; height: number };
+  };
+  const record = (
+    index: number,
+    parentIndex: number,
+    kind: string,
+    rect: CaptureNode['rect'],
+    extra: Partial<CaptureNode> = {}
+  ): CaptureNode => ({
+    index,
+    parentIndex,
+    ref: `e${index + 1}`,
+    kind,
+    rect,
+    ...extra,
+  });
+  const sheetRect = { x: 8, y: 8, width: 450, height: 670 };
+  const scrollY = subagent ? 139.6666717529297 : 72.66666412353516;
+  const scrollRect = { x: 8, y: scrollY, width: 382, height: 678 - scrollY };
+  const parent = flat ? 0 : 6;
+  const nodes = [
+    record(0, -1, 'application', { x: 0, y: 0, width: 466, height: 678 }),
+    record(
+      5,
+      flat ? 0 : 4,
+      'button',
+      { x: 183, y: 4, width: 100, height: 24 },
+      { label: 'Sheet Grabber' }
+    ),
+    record(7, parent, 'other', sheetRect, {
+      identifier: subagent ? 'agent-subagent-detail-sheet' : 'agent-session-tree-sheet',
+    }),
+    record(
+      8,
+      parent,
+      'text',
+      { x: 28, y: 20, width: subagent ? 284 : 342, height: 23.666667938232422 },
+      { label: subagent ? 'Subagent' : 'Session tree' }
+    ),
+    record(
+      9,
+      parent,
+      'text',
+      { x: 28, y: 47.66666603088379, width: subagent ? 284 : 342, height: 17 },
+      { label: 'Session caption' }
+    ),
+    record(10, parent, 'other', scrollRect),
+    record(11, 10, 'scroll-area', scrollRect, {
+      type: 'ScrollView',
+      role: flat ? 'RCTEnhancedScrollView' : undefined,
+    }),
+  ];
+  if (!flat)
+    nodes.splice(
+      1,
+      0,
+      record(4, 2, 'other', sheetRect, { label: 'Sheet Grabber' }),
+      record(6, 4, 'other', sheetRect)
+    );
+  if (subagent)
+    nodes.push(
+      record(
+        12,
+        parent,
+        'button',
+        { x: 326, y: 20.333333333333336, width: 44, height: 44 },
+        { identifier: 'agent-subagent-detail-refresh' }
+      ),
+      ...[72.66666412353516, 93.66666412353516, 114.66666412353516].map((y, offset) =>
+        record(
+          13 + offset,
+          parent,
+          'text',
+          { x: 28, y, width: 342, height: 17 },
+          { label: 'Session metadata' }
+        )
+      )
+    );
+  return {
+    name: flat ? 'flattened subagent' : subagent ? 'UIKit subagent' : 'UIKit tree',
+    y: subagent ? 138 : 71,
+    nodes,
+  };
+}
+const coverSheetCaptures = [
+  coverSheetCapture(false),
+  coverSheetCapture(true),
+  coverSheetCapture(true, true),
+];
+
 describe('native end-to-end gate', () => {
   test('real IME restoration is explicit and rejects other platforms/devices before IO', async () => {
     let calls = 0;
@@ -1255,76 +1348,120 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
-  test('a small-phone sheet dismissal stays within the screen', async () => {
+  test.each(coverSheetCaptures)(
+    '$name dismisses from observed header padding exactly once',
+    async (capture) => {
+      const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-cover-dismiss-'));
+      try {
+        await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+        for (const gestureFails of [false, true]) {
+          const calls: string[][] = [];
+          const runner = new NativeRunner(
+            suite,
+            directory,
+            directory,
+            async (args) => {
+              calls.push(args);
+              if (args[0] === 'snapshot') return { nodes: capture.nodes };
+              if (gestureFails) throw new Error('Gesture outcome is unknown');
+              return {};
+            },
+            {}
+          );
+          const result = runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+          if (gestureFails) await expect(result).rejects.toThrow('Gesture outcome is unknown');
+          else await result;
+          expect(calls).toEqual([
+            ['snapshot'],
+            ['gesture', 'pan', '233', String(capture.y), '0', '500', '350'],
+          ]);
+        }
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
+  test('sheet dismissal keeps its endpoint fence on a small viewport', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-phone-dismiss-'));
     try {
       await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
       const calls: string[][] = [];
+      // The same observed sheet in a shorter viewport must reduce its travel.
+      const nodes = coverSheetCaptures[0].nodes.map((node) => ({
+        ...node,
+        rect: {
+          ...node.rect,
+          height: node.index === 0 ? 400 : Math.min(node.rect.height, 400 - node.rect.y),
+        },
+      }));
       const runner = new NativeRunner(
         suite,
         directory,
         directory,
         async (args) => {
           calls.push(args);
-          if (args[0] === 'snapshot')
-            return {
-              nodes: [
-                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 390, height: 844 } },
-                { ...node, label: 'Sheet Grabber', rect: { x: 0, y: 0, width: 390, height: 844 } },
-              ],
-            };
-          return {};
+          return args[0] === 'snapshot' ? { nodes } : {};
         },
         {}
       );
       await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
-      const gesture = calls.find((args) => args[0] === 'gesture')!;
-      expect(Number(gesture[3]) + Number(gesture[5])).toBeLessThan(844);
-      expect(Number(gesture[5])).toBeGreaterThan(0);
+      expect(calls).toEqual([['snapshot'], ['gesture', 'pan', '233', '71', '0', '305', '350']]);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });
-  test('a near-top cover-screen grabber dismisses from its lower interior exactly once', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-cover-dismiss-'));
+  test.each([
+    'missing header',
+    'missing scroller',
+    'missing sheet',
+    'no padding',
+    'covered padding',
+    'foreign scroller',
+  ])('sheet dismissal refuses %s before any mutation', async (failure) => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-unsafe-dismiss-'));
     try {
       await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
-      for (const gestureFails of [false, true]) {
-        const calls: string[][] = [];
-        const runner = new NativeRunner(
-          suite,
-          directory,
-          directory,
-          async (args) => {
-            calls.push(args);
-            if (args[0] === 'snapshot')
-              return {
-                nodes: [
-                  { ...node, type: 'Application', rect: { x: 0, y: 0, width: 466, height: 678 } },
-                  {
-                    ...node,
-                    type: 'Button',
-                    label: 'Sheet Grabber',
-                    rect: { x: 183, y: 4, width: 100, height: 24 },
-                  },
-                ],
-              };
-            if (gestureFails) throw new Error('Gesture outcome is unknown');
-            return {};
-          },
-          {}
-        );
-        const result = runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
-        if (gestureFails) await expect(result).rejects.toThrow('Gesture outcome is unknown');
-        else await result;
-        expect(calls).toEqual([['snapshot'], ['gesture', 'pan', '233', '27', '0', '500', '350']]);
-      }
+      let nodes = coverSheetCaptures[0].nodes.map((node) => ({
+        ...node,
+        rect: { ...node.rect },
+      }));
+      if (failure === 'missing header') nodes = nodes.filter((node) => node.kind !== 'text');
+      if (failure === 'missing scroller')
+        nodes = nodes.filter((node) => node.kind !== 'scroll-area');
+      if (failure === 'missing sheet')
+        nodes = nodes.filter((node) => node.index !== 4 && node.index !== 7);
+      if (failure === 'no padding') nodes.find((node) => node.index === 9)!.rect.height = 25;
+      if (failure === 'foreign scroller') nodes.find((node) => node.index === 11)!.parentIndex = 0;
+      if (failure === 'covered padding')
+        nodes.push({
+          index: 30,
+          ref: 'e31',
+          parentIndex: 6,
+          type: 'Button',
+          kind: 'button',
+          rect: { x: 210, y: 65, width: 44, height: 10 },
+        });
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          return { nodes };
+        },
+        {}
+      );
+      await expect(runner.runSection('dismiss.ad', { PLATFORM: 'ios' })).rejects.toThrow(
+        'Cannot dismiss sheet'
+      );
+      expect(calls).toEqual([['snapshot']]);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });
-  test('a sheet dismissal drags the grabber control, not a container that inherited its label', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-grabber-'));
+  test('an explicit sheet close button keeps priority over header dismissal', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-close-'));
     try {
       await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
       const calls: string[][] = [];
@@ -1334,30 +1471,19 @@ describe('native end-to-end gate', () => {
         directory,
         async (args) => {
           calls.push(args);
-          if (args[0] === 'snapshot')
-            return {
-              nodes: [
-                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 834, height: 1210 } },
-                {
-                  ...node,
-                  type: 'Other',
-                  label: 'Sheet Grabber',
-                  rect: { x: 127, y: 240, width: 580, height: 950 },
-                },
-                {
-                  ...node,
-                  type: 'Button',
-                  label: 'Sheet Grabber',
-                  rect: { x: 367, y: 236, width: 100, height: 24 },
-                },
-              ],
-            };
-          return {};
+          return args[0] === 'snapshot'
+            ? {
+                nodes: [
+                  ...coverSheetCaptures[0].nodes,
+                  { ...node, index: 30, ref: 'e31', identifier: 'sheet-close', kind: 'button' },
+                ],
+              }
+            : {};
         },
         {}
       );
       await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
-      expect(calls.find((args) => args[0] === 'gesture')?.slice(2, 4)).toEqual(['417', '259']);
+      expect(calls).toEqual([['snapshot'], ['press', 'id="sheet-close"']]);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
