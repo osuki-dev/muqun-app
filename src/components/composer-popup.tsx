@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import type { ComposerPopupRow } from '@/lib/composer-popup';
+import { fadeInDown, fadeOutDown } from '@/lib/motion';
 
 /**
  * The list the composer raises when a trigger character opens one: slash
@@ -87,7 +88,10 @@ export function ComposerPopup({
   const listHeight = Math.min(wanted, room);
 
   return (
-    <Animated.View testID={testIDPrefix}>
+    <Animated.View
+      entering={fadeInDown('dropdown')}
+      exiting={fadeOutDown('micro')}
+      testID={testIDPrefix}>
       {/* `cards.floating`: the kit leaves this fill as given, so the popup
           keeps the floating floor over the terminal or transcript under it
           instead of thinning to the bare slider like a `cards.plain` card. */}

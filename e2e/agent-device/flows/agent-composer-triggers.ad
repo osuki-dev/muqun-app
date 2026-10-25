@@ -1,0 +1,29 @@
+# The ordinary offline AgentWorkbench and AgentComposer, without sending a prompt.
+open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
+wait "id=agent-composer-input" 15000
+fill "id=agent-composer-input" "@"
+wait "id=file-mention-app.json" 10000
+wait 400
+is visible "id=agent-composer-input label=@"
+snapshot
+screenshot "shots/agent-composer-files.png"
+press "id=file-mention-app.json"
+wait absent "id=file-mention-app.json" 5000
+is visible "id=agent-composer-input label=\"app.json \""
+fill "id=agent-composer-input" "$"
+wait "id=skill-offline-review" 10000
+wait 400
+is visible "id=agent-composer-input label=$"
+snapshot
+screenshot "shots/agent-composer-skills.png"
+press "id=skill-offline-review"
+wait absent "id=skill" 5000
+is visible "id=agent-composer-input label=\"$offline-review \""
+fill "id=agent-composer-input" "/"
+wait "id=slash-command-/new" 10000
+wait 400
+is visible "id=agent-composer-input label=/"
+snapshot
+screenshot "shots/agent-composer-commands.png"
+fill "id=agent-composer-input" ""
+wait absent "id=slash-command" 5000

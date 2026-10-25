@@ -1,4 +1,5 @@
 import { gatewaySocketFor } from './gateway-socket-runtime';
+import { demoAgentComposerCatalog, demoAgentComposerFiles } from './demo-agent-composer';
 import { demoStageSnapshot, demoStageSessions, DEMO_STAGE_ASIDS } from './demo-stage-progress';
 import { agentSnapshotRefreshQuery } from './agent-session-runtime';
 import { DEMO_COMPACTION_LOG_ASIDS, isDemoCompactionLogAsid } from './demo-compaction-log-native';
@@ -1047,6 +1048,8 @@ export async function listAgentFiles(
   query?: string,
   limit = 20
 ): Promise<FileMentionHit[]> {
+  if (usesOfflineDemo() && asid === DEMO_COMPACTION_ASID)
+    return demoAgentComposerFiles(query, limit);
   const params = new URLSearchParams();
   if (query) params.set('query', query);
   params.set('limit', String(limit));
@@ -1218,7 +1221,8 @@ export async function getAgentCatalog(
   endpoint?: CatalogEndpoint,
   options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
-  if (usesOfflineDemo(endpoint)) return EMPTY_CATALOG;
+  if (usesOfflineDemo(endpoint))
+    return options?.directory === '/demo/muqun' ? demoAgentComposerCatalog() : EMPTY_CATALOG;
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',

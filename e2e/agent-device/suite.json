@@ -8,6 +8,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "agent-composer-triggers",
+      "program": "flows/agent-composer-triggers",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "uploaded-video",
       "program": "flows/uploaded-video",
       "tags": ["full", "agents", "files"],
@@ -186,6 +192,10 @@
     }
   ],
   "programs": {
+    "flows/agent-composer-triggers": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-composer-triggers.ad" }
+    ],
     "flows/home-stage-progress": [
       {
         "include": "subflows/open-demo"
