@@ -11,16 +11,16 @@ export default function SettingsStorageScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SheetScene fitsContent testID="settings-storage-sheet" title={t`Storage`}>
+    <SheetScene testID="settings-storage-sheet" title={t`Storage`}>
       <ScrollView
         nestedScrollEnabled
-        style={sheetSceneStyles.fitScroller}
+        style={sheetSceneStyles.scroller}
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
         <SettingsStorage />
-        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+        <SheetSceneFooter bottomInset={insets.bottom} />
       </ScrollView>
     </SheetScene>
   );

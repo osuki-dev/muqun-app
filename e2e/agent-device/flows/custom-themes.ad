@@ -70,14 +70,14 @@ press "id=theme-import-link"
 is visible "id=theme-link-input"
 is visible "id=theme-link-inspect"
 press "id=theme-link-cancel"
-is hidden "id=theme-link-input"
+wait absent "id=theme-link-input" 5000
 # The file route is a row of the same menu, so it is reached by opening it
 # again; the dock's room left the grid at its end, so the card is found first.
 scroll down --until "id=theme-import"
 press "id=theme-import"
 is visible "id=theme-import-file"
 press "id=theme-menu-cancel"
-is hidden "id=theme-import-file"
+wait absent "id=theme-import-file" 5000
 
 # section browse-entry
 # The catalogue is the themes sheet's Gallery tab. Present, and deliberately
@@ -227,6 +227,8 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section storage-press
+# Debug warnings can arrive during theme rendering and cover the final row.
+react-native dismiss-overlay
 press "${TARGET}"
 
 # section storage-settle

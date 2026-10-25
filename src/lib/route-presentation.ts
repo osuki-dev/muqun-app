@@ -242,7 +242,9 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // so it opens with every row showing instead of scrolling.
   'settings-appearance': 'expandable',
   'settings-alerts': 'fitToContents',
-  'settings-storage': 'fitToContents',
+  // Storage is a long, asynchronously populated list. A stable detent avoids
+  // retaining an undersized native content measurement when it is reopened.
+  'settings-storage': 'expandable',
   'settings-about': 'fitToContents',
   'settings-stage-diagnostics': 'fitToContents',
   // Two font groups, including a URL field that needs room above the keyboard.
@@ -404,7 +406,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // The settings groups are content-sized, capped by `SheetScene`'s `fitsContent`.
   'settings-terminal': 'short',
   'settings-alerts': 'short',
-  'settings-storage': 'short',
+  'settings-storage': 'list',
   'settings-about': 'short',
   'settings-stage-diagnostics': 'short',
 };
