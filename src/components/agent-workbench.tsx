@@ -816,6 +816,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Whether a pull for earlier history is still being answered.
   const [loadingEarlier, setLoadingEarlier] = useState(false);
   const [earlierExhausted, setEarlierExhausted] = useState(false);
+  const historyCursorRef = useRef<string | null | undefined>(undefined);
+  const historyPagingRef = useRef(false);
   /**
    * Where the rendered window starts, mirrored for the resync path.
    *
@@ -851,8 +853,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [readRenderedRuntime, serverId]);
   useEffect(() => {
     activeAsidRef.current = activeAsid;
+    historyCursorRef.current = undefined;
+    historyPagingRef.current = false;
     setEarlierExhausted(false);
-  }, [activeAsid]);
+  }, [activeAsid, serverId]);
   // Opening a session answers its question notices: the form is on screen now.
   useEffect(() => {
     if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid, serverId);
@@ -1932,11 +1936,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         async () => {
           return recoverWith(
             async () => {
-              const snap = await getAgentSessionSnapshot(sessionId, asid, {
+              let requestedCursor = mode === 'enter' ? undefined : historyCursorRef.current;
+              let snap = await getAgentSessionSnapshot(sessionId, asid, {
                 refresh: mode === 'refresh',
+                historyCursor: requestedCursor,
                 capabilities: useServerCapabilities.getState().byServer[serverId],
               });
+              // A concurrent pull can extend the reader while this resync is
+              // in flight. Re-read that boundary before replacing its rows.
+              while (
+                ownsSnapshot() &&
+                mode !== 'enter' &&
+                historyCursorRef.current !== requestedCursor
+              ) {
+                requestedCursor = historyCursorRef.current;
+                snap = await getAgentSessionSnapshot(sessionId, asid, {
+                  historyCursor: requestedCursor,
+                  capabilities: useServerCapabilities.getState().byServer[serverId],
+                });
+              }
               if (!ownsSnapshot()) return;
+              historyCursorRef.current = snap.history_cursor;
+              setEarlierExhausted(snap.history_cursor === null);
               const fresh = freshSessionRef.current === asid;
               const timeline = fresh
                 ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
@@ -4637,21 +4658,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
       return;
     }
-    if (!activeAsid || earlierExhausted || !supportsRemoteEarlier) return;
+    if (!activeAsid || earlierExhausted || !supportsRemoteEarlier || historyPagingRef.current)
+      return;
+    historyPagingRef.current = true;
     setLoadingEarlier(true);
     const owner = activeAsid;
-    void loadEarlierAgentTimeline(sessionId, owner)
+    const ownerGeneration = ownerGenerationRef.current;
+    const ownsPage = () =>
+      activeAsidRef.current === owner && ownerGenerationRef.current === ownerGeneration;
+    void loadEarlierAgentTimeline(sessionId, owner, historyCursorRef.current)
       .then(async (page) => {
         // The adapter lost the cursor this paging read from (a restart, an
         // eviction): the snapshot is read again, which gives it one, and the
         // same pull goes on from there. It is not the end of the history.
-        if (!page.cursorLost || activeAsidRef.current !== owner) return page;
+        if (!page.cursorLost || !ownsPage()) return page;
         await loadSnapshot('refresh');
-        if (activeAsidRef.current !== owner) return page;
-        return loadEarlierAgentTimeline(sessionId, owner);
+        if (!ownsPage()) return page;
+        return loadEarlierAgentTimeline(sessionId, owner, historyCursorRef.current);
       })
       .then((page) => {
-        if (activeAsidRef.current !== owner || page.cursorLost) return;
+        if (!ownsPage() || page.cursorLost) return;
+        if (page.history_cursor !== undefined) historyCursorRef.current = page.history_cursor;
         // Only the source knows whether older history remains. Filtering can
         // produce an empty page; keep the next pull available without spinning.
         setEarlierExhausted(page.exhausted);
@@ -4661,7 +4688,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         console.warn('Failed to load earlier messages:', err);
       })
       .finally(() => {
-        if (activeAsidRef.current === owner) setLoadingEarlier(false);
+        if (ownsPage()) {
+          historyPagingRef.current = false;
+          setLoadingEarlier(false);
+        }
       });
   }, [
     activeAsid,

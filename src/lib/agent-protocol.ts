@@ -1342,6 +1342,7 @@ export function parseTimelineItems(value: unknown): TimelineItem[] {
 
 /** A filtered page may be empty without reaching the beginning of history. */
 export function parseEarlierTimelinePage(value: unknown): {
+  history_cursor?: string | null;
   items: TimelineItem[];
   exhausted: boolean;
 } {
@@ -1349,7 +1350,13 @@ export function parseEarlierTimelinePage(value: unknown): {
   if (!record || !Array.isArray(record.items) || typeof record.exhausted !== 'boolean') {
     throw new Error('Invalid earlier history page');
   }
-  return { items: parseTimelineItems(record.items), exhausted: record.exhausted };
+  return {
+    items: parseTimelineItems(record.items),
+    exhausted: record.exhausted,
+    ...(record.history_cursor === null || typeof record.history_cursor === 'string'
+      ? { history_cursor: record.history_cursor }
+      : {}),
+  };
 }
 
 /** Where a row sorts: its own key when it has one, its message id otherwise. */
@@ -1560,6 +1567,9 @@ function hostPathFromUri(uri: string): string {
 }
 
 export interface AgentSessionSnapshot {
+  /** Absent on older Gateways; null means an empty history window. */
+  history_cursor?: string | null;
+  history_reset?: boolean;
   info: AgentSessionInfo | null;
   timeline: TimelineItem[];
   permissions: PermissionRequest[];
@@ -1585,6 +1595,9 @@ export function parseAgentSessionSnapshot(value: unknown): AgentSessionSnapshot 
     }
   }
   return {
+    ...(rec.history_cursor === null || typeof rec.history_cursor === 'string'
+      ? { history_cursor: rec.history_cursor }
+      : {}),
     info: parseAgentSessionInfo(rec.info),
     timeline: sortTimeline(parseTimelineItems(rec.timeline)),
     permissions,
