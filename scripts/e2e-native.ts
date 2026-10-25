@@ -426,6 +426,19 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
   const viewport = appViewport(nodes);
   const control = grabber.rect!;
   const x = Math.round(control.x + control.width / 2);
+  // A lowered sheet exposes its real UIKit grabber well below the OS
+  // edge. Its content may start behind the grabber, with no fixed header gap.
+  if (
+    nodeRole(grabber) === 'button' &&
+    control.height > 0 &&
+    control.height <= 44 &&
+    control.y >= viewport.y + 80 &&
+    control.y + control.height < viewport.y + viewport.height - 24 &&
+    control.x >= viewport.x &&
+    control.x + control.width <= viewport.x + viewport.width
+  ) {
+    return { x, y: Math.round(control.y + control.height / 2) };
+  }
   const ancestors = new Set<number>();
   let parentIndex = grabber.parentIndex;
   while (parentIndex !== undefined && !ancestors.has(parentIndex)) {

@@ -1381,6 +1381,72 @@ describe('native end-to-end gate', () => {
       }
     }
   );
+  test.each([
+    {
+      device: 'iPad',
+      viewport: { x: 0, y: 0, width: 834, height: 1210 },
+      grabber: { x: 367, y: 253, width: 100, height: 24 },
+      sheet: { x: 127, y: 257, width: 580, height: 933 },
+      start: ['417', '265'],
+    },
+    {
+      device: 'iPhone',
+      viewport: { x: 0, y: 0, width: 402, height: 874 },
+      grabber: { x: 152.99005, y: 224.90713, width: 96.0199, height: 23.04478 },
+      sheet: { x: 8, y: 228.74793, width: 386, height: 637.25209 },
+      start: ['201', '236'],
+    },
+    {
+      device: 'Duo',
+      viewport: { x: 0, y: 0, width: 466, height: 678 },
+      grabber: { x: 183, y: 118.66667, width: 100, height: 24 },
+      sheet: { x: 8, y: 122.66667, width: 450, height: 547.33331 },
+      start: ['233', '131'],
+    },
+  ])(
+    '$device lowered theme sheet uses its native grabber without header padding',
+    async ({ viewport, grabber, sheet, start }) => {
+      const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-floating-dismiss-'));
+      try {
+        await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+        const calls: string[][] = [];
+        const nodes = [
+          { index: 0, type: 'Application', rect: viewport },
+          {
+            index: 1,
+            type: 'Button',
+            label: 'Sheet Grabber',
+            rect: grabber,
+          },
+          {
+            index: 2,
+            type: 'Other',
+            identifier: 'settings-theme-sheet',
+            rect: sheet,
+          },
+          {
+            index: 3,
+            type: 'ScrollView',
+            rect: sheet,
+          },
+        ];
+        const runner = new NativeRunner(
+          suite,
+          directory,
+          directory,
+          async (args) => {
+            calls.push(args);
+            return args[0] === 'snapshot' ? { nodes } : {};
+          },
+          {}
+        );
+        await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+        expect(calls).toEqual([['snapshot'], ['gesture', 'pan', ...start, '0', '500', '350']]);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
   test('sheet dismissal keeps its endpoint fence on a small viewport', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-phone-dismiss-'));
     try {
