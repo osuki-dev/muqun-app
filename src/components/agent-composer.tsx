@@ -597,7 +597,7 @@ export interface AgentComposerProps {
   hideFieldDecoration?: boolean;
   fieldTextTopInset?: number;
   hideParameterRow?: boolean;
-  /** Home's field reaches the dock edges; safe-area space remains outside the surface. */
+  /** Home's field owns the dock surface, including the iOS bottom safe area. */
   flushField?: boolean;
   /** Space outside Home's surface, in addition to the current bottom safe area. */
   outerInsets?: { horizontal: number; bottom: number };
@@ -1572,8 +1572,9 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
-  const safeAreaFoot = flushField && keyboardHeight === 0 ? bottomInset : 0;
-  const dockFoot = safeAreaFoot + (outerInsets?.bottom ?? 0);
+  const safeAreaFoot = keyboardHeight === 0 ? bottomInset : 0;
+  const fieldBottomInset = process.env.EXPO_OS === 'ios' ? safeAreaFoot : 0;
+  const dockFoot = (flushField ? safeAreaFoot - fieldBottomInset : 0) + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [surfaceLeft, setSurfaceLeft] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
@@ -1640,13 +1641,14 @@ export const AgentComposer = memo(function AgentComposer({
     }
   };
   /** What sits under the field inside the glass. */
-  // Session docks carry the safe area inside their material. Home's single
-  // field keeps it outside, so the safe area cannot reintroduce a white rim.
+  // On iOS the field paints the safe area while its controls stay above it.
+  // Account for that inset once, including when the keyboard replaces it.
   const innerBottomPadding = flushField
     ? 0
     : bar
-      ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
-      : Math.max(10, bottomInset + 6);
+      ? Math.max(theme.spacing.sm, safeAreaFoot) - fieldBottomInset
+      : Math.max(10, (process.env.EXPO_OS === 'ios' ? safeAreaFoot : bottomInset) + 6) -
+        fieldBottomInset;
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
   const dockBottomPadding = innerBottomPadding + dockFoot;
   // The dock's padding keeps its popups and notices inside the safe edges. A
@@ -2555,6 +2557,7 @@ export const AgentComposer = memo(function AgentComposer({
                   fieldBackgroundOutset={fieldBackgroundOutset}
                   fieldDecoration={decorationHidden ? undefined : fieldDecoration}
                   fieldTextTopInset={fieldTextTopInset}
+                  fieldBottomInset={fieldBottomInset}
                   fieldShadow={fieldShadow}
                   onVoiceActiveChange={setVoiceActive}
                   spans={spans}

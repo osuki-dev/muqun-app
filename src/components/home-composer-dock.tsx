@@ -31,6 +31,7 @@ import {
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
@@ -384,6 +385,9 @@ export function HomeComposerDock({
   // the selection moves: opening a task on another computer selects that one
   // for its screen, and the dock must not pull it back mid-open (A5 D3).
   const focused = useIsFocused();
+  // Home can send without ever opening the computer screen. Keep its selected
+  // tunnel alive for the dock, not only for transient reads or the reply drawer.
+  useGatewayTunnel(selected ? record : null, focused);
   const selectTarget = useEffectEvent(() => {
     if (!ready || !targetId || record?.serverId === targetId) return;
     if (!selectRecordNow(targetId)) void selectRecord(targetId);

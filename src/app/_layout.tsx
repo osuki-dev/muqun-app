@@ -406,7 +406,10 @@ function RootContent() {
   // back reopens whatever a screen still holds. See `stores/ssh-tunnels.ts`.
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
-      useSshTunnelsStore.getState().setBackgroundedIdle(state !== 'active');
+      // iOS becomes inactive for system overlays and pickers without leaving
+      // the foreground. Do not tear down a pending send for that transition.
+      if (state === 'active' || state === 'background')
+        useSshTunnelsStore.getState().setBackgroundedIdle(state === 'background');
     });
     return () => subscription.remove();
   }, []);

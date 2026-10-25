@@ -795,6 +795,33 @@ function gatewayFetchWithin(
   init?: RequestInit,
   policy?: RequestPolicy
 ): Promise<Response> {
+  const base = currentBaseUrl.replace(/\/$/, '');
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : '';
+  const path = url.startsWith('/api/')
+    ? url
+    : base && url.startsWith(`${base}/`)
+      ? url.slice(base.length)
+      : null;
+  if (!policy?.plainRecord && currentRecord && path) {
+    const record = {
+      ...currentRecord,
+      transport: isGatewayEncryptionDisabled() ? undefined : currentRecord.transport,
+    };
+    const headers = { ...activeLocaleHeaders(), ...headerRecord(init?.headers) };
+    const token = bearerOf(headers);
+    if (token && token !== record.token)
+      return Promise.reject(new GatewayTunnelUnavailableError('The selected computer changed.'));
+    // Capture identity before waiting. Reads and writes share the same lease;
+    // endpoint fetch keeps encryption and GET deduplication scoped to this computer.
+    return withRecordBaseUrl(record, (baseUrl) =>
+      gatewayEndpointFetch(
+        { ...record, url: baseUrl },
+        `${baseUrl}${path}`,
+        { ...init, headers: { ...headers, Authorization: `Bearer ${record.token}` } },
+        timeoutMs
+      )
+    );
+  }
   return withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
     sendGatewayRequest(timeoutMs, input, init, policy)
   );
@@ -806,6 +833,10 @@ async function sendGatewayRequest(
   init?: RequestInit,
   policy?: RequestPolicy
 ): Promise<Response> {
+  // Native fetch also accepts file paths. A missing SSH forward must fail as
+  // a connection error, never fall through to a local-file read on iOS.
+  if (!/^https?:\/\//i.test(requestUrl(input)))
+    throw new GatewayTunnelUnavailableError('The Gateway connection is not ready.');
   // The one place worth stamping the locale, because both the generated client
   // and every raw call in this file come through here. Merged underneath the
   // caller's own headers rather than over them, so a request that has a reason
@@ -817,7 +848,7 @@ async function sendGatewayRequest(
     ...(currentToken && !policy?.plainRecord ? { Authorization: `Bearer ${currentToken}` } : {}),
     ...headerRecord(init?.headers),
   };
-  if (shouldEncryptGatewayRequest(input)) {
+  if (!policy?.plainRecord && shouldEncryptGatewayRequest(input)) {
     return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
   }
   // Not sealed, so about to go out in the clear. A bearer token addressed to

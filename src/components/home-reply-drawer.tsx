@@ -959,6 +959,8 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const [runtime, setRuntime] = useState<AgentSessionRuntime | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [readFailed, setReadFailed] = useState(false);
+  const [readAttempt, setReadAttempt] = useState(0);
   const listRef = useRef<LegendListRef>(null);
   const { serverId, sessionId, asid } = target;
   const key = homeThreadKey(target);
@@ -1033,6 +1035,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
       sessionId,
       asid,
       onSnapshot: (snapshot) => {
+        setReadFailed(false);
         const transcript = store.getState();
         if (!initialized) {
           windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
@@ -1087,13 +1090,23 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         setMissing(true);
         setLoaded(true);
       },
+      onError: () => setReadFailed(true),
     });
     return () => {
       active = false;
       loadEarlier.current = null;
       stop();
     };
-  }, [serverId, sessionId, asid, store, readRuntime, readSupportsEarlier, target.agentId]);
+  }, [
+    serverId,
+    sessionId,
+    asid,
+    store,
+    readRuntime,
+    readSupportsEarlier,
+    target.agentId,
+    readAttempt,
+  ]);
 
   useEffect(() => {
     const mark = () => {
@@ -1167,7 +1180,24 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   if (!loaded)
     return (
       <View testID="home-reply-loading" style={styles.center}>
-        <ActivityIndicator color={theme.colors.primary} />
+        {readFailed ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t`Retry`}
+            onPress={() => {
+              setReadFailed(false);
+              setReadAttempt((attempt) => attempt + 1);
+            }}>
+            <Text variant="bodySmall" color={theme.colors.textMuted}>
+              {t`Could not load the session`}
+            </Text>
+            <Text variant="bodySmall" color={theme.colors.primary}>
+              {t`Retry`}
+            </Text>
+          </Pressable>
+        ) : (
+          <ActivityIndicator color={theme.colors.primary} />
+        )}
       </View>
     );
   if (missing)
