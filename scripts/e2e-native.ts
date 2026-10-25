@@ -344,7 +344,7 @@ function nodeRole(node: Node): string {
   return aliases[role] ?? role;
 }
 
-/** Native iOS visibility can include rows outside a list or behind the keyboard. */
+/** Native visibility can include clipped rows or controls behind the keyboard. */
 export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
   if (!node.rect) return true;
   const { x, y, width, height } = node.rect;
@@ -360,11 +360,15 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
     if (!parent) break;
     if (parent.rect && ['scroll-area', 'application'].includes(nodeRole(parent))) {
       const rect = parent.rect;
+      // Android AX may report only a clipped two-pixel strip as a hittable
+      // button. Keep its tap centre clear of scroll edges so locate continues
+      // scrolling instead of accepting that strip as a reachable control.
+      const inset = nodeRole(parent) === 'scroll-area' ? 8 : 0;
       const visible = actionable
-        ? centerX >= rect.x &&
-          centerX < rect.x + rect.width &&
-          centerY >= rect.y &&
-          centerY < rect.y + rect.height
+        ? centerX >= rect.x + inset &&
+          centerX < rect.x + rect.width - inset &&
+          centerY >= rect.y + inset &&
+          centerY < rect.y + rect.height - inset
         : x < rect.x + rect.width &&
           x + width > rect.x &&
           y < rect.y + rect.height &&

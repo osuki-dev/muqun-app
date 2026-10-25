@@ -367,6 +367,39 @@ describe('native end-to-end gate', () => {
     };
     expect(withinScrollViewport(source, [app, list, source])).toBe(true);
   });
+  test('Android clipped buttons at a scroll edge require more scrolling before a press', () => {
+    const app = {
+      ref: 'e1',
+      index: 0,
+      type: 'Application',
+      rect: { x: 0, y: 0, width: 2560, height: 1600 },
+    };
+    const list = {
+      ref: 'e2',
+      index: 1,
+      parentIndex: 0,
+      type: 'android.widget.ScrollView',
+      kind: 'scroll-area',
+      rect: { x: 640, y: 159, width: 1280, height: 1441 },
+    };
+    // Actual Android AX bounds are already clipped, despite both native flags.
+    const row = {
+      ref: 'e3',
+      index: 2,
+      parentIndex: 1,
+      type: 'android.widget.Button',
+      kind: 'button',
+      identifier: 'settings-remove-themes-row',
+      visibleToUser: true,
+      hittable: true,
+      rect: { x: 640, y: 1598, width: 1280, height: 2 },
+    };
+    expect(withinScrollViewport(row, [app, list, row])).toBe(false);
+    const atTop = { ...row, rect: { ...row.rect, y: 159 } };
+    expect(withinScrollViewport(atTop, [app, list, atTop])).toBe(false);
+    const scrolled = { ...row, rect: { ...row.rect, y: 1400, height: 96 } };
+    expect(withinScrollViewport(scrolled, [app, list, scrolled])).toBe(true);
+  });
   test('a Home result covered by the native keyboard assistant is not a reachable target', () => {
     const row = {
       ...node,
