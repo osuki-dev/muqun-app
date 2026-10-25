@@ -600,16 +600,22 @@ export async function readAgentSessionAt(
           demoNativePreviewSnapshot(asid));
   try {
     const base = endpoint.url.replace(/\/$/, '');
+    const windowed =
+      !!endpoint.serverId &&
+      useServerCapabilities
+        .getState()
+        .byServer[endpoint.serverId]?.includes('agent_history_window_v1') === true;
+    const path = windowed
+      ? `/api/agent-sessions/${encodeURIComponent(asid)}/timeline/window`
+      : sessionRoute(asid, '', sessionId, true);
     const res =
-      (endpoint.serverId ? await socketHistory(asid, 'snapshot', {}, endpoint.serverId) : null) ??
-      (await gatewayEndpointFetch(
-        endpoint as GatewayEndpoint,
-        `${base}${sessionRoute(asid, '', sessionId, true)}`,
-        {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${endpoint.token}` },
-        }
-      ));
+      (endpoint.serverId
+        ? await socketHistory(asid, windowed ? 'window' : 'snapshot', {}, endpoint.serverId)
+        : null) ??
+      (await gatewayEndpointFetch(endpoint as GatewayEndpoint, `${base}${path}`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${endpoint.token}` },
+      }));
     if (!res.ok) return null;
     return parseAgentSessionSnapshot(envelopeData(await res.json()));
   } catch {
@@ -620,8 +626,8 @@ export async function readAgentSessionAt(
 /** Capture source identity before awaiting anything; never fall back after a sent page request. */
 async function socketHistory(
   asid: string,
-  operation: 'snapshot' | 'earlier' | 'delta',
-  options: { refresh?: boolean; after?: number } = {},
+  operation: 'snapshot' | 'earlier' | 'delta' | 'window' | 'page',
+  options: { refresh?: boolean; after?: number; cursor?: string } = {},
   sourceId = configuredGatewayServerId()
 ) {
   if (
@@ -635,6 +641,10 @@ async function socketHistory(
     operation,
     options
   );
+  // A large resync (or a legacy Gateway snapshot) can exceed the socket's
+  // frame budget. Only repeat idempotent reads over authenticated HTTP;
+  // an earlier/page operation may already have advanced provider history.
+  if (response.status === 413 && (operation === 'snapshot' || operation === 'window')) return null;
   return {
     ok: response.status >= 200 && response.status < 300,
     status: response.status,
@@ -646,7 +656,7 @@ async function socketHistory(
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
   asid: string,
-  options?: { refresh?: boolean; capabilities?: readonly string[] }
+  options?: { refresh?: boolean; capabilities?: readonly string[]; historyCursor?: string | null }
 ): Promise<AgentSessionSnapshot> {
   if (usesOfflineDemo()) {
     const stage = demoStageSnapshot(asid);
@@ -660,13 +670,41 @@ export async function getAgentSessionSnapshot(
     if (preview) return preview;
     throw new Error('This agent session is not available in the offline demo');
   }
-  const query = agentSnapshotRefreshQuery(options?.refresh === true, options?.capabilities);
+  const sourceId = configuredGatewayServerId();
+  const capabilities =
+    options?.capabilities ??
+    (sourceId ? useServerCapabilities.getState().byServer[sourceId] : undefined);
+  const windowed = capabilities?.includes('agent_history_window_v1') === true;
+  const cursor = windowed ? (options?.historyCursor ?? undefined) : undefined;
+  const query = agentSnapshotRefreshQuery(options?.refresh === true, capabilities);
+  const path = windowed
+    ? `/api/agent-sessions/${encodeURIComponent(asid)}/timeline/window`
+    : sessionRoute(asid, '', sessionId, true);
+  const cursorQuery = cursor ? `${query ? '&' : '?'}cursor=${encodeURIComponent(cursor)}` : '';
+  const socketResponse = await socketHistory(asid, windowed ? 'window' : 'snapshot', {
+    refresh: options?.refresh,
+    ...(cursor ? { cursor } : {}),
+  });
+  if (!socketResponse && configuredGatewayServerId() !== sourceId)
+    throw new Error('The selected computer changed. Open the session again.');
   const res =
-    (await socketHistory(asid, 'snapshot', { refresh: options?.refresh })) ??
-    (await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
+    socketResponse ??
+    (await gatewayFetch(gatewayUrl(path + query + cursorQuery), {
       method: 'GET',
       headers: gatewayAuthHeaders(),
     }));
+  if (windowed && cursor && res.status === 409) {
+    const error = readApiError(await res.text());
+    if (error.code === 'history_cursor_lost') {
+      // Reads are safe to repeat. A lost boundary cannot silently skip history.
+      const snapshot = await getAgentSessionSnapshot(sessionId, asid, {
+        ...options,
+        historyCursor: undefined,
+      });
+      return { ...snapshot, history_reset: true };
+    }
+    throw new Error(`Failed to get agent session: 409 ${error.code}`);
+  }
   if (!res.ok) {
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
@@ -789,17 +827,36 @@ export async function sendAgentCommand(
  */
 export async function loadEarlierAgentTimeline(
   sessionId: string | undefined,
-  asid: string
-): Promise<{ items: TimelineItem[]; exhausted: boolean; cursorLost?: boolean }> {
+  asid: string,
+  historyCursor?: string | null
+): Promise<{
+  items: TimelineItem[];
+  exhausted: boolean;
+  cursorLost?: boolean;
+  history_cursor?: string | null;
+}> {
   if (usesOfflineDemo()) throw new Error('Agent writes are not available in the offline demo');
 
+  if (historyCursor === null) return { items: [], exhausted: true, history_cursor: null };
+  const windowed = historyCursor !== undefined;
   const res =
-    (await socketHistory(asid, 'earlier')) ??
-    (await gatewayFetch(gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)), {
-      method: 'POST',
-      headers: jsonHeaders(),
-      body: '{}',
-    }));
+    (await socketHistory(
+      asid,
+      windowed ? 'page' : 'earlier',
+      windowed ? { cursor: historyCursor } : {}
+    )) ??
+    (await gatewayFetch(
+      gatewayUrl(
+        windowed
+          ? `/api/agent-sessions/${encodeURIComponent(asid)}/timeline/page`
+          : sessionRoute(asid, '/timeline/earlier', sessionId, false)
+      ),
+      {
+        method: 'POST',
+        headers: jsonHeaders(),
+        body: JSON.stringify(windowed ? { cursor: historyCursor } : {}),
+      }
+    ));
   if (!res.ok) {
     const text = await res.text();
     if (res.status === 409 && readApiError(text).code === 'history_cursor_lost') {
