@@ -50,10 +50,11 @@ press id="home-recent-close-menu"
 wait stable 300 5000
 
 # section clear
-scroll top
-scroll down 0.2 --until "id=home-continue-search"
-press id="home-continue-search-clear"
+press "${TARGET}"
 wait stable 300 5000
+
+# section seek-up
+scroll up 0.2
 
 # section open-hidden-match
 press "${TARGET}"

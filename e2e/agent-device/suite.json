@@ -517,7 +517,17 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
-      { "run": "flows/home-continue-search.ad#clear" },
+      {
+        "target": { "id": "home-continue-search-clear" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/home-continue-search.ad#seek-up"
+      },
+      {
+        "target": { "id": "home-continue-search-clear" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#clear"
+      },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "hidden",
