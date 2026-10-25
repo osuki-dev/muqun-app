@@ -256,6 +256,58 @@
       },
       {
         "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
+        },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-linked-source"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-independent-source"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#start"
+      },
+      {
+        "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
+        },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-independent-source"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#start"
+      },
+      {
+        "target": {
           "id": "home-stage-pull"
         },
         "mode": "press",
@@ -305,55 +357,6 @@
       },
       {
         "run": "flows/home-stage-progress.ad#clear-draft"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
-        },
-        "mode": "press",
-        "run": "flows/home-stage-progress.ad#press"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_LINKED_SOURCE"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_INDEPENDENT_SOURCE"
-        },
-        "mode": "hidden",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#hidden"
-      },
-      {
-        "run": "flows/home-stage-progress.ad#start"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
-        },
-        "mode": "press",
-        "run": "flows/home-stage-progress.ad#press"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_INDEPENDENT_SOURCE"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
       }
     ],
     "subflows/stop-stage-progress": [
@@ -408,24 +411,7 @@
       },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
-    "subflows/home-search-submit": [
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "ipad" },
-        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "android-phone" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "android-tablet" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      }
-    ],
+    "subflows/home-search-settle": [{ "run": "flows/home-continue-search.ad#settle-typed" }],
     "subflows/home-continue-search": [
       { "run": "flows/home-continue-search.ad#choose-layout" },
       {
@@ -459,7 +445,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
@@ -518,7 +504,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "scroll",
@@ -555,7 +541,7 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",

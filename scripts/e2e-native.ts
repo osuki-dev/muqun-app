@@ -1149,8 +1149,12 @@ export class NativeRunner {
         const grabber = guardedNodes && sheetGrabber(guardedNodes);
         if (grabber?.rect && guardedNodes) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
-          const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
           const viewport = appViewport(guardedNodes);
+          // A near-top grabber's centre can start an OS gesture. Use its lower
+          // interior, retaining room for the existing viewport distance fence.
+          const y = Math.round(
+            Math.min(grabber.rect.y + grabber.rect.height - 1, viewport.y + viewport.height - 25)
+          );
           const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
           await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);
           continue;

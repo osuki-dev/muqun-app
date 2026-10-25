@@ -25,19 +25,18 @@ open "muqun:///?homeContinueFixture=16"
 wait stable 400 5000
 
 # section hidden-match
+scroll top
+scroll down 0.2 --until "id=home-continue-search"
 fill id="home-continue-search" "  HIDDEN   LEAF  "
 
 # section no-match
+scroll top
+scroll down 0.2 --until "id=home-continue-search"
 fill id="home-continue-search" "no-such-demo-session"
 
-# section submit
-keyboard enter
-wait stable 300 5000
-
 # section settle-typed
-# The search filters as it is typed, and a Pad's results sit above its
-# keyboard. Any keyboard command there (Return or its hide key) can outlast
-# XCTest's main-thread watchdog over the animated Home, so leave it up.
+# The search filters on every edit. Verify the resulting rows below without
+# dispatching Return, which can stall XCTest over the animated Home.
 wait stable 300 5000
 
 # section session-menu

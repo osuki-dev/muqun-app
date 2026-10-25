@@ -14,15 +14,19 @@ scroll down --until "text=\"${EXPECTED}\""
 is visible "text=\"${EXPECTED}\""
 snapshot
 screenshot "shots/muqun-${LEAF}.png"
-scroll up --until "id=agent-tool-open-detail"
+scroll up 0.2 --until "id=agent-tool-open-detail"
 press "id=agent-tool-open-detail"
 wait "id=agent-tool-detail-sheet" 5000
 snapshot
 screenshot "shots/muqun-${LEAF}-details.png"
 back --system
+wait absent "id=agent-tool-detail-sheet" 10000
+wait stable 400 5000
 
 # section close
 back --system
+wait absent "id=agent-subagent-detail-sheet" 10000
+wait "id=terminal-composer-input" 10000
 
 # section calling
 wait "id=agent-muqun-body" 5000

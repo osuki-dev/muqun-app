@@ -1170,6 +1170,44 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test('a near-top cover-screen grabber dismisses from its lower interior exactly once', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-cover-dismiss-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+      for (const gestureFails of [false, true]) {
+        const calls: string[][] = [];
+        const runner = new NativeRunner(
+          suite,
+          directory,
+          directory,
+          async (args) => {
+            calls.push(args);
+            if (args[0] === 'snapshot')
+              return {
+                nodes: [
+                  { ...node, type: 'Application', rect: { x: 0, y: 0, width: 466, height: 678 } },
+                  {
+                    ...node,
+                    type: 'Button',
+                    label: 'Sheet Grabber',
+                    rect: { x: 183, y: 4, width: 100, height: 24 },
+                  },
+                ],
+              };
+            if (gestureFails) throw new Error('Gesture outcome is unknown');
+            return {};
+          },
+          {}
+        );
+        const result = runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+        if (gestureFails) await expect(result).rejects.toThrow('Gesture outcome is unknown');
+        else await result;
+        expect(calls).toEqual([['snapshot'], ['gesture', 'pan', '233', '27', '0', '500', '350']]);
+      }
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test('a sheet dismissal drags the grabber control, not a container that inherited its label', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-grabber-'));
     try {
@@ -1204,7 +1242,7 @@ describe('native end-to-end gate', () => {
         {}
       );
       await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
-      expect(calls.find((args) => args[0] === 'gesture')?.slice(2, 4)).toEqual(['417', '248']);
+      expect(calls.find((args) => args[0] === 'gesture')?.slice(2, 4)).toEqual(['417', '259']);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

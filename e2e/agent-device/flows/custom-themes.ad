@@ -21,13 +21,13 @@ scroll down --pixels 300
 # accessibility label, and the manifest's target vocabulary is text and id only.
 press "id=terminal-open-files"
 wait stable 400 5000
-scroll down --pixels 350
+scroll down 0.2 --until "text=\"Open muqun.muqun-theme.json\""
 press "text=\"Open muqun.muqun-theme.json\""
 wait "id=custom-theme-preview" 15000
 # Opening a valid theme goes straight to preview; applying remains explicit.
+# Seek the confirm by identity; it may already fit below the preview.
+scroll down --until "id=theme-apply"
 is visible "id=theme-apply"
-# The confirm sits under the appearance settings in the asset viewer.
-scroll down --pixels 900
 press "id=theme-apply"
 # Applying from the file viewer goes home in one move under the reskin cover:
 # the viewer and the files sheet close with it, so nothing is left to dismiss.
@@ -141,13 +141,9 @@ wait stable 400 5000
 is visible "text=100%"
 
 # section home-visibility
+scroll down 0.2 --until "id=theme-show-home-logo"
 press "id=theme-show-home-logo"
-# `Show Home text` sits directly under `Show Home logo`, which puts it behind
-# the DONE bar this route pins to the bottom of the screen. A deterministic pan
-# rather than `scroll --pixels`: that one is a flick and overshoots by about
-# sevenfold, which on this short page means the foot of it.
-gesture pan 200 620 0 -150 400
-wait stable 400 5000
+scroll down 0.2 --until "id=theme-show-home-text"
 press "id=theme-show-home-text"
 wait stable 400 5000
 # The reset control appears once a preference is custom, but it sits under the
