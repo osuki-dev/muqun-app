@@ -91,7 +91,7 @@ import {
 } from './multipart';
 import {
   assertAssetGateway,
-  assetFromUploadedPdf,
+  assetFromUploadedFile,
   assetFromContentHeaders,
   findAssetById,
   findAssetByPath,
@@ -2039,7 +2039,7 @@ export async function resolveAgentFileAsset(
     if (!asset) throw new Error('File output unavailable.');
     return asset;
   }
-  const upload = assetFromUploadedPdf(uri, serverId);
+  const upload = assetFromUploadedFile(uri, serverId);
   if (upload) return upload;
   const health = await gatewayFetch(gatewayUrl('/health'), {
     headers: gatewayAuthHeaders(),

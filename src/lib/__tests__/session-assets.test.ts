@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   assertAssetGateway,
   assetFromLocalPdf,
-  assetFromUploadedPdf,
+  assetFromUploadedFile,
   assetFromToolFile,
   isPdfFile,
   assetFromContentHeaders,
@@ -259,21 +259,43 @@ describe('PDF entry points', () => {
     expect(remote?.gatewayServerId).toBeUndefined();
   });
 
-  test('resolves uploaded PDFs independently of the workspace without accepting URLs or traversal', () => {
-    const upload = assetFromUploadedPdf(
-      '/home/test/.local/share/muqun-gateway/uploads/abc-123.pdf',
+  test('resolves uploaded PDFs and videos independently of the workspace without accepting URLs or traversal', () => {
+    const name = '11111111-2222-4333-8444-555555555555';
+    const upload = assetFromUploadedFile(
+      `/home/test/.local/share/muqun-gateway/uploads/${name}.pdf`,
       'owner'
     );
-    expect(upload?.uploadName).toBe('abc-123.pdf');
+    expect(upload?.uploadName).toBe(`${name}.pdf`);
     expect(upload?.localUri).toBeUndefined();
     expect(upload?.gatewayServerId).toBe('owner');
+    for (const [extension, mime] of [
+      ['mp4', 'video/mp4'],
+      ['mov', 'video/quicktime'],
+    ]) {
+      const video = assetFromUploadedFile(
+        `file:///state/muqun-gateway/uploads/${name}.${extension}`,
+        'owner'
+      );
+      expect(video).toMatchObject({
+        kind: 'video',
+        mime,
+        uploadName: `${name}.${extension}`,
+        gatewayServerId: 'owner',
+      });
+      expect(video?.localUri).toBeUndefined();
+    }
     for (const path of [
       'https://host/muqun-gateway/uploads/abc.pdf',
       '//host/muqun-gateway/uploads/abc.pdf',
       '/muqun-gateway/uploads/../secret.pdf',
       '/workspace/report.pdf',
+      `/state/../muqun-gateway/uploads/${name}.mp4`,
+      `/state/muqun-gateway/uploads/${name}.mp4/other`,
+      `/state/muqun-gateway/uploads/${name}.mp4?token=secret`,
+      `/state/muqun-gateway/uploads/${name}.mp4%2fsecret`,
+      `/state/muqun-gateway/uploads/${name}.exe`,
     ]) {
-      expect(assetFromUploadedPdf(path, 'owner')).toBeNull();
+      expect(assetFromUploadedFile(path, 'owner')).toBeNull();
     }
   });
 

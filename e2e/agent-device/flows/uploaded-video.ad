@@ -1,0 +1,39 @@
+# Persisted ByPath history, parsed without a prior optimistic row.
+# section open
+open "muqun://agent?asid=demo-tree-leaf-25"
+wait "id=\"inline-video-output\"" 15000
+is visible "text=\"Review this uploaded recording.\""
+is hidden "text=\"Attached files (on this host):\""
+is visible "label=\"Play\""
+snapshot
+screenshot "shots/uploaded-video-idle.png"
+
+# section play
+press "id=\"video-playback-toggle\""
+wait "label=\"Pause\"" 15000
+wait 2000
+snapshot
+screenshot "shots/uploaded-video-playing.png"
+
+# section progress
+is visible "${TARGET}"
+is hidden "text=\"Could not play this video file.\""
+press "id=\"video-playback-toggle\""
+wait "label=\"Play\"" 10000
+snapshot
+screenshot "shots/uploaded-video-paused.png"
+
+# section reload
+# Leave while playing: returning must never resume automatically.
+press "id=\"video-playback-toggle\""
+wait "label=\"Pause\"" 10000
+open "muqun:///"
+wait "id=\"home-recent-sessions\"" 15000
+wait absent "id=\"inline-video-output\"" 10000
+open "muqun://agent?asid=demo-tree-leaf-25"
+wait "id=\"inline-video-output\"" 15000
+is visible "text=\"Review this uploaded recording.\""
+is hidden "text=\"Attached files (on this host):\""
+is visible "label=\"Play\""
+snapshot
+screenshot "shots/uploaded-video-reopened.png"

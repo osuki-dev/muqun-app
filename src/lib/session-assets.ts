@@ -10,6 +10,7 @@
 
 /** What the gateway sniffed the file to be; decides which viewer opens. */
 import { imageAssetPath } from './gateway-image-previews';
+import { gatewayUploadName } from './uploaded-attachments';
 export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
@@ -326,17 +327,26 @@ export function assertAssetGateway(
     throw new Error('The file belongs to a different Gateway');
 }
 
-/** Uploaded PDFs use the authenticated upload route, never a host-path fetch. */
-export function assetFromUploadedPdf(path: string, serverId: string | null): SessionAsset | null {
-  if (!/^(?:\/|file:\/\/\/)/.test(path) || path.startsWith('//')) return null;
-  const name = /\/muqun-gateway\/uploads\/([a-zA-Z0-9_-]+\.pdf)$/i.exec(path)?.[1];
+/** Uploaded media lives outside the workspace and uses the authenticated upload route. */
+export function assetFromUploadedFile(path: string, serverId: string | null): SessionAsset | null {
+  const name = gatewayUploadName(path);
   if (!name) return null;
+  const extension = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+  const mime =
+    extension === 'pdf'
+      ? 'application/pdf'
+      : extension === 'mov'
+        ? 'video/quicktime'
+        : extension === 'mp4'
+          ? 'video/mp4'
+          : null;
+  if (!mime) return null;
   return {
     id: `upload:${name}`,
     path,
     name,
-    kind: 'pdf',
-    mime: 'application/pdf',
+    kind: extension === 'pdf' ? 'pdf' : 'video',
+    mime,
     size: 0,
     modified_unix_ms: 0,
     previewable: true,

@@ -12,7 +12,7 @@ import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { saveSessionAsset } from '@/lib/save-file';
-import { resolveAgentFileAsset } from '@/lib/gateway-client';
+import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
 import type { SessionAsset } from '@/lib/session-assets';
 import { AudioPlaybackSession, type AudioPlaybackState } from '@/lib/audio-playback-session';
 import { videoPreviewRuntime } from '@/lib/video-preview';
@@ -35,15 +35,17 @@ export function InlineVideoFile({
   poster?: ImageSource;
 }) {
   const { ref, visible } = useInlineMediaVisibility();
+  const [serverId] = useState(configuredGatewayServerId);
   const asset: SessionAsset = {
     id: file.uri,
     path: file.uri,
     name: file.name ?? file.uri.split('/').pop() ?? '',
-    mime: file.mime ?? 'video/mp4',
+    mime: file.mime ?? (/\.mov$/i.test(file.uri) ? 'video/quicktime' : 'video/mp4'),
     kind: 'video',
     size: 0,
     modified_unix_ms: 0,
     previewable: true,
+    gatewayServerId: serverId ?? undefined,
   };
   return (
     <Animated.View ref={ref} testID="inline-video-output">
@@ -51,7 +53,7 @@ export function InlineVideoFile({
         asset={asset}
         visible={visible}
         poster={poster}
-        resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal)}
+        resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal, serverId)}
       />
     </Animated.View>
   );

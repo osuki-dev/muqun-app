@@ -8,6 +8,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "uploaded-video",
+      "program": "flows/uploaded-video",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
       "tags": ["full", "agents"],
@@ -382,6 +388,18 @@
       {
         "run": "flows/home-stage-progress.ad#home"
       }
+    ],
+    "flows/uploaded-video": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/uploaded-video.ad#open" },
+      { "run": "flows/uploaded-video.ad#play" },
+      {
+        "target": { "text": "0:[0-2][1-9] / 0:30" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/uploaded-video.ad#progress"
+      },
+      { "run": "flows/uploaded-video.ad#reload" }
     ],
     "flows/agent-transcript-streaming": [
       { "include": "subflows/open-demo" },

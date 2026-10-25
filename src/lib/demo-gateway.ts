@@ -33,6 +33,7 @@ import type {
   AgentSessionSnapshot,
   TimelineItem,
 } from '@/lib/agent-protocol';
+import { parseTimelineItems } from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
 import { parseTaskList, type TaskView } from '@/lib/task-ledger';
 import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
@@ -42,6 +43,8 @@ import {
   demoTerminalScroll,
   demoTerminalTail,
 } from '@/lib/demo-terminal-history';
+
+const DEMO_UPLOADED_VIDEO_NAME = '11111111-2222-4333-8444-555555555555.mp4';
 
 /**
  * A self-contained demo: the whole app driven by data baked into the bundle,
@@ -379,17 +382,19 @@ export function demoAgentSessionTree(): {
     agent_name: 'Demo researcher',
     agent_role: 'research',
   };
-  const leaves = Array.from({ length: 24 }, (_, index) =>
+  const leaves = Array.from({ length: 25 }, (_, index) =>
     session(
       `demo-tree-leaf-${index + 1}`,
       nested.asid,
-      index === 23
-        ? 'Diagram examples'
-        : index === 22
-          ? 'Diagram stress test'
-          : index === 21
-            ? 'Audio output preview'
-            : `Leaf ${index + 1}`
+      index === 24
+        ? 'Uploaded video preview'
+        : index === 23
+          ? 'Diagram examples'
+          : index === 22
+            ? 'Diagram stress test'
+            : index === 21
+              ? 'Audio output preview'
+              : `Leaf ${index + 1}`
     )
   );
   return {
@@ -1031,6 +1036,25 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
     ];
     return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
   }
+  if (asid === 'demo-tree-leaf-25') {
+    // The persisted ByPath text comes through the real wire parser, without an
+    // optimistic row or an attachments field, just like older session history.
+    const timeline = parseTimelineItems([
+      {
+        id: 'demo-uploaded-video',
+        message_id: 'demo-uploaded-video',
+        role: 'user',
+        ordinal: 0,
+        part: {
+          type: 'text',
+          text: `Review this uploaded recording.\n\nAttached files (on this host):\n- /demo/muqun-gateway/uploads/${DEMO_UPLOADED_VIDEO_NAME}`,
+        },
+        seq: 1,
+        updated_ms: 1,
+      },
+    ]);
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: 1 };
+  }
   const child = tree.childrenByParent[asid]?.[0];
   const timeline: TimelineItem[] = [
     {
@@ -1643,6 +1667,17 @@ export function demoSessionAssets(): SessionAsset[] {
   const origin = { session_id: SESSION_ID, pane_id: 'pane-1', workspace_id: 'ws-1' };
   return [
     {
+      id: 'as-demo-uploaded-video',
+      path: `/demo/muqun-gateway/uploads/${DEMO_UPLOADED_VIDEO_NAME}`,
+      name: DEMO_UPLOADED_VIDEO_NAME,
+      kind: 'video',
+      mime: 'video/mp4',
+      size: 94150,
+      modified_unix_ms: Date.now(),
+      previewable: true,
+      ...origin,
+    },
+    {
       id: 'as-demo-video',
       path: '~/code/muqun/out/sample-video.mp4',
       name: 'sample-video.mp4',
@@ -1976,7 +2011,7 @@ export function demoAssetText(assetId: string): string {
 /** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
 export function demoAudioBytes(assetId: string): Uint8Array | null {
   if (assetId === 'as-demo-spec') return demoPdfBytes();
-  if (assetId === 'as-demo-video')
+  if (assetId === 'as-demo-video' || assetId === 'as-demo-uploaded-video')
     return Uint8Array.from(atob(DEMO_VIDEO_BASE64), (char) => char.charCodeAt(0));
   if (assetId !== 'as-demo-audio') return null;
   const rate = 16_000;

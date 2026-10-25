@@ -137,6 +137,14 @@ const MessageAttachments = memo(function MessageAttachments({
             />
           );
         const file = files?.[attIdx];
+        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
+        if (asid && /\.(mp4|mov)$/i.test(att)) {
+          return (
+            <View key={`${att}-${attIdx}`} style={{ width: '100%' }}>
+              <InlineVideoFile asid={asid} file={{ uri: att, name: fileName }} />
+            </View>
+          );
+        }
         if (file ? file.image : isImageAttachment(att)) {
           return (
             <UnmappedImageThumbnail
@@ -155,7 +163,6 @@ const MessageAttachments = memo(function MessageAttachments({
             </UnmappedImageThumbnail>
           );
         }
-        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
         if (!file && asid && isPdfFile({ uri: att })) {
           return (
             <InlineFileLink
