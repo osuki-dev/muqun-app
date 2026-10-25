@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   assertAssetGateway,
   assetFromLocalPdf,
+  assetFromLocalVideo,
   assetFromUploadedFile,
   assetFromToolFile,
   isPdfFile,
@@ -271,6 +272,13 @@ describe('PDF entry points', () => {
     for (const [extension, mime] of [
       ['mp4', 'video/mp4'],
       ['mov', 'video/quicktime'],
+      ['webm', 'video/webm'],
+      ['mkv', 'video/x-matroska'],
+      ['3gp', 'video/3gpp'],
+      ['3g2', 'video/3gpp2'],
+      ['mpeg', 'video/mpeg'],
+      ['flv', 'video/x-flv'],
+      ['avi', 'video/x-msvideo'],
     ]) {
       const video = assetFromUploadedFile(
         `file:///state/muqun-gateway/uploads/${name}.${extension}`,
@@ -293,9 +301,69 @@ describe('PDF entry points', () => {
       `/state/muqun-gateway/uploads/${name}.mp4/other`,
       `/state/muqun-gateway/uploads/${name}.mp4?token=secret`,
       `/state/muqun-gateway/uploads/${name}.mp4%2fsecret`,
-      `/state/muqun-gateway/uploads/${name}.exe`,
     ]) {
       expect(assetFromUploadedFile(path, 'owner')).toBeNull();
+    }
+  });
+
+  test('declared video metadata opens unlisted containers while misleading extensions and playlists cannot select a player', () => {
+    for (const mime of ['video/x-future-container', 'Video/WebM; codecs=vp9', 'video/mp2t']) {
+      expect(assetFromToolFile({ uri: '/workspace/clip.unknown', mime })?.kind).toBe('video');
+      expect(
+        sessionAssetsFromResponse([{ id: 'clip', path: '/workspace/clip', mime }])[0]?.kind
+      ).toBe('video');
+      expect(assetFromContentHeaders('clip', headersFrom({ 'content-type': mime }))?.kind).toBe(
+        'video'
+      );
+    }
+    expect(assetFromToolFile({ uri: '/workspace/clip.webm', mime: 'text/plain' })?.kind).toBe(
+      'text'
+    );
+    expect(assetFromToolFile({ uri: '/workspace/main.ts' })?.kind).toBe('binary');
+    expect(assetFromToolFile({ uri: '/workspace/playlist.m3u8', mime: 'video/mp4' })?.kind).toBe(
+      'binary'
+    );
+    expect(
+      sessionAssetsFromResponse([
+        { id: 'playlist', path: '/workspace/playlist.mpd', kind: 'video', mime: 'video/mp4' },
+      ])[0]?.kind
+    ).toBe('binary');
+  });
+
+  test('device video previews never turn host or remote paths into local native sources', () => {
+    const file = { id: 'picked', name: 'clip.webm', mime: 'application/octet-stream', size: 12 };
+    for (const localUri of ['file:///cache/clip.webm', 'content://documents/42']) {
+      expect(assetFromLocalVideo({ ...file, localUri })).toMatchObject({
+        localUri,
+        mime: 'video/webm',
+        kind: 'video',
+        size: 12,
+      });
+    }
+    for (const localUri of ['/workspace/clip.webm', 'https://host/clip.webm'])
+      expect(assetFromLocalVideo({ ...file, localUri })).toBeNull();
+    expect(
+      assetFromLocalVideo({
+        ...file,
+        name: 'playlist.m3u8',
+        mime: 'video/mp4',
+        localUri: 'file:///cache/playlist.m3u8',
+      })
+    ).toBeNull();
+  });
+
+  test('unknown and ambiguous validated uploads remain generic authenticated files', () => {
+    for (const extension of ['exe', 'bin', 'ts', 'mts', 'm3u8']) {
+      const upload = assetFromUploadedFile(
+        `/state/muqun-gateway/uploads/11111111-2222-4333-8444-555555555555.${extension}`,
+        'owner'
+      );
+      expect(upload).toMatchObject({
+        kind: 'binary',
+        previewable: false,
+        gatewayServerId: 'owner',
+        uploadName: `11111111-2222-4333-8444-555555555555.${extension}`,
+      });
     }
   });
 

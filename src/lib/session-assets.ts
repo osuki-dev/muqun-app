@@ -11,6 +11,7 @@
 /** What the gateway sniffed the file to be; decides which viewer opens. */
 import { imageAssetPath } from './gateway-image-previews';
 import { gatewayUploadName } from './uploaded-attachments';
+import { isVideoManifest, normalizedFileMime, videoFileMime } from './media-file';
 export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
@@ -111,7 +112,16 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
   // nothing to name it after; either one missing means the entry is unusable.
   if (!id || !path) return null;
 
-  const kind = ASSET_KINDS.find((entry) => entry === raw.kind) ?? 'binary';
+  const mime = normalizedFileMime(typeof raw.mime === 'string' ? raw.mime : '');
+  const kind = isVideoManifest({
+    mime,
+    name: typeof raw.name === 'string' ? raw.name : path,
+    uri: path,
+  })
+    ? 'binary'
+    : videoFileMime({ mime })
+      ? 'video'
+      : (ASSET_KINDS.find((entry) => entry === raw.kind) ?? 'binary');
   const name = typeof raw.name === 'string' && raw.name ? raw.name : fileNameOf(path);
   const thumbnail = imageAssetPath(raw.thumbnail_url, id, 'thumbnail');
   const preview = imageAssetPath(raw.preview_url, id, 'preview');
@@ -123,7 +133,7 @@ function normalizeSessionAsset(value: unknown): SessionAsset | null {
     path,
     name,
     kind,
-    mime: typeof raw.mime === 'string' ? raw.mime : 'application/octet-stream',
+    mime: mime || 'application/octet-stream',
     size: typeof raw.size === 'number' && raw.size >= 0 ? raw.size : 0,
     modified_unix_ms: typeof raw.modified_unix_ms === 'number' ? raw.modified_unix_ms : 0,
     origin: normalizeAssetOrigin(raw.origin),
@@ -185,10 +195,14 @@ export function assetFromContentHeaders(
   header: (name: string) => string | null | undefined,
   options: { previewable?: boolean } = {}
 ): SessionAsset {
-  const mime = (header('content-type') ?? '').split(';')[0].trim();
+  const mime = normalizedFileMime(header('content-type'));
   const name = fileNameFromContentDisposition(header('content-disposition')) || assetId;
   const declaredKind = header('x-asset-kind');
-  const kind = ASSET_KINDS.find((entry) => entry === declaredKind) ?? assetKindFromMime(mime);
+  const kind = isVideoManifest({ mime, name })
+    ? 'binary'
+    : videoFileMime({ mime })
+      ? 'video'
+      : (ASSET_KINDS.find((entry) => entry === declaredKind) ?? assetKindFromMime(mime));
   const size = Number(header('content-length') ?? '');
   return {
     id: assetId,
@@ -209,7 +223,7 @@ export function assetFromContentHeaders(
 function assetKindFromMime(mime: string): AssetKind {
   if (mime.startsWith('image/')) return 'image';
   if (mime.startsWith('audio/')) return 'audio';
-  if (mime.startsWith('video/')) return 'video';
+  if (mime.startsWith('video/') && !isVideoManifest({ mime })) return 'video';
   if (mime === 'application/pdf') return 'pdf';
   if (mime === 'text/markdown') return 'markdown';
   if (mime.startsWith('text/') || mime === 'application/json') return 'text';
@@ -252,18 +266,9 @@ export function assetFromToolFile(
   const uri = file.uri ?? '';
   const path = uri.startsWith('file://') ? decodeURI(uri.slice('file://'.length)) : uri;
   if (!path.startsWith('/')) return null;
-  const mime = isPdfFile(file) ? 'application/pdf' : (file.mime ?? '');
-  const kind: AssetKind = mime.startsWith('audio/')
-    ? 'audio'
-    : mime.startsWith('image/')
-      ? 'image'
-      : mime === 'application/pdf'
-        ? 'pdf'
-        : mime === 'text/markdown'
-          ? 'markdown'
-          : mime.startsWith('text/')
-            ? 'text'
-            : 'binary';
+  const mime =
+    videoFileMime(file) ?? (isPdfFile(file) ? 'application/pdf' : normalizedFileMime(file.mime));
+  const kind = isVideoManifest(file) ? 'binary' : assetKindFromMime(mime);
   return {
     id: path,
     path,
@@ -319,6 +324,26 @@ export function assetFromLocalPdf(
   };
 }
 
+/** Only an explicit device pick may give the native preview a local source. */
+export function assetFromLocalVideo(
+  file: { id: string; localUri: string; name: string; mime: string; size?: number } | undefined
+): SessionAsset | null {
+  if (!file || !/^(?:file|content):\/\//.test(file.localUri)) return null;
+  const mime = videoFileMime({ ...file, uri: file.localUri });
+  if (!mime) return null;
+  return {
+    id: file.id,
+    path: file.name,
+    name: file.name,
+    kind: 'video',
+    mime,
+    size: file.size ?? 0,
+    modified_unix_ms: 0,
+    previewable: true,
+    localUri: file.localUri,
+  };
+}
+
 export function assertAssetGateway(
   asset: Pick<SessionAsset, 'gatewayServerId'>,
   currentServerId: string | null
@@ -331,25 +356,19 @@ export function assertAssetGateway(
 export function assetFromUploadedFile(path: string, serverId: string | null): SessionAsset | null {
   const name = gatewayUploadName(path);
   if (!name) return null;
-  const extension = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
-  const mime =
-    extension === 'pdf'
-      ? 'application/pdf'
-      : extension === 'mov'
-        ? 'video/quicktime'
-        : extension === 'mp4'
-          ? 'video/mp4'
-          : null;
-  if (!mime) return null;
+  const mime = isPdfFile({ name })
+    ? 'application/pdf'
+    : (videoFileMime({ name }) ?? 'application/octet-stream');
+  const kind = assetKindFromMime(mime);
   return {
     id: `upload:${name}`,
     path,
     name,
-    kind: extension === 'pdf' ? 'pdf' : 'video',
+    kind,
     mime,
     size: 0,
     modified_unix_ms: 0,
-    previewable: true,
+    previewable: kind !== 'binary',
     gatewayServerId: serverId ?? undefined,
     uploadName: name,
   };

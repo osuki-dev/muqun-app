@@ -3,6 +3,7 @@ import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { isPdfFile } from '@/lib/session-assets';
 import { isThemeFilePath } from '@/lib/audio-markdown';
+import { videoFileMime } from '@/lib/media-file';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -355,21 +356,21 @@ const ToolFiles = memo(function ToolFiles({
               style={{ borderRadius: profile.chrome.surface }}
             />
           );
+        if (audioSessionId && videoFileMime(file)) {
+          return (
+            <InlineVideoFile
+              key={`${audioSessionId}:${file.uri}`}
+              file={file}
+              asid={audioSessionId}
+            />
+          );
+        }
         if (audioSessionId && isPdfFile(file)) {
           return (
             <InlineFileLink
               key={`${audioSessionId}:${file.uri}`}
               asid={audioSessionId}
               file={{ uri: file.uri, name: file.name ?? basename(file.uri) }}
-            />
-          );
-        }
-        if (audioSessionId && file.mime?.startsWith('video/')) {
-          return (
-            <InlineVideoFile
-              key={`${audioSessionId}:${file.uri}`}
-              file={file}
-              asid={audioSessionId}
             />
           );
         }

@@ -15,6 +15,7 @@ import { saveSessionAsset } from '@/lib/save-file';
 import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
 import type { SessionAsset } from '@/lib/session-assets';
 import { AudioPlaybackSession, type AudioPlaybackState } from '@/lib/audio-playback-session';
+import { videoFileMime } from '@/lib/media-file';
 import { videoPreviewRuntime } from '@/lib/video-preview';
 import { useVoiceInput } from '@/stores/voice-input';
 
@@ -40,7 +41,7 @@ export function InlineVideoFile({
     id: file.uri,
     path: file.uri,
     name: file.name ?? file.uri.split('/').pop() ?? '',
-    mime: file.mime ?? (/\.mov$/i.test(file.uri) ? 'video/quicktime' : 'video/mp4'),
+    mime: videoFileMime(file) ?? 'application/octet-stream',
     kind: 'video',
     size: 0,
     modified_unix_ms: 0,
