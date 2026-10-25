@@ -33,6 +33,8 @@ interface FileMentionPanelProps {
   query: string;
   /** Short landscape workspaces cannot fit the full five-row tray above the IME. */
   visibleRows?: number;
+  /** Room above the composer, including the panel's vertical padding. */
+  maxHeight?: number;
   onSelect: (hit: FileMentionHit) => void;
   /**
    * The computers to offer above the files, already ranked (current first,
@@ -65,6 +67,7 @@ export function FileMentionPanel({
   hits,
   query,
   visibleRows = FILE_MENTION_VISIBLE_ROWS,
+  maxHeight,
   onSelect,
   scope = 'workspace',
   computers = NO_COMPUTERS,
@@ -91,7 +94,14 @@ export function FileMentionPanel({
         // composer out from under the thumb between touch down and touch up.
         keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}
-        style={{ maxHeight: ROW_HEIGHT * visibleRows }}>
+        style={{
+          maxHeight: Math.min(
+            ROW_HEIGHT * visibleRows,
+            maxHeight === undefined
+              ? Infinity
+              : Math.max(0, maxHeight - styles.panel.paddingVertical * 2)
+          ),
+        }}>
         {/* The other computers, pinned above the files: the current target
             first and marked, the reachable ones next, the unreachable ones
             greyed and not pickable. */}

@@ -6585,6 +6585,7 @@ export function ServerTerminalWorkspace({
                         hits={mentionHits}
                         query={mentionTrigger.query}
                         visibleRows={isPadLayout ? 3 : undefined}
+                        maxHeight={commandPopupMaxHeight}
                         onSelect={chooseMention}
                       />
                     </View>

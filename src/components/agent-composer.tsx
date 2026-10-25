@@ -1903,6 +1903,7 @@ export const AgentComposer = memo(function AgentComposer({
               query={mentionTrigger.query}
               onSelect={chooseMention}
               scope="project"
+              maxHeight={popupMaxHeight}
             />
           </View>
         ) : null}
