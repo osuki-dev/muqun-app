@@ -1,4 +1,4 @@
-import { assetFromLocalPdf } from '@/lib/session-assets';
+import { assetFromLocalPdf, assetFromLocalVideo } from '@/lib/session-assets';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { GuideCommand } from '@/components/guide-command';
@@ -1411,7 +1411,7 @@ export function ServerTerminalWorkspace({
    */
   const keyboardHeight = useKeyboardState((state) => state.height);
   const commandPopupMaxHeight = Math.max(
-    120,
+    0,
     Math.min(
       windowHeight * 0.45,
       windowHeight - insets.top - DETAIL_HEADER_HEIGHT - keyboardHeight - composerHeight - 24
@@ -3342,7 +3342,7 @@ export function ServerTerminalWorkspace({
       candidate.instanceId ? [candidate] : []
     );
   }, [data.agents, data.panes, selection.paneId, selection.workspaceId, selectedPane]);
-  // PDFs use the shared document viewer. The image viewer pages between images,
+  // PDFs and videos use the shared viewer. The image viewer pages between images,
   // so the tapped tile's position is resolved within that subset.
   const previewImages = useMemo<PreviewImage[]>(
     () =>
@@ -3351,7 +3351,9 @@ export function ServerTerminalWorkspace({
         .map((item) => ({ id: item.id, uri: item.localUri })),
     [attachments]
   );
-  const previewPdf = assetFromLocalPdf(attachments.find((item) => item.id === previewAttachmentId));
+  const previewAttachment = attachments.find((item) => item.id === previewAttachmentId);
+  const previewFile =
+    assetFromLocalVideo(previewAttachment) ?? assetFromLocalPdf(previewAttachment);
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
@@ -6585,6 +6587,7 @@ export function ServerTerminalWorkspace({
                         hits={mentionHits}
                         query={mentionTrigger.query}
                         visibleRows={isPadLayout ? 3 : undefined}
+                        maxHeight={commandPopupMaxHeight}
                         onSelect={chooseMention}
                       />
                     </View>
@@ -6832,6 +6835,7 @@ export function ServerTerminalWorkspace({
                               exiting={fadeOutDown('short')}
                               layout={dockRowLayout}>
                               <AttachmentStrip
+                                previewing={Boolean(previewFile) || previewIndex >= 0}
                                 attachments={attachments}
                                 onRemove={removeAttachment}
                                 onRetry={retryUpload}
@@ -6872,8 +6876,8 @@ export function ServerTerminalWorkspace({
                 </Animated.View>
               ) : null}
 
-              {previewPdf ? (
-                <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+              {previewFile ? (
+                <AssetViewer asset={previewFile} onClose={() => setPreviewAttachmentId(null)} />
               ) : null}
               {previewIndex >= 0 ? (
                 <ImagePreviewModal

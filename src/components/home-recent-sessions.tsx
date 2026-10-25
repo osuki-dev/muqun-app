@@ -72,7 +72,7 @@ import {
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
 import { boundTask } from '@/lib/home-in-progress';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
 import {
   paneLedgerTask,
@@ -85,6 +85,7 @@ import { selectServerAgentsContent, useServerAgents } from '@/stores/server-agen
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { freshHomeOverview, publishHomeOverview } from '@/lib/home-overview-sync';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { describeGatewayFailure } from '@/lib/network-error';
@@ -233,6 +234,8 @@ export function useHomeRecentEntries({
       let again = false;
       const isCurrent = () => current && AppState.currentState === 'active';
       const refreshOne = async (record: GatewayRecord): Promise<boolean | undefined> => {
+        // A socket snapshot may arrive while this fallback request is in flight.
+        const isReadCurrent = () => isCurrent() && !freshHomeOverview(record.serverId);
         // The selected computer's listing does not need the Herdr session,
         // so it goes out beside that lookup rather than after it.
         const agentSessionsList =
@@ -241,7 +244,7 @@ export function useHomeRecentEntries({
             : undefined;
         agentSessionsList?.catch(() => undefined);
         const choices = await homeSessionChoices(record);
-        if (!isCurrent()) return undefined;
+        if (!isReadCurrent()) return undefined;
         const sessionId = resolveSessionId(
           choices,
           useServerSession.getState().byServer[record.serverId]
@@ -252,7 +255,7 @@ export function useHomeRecentEntries({
           sessionId,
           entries: recent.entries,
           read: (path) => readGatewayRecordJson(record, path),
-          isCurrent,
+          isCurrent: isReadCurrent,
           recordPanes: useServerAgents.getState().record,
           observe: recent.observeSession,
           updateTitle: recent.updateTitle,
@@ -289,6 +292,7 @@ export function useHomeRecentEntries({
           // and is answering again -- and one known to be down not at all.
           const reachability = readReachability();
           const due = servers.filter((server) => {
+            if (publishHomeOverview(server.serverId)) return false;
             if (isDemoRecord(server) || reachability[server.serverId] === 'offline') return false;
             return homeRefreshDue(
               homeRefreshAttempt(server.serverId),

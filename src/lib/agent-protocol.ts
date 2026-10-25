@@ -29,6 +29,7 @@ import { messageImageForSource } from './gateway-image-previews';
 import { stripTaskInstruction } from './task-plumbing';
 import { asFiniteNumber, asRecord, asString } from './record';
 import type { UploadLimits } from './attachment-queue';
+import { gatewayUploadName, splitUploadedAttachmentSuffix } from './uploaded-attachments';
 
 export { asFiniteNumber, asRecord, asString } from './record';
 
@@ -1298,12 +1299,21 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
   if (!id) return null;
   const part = parseAgentPart(rec.part);
   if (!part) return null;
+  const role = parseTimelineRole(rec.role);
+  const suffix =
+    role === 'user' && part.type === 'text' ? splitUploadedAttachmentSuffix(part.text) : null;
   const attachments = asStringArray(rec.attachments);
+  for (const path of suffix?.attachments ?? []) {
+    if (!attachments.some((existing) => gatewayUploadName(existing) === gatewayUploadName(path)))
+      attachments.push(path);
+  }
+  const displayPart =
+    suffix?.attachments.length && part.type === 'text' ? { ...part, text: suffix.text } : part;
   const imageAssets = parseMessageImageAssets(rec.image_assets);
   return {
     id,
     message_id: asString(rec.message_id) ?? id,
-    role: parseTimelineRole(rec.role),
+    role,
     ordinal: asFiniteNumber(rec.ordinal) ?? 0,
     part:
       part.type === 'tool' && imageAssets.length > 0
@@ -1312,7 +1322,7 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
             image_assets: imageAssets,
             ...(attachments.length ? { image_attachments: attachments } : {}),
           }
-        : part,
+        : displayPart,
     seq: asFiniteNumber(rec.seq) ?? 0,
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
     ...(attachments.length > 0 ? { attachments } : {}),
@@ -1328,6 +1338,18 @@ export function parseTimelineItems(value: unknown): TimelineItem[] {
     if (item) out.push(item);
   }
   return out;
+}
+
+/** A filtered page may be empty without reaching the beginning of history. */
+export function parseEarlierTimelinePage(value: unknown): {
+  items: TimelineItem[];
+  exhausted: boolean;
+} {
+  const record = asRecord(value);
+  if (!record || !Array.isArray(record.items) || typeof record.exhausted !== 'boolean') {
+    throw new Error('Invalid earlier history page');
+  }
+  return { items: parseTimelineItems(record.items), exhausted: record.exhausted };
 }
 
 /** Where a row sorts: its own key when it has one, its message id otherwise. */

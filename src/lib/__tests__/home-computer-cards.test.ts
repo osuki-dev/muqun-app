@@ -257,8 +257,11 @@ describe('buildComputerCards', () => {
         buildComputerCards({
           ...input,
           index: index({ coding: [{ ...removed, state, reopenCount: 1 }] }),
-        })
-      ).toEqual([]);
+        }).map((card) => [card.serverId, card.now, card.finished])
+      ).toEqual([
+        ['coding', [], []],
+        ['other', [], []],
+      ]);
     }
   });
 
@@ -426,7 +429,9 @@ describe('buildComputerCards', () => {
         dismissed: new Set(),
         nowMs: NOW,
       });
-      expect(cards.map((card) => card.serverId)).toEqual(['source']);
+      expect(cards.map((card) => card.serverId)).toEqual(['source', 'mini']);
+      expect(cards[1]!.now).toEqual([]);
+      expect(cards[1]!.finished).toEqual([]);
       expect(cards[0]!.now[0]!.task).toEqual(parent);
       expect(buildTaskTree(ledger.source!.tasks)[0]!.children).toEqual([mirror]);
       expect(ledger.mini!.tasks).toEqual([remote]);
@@ -456,7 +461,23 @@ describe('buildComputerCards', () => {
     { serverId: 'off' },
   ];
 
-  test('sorted needs-you, working, paused, idle; offline gets no card', () => {
+  test('empty or reconnecting ledgers never remove paired computer destinations', () => {
+    const paired = [{ serverId: 'osk' }, { serverId: 'mini' }];
+    for (const miniStatus of ['live', 'offline', 'live'] as const) {
+      const cards = buildComputerCards({
+        servers: paired,
+        index: {},
+        reachability: (id) => (id === 'mini' ? miniStatus : 'live'),
+        dismissed: new Set(),
+        nowMs: NOW,
+      });
+      expect(cards.map((card) => card.serverId)).toEqual(['osk', 'mini']);
+      expect(cards[1]!.activity).toBe(miniStatus === 'offline' ? 'offline' : 'idle');
+      expect(cards.every((card) => card.now.length === 0 && card.finished.length === 0)).toBe(true);
+    }
+  });
+
+  test('sorted needs-you, working, paused, idle; offline stays selectable last', () => {
     const cards = buildComputerCards({
       requests: {
         request: {
@@ -494,6 +515,7 @@ describe('buildComputerCards', () => {
       ['busy', 'working'],
       ['paused', 'paused'],
       ['idle', 'idle'],
+      ['off', 'offline'],
     ]);
     expect(cards[0]!.now[0]!.children.map((child) => child.taskId)).toEqual(['c']);
   });
@@ -512,7 +534,9 @@ describe('buildComputerCards', () => {
     });
     expect(cards.map((card) => [card.serverId, card.activity])).toEqual([
       ['busy', 'working'],
+      ['idle', 'idle'],
       ['asks', 'idle'],
+      ['off', 'idle'],
     ]);
   });
 
@@ -534,7 +558,7 @@ describe('buildComputerCards', () => {
       dismissed: new Set([dismissedKey('a', { taskId: 'f1' })]),
       nowMs: NOW,
     });
-    // b has no work and no card, so a's is the only one and gets the room.
+    // Empty b remains a selectable computer; the task row limits still apply.
     expect(card!.now.map((row) => row.task.taskId)).toEqual(['w1', 'w4', 'w2', 'w3', 'idle']);
     expect(card!.nowTotal).toBe(5);
     expect(card!.finished.map((done) => done.taskId)).toEqual(['f2', 'f3']);

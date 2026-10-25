@@ -3,7 +3,8 @@ import { useVoiceInputTrigger } from '@/components/voice-input-button';
 import { useLingui } from '@lingui/react/macro';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Spinner, useThemeTokens, TextField, type TextFieldProps } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, type TextFieldProps } from '@osuki-dev/ui';
+import { ComposerTextInput } from '@/components/composer-text-input';
 import { PressableScale } from '@/components/pressable-scale';
 import { MicrophoneIcon, MessageSendIcon } from '@/icons';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
@@ -114,7 +115,7 @@ export interface TerminalComposerProps {
   compact?: boolean;
   /** How many lines the field is tall while empty; it grows from there to its max. */
   minLines?: number;
-  /** The draft as nested spans, the field's children (kit `TextField`). */
+  /** The draft as nested spans in the native field. */
   spans?: ReactNode;
 }
 
@@ -343,8 +344,8 @@ export function TerminalComposer({
           ]}>
           <>
             {!expanded && leading}
-            <TextField
-              ref={inputRef}
+            <ComposerTextInput
+              inputRef={inputRef}
               multiline
               autoCorrect={false}
               placeholderTextColor={placeholderText}
@@ -385,7 +386,7 @@ export function TerminalComposer({
                 },
               ]}>
               {spans}
-            </TextField>
+            </ComposerTextInput>
             <View
               testID={expanded ? 'composer-expanded-actions' : undefined}
               style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>

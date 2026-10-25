@@ -1,3 +1,4 @@
+import { useHomeSummary } from '@/stores/home-summary';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -127,5 +128,30 @@ export function useHomeReachability(
   return useMemo(
     () => Object.fromEntries(serverIds.map((serverId, index) => [serverId, reachability[index]])),
     [serverIds, reachability]
+  );
+}
+
+/** Home can know a computer is alive indirectly; action routes still use direct status. */
+export function useHomeConnectionStatuses(
+  serverIds: readonly string[],
+  selectedId?: string,
+  activeConnection?: ActiveServerConnection
+): Record<string, ConnectionStatus> {
+  const direct = useConnectionStatuses(serverIds, selectedId, activeConnection);
+  const relayed = useHomeSummary(
+    useShallow((state) => serverIds.map((id) => state.live[id] === true))
+  );
+  return useMemo(
+    () =>
+      Object.fromEntries(
+        serverIds.map((id, index) => {
+          const status = direct[id] ?? 'unknown';
+          return [
+            id,
+            relayed[index] && status !== 'unauthorized' && status !== 'repair' ? 'live' : status,
+          ];
+        })
+      ),
+    [direct, relayed, serverIds]
   );
 }

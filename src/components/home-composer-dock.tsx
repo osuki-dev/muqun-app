@@ -1,3 +1,4 @@
+import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import type { SideInsets } from '@/hooks/use-side-insets';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
@@ -112,7 +113,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
 import { mentionedComputers, taskMentions, type MentionComputer } from '@/lib/composer-mentions';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -346,22 +347,35 @@ export function HomeComposerDock({
   /**
    * The task's `mentions`: the computers the draft names, checked against the
    * target's own linked peers read just now (`taskMentions`). Nothing when the
-   * draft names none, the target cannot link, or it did not answer.
+   * draft names none. A failed resolution preserves the draft.
    */
-  const mentionsIn = async (goal: string, serverId: string): Promise<string[]> => {
+  const mentionsIn = async (
+    goal: string,
+    serverId: string
+  ): Promise<{ mentions: string[]; computerIds: string[] }> => {
     // Only a draft that names a computer (`@src/…` is a file) asks, and
     // briefly: Send does not wait long on a slow computer for this.
     const named = mentionedComputers(
       goal,
       mentionComputers.map((computer) => computer.name)
     );
-    if (!fleetCapable || named.length === 0) return [];
+    if (named.length === 0) return { mentions: [], computerIds: [] };
     const target = servers.find((server) => server.serverId === serverId);
-    if (!target || target.sshTunnel) return [];
+    if (!fleetCapable || !target || target.sshTunnel) throw new Error(t`Computer unavailable.`);
     const answer = await fetchFleetPeers(recordEndpoint(target), MENTIONS_READ_TIMEOUT_MS);
     // What the target said about its links is news for the fleet store too.
     useFleetPeers.getState().record(serverId, answer);
-    return answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : [];
+    const mentions = answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : null;
+    if (!mentions) throw new Error(t`Computer unavailable.`);
+    if (
+      !useServerCapabilities.getState().byServer[serverId]?.includes('agent_computer_context_v1')
+    ) {
+      throw new Error(t`Update Gateway to use computer references in this conversation.`);
+    }
+    const computerIds = named.map(
+      (name) => mentionComputers.find((computer) => computer.name === name)!.serverId
+    );
+    return { mentions, computerIds };
   };
 
   // One connection at a time: the computer Send goes to is the one selected,
@@ -472,13 +486,16 @@ export function HomeComposerDock({
   // there by themselves.
   const [dockClip, setDockClip] = useState(0);
   const drawer = useHomeReplyDrawer({ clipHeight: dockClip, topInset });
-  const conversation = thread && thread.kind !== 'task' ? thread : undefined;
+  const replyTitle = useHomeThreadTitle(thread);
+  const conversation =
+    thread && thread.kind !== 'task'
+      ? replyTitle && replyTitle !== thread.title
+        ? { ...thread, title: replyTitle }
+        : thread
+      : undefined;
   const drawerAllowed = Boolean(conversation) && focused;
   const closeDrawer = drawer.close;
   const drawerOpen = drawer.open;
-  const liveThreadTitle = useHomeThreadLive((state) =>
-    threadKey && state.key === threadKey ? state.live.title : undefined
-  );
   const drawerKey = useRef(threadKey);
   useEffect(() => {
     const changed = drawerKey.current !== threadKey;
@@ -914,6 +931,8 @@ export function HomeComposerDock({
               return false;
             }
             if (plan.kind === 'session') {
+              const { computerIds } = await mentionsIn(text, serverId);
+              if (!owns()) throw new Error(t`Computer unavailable.`);
               if (plan.switchMode) await switchAgentMode(plan.asid, plan.switchMode);
               if (plan.switchModel)
                 await switchAgentModel(plan.sessionId, plan.asid, plan.switchModel);
@@ -921,6 +940,7 @@ export function HomeComposerDock({
               await sendAgentPrompt(plan.sessionId, plan.asid, {
                 text,
                 attachments,
+                computerIds,
                 ...(plan.delivery ? { delivery: plan.delivery } : {}),
               });
             } else {
@@ -1301,12 +1321,12 @@ export function HomeComposerDock({
               return false;
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
-            const mentions = await mentionsIn(text, serverId);
+            const { mentions, computerIds } = await mentionsIn(text, serverId);
             const created = await sendHomeLedger(
               serverId,
               {
                 goal: text,
-                ...(mentions.length ? { mentions } : {}),
+                ...(mentions.length ? { mentions, computerIds } : {}),
                 ...(carried?.agentId
                   ? { agentId: carried.agentId }
                   : params.agentId
@@ -1454,7 +1474,7 @@ export function HomeComposerDock({
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             if (viaLedger) {
-              const mentions = await mentionsIn(text, serverId);
+              const { mentions, computerIds } = await mentionsIn(text, serverId);
               if (!owns()) {
                 setError(t`Computer unavailable.`);
                 return false;
@@ -1463,7 +1483,7 @@ export function HomeComposerDock({
                 serverId,
                 {
                   goal: text,
-                  ...(mentions.length ? { mentions } : {}),
+                  ...(mentions.length ? { mentions, computerIds } : {}),
                   agentId: kind,
                   ...(cwd ? { cwd } : {}),
                 },
@@ -1749,7 +1769,11 @@ export function HomeComposerDock({
         .records.find((entry) => entry.serverId === item.serverId);
       if (!record) return;
       inFlight.add(item.id);
-      void readAgentSessionAt(recordEndpoint(record), HOME_AGENT_SESSION_ID, item.asid)
+      void readAgentSessionAt(
+        { ...recordEndpoint(record), serverId: record.serverId },
+        HOME_AGENT_SESSION_ID,
+        item.asid
+      )
         .then((snapshot) => {
           if (!snapshot) return;
           const state = boundSessionState(snapshot);
@@ -1843,15 +1867,6 @@ export function HomeComposerDock({
   // This is the same server-scoped thread Send follows, never the agent picker.
   // Live titles already passed the thread-key check above. Keep the recipient
   // visible after typing has replaced the placeholder.
-  const replyTitle = thread
-    ? liveThreadTitle?.trim() ||
-      thread.title.trim() ||
-      (thread.kind === 'session'
-        ? thread.asid
-        : thread.kind === 'pane'
-          ? thread.paneId
-          : thread.taskId)
-    : undefined;
   const replyAgentId =
     thread?.kind === 'session'
       ? thread.agentId
@@ -2102,7 +2117,15 @@ export function HomeComposerDock({
         shown.mode,
         selectedModel,
       ])}
-      mentionComputers={mentionComputers}
+      mentionComputers={
+        thread
+          ? thread.kind === 'pane' || threadFeatures.extra.computerTools === true
+            ? mentionComputers
+            : []
+          : agent?.kind === 'terminal' || features.extra.computerTools === true
+            ? mentionComputers
+            : []
+      }
       inputTestID="home-composer-input"
       sendTestID="home-composer-send"
       running={false}
@@ -2114,17 +2137,29 @@ export function HomeComposerDock({
       inputAccessibilityLabel={replyContext}
       fieldHeader={
         replyContext ? (
-          <Text
+          <View
             testID="home-composer-reply-target"
-            variant="caption"
-            color={theme.colors.textMuted}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+            accessible
             accessibilityLabel={replyContext}
             accessibilityLiveRegion="polite"
             style={styles.replyContext}>
-            {replyContext}
-          </Text>
+            <Text variant="caption" color={theme.colors.textMuted}>{t`Reply to`}</Text>
+            <View style={styles.replyTarget}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.primary}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {replyTitle}
+              </Text>
+            </View>
+            {replyAgentName ? (
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {replyAgentName}
+              </Text>
+            ) : null}
+          </View>
         ) : undefined
       }
       sessionId={threadSessionId ?? HOME_AGENT_SESSION_ID}
@@ -2239,7 +2274,20 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
 }
 
 const styles = StyleSheet.create({
-  replyContext: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 2 },
+  replyContext: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  replyTarget: {
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+  },
   error: { padding: 8, marginBottom: 4, width: '100%' },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
   unsureText: { flexShrink: 1 },

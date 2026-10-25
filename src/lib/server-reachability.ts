@@ -212,6 +212,24 @@ export function reachabilityFromProbe(
   return probe.ok ? 'live' : 'offline';
 }
 
+/** A failed check cannot erase authenticated contact received while it was in flight. */
+export function settleReachabilityProbe(
+  previous: ReachabilityProbe | undefined,
+  answer: ReachabilityProbe,
+  startedAtMs: number
+): ReachabilityProbe {
+  if (
+    !answer.ok &&
+    !answer.unauthorized &&
+    previous?.ok &&
+    previous.serverId === answer.serverId &&
+    previous.checkedAtMs >= startedAtMs
+  ) {
+    return { ...previous, rechecking: false };
+  }
+  return answer;
+}
+
 /**
  * Resolve the status for one server using the strongest scoped evidence.
  *

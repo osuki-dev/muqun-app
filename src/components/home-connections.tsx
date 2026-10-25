@@ -1,3 +1,4 @@
+import { useHomeSummary } from '@/stores/home-summary';
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
@@ -20,7 +21,7 @@ import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 
 /** Saved destinations, independent of task status and the selected Home layout. */
 export function HomeConnections({
@@ -168,7 +169,8 @@ function GatewayConnectionRow({
   const stream = useServerChannels((state) => state.streams[server.serverId]);
   const selected = useGatewayConnectionStore((state) => state.record?.serverId === server.serverId);
   const fault = usePairingFaults((state) => pairingFaultOf(state, server.serverId));
-  const connection = resolveConnectionStatus({
+  const summaryLive = useHomeSummary((state) => state.live[server.serverId] === true);
+  const directConnection = resolveConnectionStatus({
     serverId: server.serverId,
     probe,
     activeConnection,
@@ -177,7 +179,14 @@ function GatewayConnectionRow({
     selected,
     nowMs: Math.max(nowMs ?? 0, freshnessNowMs),
   });
-  const status = _(connectionStatusDescription[connection]);
+  const connection =
+    summaryLive && directConnection !== 'unauthorized' && directConnection !== 'repair'
+      ? 'live'
+      : directConnection;
+  const status =
+    summaryLive && directConnection !== 'live'
+      ? t`Summary connected`
+      : _(connectionStatusDescription[connection]);
   return (
     <PressableScale
       testID={`home-connection-gateway-${server.serverId}`}

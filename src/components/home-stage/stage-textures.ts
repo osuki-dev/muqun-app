@@ -30,7 +30,8 @@ import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
 /** The longest edge a picture is shrunk to before its clear pixels are counted. */
 const MEASURE_EDGE = 128;
 /** What measuring a picture finds: its clear share (0..1) and its width over its height. */
-export type StagePictureFacts = { clear: number; aspect: number };
+export type StagePictureFacts = { clear: number; aspect: number; decodeFailed?: boolean };
+const FAILED_PICTURE: StagePictureFacts = { clear: 0, aspect: 1, decodeFailed: true };
 /**
  * Pictures already measured: a theme's pictures are measured once. Only real
  * measurements are kept; a fallback guess is measured again next time. Theme
@@ -154,8 +155,8 @@ function measurePicture(
 /**
  * How much of the picture at `uri` is clear (0..1), which decides the layer
  * it becomes, and its shape, which lays it out: `null` while it loads,
- * `undefined` for no picture or one that failed to load (until Home comes
- * back and it is tried again).
+ * `undefined` for no picture. A decode failure retains the URI through a
+ * conservative measurement marked for native-image fallback until retry.
  */
 export function useStagePictureFacts(
   uri: string | undefined,
@@ -185,7 +186,8 @@ export function useStagePictureFacts(
     });
     setMeasured({ uri, facts });
   }, [image, uri, slot]);
-  if (!uri || retry.failed) return undefined;
+  if (!uri) return undefined;
+  if (retry.failed) return FAILED_PICTURE;
   if (known !== undefined) return known;
   return measured?.uri === uri ? measured.facts : null;
 }

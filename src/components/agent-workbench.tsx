@@ -4652,11 +4652,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       })
       .then((page) => {
         if (activeAsidRef.current !== owner || page.cursorLost) return;
-        if (page.exhausted || page.items.length === 0) {
-          setEarlierExhausted(true);
-          return;
-        }
-        setTimeline((prev) => upsertTimelineItems(prev, page.items));
+        // Only the source knows whether older history remains. Filtering can
+        // produce an empty page; keep the next pull available without spinning.
+        setEarlierExhausted(page.exhausted);
+        if (page.items.length > 0) setTimeline((prev) => upsertTimelineItems(prev, page.items));
       })
       .catch((err) => {
         console.warn('Failed to load earlier messages:', err);

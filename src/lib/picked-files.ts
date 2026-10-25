@@ -1,3 +1,4 @@
+import { videoFileMime } from './media-file';
 import type { PickedFile } from './attachment-queue';
 
 /** The subset of Expo's document asset that survives into the upload queue. */
@@ -60,7 +61,10 @@ export function pickedFilesFromDocuments(assets: PickedDocumentAsset[]): PickedF
     const mime =
       reported && reported !== 'application/octet-stream'
         ? reported
-        : (EXTENSION_MIMES[extension] ?? reported ?? 'application/octet-stream');
+        : (EXTENSION_MIMES[extension] ??
+          videoFileMime({ name, uri: asset.uri }) ??
+          reported ??
+          'application/octet-stream');
     return {
       uri: asset.uri,
       name,

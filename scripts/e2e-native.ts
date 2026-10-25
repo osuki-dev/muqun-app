@@ -92,6 +92,7 @@ type Node = {
   parentIndex?: number;
   ref: string;
   type?: string;
+  kind?: string;
   role?: string;
   identifier?: string;
   label?: string;
@@ -301,13 +302,13 @@ export function appViewport(nodes: Node[]): NonNullable<Node['rect']> {
 }
 
 function nodeRole(node: Node): string {
-  const source = node.role ?? node.type ?? '';
+  const source = node.kind ?? node.role ?? node.type ?? '';
   const role = source
     .replace(/^XCUIElementType/, '')
     .split('.')
     .at(-1)!
     .toLowerCase();
-  // Match agent-device 0.21.12's semantic type normalization, not raw AX or
+  // Match agent-device's semantic type normalization, not raw AX or
   // Android class names. TextView is editable on iOS but static on Android.
   if (role === 'textview')
     return /^(android\.|androidx\.|com\.)/.test(source) ? 'text' : 'text-view';
@@ -343,7 +344,7 @@ function nodeRole(node: Node): string {
   return aliases[role] ?? role;
 }
 
-/** Native iOS visibility can include rows clipped below a form sheet's list. */
+/** Native visibility can include clipped rows or controls behind the keyboard. */
 export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
   if (!node.rect) return true;
   const { x, y, width, height } = node.rect;
@@ -359,11 +360,15 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
     if (!parent) break;
     if (parent.rect && ['scroll-area', 'application'].includes(nodeRole(parent))) {
       const rect = parent.rect;
+      // Android AX may report only a clipped two-pixel strip as a hittable
+      // button. Keep its tap centre clear of scroll edges so locate continues
+      // scrolling instead of accepting that strip as a reachable control.
+      const inset = nodeRole(parent) === 'scroll-area' ? 8 : 0;
       const visible = actionable
-        ? centerX >= rect.x &&
-          centerX < rect.x + rect.width &&
-          centerY >= rect.y &&
-          centerY < rect.y + rect.height
+        ? centerX >= rect.x + inset &&
+          centerX < rect.x + rect.width - inset &&
+          centerY >= rect.y + inset &&
+          centerY < rect.y + rect.height - inset
         : x < rect.x + rect.width &&
           x + width > rect.x &&
           y < rect.y + rect.height &&
@@ -372,6 +377,37 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
     }
     parentIndex = parent.parentIndex;
   }
+  // The placeholder includes the assistant band above the keys. Preserve
+  // native keyboard controls while refusing app controls covered by either.
+  const keyboards = nodes.filter(
+    (candidate) =>
+      candidate.visibleToUser !== false &&
+      (candidate.type === 'Keyboard' ||
+        (candidate.identifier === 'inputView' &&
+          candidate.role === '_UIRemoteKeyboardPlaceholderView') ||
+        (candidate.identifier === 'SystemInputAssistantView' &&
+          candidate.role === 'TUISystemInputAssistantView'))
+  );
+  const keyboardTarget = keyboards.some(
+    (candidate) => candidate.index === node.index || seen.has(candidate.index)
+  );
+  if (
+    !keyboardTarget &&
+    keyboards.some((candidate) => {
+      const rect = candidate.rect;
+      if (!rect) return false;
+      return actionable
+        ? centerX >= rect.x &&
+            centerX < rect.x + rect.width &&
+            centerY >= rect.y &&
+            centerY < rect.y + rect.height
+        : x >= rect.x &&
+            x + width <= rect.x + rect.width &&
+            y >= rect.y &&
+            y + height <= rect.y + rect.height;
+    })
+  )
+    return false;
   return true;
 }
 
@@ -383,6 +419,141 @@ export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
 export function sheetGrabber(nodes: Node[]): Node | undefined {
   const grabbers = nodes.filter((node) => node.label === 'Sheet Grabber');
   return grabbers.find((node) => nodeRole(node) === 'button') ?? grabbers[0];
+}
+
+/** Native grabbers can overlap the OS top-edge gesture region. Dismiss from
+ * observed fixed-header padding instead, before the sheet's first scroller.
+ * Private AX flattens that header and scroller beside the sheet root, so use
+ * the observed sheet bounds as well as native ancestry when it is available.
+ */
+function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number } {
+  const viewport = appViewport(nodes);
+  const control = grabber.rect!;
+  const x = Math.round(control.x + control.width / 2);
+  // A lowered sheet exposes its real UIKit grabber well below the OS
+  // edge. Its content may start behind the grabber, with no fixed header gap.
+  if (
+    nodeRole(grabber) === 'button' &&
+    control.height > 0 &&
+    control.height <= 44 &&
+    control.y >= viewport.y + 80 &&
+    control.y + control.height < viewport.y + viewport.height - 24 &&
+    control.x >= viewport.x &&
+    control.x + control.width <= viewport.x + viewport.width
+  ) {
+    return { x, y: Math.round(control.y + control.height / 2) };
+  }
+  const ancestors = new Set<number>();
+  let parentIndex = grabber.parentIndex;
+  while (parentIndex !== undefined && !ancestors.has(parentIndex)) {
+    ancestors.add(parentIndex);
+    parentIndex = nodes.find((node) => node.index === parentIndex)?.parentIndex;
+  }
+  const container = nodes.find(
+    (node) =>
+      ancestors.has(node.index) &&
+      node.label === 'Sheet Grabber' &&
+      node.rect &&
+      node.rect.height > control.height
+  );
+  const sheet =
+    container ??
+    nodes.find(
+      (node) =>
+        (node.identifier?.endsWith('-sheet') || node.identifier === 'git-diff-view') &&
+        node.visibleToUser !== false &&
+        node.rect &&
+        node.rect.x <= x &&
+        x < node.rect.x + node.rect.width &&
+        node.rect.y <= control.y + control.height &&
+        node.rect.height > control.height
+    );
+  const bounds = sheet?.rect;
+  if (!bounds) throw new Error('Cannot dismiss sheet without observed fixed-header bounds');
+  const descendsFrom = (node: Node, index: number): boolean => {
+    const seen = new Set<number>();
+    let parent = node.parentIndex;
+    while (parent !== undefined && !seen.has(parent)) {
+      if (parent === index) return true;
+      seen.add(parent);
+      parent = nodes.find((candidate) => candidate.index === parent)?.parentIndex;
+    }
+    return false;
+  };
+  const scoped = nodes.filter((node) => {
+    const rect = node.rect;
+    return (
+      rect &&
+      node.visibleToUser !== false &&
+      rect.x >= bounds.x &&
+      rect.x + rect.width <= bounds.x + bounds.width &&
+      rect.y >= bounds.y &&
+      rect.y + rect.height <= bounds.y + bounds.height + 1 &&
+      (!container || descendsFrom(node, container.index))
+    );
+  });
+  // A scroll-root form puts the heading inside the sheet's outer scroller.
+  // Treat that observed ancestor as the sheet viewport, not its first list.
+  // The visible heading still has to leave an uncovered gap before a nested
+  // list; an offscreen heading or an unsafe touch point continues to fail.
+  const rootScrollers = new Set(
+    scoped
+      .filter(
+        (node) =>
+          nodeRole(node) === 'scroll-area' &&
+          sheet &&
+          descendsFrom(sheet, node.index) &&
+          (['x', 'y', 'width', 'height'] as const).every(
+            (key) => Math.abs(node.rect![key] - bounds[key]) <= 1
+          )
+      )
+      .map((node) => node.index)
+  );
+  const scroller = scoped
+    .filter(
+      (node) =>
+        nodeRole(node) === 'scroll-area' &&
+        !rootScrollers.has(node.index) &&
+        node.rect!.x <= x &&
+        x < node.rect!.x + node.rect!.width
+    )
+    .sort((a, b) => a.rect!.y - b.rect!.y)[0];
+  const y = scroller ? Math.floor(scroller.rect!.y - 1) : NaN;
+  const header = scoped.filter(
+    (node) =>
+      nodeRole(node) === 'text' &&
+      node.rect!.y < (scroller?.rect!.y ?? 0) &&
+      !scoped.some(
+        (candidate) =>
+          nodeRole(candidate) === 'scroll-area' &&
+          !rootScrollers.has(candidate.index) &&
+          descendsFrom(node, candidate.index)
+      )
+  );
+  const covered = scoped.some(
+    (node) =>
+      actionableRoles.has(nodeRole(node)) &&
+      node.rect!.x <= x &&
+      x < node.rect!.x + node.rect!.width &&
+      node.rect!.y <= y &&
+      y < node.rect!.y + node.rect!.height
+  );
+  if (
+    !header.length ||
+    covered ||
+    y <=
+      Math.max(
+        control.y + control.height,
+        ...header.map((node) => node.rect!.y + node.rect!.height)
+      ) ||
+    x < viewport.x ||
+    x >= viewport.x + viewport.width ||
+    y < viewport.y ||
+    y >= viewport.y + viewport.height - 24
+  ) {
+    throw new Error('Cannot dismiss sheet without safe observed fixed-header padding');
+  }
+  return { x, y };
 }
 
 function hasAlert(nodes: Node[]): boolean {
@@ -819,10 +990,17 @@ export class NativeRunner {
         quality?.backend === 'private-ax' &&
         quality.state === 'sparse' &&
         /deferred/i.test(quality.reason ?? '');
-      if (!sparseTree && !deferredPrivateAX) return capture;
-      if (attempt >= (sparseTree ? 8 : 2)) return capture;
-      // A relaunch can expose a bare native tree while the first app frame is
-      // still rendering. Repeat only the read; never replay the preceding input.
+      const timedOutPrivateAX =
+        quality?.backend === 'private-ax' &&
+        quality.state === 'recovered' &&
+        quality.reasonCode === 'capture-failed' &&
+        quality.reason === 'timed out while preparing tree snapshot on the XCTest main thread';
+      if (!sparseTree && !deferredPrivateAX && !timedOutPrivateAX) return capture;
+      if (attempt >= (timedOutPrivateAX ? 1 : sparseTree ? 8 : 2)) return capture;
+      // Navigation can stall XCTest's first tree preparation, then produce a
+      // readable capture. Reacquire once; snapshotNodes still rejects exhausted
+      // failures. Sparse launch trees retain their existing settling budget.
+      // Repeat only the read; never replay the preceding input.
       await new Promise((resolve) => setTimeout(resolve, sparseTree ? 500 : 250));
     }
   }
@@ -1141,8 +1319,7 @@ export class NativeRunner {
         }
         const grabber = guardedNodes && sheetGrabber(guardedNodes);
         if (grabber?.rect && guardedNodes) {
-          const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
-          const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
+          const { x, y } = sheetDismissStart(guardedNodes, grabber);
           const viewport = appViewport(guardedNodes);
           const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
           await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);

@@ -36,6 +36,24 @@ describe('document picks', () => {
     ]);
   });
 
+  test('media uploads retain declared types and infer video only for unambiguous opaque names', () => {
+    expect(
+      pickedFilesFromDocuments([
+        { uri: 'content://provider/1', name: 'clip.webm' },
+        { uri: 'content://provider/2', name: 'clip.mkv', mimeType: 'application/octet-stream' },
+        { uri: 'content://provider/3', name: 'clip.future', mimeType: 'video/x-future-container' },
+        { uri: 'content://provider/4', name: 'main.ts' },
+        { uri: 'content://provider/5', name: 'clip.webm', mimeType: 'text/plain' },
+      ]).map((file) => file.mime)
+    ).toEqual([
+      'video/webm',
+      'video/x-matroska',
+      'video/x-future-container',
+      'application/octet-stream',
+      'text/plain',
+    ]);
+  });
+
   test('scrubs provider-controlled names before they reach UI or multipart', () => {
     expect(safePickedFileName('../../report\n.pdf')).toBe('report.pdf');
     expect(safePickedFileName('..\\..\\secret.txt')).toBe('secret.txt');

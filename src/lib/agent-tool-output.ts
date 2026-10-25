@@ -1,5 +1,4 @@
 import { asRecord, type FileDiffItem, type ToolContent } from './agent-protocol';
-import { isHiddenMuqunExecuteCall } from './internal-muqun-tools';
 
 /**
  * What a tool call is, and what is worth showing of what it said.
@@ -878,7 +877,6 @@ export function executeToolCalls(metadata: Record<string, unknown>): ExecuteTool
   if (!Array.isArray(raw)) return [];
   const out: ExecuteToolCall[] = [];
   for (const entry of raw) {
-    if (isHiddenMuqunExecuteCall(entry)) continue;
     if (typeof entry === 'string') {
       if (entry) out.push({ name: entry, status: 'completed' });
       continue;

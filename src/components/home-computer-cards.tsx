@@ -1,3 +1,4 @@
+import { useHomeSummarySync } from '@/hooks/use-home-summary';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
@@ -58,7 +59,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
-import { useServerTasksStore } from '@/stores/server-tasks';
+import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerChannels } from '@/stores/server-channels';
@@ -70,10 +71,17 @@ import { FINISHED_TASKS_SHOWN } from '@/lib/server-tasks-state';
  * (`useServerTasks`). Unmounting releases each socket; it lingers briefly and
  * closes. Draws nothing.
  */
-export function HomeTaskSync({ serverIds }: { serverIds: readonly string[] }) {
+export function HomeTaskSync({
+  serverIds,
+  summaryEnabled,
+}: {
+  serverIds: readonly string[];
+  summaryEnabled: boolean;
+}) {
+  const directIds = useHomeSummarySync(serverIds, summaryEnabled);
   return (
     <>
-      {serverIds.map((serverId) => (
+      {directIds.map((serverId) => (
         <ServerTaskSync key={serverId} serverId={serverId} />
       ))}
     </>
@@ -525,6 +533,11 @@ function ComputerCardView({
 
         {followed ? (
           <View style={styles.block}>
+            {openRows === 0 && card.finished.length === 0 ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`No tasks yet`}
+              </Text>
+            ) : null}
             {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}

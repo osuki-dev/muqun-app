@@ -55,6 +55,8 @@ import {
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { TranscriptBlockImage } from '@/components/transcript-block-image';
+import { videoFileMime } from '@/lib/media-file';
+import { gatewayUploadName } from '@/lib/uploaded-attachments';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineFileLink } from '@/components/inline-file-link';
 import { ThemeFencePreview } from '@/components/theme-fence-preview';
@@ -116,7 +118,7 @@ const MessageAttachments = memo(function MessageAttachments({
   attachments: readonly string[];
   imageAssets?: readonly MessageImageAsset[];
   /** A queued row's names and image decisions, index for index; see `inboxItemAttachments`. */
-  files?: readonly { name: string; image: boolean }[];
+  files?: readonly { name: string; image: boolean; mime?: string }[];
   asid?: string;
   onPreviewImage: (uri: string) => void;
 }) {
@@ -137,6 +139,21 @@ const MessageAttachments = memo(function MessageAttachments({
             />
           );
         const file = files?.[attIdx];
+        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
+        const videoMime = videoFileMime({
+          uri: att,
+          name: fileName,
+          mime:
+            file?.mime ??
+            imageAssets?.find((asset) => asset.src === att && !asset.unavailable_reason)?.mime,
+        });
+        if (asid && videoMime) {
+          return (
+            <View key={`${att}-${attIdx}`} style={{ width: '100%' }}>
+              <InlineVideoFile asid={asid} file={{ uri: att, name: fileName, mime: videoMime }} />
+            </View>
+          );
+        }
         if (file ? file.image : isImageAttachment(att)) {
           return (
             <UnmappedImageThumbnail
@@ -155,8 +172,7 @@ const MessageAttachments = memo(function MessageAttachments({
             </UnmappedImageThumbnail>
           );
         }
-        const fileName = file?.name || att.split('/').filter(Boolean).pop() || t`Attachment`;
-        if (!file && asid && isPdfFile({ uri: att })) {
+        if (asid && (isPdfFile({ uri: att }) || gatewayUploadName(att))) {
           return (
             <InlineFileLink
               key={`${att}-${attIdx}`}

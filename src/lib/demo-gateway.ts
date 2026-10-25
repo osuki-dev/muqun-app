@@ -33,6 +33,7 @@ import type {
   AgentSessionSnapshot,
   TimelineItem,
 } from '@/lib/agent-protocol';
+import { parseTimelineItems } from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
 import { parseTaskList, type TaskView } from '@/lib/task-ledger';
 import { PANE_CAPTURED_HISTORY_SEGMENTS_CAPABILITY } from '@/lib/terminal-history-segments';
@@ -42,6 +43,8 @@ import {
   demoTerminalScroll,
   demoTerminalTail,
 } from '@/lib/demo-terminal-history';
+
+const DEMO_UPLOADED_VIDEO_NAME = '11111111-2222-4333-8444-555555555555.mp4';
 
 /**
  * A self-contained demo: the whole app driven by data baked into the bundle,
@@ -379,17 +382,19 @@ export function demoAgentSessionTree(): {
     agent_name: 'Demo researcher',
     agent_role: 'research',
   };
-  const leaves = Array.from({ length: 24 }, (_, index) =>
+  const leaves = Array.from({ length: 25 }, (_, index) =>
     session(
       `demo-tree-leaf-${index + 1}`,
       nested.asid,
-      index === 23
-        ? 'Diagram examples'
-        : index === 22
-          ? 'Diagram stress test'
-          : index === 21
-            ? 'Audio output preview'
-            : `Leaf ${index + 1}`
+      index === 24
+        ? 'Uploaded video preview'
+        : index === 23
+          ? 'Diagram examples'
+          : index === 22
+            ? 'Diagram stress test'
+            : index === 21
+              ? 'Audio output preview'
+              : `Leaf ${index + 1}`
     )
   );
   return {
@@ -684,6 +689,175 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  const muqunFixtures: Record<
+    string,
+    {
+      name: string;
+      input: Record<string, unknown>;
+      result: unknown;
+      running?: boolean;
+      toolName?: string;
+    }
+  > = {
+    'demo-tree-leaf-9': {
+      name: 'exec.run',
+      input: {
+        command: Array.from({ length: 9 }, (_, index) => `printf 'step ${index + 1}\\n'`).join(
+          '\n'
+        ),
+        cwd: '~/Work/sample',
+        machine: 'mini',
+      },
+      result: {
+        task_id: 'demo-long-build',
+        state: 'done',
+        exit_code: 0,
+        machine: 'mini',
+        stdout_tail: Array.from(
+          { length: 24 },
+          (_, index) => `Build step ${index + 1} completed`
+        ).join('\n'),
+      },
+    },
+    'demo-tree-leaf-10': {
+      name: 'exec.run',
+      input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
+      result: undefined,
+      running: true,
+    },
+    'demo-tree-leaf-11': {
+      name: 'exec.run',
+      toolName: 'muqun_exec_run',
+      input: { command: 'bun run build', cwd: '~/Work/sample', machine: 'mini' },
+      result: {
+        task_id: 'demo-build',
+        state: 'working',
+        machine: 'mini',
+        stdout_tail: 'Building the app…',
+      },
+    },
+    'demo-tree-leaf-12': {
+      name: 'tasks.delegate',
+      toolName: 'muqun__tasks.delegate',
+      input: { goal: 'Review the build output', machine: 'mini' },
+      result: {
+        task_id: 'demo-review',
+        state: 'working',
+        goal: 'Review the build output',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-13': {
+      name: 'tasks.wait',
+      toolName: 'mcp__muqun__tasks.wait',
+      input: { task_id: 'demo-build' },
+      result: {
+        task_id: 'demo-build',
+        state: 'done',
+        kind: 'command',
+        goal: 'bun run build',
+        binding: { peer_name: 'mini' },
+        exit_code: 0,
+        stdout_tail: 'Build complete\nAll checks passed',
+      },
+    },
+    'demo-tree-leaf-14': {
+      name: 'tasks.read',
+      input: { task_id: 'demo-review' },
+      result: {
+        task_id: 'demo-review',
+        state: 'working',
+        goal: 'Review the build output',
+        progress: 'Checking the generated bundle',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-15': {
+      name: 'tasks.cancel',
+      input: { task_id: 'demo-review' },
+      result: {
+        task_id: 'demo-review',
+        state: 'cancelled',
+        goal: 'Review the build output',
+        binding: { peer_name: 'mini' },
+        exit_code: 130,
+      },
+    },
+    'demo-tree-leaf-16': {
+      name: 'tasks.complete',
+      input: { task_id: 'demo-review', summary: 'Build reviewed' },
+      result: {
+        task_id: 'demo-review',
+        state: 'done',
+        summary: 'Build reviewed',
+        binding: { peer_name: 'mini' },
+      },
+    },
+    'demo-tree-leaf-17': {
+      name: 'fleet.list',
+      input: {},
+      result: {
+        machines: [
+          { machineId: 'demo-mini', label: 'mini', os: 'macos', online: true },
+          { machineId: 'demo-workstation', label: 'workstation', os: 'linux', online: false },
+        ],
+      },
+    },
+    'demo-tree-leaf-18': {
+      name: 'fleet.describe',
+      input: { machine: 'mini' },
+      result: {
+        machineId: 'demo-mini',
+        label: 'mini',
+        os: 'macos',
+        arch: 'aarch64',
+        gatewayVersion: '4.0.0',
+        agents: [
+          { id: 'codex', version: '1.0' },
+          { id: 'opencode', version: '1.0' },
+        ],
+        toolchains: [{ id: 'bun', version: '1.3' }],
+      },
+    },
+    'demo-tree-leaf-19': {
+      name: 'exec.run',
+      input: { command: 'bun run verify', cwd: '~/Work/sample', machine: 'mini' },
+      result: {
+        task_id: 'demo-failure',
+        state: 'failed',
+        machine: 'mini',
+        exit_code: 1,
+        stdout_tail: 'Verification failed\nMissing required fixture',
+      },
+    },
+  };
+  const muqunFixture = muqunFixtures[asid];
+  if (muqunFixture) {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-muqun-tool',
+        message_id: 'demo-muqun-tool',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-muqun-call',
+          name: muqunFixture.toolName ?? `muqun:${muqunFixture.name}`,
+          input: muqunFixture.input,
+          output: muqunFixture.running
+            ? undefined
+            : { content: [{ type: 'text', text: JSON.stringify(muqunFixture.result) }] },
+          content: [],
+          metadata: {},
+          state: muqunFixture.running ? 'running' : 'completed',
+          time: muqunFixture.running ? { ran: 1000 } : { ran: 1000, completed: 2500 },
+        },
+        seq: 1,
+        updated_ms: 1,
+      },
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: 1 };
+  }
   if (asid === 'demo-tree-leaf-20') {
     // Distinct messages keep these calls out of routine-tool grouping. They
     // exercise the real disclosure, detail and image renderer without a host.
@@ -861,6 +1035,25 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
       })),
     ];
     return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
+  if (asid === 'demo-tree-leaf-25') {
+    // The persisted ByPath text comes through the real wire parser, without an
+    // optimistic row or an attachments field, just like older session history.
+    const timeline = parseTimelineItems([
+      {
+        id: 'demo-uploaded-video',
+        message_id: 'demo-uploaded-video',
+        role: 'user',
+        ordinal: 0,
+        part: {
+          type: 'text',
+          text: `Review this uploaded recording.\n\nAttached files (on this host):\n- /demo/muqun-gateway/uploads/${DEMO_UPLOADED_VIDEO_NAME}`,
+        },
+        seq: 1,
+        updated_ms: 1,
+      },
+    ]);
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: 1 };
   }
   const child = tree.childrenByParent[asid]?.[0];
   const timeline: TimelineItem[] = [
@@ -1474,6 +1667,17 @@ export function demoSessionAssets(): SessionAsset[] {
   const origin = { session_id: SESSION_ID, pane_id: 'pane-1', workspace_id: 'ws-1' };
   return [
     {
+      id: 'as-demo-uploaded-video',
+      path: `/demo/muqun-gateway/uploads/${DEMO_UPLOADED_VIDEO_NAME}`,
+      name: DEMO_UPLOADED_VIDEO_NAME,
+      kind: 'video',
+      mime: 'video/mp4',
+      size: 94150,
+      modified_unix_ms: Date.now(),
+      previewable: true,
+      ...origin,
+    },
+    {
       id: 'as-demo-video',
       path: '~/code/muqun/out/sample-video.mp4',
       name: 'sample-video.mp4',
@@ -1807,7 +2011,7 @@ export function demoAssetText(assetId: string): string {
 /** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
 export function demoAudioBytes(assetId: string): Uint8Array | null {
   if (assetId === 'as-demo-spec') return demoPdfBytes();
-  if (assetId === 'as-demo-video')
+  if (assetId === 'as-demo-video' || assetId === 'as-demo-uploaded-video')
     return Uint8Array.from(atob(DEMO_VIDEO_BASE64), (char) => char.charCodeAt(0));
   if (assetId !== 'as-demo-audio') return null;
   const rate = 16_000;

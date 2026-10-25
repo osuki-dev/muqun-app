@@ -107,28 +107,38 @@ export const MAX_TASK_MENTIONS = 8;
  * The `mentions` a task may carry: the computers the draft names, as the
  * target computer itself calls them -- each linked peer by the name its own
  * `GET /api/peers` lists, the target as `self` -- capped at
- * `MAX_TASK_MENTIONS`. A name the target has not linked is dropped: the
- * gateway refuses anything else.
+ * `MAX_TASK_MENTIONS`. Refuse incomplete or ambiguous resolution instead of
+ * silently dropping part of the user's requested scope.
  */
 export function taskMentions(
   text: string,
   offered: readonly MentionComputer[],
   peers: readonly { serverId: string; name: string }[]
-): string[] {
+): string[] | null {
   const named = mentionedComputers(
     text,
     offered.map((computer) => computer.name)
   );
   const mentions: string[] = [];
+  if (named.length > MAX_TASK_MENTIONS) return null;
   for (const name of named) {
-    const computer = offered.find((candidate) => candidate.name === name);
-    if (!computer) continue;
-    const mention = computer.current
-      ? 'self'
-      : peers.find((peer) => peer.serverId === computer.serverId)?.name;
+    const candidates = offered.filter((candidate) => candidate.name === name);
+    if (candidates.length !== 1) return null;
+    const computer = candidates[0]!;
+    const linked = peers.filter((peer) => peer.serverId === computer.serverId);
+    if (!computer.current && linked.length !== 1) return null;
+    const mention = computer.current ? 'self' : linked[0]!.name;
+    // The legacy wire contract resolves by name. Never let that final hop
+    // select a different identity from the one the composer offered.
+    if (
+      !computer.current &&
+      (mention.toLowerCase() === 'self' ||
+        peers.filter((peer) => peer.name.toLowerCase() === mention.toLowerCase()).length !== 1)
+    )
+      return null;
     if (mention && !mentions.includes(mention)) mentions.push(mention);
   }
-  return mentions.slice(0, MAX_TASK_MENTIONS);
+  return mentions;
 }
 
 /** The computer names the draft mentions (`@name` as its own word), in draft order, each once. */

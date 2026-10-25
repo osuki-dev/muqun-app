@@ -1,4 +1,4 @@
-import { assetFromLocalPdf } from '@/lib/session-assets';
+import { assetFromLocalPdf, assetFromLocalVideo } from '@/lib/session-assets';
 import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
 import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
@@ -877,7 +877,7 @@ export const AgentComposer = memo(function AgentComposer({
   // owned submission callback; it does not establish a canonical timeline row.
   const visibleAttachments = attachmentUploads.attachments;
 
-  // Staged images page in the lightbox; device-picked PDFs use the file viewer.
+  // Staged images page in the lightbox; local PDFs and videos use the file viewer.
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const previewImages = useMemo<PreviewImage[]>(
     () =>
@@ -886,9 +886,9 @@ export const AgentComposer = memo(function AgentComposer({
         .map((item) => ({ id: item.id, uri: item.localUri })),
     [visibleAttachments]
   );
-  const previewPdf = assetFromLocalPdf(
-    visibleAttachments.find((item) => item.id === previewAttachmentId)
-  );
+  const previewAttachment = visibleAttachments.find((item) => item.id === previewAttachmentId);
+  const previewFile =
+    assetFromLocalVideo(previewAttachment) ?? assetFromLocalPdf(previewAttachment);
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
@@ -1138,12 +1138,12 @@ export const AgentComposer = memo(function AgentComposer({
     heldCaret && heldCaret.draft === text
       ? { start: heldCaret.caret, end: heldCaret.caret }
       : (skillPopup.inputProps.selection ?? slashPopup.inputProps.selection);
-  // Span mode starts as soon as a mention can appear (an `@` or a token in the
-  // draft), so the field switches from `value` to spans on a keystroke rather
+  // Span mode starts as soon as a trigger or mention can appear in the
+  // draft, so the field switches from `value` to spans on a keystroke rather
   // than in the same commit as a pick -- Android drops the first colouring
   // otherwise.
   const spans =
-    ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
+    /^[@$/]/.test(text) || ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
       <MentionSpans text={text} ranges={ranges} />
     ) : undefined;
 
@@ -1608,7 +1608,7 @@ export const AgentComposer = memo(function AgentComposer({
     if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
   }, [surfaceHeight, dockHeight, dockClipHeight, decorationClearance, compactionClearance]);
   const popupMaxHeight = Math.max(
-    POPUP_MIN_HEIGHT,
+    0,
     windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
   );
   // The compact dock's second line holds the two choices that define a new
@@ -1903,6 +1903,7 @@ export const AgentComposer = memo(function AgentComposer({
               query={mentionTrigger.query}
               onSelect={chooseMention}
               scope="project"
+              maxHeight={popupMaxHeight}
             />
           </View>
         ) : null}
@@ -2449,6 +2450,7 @@ export const AgentComposer = memo(function AgentComposer({
                     },
                   ]}>
                   <AttachmentStrip
+                    previewing={Boolean(previewFile) || previewIndex >= 0}
                     attachments={visibleAttachments}
                     onRemove={removeStagedAttachment}
                     onRetry={retryStagedAttachment}
@@ -2641,8 +2643,8 @@ export const AgentComposer = memo(function AgentComposer({
             </View>
           </ComposerSurface>
         </View>
-        {previewPdf ? (
-          <AssetViewer asset={previewPdf} onClose={() => setPreviewAttachmentId(null)} />
+        {previewFile ? (
+          <AssetViewer asset={previewFile} onClose={() => setPreviewAttachmentId(null)} />
         ) : null}
         {previewIndex >= 0 ? (
           <ImagePreviewModal

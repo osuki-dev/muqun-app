@@ -274,7 +274,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           {taskSummary ? (
             <View style={styles.headerRow}>
               <View style={styles.headerIcon}>
-                <ForkIcon size={13} color={theme.colors.textMuted} />
+                {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
               </View>
               <Text
                 variant="caption"

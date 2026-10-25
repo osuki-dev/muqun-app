@@ -108,6 +108,9 @@ Configure the ignored provider credentials
 and private signing-key path in `.env.hotupdater`. The scripts explicitly select
 the channel and enable OTA; stale channel settings in that file cannot redirect them.
 
+Keep localized OTA note manifests local and ignored under `release-notes/`;
+never commit them. Versioned `vX.Y.Z.md` release notes remain repository documents.
+
 ```sh
 bun run update:preview android release-notes/ota-notes.json
 bun run update:preview ios release-notes/ota-notes.json

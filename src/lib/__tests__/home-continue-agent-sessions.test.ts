@@ -441,7 +441,7 @@ test("the gateway's terminal provenance rides into the Continue snapshot", () =>
       },
     }),
   ]);
-  expect(listed.terminal).toEqual({ sessionId: 'dev', paneId: 'p-cc' });
+  expect(listed.terminal).toEqual({ sessionId: 'dev', paneId: 'p-cc', instanceId: 'i-1' });
   expect(gatewayAgentSessions([info('native', 10)])[0].terminal).toBeUndefined();
 });
 

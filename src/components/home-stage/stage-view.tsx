@@ -292,7 +292,8 @@ export function StageView({
     Math.min(HERO_MAX_EDGE, Math.round(window.height * dpr * 0.8)),
     textureShrink
   );
-  const gpuUri = (layer: StageLayer | null) => (effects.gpu ? layer?.uri : undefined);
+  const gpuUri = (layer: StageLayer | null) =>
+    effects.gpu && !composition.nativeImages ? layer?.uri : undefined;
   const backdropEdge = role === 'sky' ? Math.min(BASE_MAX_EDGE, coverEdge) : coverEdge;
   const backdropTexture = useStageTexture(gpuUri(composition.backdrop), backdropEdge, 'backdrop');
   const paintingTexture = useStageTexture(gpuUri(composition.painting), coverEdge, 'painting');
@@ -304,7 +305,7 @@ export function StageView({
   const textureFailed = [backdropTexture, paintingTexture, heroTexture, frameTexture].some(
     (state) => state.status === 'failed'
   );
-  const renderGpu = effects.gpu && !textureFailed;
+  const renderGpu = effects.gpu && !textureFailed && !composition.nativeImages;
   // What the diagnostics sheet shows: the rung, pixel ratio and textures drawn.
   const backdropSize = textureSize(backdropTexture);
   const paintingSize = textureSize(paintingTexture);
@@ -341,7 +342,8 @@ export function StageView({
   // A reskin holds its cover until the layers are chosen and their textures are in (or failed).
   const settled =
     composition.ready &&
-    (!effects.gpu ||
+    (composition.nativeImages ||
+      !effects.gpu ||
       [backdropTexture, paintingTexture, heroTexture, frameTexture].every(
         (state) => state.status !== 'loading'
       ));
@@ -581,7 +583,11 @@ export function StageView({
             </Suspense>
           </MapErrorBoundary>
         ) : (
-          <StaticStage composition={composition} art={art} skia={!gpuLost} />
+          <StaticStage
+            composition={composition}
+            art={art}
+            skia={!gpuLost && !composition.nativeImages}
+          />
         )}
         {/* Nothing is drawn over the scene while it readies a frame: the launch
             scene and a reskin's cover already wait for `gpuReady`, and a frame

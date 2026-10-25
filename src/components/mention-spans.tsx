@@ -14,6 +14,16 @@ export function MentionSpans({ text, ranges }: { text: string; ranges: readonly 
   const theme = useThemeTokens();
   const pieces: ReactNode[] = [];
   let at = 0;
+  // A trigger is only visual emphasis, not an atomic mention: deleting it
+  // must keep the rest of the draft and ordinary native caret behaviour.
+  if (/^[@$/]/.test(text) && ranges[0]?.start !== 0) {
+    pieces.push(
+      <SpanText key="trigger" style={{ color: theme.colors.primary }}>
+        {text[0]}
+      </SpanText>
+    );
+    at = 1;
+  }
   for (const range of ranges) {
     if (range.start > at) pieces.push(text.slice(at, range.start));
     pieces.push(

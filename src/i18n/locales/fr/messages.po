@@ -678,6 +678,7 @@ msgstr "Vue par défaut des panneaux d’agent"
 msgid "Agent working"
 msgstr "Agent au travail"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/new-task-action.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -871,6 +872,10 @@ msgstr "Apparence"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "Apparence, terminal, sécurité"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Apply"
+msgstr "Appliquer"
 
 #: src/i18n/labels.ts
 msgid "Apply a patch"
@@ -1157,6 +1162,10 @@ msgstr "Écriture du cache"
 msgid "Calculating…"
 msgstr "Calcul en cours…"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Call duration"
+msgstr "Durée de l’appel"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour prendre une photo"
@@ -1202,6 +1211,7 @@ msgstr "Annuler la modification de {0}"
 msgid "Cancel queued message"
 msgstr "Annuler le message en attente"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-row.tsx
 msgid "Cancel task"
 msgstr "Annuler la tâche"
@@ -1210,6 +1220,7 @@ msgstr "Annuler la tâche"
 msgid "Cancel this queued message"
 msgstr "Annuler ce message en attente"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
@@ -1364,6 +1375,10 @@ msgstr "Choisir des fichiers"
 #: src/components/settings-appearance.tsx
 msgid "Choose Home and app chrome. Colours stay with your theme."
 msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs restent celles du thème"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Choose how Home gets updates from your computers."
+msgstr "Choisissez comment l’accueil reçoit les mises à jour de vos ordinateurs"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1587,12 +1602,21 @@ msgstr "Échec de la compaction — touchez pour masquer"
 msgid "Compared with {base}"
 msgstr "Comparé à {base}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Complete task"
+msgstr "Terminer la tâche"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Completed"
 msgstr "Terminé"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Completion unconfirmed"
+msgstr "Fin non confirmée"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
@@ -1605,6 +1629,7 @@ msgstr "Terminé"
 msgid "Computer"
 msgstr "Ordinateur"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/computer-map/screen.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "Computer details"
@@ -1632,6 +1657,7 @@ msgstr "Ordinateur indisponible"
 
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
@@ -1699,6 +1725,11 @@ msgstr "Conflits"
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
 msgstr "Se connecter"
+
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Connect separately"
+msgstr "Connecter séparément"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2344,6 +2375,10 @@ msgstr "Impossible d’enregistrer ce réglage. Réessayez"
 msgid "Could not save voice settings. Please try again."
 msgstr "Impossible d’enregistrer les paramètres vocaux. Réessayez"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Could not save. Check that your computers are online and their Gateways are up to date."
+msgstr "Enregistrement impossible. Vérifiez que vos ordinateurs sont en ligne et leurs Gateways à jour"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -2359,6 +2394,7 @@ msgstr "Impossible d’envoyer la commande"
 msgid "Could not send input."
 msgstr "Impossible d’envoyer la saisie"
 
+#: src/components/home-reply-key-row.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
 msgstr "Impossible d’envoyer la touche"
@@ -2476,6 +2512,10 @@ msgstr "Chemin actuel"
 #: src/components/settings-theme-sheet.tsx
 msgid "Current theme"
 msgstr "Thème actuel"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Currently using {currentName}"
+msgstr "Actuellement via {currentName}"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Custom"
@@ -2674,6 +2714,7 @@ msgstr "Masquer ce qui s’est passé pendant votre absence"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-home-connections-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Terminé"
@@ -2845,6 +2886,10 @@ msgstr "Tous les écrans de l'app"
 msgid "exit {code}"
 msgstr "sortie {code}"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Exit code"
+msgstr "Code de sortie"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2894,6 +2939,7 @@ msgstr "Exporter les couleurs"
 msgid "Export theme"
 msgstr "Exporter le thème"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-sleep-tool-body.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
@@ -3072,6 +3118,10 @@ msgstr "D’un objectif au travail en cours"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Caméra frontale. Présentez le QR code devant l'écran"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Full content in Details"
+msgstr "Contenu complet dans les détails"
 
 #: src/components/video-asset-preview.tsx
 msgid "Fullscreen"
@@ -3261,6 +3311,11 @@ msgstr "Accueil"
 msgid "Home agent"
 msgstr "Agent de l’accueil"
 
+#: src/components/settings-home-connections-sheet.tsx
+#: src/components/settings-home-summary.tsx
+msgid "Home connections"
+msgstr "Connexions de l’accueil"
+
 #: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
@@ -3362,6 +3417,7 @@ msgstr "Importer un fichier"
 msgid "Import link"
 msgstr "Importer un lien"
 
+#: src/components/settings-theme-sheet.tsx
 #: src/components/theme-card.tsx
 msgid "Import theme"
 msgstr "Importer un thème"
@@ -3494,10 +3550,6 @@ msgstr "Ses informations n’ont pas pu être retirées du stockage sécurisé"
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be written to secure storage."
 msgstr "Ses informations n’ont pas pu être écrites dans le stockage sécurisé"
-
-#: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the computer in use."
-msgstr "Ses appareils appairés apparaissent une fois qu’il est l’ordinateur utilisé"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -4147,6 +4199,10 @@ msgstr "Aucune application de ce téléphone n’ouvre les pages web"
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "Aucune application de ce téléphone n’ouvre les pages web. Le guide se trouve sur muqun.dev/support"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "No assigned task"
+msgstr "Aucune tâche attribuée"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Aucune caméra pour scanner"
@@ -4498,6 +4554,7 @@ msgstr "Observation démarrée"
 msgid "Off"
 msgstr "Désactivé"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4536,6 +4593,11 @@ msgstr "Sur tablette, l’accueil est une double page, les feuilles de travail o
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Une seule feuille Modifications pour les terminaux et les sessions d’agent : les fichiers modifiés en arbre avec le total des lignes, la branche sous le titre et Rejeter dans le menu d’un fichier"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "One computer gathers task updates for your phone."
+msgstr "Un ordinateur rassemble les mises à jour des tâches pour votre téléphone"
+
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
@@ -4803,6 +4865,7 @@ msgid "Other computers"
 msgstr "Autres ordinateurs"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "Output"
@@ -4966,6 +5029,7 @@ msgstr "Période non indiquée"
 msgid "Permission"
 msgstr "Autorisation"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-permission-card.tsx
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "Permission required"
@@ -5165,6 +5229,10 @@ msgstr "En file d’attente"
 msgid "queued to upload"
 msgstr "en attente d’envoi"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Queued when checked"
+msgstr "En file lors de la vérification"
+
 #: src/components/agent-composer.tsx
 msgid "Queued: {summary}"
 msgstr "En file d’attente : {summary}"
@@ -5216,6 +5284,10 @@ msgstr "Lire en dehors de l’espace de travail"
 msgid "Read release notes before downloading. Follow real download progress, then restart when the update is ready—or leave it for later."
 msgstr "Lisez les notes de version avant le téléchargement. Suivez sa progression réelle, puis redémarrez quand la mise à jour est prête, ou remettez cela à plus tard"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Read task"
+msgstr "Lire la tâche"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Lecture seule : recherche de symboles, découverte de fichiers, suivi des dépendances"
@@ -5260,6 +5332,10 @@ msgstr "Raisonnement"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "Recevez les blocages d’agents et les mises à jour du Gateway"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Received"
+msgstr "Reçu"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
@@ -5555,6 +5631,10 @@ msgstr "Restaurer les commandes par défaut masquées"
 msgid "Restore hidden defaults"
 msgstr "Restaurer les valeurs par défaut masquées"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Result available in Details"
+msgstr "Résultat disponible dans les détails"
+
 #: src/i18n/labels.ts
 msgid "Resume"
 msgstr "Reprendre"
@@ -5693,6 +5773,7 @@ msgstr "Exécuter une commande"
 msgid "Run a terminal command"
 msgstr "Exécuter une commande de terminal"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
@@ -5726,11 +5807,16 @@ msgstr "Exécutez t3 pair sur l’hôte, renseignez le jeton affiché comme t3.p
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "En cours"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Running when checked"
+msgstr "En cours lors de la vérification"
 
 #: src/components/changes-sheet.tsx
 msgid "Same as {base}"
@@ -5799,6 +5885,10 @@ msgstr "Commandes enregistrées"
 msgid "Saved history · Live status unavailable"
 msgstr "Historique enregistré · État en direct indisponible"
 
+#: src/components/agent-runtime-notice.tsx
+msgid "Saved history · Send a message to resume"
+msgstr "Historique enregistré · Envoyez un message pour reprendre"
+
 #: src/components/pane-history-sheet.tsx
 msgid "Saved observations"
 msgstr "Observations enregistrées"
@@ -5821,6 +5911,7 @@ msgstr "Hôte SSH enregistré"
 msgid "Saved terminal history"
 msgstr "Historique enregistré du terminal"
 
+#: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
@@ -5931,8 +6022,8 @@ msgstr "Sélectionné"
 msgid "Send"
 msgstr "Envoyer"
 
-#: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/terminal-key-row.tsx
 msgid "Send {spoken}"
 msgstr "Envoyer {spoken}"
 
@@ -6082,6 +6173,14 @@ msgstr "Partager la transcription de cette session"
 #: src/components/agent-account-limits-section.tsx
 msgid "Shared across sessions. Refresh to update."
 msgstr "Partagé entre les sessions. Actualisez pour mettre à jour"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
+msgstr "Partage le résumé de l’accueil (tâches, sessions et terminaux) avec cet ordinateur et les ordinateurs de secours. Les conversations restent connectées directement"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Shares Home summaries (tasks, sessions and terminals) with this computer. Conversations stay directly connected."
+msgstr "Partage le résumé de l’accueil (tâches, sessions et terminaux) avec cet ordinateur. Les conversations restent connectées directement"
 
 #: src/components/agent-background-tray.tsx
 msgid "Shells"
@@ -6416,6 +6515,7 @@ msgstr "Lancez-le sur cette machine, puis touchez Réessayer"
 msgid "Start one there, then tap Retry:"
 msgstr "Lancez-en un sur cette machine, puis touchez Réessayer :"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Démarrer la tâche"
@@ -6428,6 +6528,7 @@ msgstr "Démarrez l’agent sur l’ordinateur, puis vérifiez à nouveau"
 msgid "Start the OpenCode service on the computer, then check again."
 msgstr "Démarrez le service OpenCode sur l’ordinateur, puis vérifiez à nouveau"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Started"
 msgstr "Démarré"
@@ -6542,6 +6643,10 @@ msgstr "Arrêter cette commande"
 msgid "Stopped"
 msgstr "Arrêté"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Stopped sharing. Reconnect your computers and try again to finish removing access."
+msgstr "Partage arrêté. Reconnectez vos ordinateurs et réessayez pour supprimer les accès restants"
+
 #: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
@@ -6578,6 +6683,10 @@ msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "Résumer l'historique et continuer à partir du résumé"
 
+#: src/components/home-connections.tsx
+msgid "Summary connected"
+msgstr "Résumés des tâches connectés"
+
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Suspendre"
@@ -6598,6 +6707,10 @@ msgstr "Changer de mode d'agent"
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
 msgstr "Changer d'app"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Switch automatically"
+msgstr "Basculer automatiquement"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
@@ -7074,7 +7187,7 @@ msgstr "Thème"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Theme action failed"
-msgstr ""
+msgstr "Échec de l’action du thème"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
@@ -7132,6 +7245,10 @@ msgstr "Cette application"
 #: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "Cette action est irréversible"
+
+#: src/components/agent-tool-card.tsx
+msgid "This computer"
+msgstr "Cet ordinateur"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This computer cannot run that command yet."
@@ -7390,6 +7507,10 @@ msgstr "Via {host}"
 msgid "timed out"
 msgstr "délai dépassé"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Timeline entries"
+msgstr "Entrées de la chronologie"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Aujourd’hui"
@@ -7419,6 +7540,10 @@ msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Appel d’outil"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Toolchains"
+msgstr "Chaînes d’outils"
 
 #: src/components/settings-storage.tsx
 msgid "Total"
@@ -7560,6 +7685,7 @@ msgstr "Annuler jusqu’ici"
 msgid "unknown"
 msgstr "inconnu"
 
+#: src/components/agent-muqun-tool-body.tsx
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "Inconnu"
@@ -7665,9 +7791,17 @@ msgstr "Mettre à jour"
 msgid "Update download failed. Try again."
 msgstr "Le téléchargement de la mise à jour a échoué. Réessayez"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Update Gateway on this computer first."
+msgstr "Mettez d’abord à jour Gateway sur cet ordinateur"
+
 #: src/components/home-recent-sessions.tsx
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "Mettez à jour Gateway sur cet ordinateur, puis reconnectez-vous pour pouvoir supprimer des sessions depuis l’accueil"
+
+#: src/components/home-composer-dock.tsx
+msgid "Update Gateway to use computer references in this conversation."
+msgstr "Mettez Gateway à jour pour mentionner des ordinateurs dans cette conversation"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
@@ -7742,14 +7876,17 @@ msgstr "envoi en cours"
 msgid "Usage snapshot is stale"
 msgstr "Les données d’utilisation sont obsolètes"
 
-#. placeholder {0}: server.label
-#: src/components/settings-servers.tsx
-msgid "Use {0}"
-msgstr "Utiliser {0}"
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use another computer if this one disconnects."
+msgstr "Utiliser un autre ordinateur si celui-ci se déconnecte"
 
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Utiliser le code de l’appareil"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Use one computer"
+msgstr "Passer par un ordinateur"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Use Shift+Left on the terminal keyboard to answer the pending question."
@@ -7770,10 +7907,6 @@ msgstr "Utilisez l’URL du dépôt, puis indiquez sa branche et le fichier du t
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
 msgstr "Utiliser les valeurs par défaut du thème"
-
-#: src/components/settings-servers.tsx
-msgid "Use this computer"
-msgstr "Utiliser cet ordinateur"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -7796,6 +7929,10 @@ msgstr "Variable · {0}"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
+
+#: src/components/settings-home-summary.tsx
+msgid "Via {name}"
+msgstr "Via {name}"
 
 #: src/components/home-stage/stage-needs-card.tsx
 msgid "View"
@@ -7839,6 +7976,10 @@ msgstr "Attendre"
 #: src/components/agent-sleep-tool-body.tsx
 msgid "Wait for {duration}"
 msgstr "Attendre {duration}"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Wait for task"
+msgstr "Attendre la tâche"
 
 #: src/components/agent-workbench.tsx
 msgid "Wait for the turn to end before choosing a model."
@@ -7885,6 +8026,10 @@ msgstr "En attente de votre réponse"
 msgid "Waiting to send"
 msgstr "En attente d’envoi"
 
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Waiting when checked"
+msgstr "En attente lors de la vérification"
+
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Bienvenue dans {agentName}"
@@ -7902,6 +8047,10 @@ msgstr "Ce qui tourne"
 msgid "What's new"
 msgstr "Nouveautés"
 
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Which computer?"
+msgstr "Quel ordinateur ?"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Pendant votre absence"
@@ -7916,6 +8065,10 @@ msgstr "En cours"
 msgctxt "task state"
 msgid "Working"
 msgstr "En cours"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Working directory"
+msgstr "Dossier de travail"
 
 #: src/components/session-map.tsx
 msgid "Workspace"
@@ -8009,6 +8162,10 @@ msgstr "Votre message"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired computers"
 msgstr "Vos ordinateurs appairés"
+
+#: src/components/settings-home-connections-sheet.tsx
+msgid "Your phone connects to each computer."
+msgstr "Votre téléphone se connecte à chaque ordinateur séparément"
 
 #: src/lib/network-error.ts
 msgid "Your phone's clock is off by {minutes} minutes. Fix the date and time, then try again."

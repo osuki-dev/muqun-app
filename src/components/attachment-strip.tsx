@@ -3,6 +3,8 @@ import { useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
+import { useState } from 'react';
+import { useIsFocused } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -13,6 +15,9 @@ import {
   type PendingAttachment,
 } from '@/lib/attachments';
 import { isPdfFile } from '@/lib/session-assets';
+import { videoFileMime } from '@/lib/media-file';
+import { useAppActive } from '@/hooks/use-app-active';
+import { StagedVideoThumbnail } from '@/components/staged-video-thumbnail';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
@@ -31,6 +36,7 @@ export function AttachmentStrip({
   onPreview,
   textColor,
   readOnly = false,
+  previewing = false,
 }: {
   attachments: PendingAttachment[];
   onRemove: (id: string) => void;
@@ -39,12 +45,17 @@ export function AttachmentStrip({
   textColor: string;
   /** Submission previews remain inspectable, but cannot mutate the in-flight files. */
   readOnly?: boolean;
+  /** The full preview owns decoding while it covers the strip. */
+  previewing?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   // Above the early return: these tiles are painted over the composer, which is
   // itself above the artwork, so their fills follow the reader's slider.
   const surfaceBackground = useSurfaceBackground();
+  const active = useAppActive();
+  const focused = useIsFocused();
+  const [viewport, setViewport] = useState({ width: 0, first: 0 });
   if (attachments.length === 0) return null;
 
   /** What the overlay is showing, for anyone who cannot see the overlay. */
@@ -66,24 +77,41 @@ export function AttachmentStrip({
       horizontal
       keyboardShouldPersistTaps="always"
       showsHorizontalScrollIndicator={false}
+      onLayout={(event) => {
+        const width = event.nativeEvent.layout.width;
+        setViewport((previous) => (previous.width === width ? previous : { ...previous, width }));
+      }}
+      onScroll={(event) => {
+        const first = Math.floor(event.nativeEvent.contentOffset.x / (TILE_SIZE + 8));
+        setViewport((previous) => (previous.first === first ? previous : { ...previous, first }));
+      }}
+      scrollEventThrottle={100}
       contentContainerStyle={styles.strip}>
-      {attachments.map((attachment) => {
+      {attachments.map((attachment, index) => {
         const failed = attachment.status === 'error';
         // A file over the cap has nothing to retry: the tile says so and takes no tap.
         const retryable = failed && attachment.failure !== 'too-large';
         const reason = failed ? describeAttachmentFailure(attachment) : null;
         const isImage = isImageAttachment(attachment.mime);
-        const previewable = isImage || isPdfFile(attachment);
+        const video = videoFileMime({ ...attachment, uri: attachment.localUri });
+        const previewable = isImage || Boolean(video) || isPdfFile(attachment);
+        const showVideoFrame =
+          active &&
+          focused &&
+          !previewing &&
+          index >= viewport.first &&
+          index <= viewport.first + Math.ceil(viewport.width / (TILE_SIZE + 8));
         // A tap means retry on a failed tile and preview on anything else worth
         // looking at, so the label has to say which of the two it is.
         const status = describeStatus(attachment.status);
-        const label = failed
-          ? retryable
-            ? t`Retry uploading ${attachment.name}: ${reason}`
-            : `${attachment.name}: ${reason}`
-          : previewable
-            ? t`Preview ${attachment.name}, ${status}`
-            : `${attachment.name}, ${status}`;
+        const label =
+          failed && !video
+            ? retryable
+              ? t`Retry uploading ${attachment.name}: ${reason}`
+              : `${attachment.name}: ${reason}`
+            : previewable
+              ? t`Preview ${attachment.name}, ${status}`
+              : `${attachment.name}, ${status}`;
 
         return (
           // A picked file used to be simply there, and a removed one simply
@@ -99,9 +127,11 @@ export function AttachmentStrip({
             style={styles.tileWrap}>
             <PressableScale
               accessibilityLabel={label}
-              disabled={(!failed && !previewable) || (failed && (!retryable || readOnly))}
+              disabled={
+                !video && ((!failed && !previewable) || (failed && (!retryable || readOnly)))
+              }
               pressedScale={0.94}
-              onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
+              onPress={() => (failed && !video ? onRetry(attachment.id) : onPreview(attachment.id))}
               style={[
                 styles.tile,
                 {
@@ -111,7 +141,14 @@ export function AttachmentStrip({
                   ? { borderColor: theme.colors.danger, borderWidth: StyleSheet.hairlineWidth }
                   : null,
               ]}>
-              {isImage ? (
+              {video && showVideoFrame ? (
+                <StagedVideoThumbnail
+                  key={attachment.localUri}
+                  uri={attachment.localUri}
+                  name={attachment.name}
+                  mime={video}
+                />
+              ) : isImage ? (
                 <Image
                   source={{ uri: attachment.localUri }}
                   style={styles.thumbnail}
@@ -161,7 +198,9 @@ export function AttachmentStrip({
                   entering={fadeIn('micro')}
                   exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.failedOverlay]}>
-                  <AppIcon name={retryable ? 'undo' : 'blocked'} size={17} color="#FFFFFF" />
+                  {!video ? (
+                    <AppIcon name={retryable ? 'undo' : 'blocked'} size={17} color="#FFFFFF" />
+                  ) : null}
                 </Animated.View>
               ) : null}
             </PressableScale>
@@ -178,6 +217,14 @@ export function AttachmentStrip({
                   {reason}
                 </Text>
               </Animated.View>
+            ) : null}
+            {video && retryable && !readOnly ? (
+              <PressableScale
+                accessibilityLabel={t`Retry uploading ${attachment.name}: ${reason}`}
+                onPress={() => onRetry(attachment.id)}
+                style={{ minHeight: 44, justifyContent: 'center', alignItems: 'center' }}>
+                <Text variant="caption" color={theme.colors.primary}>{t`Retry`}</Text>
+              </PressableScale>
             ) : null}
             {/* Ready is worth its own mark rather than just the absence of an
                 overlay, because Send waiting on a tile only makes sense if the

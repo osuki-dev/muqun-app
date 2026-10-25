@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   canMarkTaskDone,
-  isMentionsRefusal,
   isTerminalTaskState,
   ledgerTaskBody,
   parseCreatedLedgerTask,
@@ -194,6 +193,10 @@ describe('POST /api/tasks', () => {
       mentions: ['cedar'],
     });
     expect(ledgerTaskBody({ goal: 'g', mentions: [] })).toEqual({ goal: 'g' });
+    expect(ledgerTaskBody({ goal: 'g', computerIds: ['machine-a'] })).toEqual({
+      goal: 'g',
+      computer_ids: ['machine-a'],
+    });
   });
 
   test('the answer is the task plus the session it opened', () => {
@@ -221,23 +224,5 @@ describe('POST /api/tasks', () => {
   test('a root query is encoded', () => {
     expect(taskListPath({ limit: 100, root: 't 1' })).toBe('/api/tasks?limit=100&root=t%201');
     expect(taskListPath()).toBe('/api/tasks');
-  });
-});
-
-describe('isMentionsRefusal: when a task is resent without its mentions', () => {
-  test.each([
-    [
-      'a 400 refusing the mentions',
-      'Open task: 400 {"error":{"code":"invalid_mentions","message":"…"}}',
-      true,
-    ],
-    [
-      'another 400 whose words mention them',
-      'Open task: 400 {"error":{"code":"invalid_request","message":"mentions must be…"}}',
-      false,
-    ],
-    ['a server error', 'Open task: 500 {"error":{"code":"invalid_mentions"}}', false],
-  ] as const)('%s', (_name, message, expected) => {
-    expect(isMentionsRefusal(new Error(message))).toBe(expected);
   });
 });

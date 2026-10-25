@@ -169,6 +169,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
+  const [videoExpanded, setVideoExpanded] = useState(false);
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
@@ -394,7 +395,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       statusBarTranslucent
       navigationBarTranslucent
       animationType={quiet ? 'none' : 'fade'}
-      onRequestClose={onClose}>
+      onRequestClose={() => (videoExpanded ? setVideoExpanded(false) : onClose())}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         {/* Both insets are paid here rather than per body: the fill is on this
             view, so padding it keeps the colour edge to edge while the content
@@ -432,6 +433,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 // The sides too: iPhone Duo keeps its status bar down the right edge.
                 sideInsetPadding(insets),
                 { paddingBottom: insets.bottom },
+                videoExpanded && { paddingTop: insets.top },
               ]}>
               {/* SafeAreaView reports zero insets inside a native Modal, so pad from
               the root provider's insets instead.
@@ -441,7 +443,12 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               whatever the body puts on the screen -- including a loading state
               that fills the rest of it. A viewer you cannot leave while it is
               loading is worse than one that fails. */}
-              <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
+              <View
+                style={[
+                  styles.headerLayer,
+                  { paddingTop: insets.top },
+                  videoExpanded && { display: 'none' },
+                ]}>
                 {/* The sheet's own heading, on the sheet's gutter: the file's name
                     is the title and its size and age are the caption, and the
                     two round controls are its trailing edge. Every body below
@@ -575,6 +582,8 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                       error={error}
                       markdownStyle={markdownStyle}
                       onRetry={() => setAttempt((previous) => previous + 1)}
+                      videoExpanded={videoExpanded}
+                      onToggleVideoExpanded={() => setVideoExpanded((previous) => !previous)}
                     />
                   )}
                 </>
@@ -620,6 +629,8 @@ function AssetBody({
   error,
   markdownStyle,
   onRetry,
+  videoExpanded,
+  onToggleVideoExpanded,
 }: {
   asset: SessionAsset;
   presentation: AssetPresentation;
@@ -630,6 +641,8 @@ function AssetBody({
   error: string | null;
   markdownStyle: ReturnType<typeof createMarkdownStyle>;
   onRetry: () => void;
+  videoExpanded: boolean;
+  onToggleVideoExpanded: () => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
@@ -660,7 +673,14 @@ function AssetBody({
   // than as having replaced something.
   if (presentation === 'pdf') return <PdfAssetPreview asset={asset} />;
   if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
-  if (presentation === 'video') return <VideoAssetPreview asset={asset} />;
+  if (presentation === 'video')
+    return (
+      <VideoAssetPreview
+        asset={asset}
+        expanded={videoExpanded}
+        onToggleExpanded={onToggleVideoExpanded}
+      />
+    );
   if (tooLarge) {
     // The one refusal left, and the only one that says a number. It is reached
     // before a byte is read, so what it offers is the way to the file rather
