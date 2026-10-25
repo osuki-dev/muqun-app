@@ -980,6 +980,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   useEffect(() => {
     let windowStart = 0;
     let initialized = false;
+    let historyCursor: string | null | undefined;
     let active = true;
     let paging = false;
     let exhausted = false;
@@ -1006,18 +1007,23 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
       paging = true;
       setLoadingEarlier(true);
       void (async () => {
-        let page = await loadEarlierAgentTimeline(sessionId, asid);
+        let page = await loadEarlierAgentTimeline(sessionId, asid, historyCursor);
         if (!owns()) return;
         if (page.cursorLost) {
-          const snapshot = await getAgentSessionSnapshot(sessionId, asid, { refresh: true });
+          const snapshot = await getAgentSessionSnapshot(sessionId, asid, {
+            refresh: true,
+            historyCursor,
+          });
           if (!owns()) return;
+          historyCursor = snapshot.history_cursor;
           store
             .getState()
             .setTimeline((previous) => upsertTimelineItems(previous, snapshot.timeline));
-          page = await loadEarlierAgentTimeline(sessionId, asid);
+          page = await loadEarlierAgentTimeline(sessionId, asid, historyCursor);
           if (!owns()) return;
         }
         if (page.cursorLost) throw new Error('History cursor could not be restored');
+        if (page.history_cursor !== undefined) historyCursor = page.history_cursor;
         exhausted = page.exhausted;
         setEarlierExhausted(exhausted);
         store.getState().setTimeline((previous) => upsertTimelineItems(previous, page.items));
@@ -1031,13 +1037,14 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         });
     };
     const stop = followHomeSession({
+      readHistoryCursor: () => historyCursor,
       serverId,
       sessionId,
       asid,
       onSnapshot: (snapshot) => {
         setReadFailed(false);
         const transcript = store.getState();
-        if (!initialized) {
+        if (!initialized || snapshot.history_reset) {
           windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
           transcript.setTimeline(snapshot.timeline, windowStart);
           initialized = true;
@@ -1045,8 +1052,9 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
           // Reconnects must not discard history the reader already pulled in.
           transcript.setTimeline((previous) => upsertTimelineItems(previous, snapshot.timeline));
         }
-        exhausted = false;
-        setEarlierExhausted(false);
+        historyCursor = snapshot.history_cursor;
+        exhausted = snapshot.history_cursor === null;
+        setEarlierExhausted(exhausted);
         transcript.configure({ windowStart, status: snapshot.info?.status });
         setAgentId(snapshot.info?.agent_id ?? target.agentId);
         transcript.setInbox(snapshot.inbox);

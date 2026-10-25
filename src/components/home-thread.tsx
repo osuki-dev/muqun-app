@@ -68,6 +68,7 @@ const HOME_THREAD_PANE_ROWS = 80;
  * unless that is still the very connection this started on. Returns the stop.
  */
 export function followHomeSession({
+  readHistoryCursor,
   serverId,
   sessionId,
   asid,
@@ -80,6 +81,7 @@ export function followHomeSession({
   sessionId: string;
   asid: string;
   onSnapshot: (snapshot: AgentSessionSnapshot) => void;
+  readHistoryCursor?: () => string | null | undefined;
   /** Events about this session; `agent.resync` is answered with a read instead. */
   onEvent: (event: AgentDomainEvent) => void;
   onNotFound?: () => void;
@@ -107,10 +109,14 @@ export function followHomeSession({
     }
     reading = true;
     readStartedAtMs = Date.now();
-    void getAgentSessionSnapshot(sessionId, asid)
+    const historyCursor = readHistoryCursor?.();
+    void getAgentSessionSnapshot(sessionId, asid, { historyCursor })
       .then(
         (snapshot) => {
-          if (active && owns()) onSnapshot(snapshot);
+          if (active && owns()) {
+            if (readHistoryCursor?.() !== historyCursor) readAgain = true;
+            else onSnapshot(snapshot);
+          }
         },
         (failure: unknown) => {
           if (!active || !owns()) return;
