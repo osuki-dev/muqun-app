@@ -5,6 +5,8 @@ import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
 import type { AudioPlaybackRuntime } from '@/lib/audio-playback-session';
 import { VIDEO_CONTENT_LIMIT } from '@/lib/media-limits';
 
+import { assertStandaloneVideo, videoCacheExtension } from './media-file';
+
 let sequence = 0;
 /** The shared media session owns the player, download and cache file together. */
 export function videoPreviewRuntime(
@@ -14,10 +16,6 @@ export function videoPreviewRuntime(
     onPrepared: (player: VideoPlayer) => void;
   }
 ): AudioPlaybackRuntime {
-  const file = new File(
-    Paths.cache,
-    `video-preview-${Date.now()}-${sequence++}.${asset.mime === 'video/quicktime' ? 'mov' : 'mp4'}`
-  );
   let disposeCache: (() => void) | undefined;
   let player: VideoPlayer | undefined;
   let initialized = false;
@@ -27,10 +25,16 @@ export function videoPreviewRuntime(
       const resolved = options.resolve ? await options.resolve(signal) : asset;
       const bytes = await readAssetBytes(resolved, { signal, maxBytes: VIDEO_CONTENT_LIMIT });
       if (signal.aborted) throw new Error('Operation cancelled');
+      assertStandaloneVideo({ ...resolved, uri: resolved.path }, bytes);
+      const file = new File(
+        Paths.cache,
+        `video-preview-${Date.now()}-${sequence++}.${videoCacheExtension(resolved)}`
+      );
       disposeCache = await protectTemporaryCacheEntry(file);
       if (signal.aborted) throw new Error('Operation cancelled');
       file.create();
       await file.write(bytes);
+      if (signal.aborted) throw new Error('Operation cancelled');
       player = new VideoPlayer({ uri: file.uri, initializeOnCreation: false });
       options.onPrepared(player);
     },

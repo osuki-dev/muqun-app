@@ -91,7 +91,7 @@ import {
 } from './multipart';
 import {
   assertAssetGateway,
-  assetFromUploadedPdf,
+  assetFromUploadedFile,
   assetFromContentHeaders,
   findAssetById,
   findAssetByPath,
@@ -673,6 +673,15 @@ export interface GatewayAuthObserver {
 
 let authObserver: GatewayAuthObserver | null = null;
 
+let answerObserver: ((endpoint: { url: string; token: string }) => void) | null = null;
+
+/** Authenticated contact is also reachability evidence, independent of pairing faults. */
+export function setGatewayAnswerObserver(
+  observer: ((endpoint: { url: string; token: string }) => void) | null
+): void {
+  answerObserver = observer;
+}
+
 export function setGatewayAuthObserver(observer: GatewayAuthObserver | null): void {
   authObserver = observer;
 }
@@ -691,9 +700,10 @@ function noteRefusal(endpoint: { url: string; token: string }, status: number, b
 
 /** The gateway took this token: whatever was held against its pairing is disproved. */
 function noteAccepted(endpoint: { url: string; token: string }) {
-  if (!authObserver || !endpoint.token) return;
+  if (!endpoint.token) return;
   try {
-    authObserver.accepted(endpoint);
+    authObserver?.accepted(endpoint);
+    answerObserver?.(endpoint);
   } catch {
     // Likewise: bookkeeping never changes the answer.
   }
@@ -708,11 +718,11 @@ async function noteRefusedResponse(
   endpoint: { url: string; token: string },
   response: Response
 ): Promise<void> {
-  if (!authObserver) return;
   if (response.ok) {
     noteAccepted(endpoint);
     return;
   }
+  if (!authObserver) return;
   if (!PAIRING_REFUSAL_STATUSES.has(response.status)) return;
   let body = '';
   try {
@@ -2029,30 +2039,42 @@ export async function resolveAgentFileAsset(
     if (!asset) throw new Error('File output unavailable.');
     return asset;
   }
-  const upload = assetFromUploadedPdf(uri, serverId);
-  if (upload) return upload;
-  const health = await gatewayFetch(gatewayUrl('/health'), {
-    headers: gatewayAuthHeaders(),
-    signal,
-  });
-  if (!health.ok) throw new Error(`HTTP ${health.status}`);
-  const capabilities = (await health.json()).capabilities;
-  if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
-    throw new AudioPlaybackError('unsupported');
+  const upload = assetFromUploadedFile(uri, serverId);
+  if (upload && upload.kind !== 'binary') return upload;
+  // Unknown uploads stay usable on older Gateways; an explicit open can ask
+  // the existing metadata endpoint for its sniffed type without reading bytes.
+  try {
+    const health = await gatewayFetch(gatewayUrl('/health'), {
+      headers: gatewayAuthHeaders(),
+      signal,
+    });
+    if (!health.ok) throw new Error(`HTTP ${health.status}`);
+    const capabilities = (await health.json()).capabilities;
+    if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
+      throw new AudioPlaybackError('unsupported');
+    }
+    assertFileGateway(serverId);
+    const response = await gatewayFetch(
+      gatewayUrl(
+        `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+      ),
+      { headers: gatewayAuthHeaders(), signal }
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const envelope = await response.json();
+    const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+    if (!asset) throw new Error('File output unavailable.');
+    assertFileGateway(serverId);
+    return {
+      ...asset,
+      gatewayServerId: serverId ?? undefined,
+      ...(upload ? { uploadName: upload.uploadName } : {}),
+    };
+  } catch (error) {
+    if (!upload || signal.aborted) throw error;
+    assertFileGateway(serverId);
+    return upload;
   }
-  assertFileGateway(serverId);
-  const response = await gatewayFetch(
-    gatewayUrl(
-      `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
-    ),
-    { headers: gatewayAuthHeaders(), signal }
-  );
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const envelope = await response.json();
-  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
-  if (!asset) throw new Error('File output unavailable.');
-  assertFileGateway(serverId);
-  return { ...asset, gatewayServerId: serverId ?? undefined };
 }
 
 export async function readAssetBytes(

@@ -2,6 +2,24 @@
   "version": 1,
   "flows": [
     {
+      "name": "muqun-tools",
+      "program": "flows/muqun-tools",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-composer-triggers",
+      "program": "flows/agent-composer-triggers",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "uploaded-video",
+      "program": "flows/uploaded-video",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
       "tags": ["full", "agents"],
@@ -165,9 +183,19 @@
       "tags": ["full", "agents", "workspace"],
       "platforms": ["ios", "android"],
       "devices": ["iphone", "android-phone"]
+    },
+    {
+      "name": "home-summary-visibility",
+      "program": "flows/home-summary",
+      "tags": ["full", "workspace", "settings"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
+    "flows/agent-composer-triggers": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-composer-triggers.ad" }
+    ],
     "flows/home-stage-progress": [
       {
         "include": "subflows/open-demo"
@@ -244,6 +272,58 @@
       },
       {
         "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
+        },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-linked-source"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-independent-source"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#start"
+      },
+      {
+        "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
+        },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "user-message-demo-stage-independent-source"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#start"
+      },
+      {
+        "target": {
           "id": "home-stage-pull"
         },
         "mode": "press",
@@ -293,55 +373,6 @@
       },
       {
         "run": "flows/home-stage-progress.ad#clear-draft"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
-        },
-        "mode": "press",
-        "run": "flows/home-stage-progress.ad#press"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_LINKED_SOURCE"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_INDEPENDENT_SOURCE"
-        },
-        "mode": "hidden",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#hidden"
-      },
-      {
-        "run": "flows/home-stage-progress.ad#start"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
-      },
-      {
-        "target": {
-          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
-        },
-        "mode": "press",
-        "run": "flows/home-stage-progress.ad#press"
-      },
-      {
-        "target": {
-          "text": "STAGE_QA_OPENED_INDEPENDENT_SOURCE"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/home-stage-progress.ad#visible"
       }
     ],
     "subflows/stop-stage-progress": [
@@ -367,6 +398,18 @@
       {
         "run": "flows/home-stage-progress.ad#home"
       }
+    ],
+    "flows/uploaded-video": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/uploaded-video.ad#open" },
+      { "run": "flows/uploaded-video.ad#play" },
+      {
+        "target": { "text": "0:[0-2][1-9] / 0:30" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/uploaded-video.ad#progress"
+      },
+      { "run": "flows/uploaded-video.ad#reload" }
     ],
     "flows/agent-transcript-streaming": [
       { "include": "subflows/open-demo" },
@@ -396,24 +439,7 @@
       },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
-    "subflows/home-search-submit": [
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "ipad" },
-        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "android-phone" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      },
-      {
-        "when": { "env": "DEVICE_KIND", "equals": "android-tablet" },
-        "steps": [{ "run": "flows/home-continue-search.ad#submit" }]
-      }
-    ],
+    "subflows/home-search-settle": [{ "run": "flows/home-continue-search.ad#settle-typed" }],
     "subflows/home-continue-search": [
       { "run": "flows/home-continue-search.ad#choose-layout" },
       {
@@ -447,7 +473,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
@@ -506,7 +532,7 @@
         "run": "flows/home-continue-search.ad#assert-visible"
       },
       { "run": "flows/home-continue-search.ad#no-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "scroll",
@@ -519,7 +545,17 @@
         "mode": "visible",
         "run": "flows/home-continue-search.ad#assert-visible"
       },
-      { "run": "flows/home-continue-search.ad#clear" },
+      {
+        "target": { "id": "home-continue-search-clear" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/home-continue-search.ad#seek-up"
+      },
+      {
+        "target": { "id": "home-continue-search-clear" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#clear"
+      },
       {
         "target": { "id": "home-continue-no-matches" },
         "mode": "hidden",
@@ -543,7 +579,7 @@
         "run": "flows/home-continue-search.ad#assert-hidden"
       },
       { "run": "flows/home-continue-search.ad#hidden-match" },
-      { "include": "subflows/home-search-submit" },
+      { "include": "subflows/home-search-settle" },
       {
         "target": { "id": "home-recent-open-demo-continue-search-16" },
         "mode": "scroll",
@@ -1179,7 +1215,7 @@
       },
       {
         "target": {
-          "text": "feat/linked-checkout"
+          "id": "changes-worktree-%2FUsers%2Fdemo%2Fcode%2Fmuqun-worktrees%2Flinked-checkout"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s5b"
@@ -1197,7 +1233,7 @@
       },
       {
         "target": {
-          "text": "feat/git-diff"
+          "id": "changes-worktree-current"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s5e"
@@ -1822,11 +1858,23 @@
         "run": "flows/file-mentions.ad#s4"
       },
       {
+        "target": { "id": "file-mention-app.json" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
+      },
+      {
         "target": {
           "text": "Mention app.json"
         },
         "mode": "visible",
         "run": "flows/file-mentions.ad#s5"
+      },
+      {
+        "target": { "id": "file-mention-package.json" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
       },
       {
         "target": {
@@ -1842,11 +1890,23 @@
         "run": "flows/file-mentions.ad#s8"
       },
       {
+        "target": { "id": "file-mention-src/theme.ts" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/file-mentions.ad#seek-up"
+      },
+      {
         "target": {
           "text": "Mention src/theme.ts"
         },
         "mode": "visible",
         "run": "flows/file-mentions.ad#s9"
+      },
+      {
+        "target": { "id": "file-mention-docs/theming.md" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/file-mentions.ad#seek-down"
       },
       {
         "target": {
@@ -1868,6 +1928,12 @@
         },
         "mode": "hidden",
         "run": "flows/file-mentions.ad#s12"
+      },
+      {
+        "target": { "id": "file-mention-src/theme.ts" },
+        "mode": "scroll",
+        "direction": "up",
+        "run": "flows/file-mentions.ad#seek-up"
       },
       {
         "target": {
@@ -7054,6 +7120,139 @@
       },
       { "run": "flows/agent-session-tree.ad#context-closed" }
     ],
+    "flows/muqun-tools": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "11",
+          "TITLE": "Run command · mini",
+          "STATUS": "Started",
+          "EXPECTED": "bun run build"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "12",
+          "TITLE": "Start task · mini",
+          "STATUS": "Started",
+          "EXPECTED": "Review the build output"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "13",
+          "TITLE": "Wait for task · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Exit code"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "14",
+          "TITLE": "Read task · mini",
+          "STATUS": "Running when checked",
+          "EXPECTED": "Checking the generated bundle"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "15",
+          "TITLE": "Cancel task · mini",
+          "STATUS": "Cancelled",
+          "EXPECTED": "130"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "16",
+          "TITLE": "Complete task · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Build reviewed"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "17",
+          "TITLE": "Computers",
+          "STATUS": "Received",
+          "EXPECTED": "workstation"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "18",
+          "TITLE": "Computer details · mini",
+          "STATUS": "Received",
+          "EXPECTED": "Toolchains"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "19",
+          "TITLE": "Run command · mini",
+          "STATUS": "Failed",
+          "EXPECTED": "Exit code"
+        }
+      },
+      {
+        "include": "subflows/muqun-tool",
+        "env": {
+          "LEAF": "9",
+          "TITLE": "Run command · mini",
+          "STATUS": "Completed",
+          "EXPECTED": "Full content in Details"
+        }
+      },
+      { "include": "subflows/muqun-calling", "env": { "LEAF": "10" } }
+    ],
+    "subflows/muqun-calling": [
+      { "run": "flows/muqun-tools.ad#open" },
+      {
+        "target": {
+          "text": "Run command · mini · Running · Expand tool call(, busy)?"
+        },
+        "mode": "visible",
+        "run": "flows/muqun-tools.ad#target-visible"
+      },
+      {
+        "target": {
+          "id": "agent-tool-toggle"
+        },
+        "mode": "press",
+        "run": "flows/muqun-tools.ad#target-press"
+      },
+      {
+        "target": {
+          "text": "Run command · mini · Running · Collapse tool call(, busy)?"
+        },
+        "mode": "visible",
+        "run": "flows/muqun-tools.ad#target-visible"
+      },
+      { "run": "flows/muqun-tools.ad#calling" },
+      { "run": "flows/muqun-tools.ad#close" }
+    ],
+    "subflows/muqun-tool": [
+      {
+        "run": "flows/muqun-tools.ad#open"
+      },
+      {
+        "run": "flows/muqun-tools.ad#inspect"
+      },
+      {
+        "run": "flows/muqun-tools.ad#close"
+      }
+    ],
     "flows/agent-tool-detail": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-tool-detail.ad#open" },
@@ -7426,6 +7625,24 @@
         "mode": "hidden",
         "timeout": 15000,
         "run": "flows/settings-sheets.ad#hidden"
+      }
+    ],
+    "flows/home-summary": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/home-summary.ad#settings"
+      },
+      {
+        "target": {
+          "id": "home-summary-settings"
+        },
+        "mode": "hidden",
+        "run": "flows/home-summary.ad#hidden"
+      },
+      {
+        "run": "flows/home-summary.ad#home"
       }
     ]
   }

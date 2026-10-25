@@ -61,3 +61,18 @@ test('a Codex file citation becomes the file it cites, not raw markup', () => {
   // A citation with no usable path is left as it was written.
   expect(files(':codex-file-citation{purpose="output"}')).toEqual([]);
 });
+
+test('legacy video links share container hints without interpreting code, playlists or web URLs as local players', () => {
+  const text =
+    '[WebM](/tmp/clip.webm) [MKV](./clip.mkv) :codex-file-citation{path="/tmp/clip.3gp"}';
+  expect(
+    splitAudioMarkdown(text)
+      .filter((part) => part.kind === 'video')
+      .map((part) => part.uri)
+  ).toEqual(['/tmp/clip.webm', './clip.mkv', '/tmp/clip.3gp']);
+  expect(
+    splitAudioMarkdown(
+      '[code](/tmp/main.ts) [playlist](/tmp/list.m3u8) [web](https://host/clip.webm) `[/tmp/clip.webm](/tmp/clip.webm)`'
+    ).filter((part) => part.kind === 'video')
+  ).toEqual([]);
+});

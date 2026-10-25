@@ -12,9 +12,10 @@ import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { saveSessionAsset } from '@/lib/save-file';
-import { resolveAgentFileAsset } from '@/lib/gateway-client';
+import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
 import type { SessionAsset } from '@/lib/session-assets';
 import { AudioPlaybackSession, type AudioPlaybackState } from '@/lib/audio-playback-session';
+import { videoFileMime } from '@/lib/media-file';
 import { videoPreviewRuntime } from '@/lib/video-preview';
 import { useVoiceInput } from '@/stores/voice-input';
 
@@ -23,6 +24,9 @@ type VideoOptions = {
   visible?: boolean;
   resolve?: (signal: AbortSignal) => Promise<SessionAsset>;
   poster?: ImageSource;
+  /** Native Modal previews expand in their own window, keeping the same player. */
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 };
 
 export function InlineVideoFile({
@@ -35,15 +39,17 @@ export function InlineVideoFile({
   poster?: ImageSource;
 }) {
   const { ref, visible } = useInlineMediaVisibility();
+  const [serverId] = useState(configuredGatewayServerId);
   const asset: SessionAsset = {
     id: file.uri,
     path: file.uri,
     name: file.name ?? file.uri.split('/').pop() ?? '',
-    mime: file.mime ?? 'video/mp4',
+    mime: videoFileMime(file) ?? 'application/octet-stream',
     kind: 'video',
     size: 0,
     modified_unix_ms: 0,
     previewable: true,
+    gatewayServerId: serverId ?? undefined,
   };
   return (
     <Animated.View ref={ref} testID="inline-video-output">
@@ -51,13 +57,20 @@ export function InlineVideoFile({
         asset={asset}
         visible={visible}
         poster={poster}
-        resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal)}
+        resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal, serverId)}
       />
     </Animated.View>
   );
 }
 
-export function VideoAssetPreview({ asset, visible = true, resolve, poster }: VideoOptions) {
+export function VideoAssetPreview({
+  asset,
+  visible = true,
+  resolve,
+  poster,
+  expanded,
+  onToggleExpanded,
+}: VideoOptions) {
   const [active, setActive] = useState(AppState.currentState === 'active');
   const recording = useVoiceInput((state) => state.request !== null);
   const [attempt, setAttempt] = useState(0);
@@ -72,6 +85,8 @@ export function VideoAssetPreview({ asset, visible = true, resolve, poster }: Vi
       visible={active && !recording && visible}
       resolve={resolve}
       poster={poster}
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
       onRetry={() => setAttempt((value) => value + 1)}
     />
   );
@@ -83,6 +98,8 @@ function VideoPlayerCard({
   resolve,
   onRetry,
   poster,
+  expanded,
+  onToggleExpanded,
 }: VideoOptions & { onRetry: () => void }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -116,21 +133,25 @@ function VideoPlayerCard({
     void session.setVisible(visible);
   }, [session, visible]);
   useEffect(() => {
-    if (Platform.OS !== 'android' || !fullscreen) return;
+    if (Platform.OS !== 'android' || !fullscreen || onToggleExpanded) return;
     // Subscribe when fullscreen opens so this takes priority over route back.
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       video.current?.exitFullscreen();
       return true;
     });
     return () => subscription.remove();
-  }, [fullscreen]);
+  }, [fullscreen, onToggleExpanded]);
   const playing = state.phase === 'playing';
   const error = state.phase === 'error';
   const loading = state.phase === 'loading';
   const label = error ? t`Try again` : playing ? t`Pause` : t`Play`;
   return (
     <View
-      style={[styles.card, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}
+      style={[
+        styles.card,
+        expanded && styles.expandedCard,
+        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+      ]}
       testID="video-asset-preview">
       {player && !error ? (
         <VideoView
@@ -141,7 +162,7 @@ function VideoPlayerCard({
           resizeMode="contain"
           surfaceType="texture"
           keepScreenAwake={playing}
-          style={styles.video}
+          style={expanded ? styles.expandedVideo : styles.video}
         />
       ) : (
         <PressableScale
@@ -152,7 +173,7 @@ function VideoPlayerCard({
             if (error) onRetry();
             else void session.play();
           }}
-          style={styles.poster}>
+          style={[styles.poster, expanded && styles.expandedVideo]}>
           {poster && <VideoPoster key={poster.uri} source={poster} />}
           <View style={styles.posterAction}>
             <StartIcon size={32} color="white" />
@@ -202,9 +223,9 @@ function VideoPlayerCard({
         </View>
         <PressableScale
           accessibilityRole="button"
-          accessibilityLabel={t`Fullscreen`}
-          disabled={!player || error}
-          onPress={() => video.current?.enterFullscreen()}
+          accessibilityLabel={expanded ? t`Back` : t`Fullscreen`}
+          disabled={!expanded && (!player || error)}
+          onPress={() => (onToggleExpanded ? onToggleExpanded() : video.current?.enterFullscreen())}
           style={styles.action}>
           <FullscreenIcon size={18} color={theme.colors.textMuted} />
         </PressableScale>
@@ -242,6 +263,8 @@ function VideoPoster({ source }: { source: ImageSource }) {
 const styles = StyleSheet.create({
   card: { width: '100%', borderRadius: 14, overflow: 'hidden', gap: 8, paddingBottom: 8 },
   video: { width: '100%', aspectRatio: 16 / 9 },
+  expandedCard: { flex: 1, borderRadius: 0 },
+  expandedVideo: { flex: 1, minHeight: 0, aspectRatio: undefined },
   poster: {
     width: '100%',
     aspectRatio: 16 / 9,

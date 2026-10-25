@@ -33,7 +33,7 @@ async function loadDiagramFonts(interfaceFont: FontSlot, monoFont: FontSlot) {
       if (!uri || !family) return;
       const data = await Skia.Data.fromURI(uri);
       try {
-        const face = Skia.Typeface.MakeFreeTypeFaceFromData(data);
+        const face = Skia.Typeface.MakeFromData(data);
         if (face) {
           provider.registerFont(face, family);
           face.dispose();

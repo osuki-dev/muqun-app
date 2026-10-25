@@ -1,3 +1,4 @@
+import { videoFileMime } from '@/lib/media-file';
 import { isHostPathSource } from '@/lib/message-images';
 
 /** Local media and file links become players or chips; code examples and web links stay markdown. */
@@ -19,7 +20,7 @@ export function isThemeFilePath(path: string): boolean {
 }
 
 function mediaKind(path: string): 'audio' | 'video' | 'file' {
-  if (/\.(mp4|mov|m4v)$/i.test(path)) return 'video';
+  if (videoFileMime({ uri: path })) return 'video';
   if (/\.(wav|mp3|m4a|aac|ogg|opus|flac|aiff?)$/i.test(path)) return 'audio';
   return 'file';
 }
@@ -118,9 +119,10 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
           if (
             !uri ||
             !isHostPathSource(uri) ||
-            !/\.(?:wav|mp3|m4a|aac|ogg|opus|flac|aiff?|mp4|mov|m4v|png|jpe?g|webp|gif|pdf|zip|txt|md|json|csv|docx?|muqun-theme)$/i.test(
-              uri
-            )
+            (!videoFileMime({ uri }) &&
+              !/\.(?:wav|mp3|m4a|aac|ogg|opus|flac|aiff?|png|jpe?g|webp|gif|pdf|zip|txt|md|json|csv|docx?|muqun-theme)$/i.test(
+                uri
+              ))
           )
             continue;
           const start = offset + match.index;

@@ -142,7 +142,7 @@ export type GatewayAgentSession = {
    * that the session and that pane are the same work, which is what lets
    * Continue show the work once rather than as a session row and a pane row.
    */
-  terminal?: { sessionId: string; paneId: string };
+  terminal?: { sessionId: string; paneId: string; instanceId?: string };
 };
 
 /** The chosen gateway's merged `GET /api/agent-sessions`, as last read. */
@@ -178,6 +178,7 @@ export function gatewayAgentSessions(
             terminal: {
               sessionId: info.runtime.terminal.session_id,
               paneId: info.runtime.terminal.pane_id,
+              instanceId: info.runtime.terminal.instance_id,
             },
           }
         : {}),

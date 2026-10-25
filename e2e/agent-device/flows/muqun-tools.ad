@@ -1,0 +1,44 @@
+# Muqun cards show historical task state, not a live invocation spinner.
+# section open
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-${LEAF}"
+wait "id=agent-subagent-detail-transcript" 10000
+wait stable 400 5000
+
+# section inspect
+is visible "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Expand tool call\""
+press "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Expand tool call\""
+wait "id=agent-muqun-body" 5000
+is visible "id=agent-tool-toggle label=\"${TITLE} · ${STATUS} · Collapse tool call\""
+is visible "text=\"Call duration\""
+scroll down --until "text=\"${EXPECTED}\""
+is visible "text=\"${EXPECTED}\""
+snapshot
+screenshot "shots/muqun-${LEAF}.png"
+scroll up 0.2 --until "id=agent-tool-open-detail"
+press "id=agent-tool-open-detail"
+wait "id=agent-tool-detail-sheet" 5000
+snapshot
+screenshot "shots/muqun-${LEAF}-details.png"
+back --system
+wait absent "id=agent-tool-detail-sheet" 10000
+wait stable 400 5000
+
+# section close
+back --system
+wait absent "id=agent-subagent-detail-sheet" 10000
+wait "id=terminal-composer-input" 10000
+
+# section calling
+wait "id=agent-muqun-body" 5000
+is visible "text=\"bun run build\""
+is hidden "id=agent-muqun-output"
+is hidden "text=\"Call duration\""
+is hidden "text=\"Started\""
+snapshot
+screenshot "shots/muqun-calling.png"
+
+# section target-visible
+is visible "${TARGET}"
+
+# section target-press
+press "${TARGET}"

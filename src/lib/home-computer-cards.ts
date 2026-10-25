@@ -550,15 +550,10 @@ function hasClosedTaskPane(
 }
 
 /**
- * The cards of the computers that have work, sorted needs-you → working →
- * paused → idle (the reader's own order within each).
- *
- * A computer gets a card only while it has something to show: an open task,
- * a goal sent, or a finished task the reader has not yet dismissed -- time
- * alone never takes a row off a card. One that is offline, idle with nothing
- * to show, or keeps no ledger gets none; Settings and the dock's target
- * picker list every computer. The room each card gets follows how many are
- * shown.
+ * Every paired computer stays selectable, sorted needs-you → working →
+ * paused → idle → offline (the reader's own order within each).
+ * Task filtering affects rows, never computer identity: an empty ledger,
+ * dismissed result or temporary disconnect must not remove a deck destination.
  */
 export function buildComputerCards(input: {
   servers: readonly { serverId: string }[];
@@ -666,13 +661,8 @@ export function buildComputerCards(input: {
       finished,
     };
   });
-  const shown = all.filter(
-    (card) =>
-      card.activity !== 'offline' &&
-      (card.now.length > 0 || card.pending.length > 0 || card.finished.length > 0)
-  );
-  const limits = input.limits ?? cardLimits(shown.length);
-  return shown
+  const limits = input.limits ?? cardLimits(all.length);
+  return all
     .sort((a, b) => ACTIVITY_RANK[a.activity] - ACTIVITY_RANK[b.activity] || a.order - b.order)
     .map(({ order: _order, ...card }) => ({
       ...card,

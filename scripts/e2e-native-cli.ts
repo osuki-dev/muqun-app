@@ -234,10 +234,11 @@ if (platform === 'android' && which('adb')) {
 const binary = process.env.AGENT_DEVICE_BIN ?? which('agent-device');
 if (!binary) throw new Error('Set AGENT_DEVICE_BIN to the installed agent-device executable');
 const version = spawnSync(binary, ['--version']);
-if (version.status !== 0 || version.stdout.toString().trim() !== '0.21.12')
-  throw new Error(
-    'This suite requires agent-device 0.21.12; review compatibility before changing the pin'
-  );
+if (version.error) throw version.error;
+const agentDeviceVersion = version.stdout.toString().trim();
+if (version.status !== 0 || !agentDeviceVersion)
+  throw new Error('Cannot read the installed agent-device version');
+console.log(`e2e: agent-device ${agentDeviceVersion}`);
 if (script) {
   const relative = path.relative(base, path.resolve(root, script));
   if (relative.startsWith('..')) throw new Error('Native script must be under e2e/agent-device');
@@ -250,6 +251,10 @@ if (!flows.length) throw new Error('No runnable flows selected');
 const reportRoot = path.resolve(process.env.E2E_REPORT_DIR ?? path.join(root, 'dist/e2e-reports'));
 const runDirectory = path.join(reportRoot, `${name ?? tag}-${Date.now()}`);
 await mkdir(runDirectory, { recursive: true });
+await writeFile(
+  path.join(runDirectory, 'tooling.json'),
+  JSON.stringify({ agentDeviceVersion }, null, 2)
+);
 const results: { name: string; seconds: number; error?: string }[] = [];
 for (const flow of flows) {
   const started = Date.now();

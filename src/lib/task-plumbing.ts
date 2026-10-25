@@ -11,7 +11,6 @@
  */
 
 import type { TimelineItem } from './agent-protocol';
-import { isHiddenMuqunTool } from './internal-muqun-tools';
 
 /** The line an agent prints when the delegated goal is finished. */
 export const TASK_DONE_MARKER = 'MUQUN_TASK_DONE:';
@@ -122,7 +121,6 @@ const SHOWN_SYNTHETIC = 'skill-invocation';
  */
 export function withoutTaskPlumbing(item: TimelineItem, streaming = false): TimelineItem | null {
   const { part } = item;
-  if (part.type === 'tool' && isHiddenMuqunTool(part)) return null;
   if (part.type === 'synthetic') return part.description === SHOWN_SYNTHETIC ? item : null;
   if (part.type !== 'text' || item.role === 'system') return item;
   const text =

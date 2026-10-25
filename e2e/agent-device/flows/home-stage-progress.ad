@@ -37,5 +37,4 @@ wait stable 300 5000
 
 # section clear-draft
 fill id="home-composer-input" ""
-keyboard dismiss
 wait stable 400 5000

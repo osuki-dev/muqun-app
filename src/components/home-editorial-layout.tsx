@@ -52,6 +52,7 @@ import {
   padCoverAvailableHeight,
   padCoverKind,
   padHomeColumns,
+  padDockOuterInset,
   padLaunchLayoutEnabled,
 } from '@/lib/home-pad-geometry';
 export {
@@ -660,6 +661,7 @@ export function HomeEditorialLayout({
                   layout={coverLayout}
                   style={[
                     styles.padLaunchSection,
+                    { marginHorizontal: padDockOuterInset(columns.cover) },
                     // Portraits fade into empty space at the foot; bring the entries into it.
                     coverKind === 'artwork' && artworkForeground ? { marginTop: -16 } : null,
                   ]}>
@@ -667,12 +669,18 @@ export function HomeEditorialLayout({
                 </Animated.View>
               ) : null}
             </KeyboardAwareScrollView>
-            {/* In flow under the launch pane, sized to the measured dock: the column
-                ends where the dock begins, so no row can sit under it. */}
+            {/* Reserve the dock's space without restricting its drawer's touch area.
+                Android will not hit children outside a parent's bounds. */}
             {hasSlot(padComposer) ? (
-              <Animated.View testID="home-pad-composer" style={padComposerStyle}>
-                {padComposer}
-              </Animated.View>
+              <>
+                <Animated.View pointerEvents="none" style={padComposerStyle} />
+                <View
+                  testID="home-pad-composer"
+                  pointerEvents="box-none"
+                  style={StyleSheet.absoluteFill}>
+                  {padComposer}
+                </View>
+              </>
             ) : null}
           </View>
           <View testID="home-pad-work-column" style={styles.padWorkColumn}>

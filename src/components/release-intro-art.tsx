@@ -57,9 +57,18 @@ function useDecorativeMotion() {
   return screenReader === null ? 'pending' : reduced || screenReader ? 'static' : 'animate';
 }
 
-function IntroParticles({ scene, animate }: { scene: number; animate: boolean }) {
+function IntroParticles({
+  scene,
+  animate,
+  width,
+  height,
+}: {
+  scene: number;
+  animate: boolean;
+  width: number;
+  height: number;
+}) {
   const theme = useThemeTokens();
-  const size = useSharedValue({ width: 1, height: 1 });
   const progress = useSharedValue(animate ? 0 : 1);
   const formation = useSharedValue<IntroFormation>({ scene, from: null });
   const positions = useDerivedValue(() => introParticlePositions(formation.get(), progress.get()));
@@ -84,21 +93,11 @@ function IntroParticles({ scene, animate }: { scene: number; animate: boolean })
     });
     return () => cancelAnimation(progress);
   }, [animate, scene, formation, positions, progress]);
-  const small = useDerivedValue(() =>
-    projectIntroParticles(positions.get(), size.get().width, size.get().height, 0)
-  );
-  const medium = useDerivedValue(() =>
-    projectIntroParticles(positions.get(), size.get().width, size.get().height, 1)
-  );
-  const large = useDerivedValue(() =>
-    projectIntroParticles(positions.get(), size.get().width, size.get().height, 2)
-  );
+  const small = useDerivedValue(() => projectIntroParticles(positions.get(), width, height, 0));
+  const medium = useDerivedValue(() => projectIntroParticles(positions.get(), width, height, 1));
+  const large = useDerivedValue(() => projectIntroParticles(positions.get(), width, height, 2));
   return (
-    <View
-      style={StyleSheet.absoluteFill}
-      onLayout={({ nativeEvent: { layout } }) =>
-        size.set({ width: layout.width, height: layout.height })
-      }>
+    <View style={StyleSheet.absoluteFill}>
       <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
         <Points
           points={small}
@@ -139,15 +138,28 @@ export function ReleaseIntroArt({
   const theme = useThemeTokens();
   const active = useAppActive();
   const motion = useDecorativeMotion();
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const Icon = [WorkflowIcon, ForkIcon, StackIcon][scene] ?? WorkflowIcon;
   return (
     <View
       style={[styles.art, maxHeight !== undefined && { maxHeight }]}
+      onLayout={({ nativeEvent: { layout } }) =>
+        setSize((current) =>
+          current.width === layout.width && current.height === layout.height
+            ? current
+            : { width: layout.width, height: layout.height }
+        )
+      }
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants">
-      {visible && active && motion !== 'pending' ? (
-        <IntroParticles scene={scene} animate={motion === 'animate'} />
+      {visible && active && motion !== 'pending' && size.width > 0 && size.height > 0 ? (
+        <IntroParticles
+          scene={scene}
+          animate={motion === 'animate'}
+          width={size.width}
+          height={size.height}
+        />
       ) : null}
       <View style={styles.emblem}>
         <Icon size={36} color={theme.colors.primary} />

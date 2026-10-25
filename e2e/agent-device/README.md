@@ -1,7 +1,9 @@
 # Native end-to-end tests
 
-Run the offline app suite with agent-device **0.21.12** on a dedicated simulator or
-emulator with no paired servers or saved SSH hosts. Install the app, select
+Run the offline app suite with the latest stable agent-device, resolving the
+installed toolchain first and recording its actual version in the report. Do not
+reject a newer release solely for differing from an old version pin. Default to
+a dedicated simulator or emulator with no paired servers or saved SSH hosts. Install the app, select
 English and the Osuki theme, and start Metro for development builds. Preview and
 release builds include their own JavaScript bundle.
 
@@ -43,9 +45,12 @@ nonzero exit status. The runner's pure tests execute before device tests.
 
 ## Device isolation
 
-Discover the existing dedicated QA device and pass its identity explicitly. Verify
-that it has no paired computers or saved SSH hosts before running the suite. Do
-not create a device for each feature, clear user data, or automate a paired device.
+Discover an existing device and pass its identity explicitly. Run the complete
+offline suite and destructive pairing fixtures only on an isolated QA device.
+For focused checks, an explicitly authorized named device may retain its existing
+pairings. Preserve its drafts, sessions and workspace data; use isolated sessions
+for test commands and messages. Do not create a device for each feature or clear
+user data to make a check pass.
 Run each supported platform separately; a phone result does not prove tablet or
 iOS coverage. The runner serializes flows within one invocation.
 

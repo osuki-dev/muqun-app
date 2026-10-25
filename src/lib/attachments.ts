@@ -1,3 +1,4 @@
+import { videoFileMime } from './media-file';
 // The global instance and inert `msg` descriptors, not a hook: every sentence
 // below is written at failure time inside an event handler, never in a render,
 // so the locale is read when the error actually happens.
@@ -82,7 +83,12 @@ function fileNameFromUri(uri: string, fallbackExtension: string): string {
 function resolveMime(reported: string | null | undefined, name: string, uri: string): string {
   if (reported && reported !== 'application/octet-stream') return reported;
   const extension = extensionOf(name) || extensionOf(uri);
-  return IMAGE_EXTENSION_MIMES[extension] ?? reported ?? 'application/octet-stream';
+  return (
+    IMAGE_EXTENSION_MIMES[extension] ??
+    videoFileMime({ name, uri }) ??
+    reported ??
+    'application/octet-stream'
+  );
 }
 
 function toPickedFiles(assets: ImagePicker.ImagePickerAsset[]): PickedFile[] {

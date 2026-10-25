@@ -1,3 +1,5 @@
+import { gatewaySocketFor } from './gateway-socket-runtime';
+import { demoAgentComposerCatalog, demoAgentComposerFiles } from './demo-agent-composer';
 import { demoStageSnapshot, demoStageSessions, DEMO_STAGE_ASIDS } from './demo-stage-progress';
 import { agentSnapshotRefreshQuery } from './agent-session-runtime';
 import { DEMO_COMPACTION_LOG_ASIDS, isDemoCompactionLogAsid } from './demo-compaction-log-native';
@@ -96,6 +98,7 @@ import {
   parseShellList,
   parseShellOutputPage,
   parseTimelineItems,
+  parseEarlierTimelinePage,
   parseRunStatus,
   parseCreatedWorktree,
   parseWorktreeList,
@@ -579,6 +582,7 @@ export async function createAgentSession(
 export async function readAgentSessionAt(
   endpoint: {
     url: string;
+    serverId?: string;
     token: string;
     deviceId?: string;
     transportKey?: string;
@@ -596,19 +600,47 @@ export async function readAgentSessionAt(
           demoNativePreviewSnapshot(asid));
   try {
     const base = endpoint.url.replace(/\/$/, '');
-    const res = await gatewayEndpointFetch(
-      endpoint as GatewayEndpoint,
-      `${base}${sessionRoute(asid, '', sessionId, true)}`,
-      {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${endpoint.token}` },
-      }
-    );
+    const res =
+      (endpoint.serverId ? await socketHistory(asid, 'snapshot', {}, endpoint.serverId) : null) ??
+      (await gatewayEndpointFetch(
+        endpoint as GatewayEndpoint,
+        `${base}${sessionRoute(asid, '', sessionId, true)}`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${endpoint.token}` },
+        }
+      ));
     if (!res.ok) return null;
     return parseAgentSessionSnapshot(envelopeData(await res.json()));
   } catch {
     return null;
   }
+}
+
+/** Capture source identity before awaiting anything; never fall back after a sent page request. */
+async function socketHistory(
+  asid: string,
+  operation: 'snapshot' | 'earlier' | 'delta',
+  options: { refresh?: boolean; after?: number } = {},
+  sourceId = configuredGatewayServerId()
+) {
+  if (
+    !sourceId ||
+    !useServerCapabilities.getState().byServer[sourceId]?.includes('agent_history_ws_v1')
+  )
+    return null;
+  const response = await gatewaySocketFor(sourceId).requestHistory(
+    sourceId,
+    asid,
+    operation,
+    options
+  );
+  return {
+    ok: response.status >= 200 && response.status < 300,
+    status: response.status,
+    json: async () => response.body,
+    text: async () => JSON.stringify(response.body),
+  };
 }
 
 export async function getAgentSessionSnapshot(
@@ -629,10 +661,12 @@ export async function getAgentSessionSnapshot(
     throw new Error('This agent session is not available in the offline demo');
   }
   const query = agentSnapshotRefreshQuery(options?.refresh === true, options?.capabilities);
-  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
-    method: 'GET',
-    headers: gatewayAuthHeaders(),
-  });
+  const res =
+    (await socketHistory(asid, 'snapshot', { refresh: options?.refresh })) ??
+    (await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true) + query), {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    }));
   if (!res.ok) {
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
@@ -706,13 +740,18 @@ export async function sendAgentPrompt(
   params: {
     text: string;
     attachments?: string[];
+    computerIds?: string[];
+    /** Correlates this submission; it does not authorize retry or promise deduplication. */
+    clientRef?: string;
     delivery?: AgentDelivery;
   }
 ): Promise<void> {
   // There is no model or agent field on a prompt: both are session state in
   // v2. Switch first, then prompt.
   const body: Record<string, unknown> = { text: params.text };
+  if (params.clientRef !== undefined) body.client_ref = params.clientRef;
   if (params.attachments && params.attachments.length > 0) body.attachments = params.attachments;
+  if (params.computerIds?.length) body.computer_ids = params.computerIds;
   if (params.delivery) body.delivery = params.delivery;
   await writeJson(sessionRoute(asid, '/prompt', sessionId, true), 'Failed to send prompt', body);
 }
@@ -753,10 +792,14 @@ export async function loadEarlierAgentTimeline(
   asid: string
 ): Promise<{ items: TimelineItem[]; exhausted: boolean; cursorLost?: boolean }> {
   if (usesOfflineDemo()) throw new Error('Agent writes are not available in the offline demo');
-  const res = await gatewayFetch(
-    gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)),
-    { method: 'POST', headers: jsonHeaders(), body: '{}' }
-  );
+
+  const res =
+    (await socketHistory(asid, 'earlier')) ??
+    (await gatewayFetch(gatewayUrl(sessionRoute(asid, '/timeline/earlier', sessionId, false)), {
+      method: 'POST',
+      headers: jsonHeaders(),
+      body: '{}',
+    }));
   if (!res.ok) {
     const text = await res.text();
     if (res.status === 409 && readApiError(text).code === 'history_cursor_lost') {
@@ -764,16 +807,7 @@ export async function loadEarlierAgentTimeline(
     }
     throw new Error(`Failed to load earlier messages: ${res.status} ${text}`);
   }
-  let data: unknown = null;
-  try {
-    data = envelopeData(await res.json());
-  } catch {
-    data = null;
-  }
-  const record =
-    data && typeof data === 'object' ? (data as { items?: unknown; exhausted?: unknown }) : {};
-  const items = parseTimelineItems(record.items);
-  return { items, exhausted: record.exhausted === true || items.length === 0 };
+  return parseEarlierTimelinePage(envelopeData(await res.json()));
 }
 
 export async function invokeAgentSkill(
@@ -1014,6 +1048,8 @@ export async function listAgentFiles(
   query?: string,
   limit = 20
 ): Promise<FileMentionHit[]> {
+  if (usesOfflineDemo() && asid === DEMO_COMPACTION_ASID)
+    return demoAgentComposerFiles(query, limit);
   const params = new URLSearchParams();
   if (query) params.set('query', query);
   params.set('limit', String(limit));
@@ -1185,7 +1221,8 @@ export async function getAgentCatalog(
   endpoint?: CatalogEndpoint,
   options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
-  if (usesOfflineDemo(endpoint)) return EMPTY_CATALOG;
+  if (usesOfflineDemo(endpoint))
+    return options?.directory === '/demo/muqun' ? demoAgentComposerCatalog() : EMPTY_CATALOG;
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
@@ -1619,10 +1656,12 @@ export async function getAgentTimelineDelta(
   if (usesOfflineDemo()) return empty;
   try {
     if (!isGatewayConfigured()) return empty;
-    const res = await gatewayFetch(
-      gatewayUrl(`${sessionRoute(asid, '/timeline', sessionId, true)}?after=${afterSeq}`),
-      { method: 'GET', headers: gatewayAuthHeaders() }
-    );
+    const res =
+      (await socketHistory(asid, 'delta', { after: afterSeq })) ??
+      (await gatewayFetch(
+        gatewayUrl(`${sessionRoute(asid, '/timeline', sessionId, true)}?after=${afterSeq}`),
+        { method: 'GET', headers: gatewayAuthHeaders() }
+      ));
     // `410 resync_required`: the point asked for has fallen out of the ring
     // buffer, so there is no delta to be had and the snapshot is the only
     // honest answer. This has to be read off the status -- the generic read

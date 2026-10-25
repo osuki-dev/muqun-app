@@ -36,6 +36,7 @@ wait stable 400 15000
 
 # section s5g
 is visible "${TARGET}"
+scroll down 0.2 --until "id=agent-changes-file-src/lib/demo-terminal-history.ts"
 
 # section s6
 press "${TARGET}"

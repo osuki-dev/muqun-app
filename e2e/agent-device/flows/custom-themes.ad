@@ -21,13 +21,13 @@ scroll down --pixels 300
 # accessibility label, and the manifest's target vocabulary is text and id only.
 press "id=terminal-open-files"
 wait stable 400 5000
-scroll down --pixels 350
+scroll down 0.2 --until "text=\"Open muqun.muqun-theme.json\""
 press "text=\"Open muqun.muqun-theme.json\""
 wait "id=custom-theme-preview" 15000
 # Opening a valid theme goes straight to preview; applying remains explicit.
+# Seek the confirm by identity; it may already fit below the preview.
+scroll down --until "id=theme-apply"
 is visible "id=theme-apply"
-# The confirm sits under the appearance settings in the asset viewer.
-scroll down --pixels 900
 press "id=theme-apply"
 # Applying from the file viewer goes home in one move under the reskin cover:
 # the viewer and the files sheet close with it, so nothing is left to dismiss.
@@ -70,14 +70,14 @@ press "id=theme-import-link"
 is visible "id=theme-link-input"
 is visible "id=theme-link-inspect"
 press "id=theme-link-cancel"
-is hidden "id=theme-link-input"
+wait absent "id=theme-link-input" 5000
 # The file route is a row of the same menu, so it is reached by opening it
 # again; the dock's room left the grid at its end, so the card is found first.
 scroll down --until "id=theme-import"
 press "id=theme-import"
 is visible "id=theme-import-file"
 press "id=theme-menu-cancel"
-is hidden "id=theme-import-file"
+wait absent "id=theme-import-file" 5000
 
 # section browse-entry
 # The catalogue is the themes sheet's Gallery tab. Present, and deliberately
@@ -138,16 +138,13 @@ is visible "${TARGET}"
 # section opacity-reset
 press "id=theme-appearance-reset"
 wait stable 400 5000
+scroll up 0.2 --until "id=theme-terminal-opacity-value"
 is visible "text=100%"
 
 # section home-visibility
+scroll down 0.2 --until "id=theme-show-home-logo"
 press "id=theme-show-home-logo"
-# `Show Home text` sits directly under `Show Home logo`, which puts it behind
-# the DONE bar this route pins to the bottom of the screen. A deterministic pan
-# rather than `scroll --pixels`: that one is a flick and overshoots by about
-# sevenfold, which on this short page means the foot of it.
-gesture pan 200 620 0 -150 400
-wait stable 400 5000
+scroll down 0.2 --until "id=theme-show-home-text"
 press "id=theme-show-home-text"
 wait stable 400 5000
 # The reset control appears once a preference is custom, but it sits under the
@@ -171,10 +168,9 @@ back --in-app
 wait "id=settings-theme-row" 10000
 
 # section settings-scroll-up
-# Storage is near the end of the full Settings document. Use a viewport-sized
-# gesture inside the content: a generic scroll starts on the pinned header on
-# iOS and leaves the Settings list at the bottom.
-gesture pan 270 320 0 430 400
+# The manifest keeps seeking the same row; stay inside the current viewport
+# and use the form sheet's scroll surface on iPad.
+scroll up 0.2 --in-sheet
 wait stable 300 5000
 
 # section settings-scroll-up-android
@@ -231,6 +227,8 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section storage-press
+# Debug warnings can arrive during theme rendering and cover the final row.
+react-native dismiss-overlay
 press "${TARGET}"
 
 # section storage-settle

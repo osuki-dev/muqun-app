@@ -177,7 +177,7 @@ function discard(file: File): void {
  */
 async function probeFont(uri: string): Promise<FontAdvanceProfile | null> {
   const data = await Skia.Data.fromURI(uri);
-  const typeface = Skia.Typeface.MakeFreeTypeFaceFromData(data);
+  const typeface = Skia.Typeface.MakeFromData(data);
   if (!typeface) throw new UserFontError({ kind: 'unreadable' });
   const font = Skia.Font(typeface, PROBE_FONT_SIZE);
   // The same rule the terminal measures its cell under. An SkFont reports

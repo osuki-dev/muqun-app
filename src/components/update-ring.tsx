@@ -1,5 +1,6 @@
-import { useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Canvas, Circle, Group, Path, Skia } from 'react-native-skia';
 import {
   ReduceMotion,
@@ -97,41 +98,71 @@ export function UpdateRing({ state, progress }: { state: UpdateRingState; progre
 
   const turn = useDerivedValue(() => [{ rotate: spin.get() - Math.PI / 2 }]);
   const accent = theme.colors.primary;
+  const percentage = Math.floor(Math.max(0, Math.min(1, progress)) * 100);
   return (
-    <Canvas style={{ width: SIZE, height: SIZE }} pointerEvents="none">
-      <Circle cx={CENTER} cy={CENTER} r={RADIUS - 3} color={accent} opacity={0.08} />
-      <Circle
-        cx={CENTER}
-        cy={CENTER}
-        r={RADIUS}
-        color={accent}
-        opacity={0.18}
-        style="stroke"
-        strokeWidth={1.4}
-      />
-      <Group transform={turn} origin={{ x: CENTER, y: CENTER }}>
-        <Path
-          path={ring}
+    <View style={styles.container} pointerEvents="none">
+      <Canvas style={StyleSheet.absoluteFill}>
+        <Circle cx={CENTER} cy={CENTER} r={RADIUS - 3} color={accent} opacity={0.08} />
+        <Circle
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
           color={accent}
-          opacity={glow}
+          opacity={0.18}
           style="stroke"
-          strokeWidth={width}
-          strokeCap="round"
-          start={0}
-          end={end}
+          strokeWidth={1.4}
         />
-      </Group>
-      <Path
-        path={check}
-        color={accent}
-        opacity={checkOpacity}
-        style="stroke"
-        strokeWidth={2}
-        strokeCap="round"
-        strokeJoin="round"
-        start={0}
-        end={checkEnd}
-      />
-    </Canvas>
+        <Group transform={turn} origin={{ x: CENTER, y: CENTER }}>
+          <Path
+            path={ring}
+            color={accent}
+            opacity={glow}
+            style="stroke"
+            strokeWidth={width}
+            strokeCap="round"
+            start={0}
+            end={end}
+          />
+        </Group>
+        <Path
+          path={check}
+          color={accent}
+          opacity={checkOpacity}
+          style="stroke"
+          strokeWidth={2}
+          strokeCap="round"
+          strokeJoin="round"
+          start={0}
+          end={checkEnd}
+        />
+      </Canvas>
+      {state === 'progress' && !indeterminate && Number.isFinite(percentage) ? (
+        <View
+          style={styles.label}
+          accessible={false}
+          importantForAccessibility="no-hide-descendants">
+          <Text
+            testID="update-progress-percent"
+            color={accent}
+            weight="medium"
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+            style={styles.percentage}>
+            {percentage}%
+          </Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { width: SIZE, height: SIZE },
+  label: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  percentage: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+});

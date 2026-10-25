@@ -26,7 +26,7 @@ export interface ViewPhotographOptions {
  *
  * Skia 3.6 removed `makeImageFromView`; the platform now rasterizes the view
  * into a texture on Skia's own device (`queue.drawElementImageToTexture`), and
- * `MakeImageFromGPUTexture` wraps that texture without a copy. The image keeps
+ * `MakeFromGPUTexture` wraps that texture without a copy. The image keeps
  * the texture alive only by reference, so {@link disposeViewPhotograph}
  * destroys the texture when the picture goes. The capture is a promise.
  *
@@ -87,7 +87,7 @@ async function capture(
       { source: ref },
       { texture, premultipliedAlpha: true }
     );
-    const image = Skia.Image.MakeImageFromGPUTexture(texture);
+    const image = Skia.Image.MakeFromGPUTexture(texture);
     textures.set(image, texture);
     return image;
   } catch (error) {
