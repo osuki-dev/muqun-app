@@ -74,6 +74,7 @@ export function followHomeSession({
   onSnapshot,
   onEvent,
   onNotFound,
+  onError,
 }: {
   serverId: string;
   sessionId: string;
@@ -82,6 +83,7 @@ export function followHomeSession({
   /** Events about this session; `agent.resync` is answered with a read instead. */
   onEvent: (event: AgentDomainEvent) => void;
   onNotFound?: () => void;
+  onError?: () => void;
 }): () => void {
   const owner = useGatewayConnectionStore.getState().record;
   if (owner?.serverId !== serverId) return () => {};
@@ -98,6 +100,7 @@ export function followHomeSession({
   let releaseSocket: (() => void) | null = null;
 
   const read = () => {
+    if (!active || !owns()) return;
     if (reading) {
       readAgain = true;
       return;
@@ -110,7 +113,9 @@ export function followHomeSession({
           if (active && owns()) onSnapshot(snapshot);
         },
         (failure: unknown) => {
-          if (active && owns() && agentRequestErrorDetail(failure).status === 404) onNotFound?.();
+          if (!active || !owns()) return;
+          if (agentRequestErrorDetail(failure).status === 404) onNotFound?.();
+          else onError?.();
         }
       )
       .finally(() => {
@@ -136,6 +141,7 @@ export function followHomeSession({
     else onEvent(event);
   };
   const connectStream = () => {
+    if (!active || !owns()) return;
     closeStream = openAgentSessionStream({
       asid,
       sessionId,

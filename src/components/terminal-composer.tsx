@@ -91,6 +91,8 @@ export interface TerminalComposerProps {
   fieldDecoration?: ReactNode;
   /** Moves tall-field text down by borrowing its bottom padding, not adding height. */
   fieldTextTopInset?: number;
+  /** Safe-area space painted by the field, below its interactive contents. */
+  fieldBottomInset?: number;
   /**
    * A `boxShadow` cast by the field's plate, for a field that is the dock's
    * only painted surface (Home). Drawn on a transparent layer behind the
@@ -128,6 +130,7 @@ export function TerminalComposer({
   fieldBackgroundOutset,
   fieldDecoration,
   fieldTextTopInset = 0,
+  fieldBottomInset = 0,
   fieldShadow,
   onVoiceActiveChange,
   inputRef,
@@ -327,6 +330,7 @@ export function TerminalComposer({
           composerStyles.fieldShell,
           fieldRadius,
           { backgroundColor: outsideBackground ? 'transparent' : backgroundColor },
+          { paddingBottom: fieldBottomInset },
           voiceActive && { minHeight: clampVoiceHeight(voiceHeight) },
         ]}>
         {!voiceActive && !outsideBackground ? fieldBackground : null}
@@ -396,7 +400,7 @@ export function TerminalComposer({
           </>
         </Animated.View>
         {voice.panel && (
-          <View collapsable={false} style={StyleSheet.absoluteFill}>
+          <View collapsable={false} style={[StyleSheet.absoluteFill, { bottom: fieldBottomInset }]}>
             {voice.panel}
           </View>
         )}

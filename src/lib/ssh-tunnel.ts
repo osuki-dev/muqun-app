@@ -145,8 +145,9 @@ interface HostEntry {
   /** In-flight or resolved connection; null once it has dropped/closed. */
   connection: Promise<TunnelConnectionHandle> | null;
   handle: TunnelConnectionHandle | null;
-  /** serverIds currently riding this host connection. */
-  riders: Set<string>;
+  generation: number;
+  /** The exact forward attempt, not just a reusable computer identity. */
+  riders: Map<string, { entry: RecordEntry; generation: number }>;
 }
 
 interface RecordEntry {
@@ -285,7 +286,7 @@ export class SshTunnelManager {
   private hostEntry(hostId: string): HostEntry {
     let host = this.hosts.get(hostId);
     if (!host) {
-      host = { hostId, connection: null, handle: null, riders: new Set() };
+      host = { hostId, connection: null, handle: null, generation: 0, riders: new Map() };
       this.hosts.set(hostId, host);
     }
     return host;
@@ -298,21 +299,21 @@ export class SshTunnelManager {
     const generation = ++entry.generation;
     this.setState(entry, { phase: 'connecting', baseUrl: null });
     const host = this.hostEntry(entry.hostId);
-    host.riders.add(entry.serverId);
+    host.riders.set(entry.serverId, { entry, generation });
     try {
       const connection = await this.connectHost(host);
       // A close/release/reconnect that fired while we were dialing wins.
       if (entry.generation !== generation || entry.refs === 0) {
-        this.pruneHostRider(host, entry.serverId);
+        this.pruneHostRider(host, entry, generation);
         return;
       }
       const forward = await connection.forwardLocal(
         { remoteHost: entry.remoteHost, remotePort: entry.remotePort },
-        { onClosed: (reason) => this.onForwardClosed(entry.serverId, generation, reason) }
+        { onClosed: (reason) => this.onForwardClosed(entry, generation, reason) }
       );
       if (entry.generation !== generation || entry.refs === 0) {
         void forward.close().catch(() => {});
-        this.pruneHostRider(host, entry.serverId);
+        this.pruneHostRider(host, entry, generation);
         return;
       }
       entry.forward = forward;
@@ -321,7 +322,7 @@ export class SshTunnelManager {
       this.setState(entry, { phase: 'open', baseUrl: tunnelBaseUrl(forward.localPort) });
     } catch (error) {
       if (entry.generation !== generation) return;
-      this.pruneHostRider(host, entry.serverId);
+      this.pruneHostRider(host, entry, generation);
       this.setState(entry, {
         phase: 'down',
         baseUrl: null,
@@ -356,12 +357,15 @@ export class SshTunnelManager {
   private connectHost(host: HostEntry): Promise<TunnelConnectionHandle> {
     if (host.handle) return Promise.resolve(host.handle);
     if (host.connection) return host.connection;
+    const generation = ++host.generation;
     const pending = this.deps
       .openConnection(host.hostId, {
-        onDropped: (reason) => this.onHostDropped(host.hostId, reason),
+        onDropped: (reason) => this.onHostDropped(host, generation, reason),
       })
       .then((handle) => {
-        host.handle = handle;
+        if (this.hosts.get(host.hostId) === host && host.generation === generation)
+          host.handle = handle;
+        else void handle.disconnect().catch(() => {});
         return handle;
       })
       .catch((error) => {
@@ -373,12 +377,12 @@ export class SshTunnelManager {
     return pending;
   }
 
-  private onForwardClosed(serverId: string, generation: number, reason: string): void {
-    const entry = this.records.get(serverId);
-    if (!entry || entry.generation !== generation) return;
+  private onForwardClosed(entry: RecordEntry, generation: number, reason: string): void {
+    if (this.records.get(entry.serverId) !== entry || entry.generation !== generation) return;
+    entry.generation += 1;
     entry.forward = null;
     const host = this.hosts.get(entry.hostId);
-    if (host) this.pruneHostRider(host, serverId);
+    if (host) this.pruneHostRider(host, entry, generation);
     if (entry.refs > 0) {
       entry.recovering = true;
       this.setState(entry, {
@@ -392,16 +396,17 @@ export class SshTunnelManager {
     }
   }
 
-  private onHostDropped(hostId: string, reason: string): void {
-    const host = this.hosts.get(hostId);
-    if (!host) return;
+  private onHostDropped(host: HostEntry, generation: number, reason: string): void {
+    if (this.hosts.get(host.hostId) !== host || host.generation !== generation) return;
+    host.generation += 1;
     host.handle = null;
     host.connection = null;
-    const riders = [...host.riders];
+    const riders = [...host.riders.values()];
     host.riders.clear();
-    for (const serverId of riders) {
-      const entry = this.records.get(serverId);
-      if (!entry) continue;
+    for (const rider of riders) {
+      const { entry } = rider;
+      if (this.records.get(entry.serverId) !== entry || entry.generation !== rider.generation)
+        continue;
       entry.forward = null;
       entry.generation += 1;
       if (entry.refs > 0) {
@@ -423,29 +428,29 @@ export class SshTunnelManager {
     this.cancelReconnect(entry);
     entry.reconnectAttempts = 0;
     entry.recovering = false;
-    entry.generation += 1;
+    const generation = entry.generation++;
     const forward = entry.forward;
     entry.forward = null;
     if (forward) void forward.close().catch(() => {});
     const host = this.hosts.get(entry.hostId);
-    if (host) this.pruneHostRider(host, entry.serverId);
+    if (host) this.pruneHostRider(host, entry, generation);
     this.setState(entry, IDLE_STATE);
     if (!keepRefs && entry.refs === 0) this.records.delete(entry.serverId);
     void phase;
   }
 
-  private pruneHostRider(host: HostEntry, serverId: string): void {
-    host.riders.delete(serverId);
+  private pruneHostRider(host: HostEntry, entry: RecordEntry, generation: number): void {
+    const rider = host.riders.get(entry.serverId);
+    if (rider?.entry !== entry || rider.generation !== generation) return;
+    host.riders.delete(entry.serverId);
     if (host.riders.size > 0) return;
     const handle = host.handle;
-    const pending = host.connection;
+    host.generation += 1;
     host.handle = null;
     host.connection = null;
-    this.hosts.delete(host.hostId);
+    if (this.hosts.get(host.hostId) === host) this.hosts.delete(host.hostId);
     if (handle) {
       void handle.disconnect().catch(() => {});
-    } else if (pending) {
-      void pending.then((h) => h.disconnect().catch(() => {})).catch(() => {});
     }
   }
 }
