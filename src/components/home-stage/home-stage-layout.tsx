@@ -190,8 +190,8 @@ export function HomeStage({
   });
   // The ledgers live in memory only, so Home mounts with none and the first
   // read brings last session's finished tasks. Those are the baseline, not
-  // completions: taken as such they flared the motes and buzzed Success on
-  // every launch.
+  // completions: taken as such they flared the motes on every launch.
+  // Passive status updates keep the visual effect without vibrating the phone.
   const ledgerRead = Object.keys(tasks).length > 0;
   const seenDoneMs = useRef<number | null>(null);
   const [burst, setBurst] = useState(0);
@@ -204,7 +204,6 @@ export function HomeStage({
     if (latestDoneMs <= seenDoneMs.current) return;
     seenDoneMs.current = latestDoneMs;
     setBurst((count) => count + 1);
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [latestDoneMs, ledgerRead]);
   // Rebuilt on every task frame, pane mirror pass and minute; kept by identity
   // while nothing shown changed, so the Stage below can skip the render.
