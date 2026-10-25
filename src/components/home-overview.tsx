@@ -1480,6 +1480,7 @@ export function HomeOverview({
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
+                enabled={!replyDrawerActive}
                 refreshing={refreshing}
                 onRefresh={() => void onRefresh()}
                 tintColor={theme.colors.primary}
@@ -1955,6 +1956,7 @@ export function HomeOverview({
           onScroll={onScroll}
           refreshControl={
             <RefreshControl
+              enabled={!replyDrawerActive}
               refreshing={refreshing}
               onRefresh={() => void onRefresh()}
               tintColor={theme.colors.textSubtle}
