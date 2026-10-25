@@ -1,6 +1,6 @@
 # Persisted ByPath history, parsed without a prior optimistic row.
 # section open
-open "muqun://agent?asid=demo-tree-leaf-25"
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-25"
 wait "id=\"inline-video-output\"" 15000
 is visible "text=\"Review this uploaded recording.\""
 is hidden "text=\"Attached files (on this host):\""
@@ -27,10 +27,10 @@ screenshot "shots/uploaded-video-paused.png"
 # Leave while playing: returning must never resume automatically.
 press "id=\"video-playback-toggle\""
 wait "label=\"Pause\"" 10000
-open "muqun:///"
-wait "id=\"home-recent-sessions\"" 15000
+back --system
+wait "id=\"terminal-composer-input\"" 15000
 wait absent "id=\"inline-video-output\"" 10000
-open "muqun://agent?asid=demo-tree-leaf-25"
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-25"
 wait "id=\"inline-video-output\"" 15000
 is visible "text=\"Review this uploaded recording.\""
 is hidden "text=\"Attached files (on this host):\""
