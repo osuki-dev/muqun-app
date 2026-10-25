@@ -120,14 +120,45 @@ function coverSheetCapture(subagent: boolean, flat = false) {
     );
   return {
     name: flat ? 'flattened subagent' : subagent ? 'UIKit subagent' : 'UIKit tree',
+    x: 233,
     y: subagent ? 138 : 71,
     nodes,
   };
+}
+
+// Git's SheetScene predates the -sheet naming convention. Its first scroller
+// is the horizontal checkout switcher, with observed padding above it.
+function gitSheetCapture(duo: boolean) {
+  const capture = coverSheetCapture(false, true);
+  const offset = duo ? 0 : 54;
+  const left = duo ? 28 : 20;
+  for (const node of capture.nodes) {
+    if (node.index === 0)
+      node.rect = { x: 0, y: 0, width: duo ? 466 : 402, height: duo ? 678 : 874 };
+    if (node.index === 5) node.rect = { x: duo ? 183 : 151, y: 4 + offset, width: 100, height: 24 };
+    if (node.index === 7) {
+      node.identifier = 'git-diff-view';
+      node.rect = duo
+        ? { x: 8, y: 8, width: 450, height: 670 }
+        : { x: 0, y: 62, width: 402, height: 812 };
+    }
+    if (node.index === 8 || node.index === 9) {
+      node.rect.x = left;
+      node.rect.y += offset;
+      node.rect.width = duo ? 236 : 256;
+    }
+    if (node.index === 10 || node.index === 11) {
+      node.rect = { x: left, y: 93.66666412353516 + offset, width: duo ? 342 : 362, height: 30 };
+    }
+  }
+  return { ...capture, name: duo ? 'Duo Git' : 'iPhone Git', x: duo ? 233 : 201, y: 92 + offset };
 }
 const coverSheetCaptures = [
   coverSheetCapture(false),
   coverSheetCapture(true),
   coverSheetCapture(true, true),
+  gitSheetCapture(false),
+  gitSheetCapture(true),
 ];
 
 describe('native end-to-end gate', () => {
@@ -1373,7 +1404,7 @@ describe('native end-to-end gate', () => {
           else await result;
           expect(calls).toEqual([
             ['snapshot'],
-            ['gesture', 'pan', '233', String(capture.y), '0', '500', '350'],
+            ['gesture', 'pan', String(capture.x), String(capture.y), '0', '500', '350'],
           ]);
         }
       } finally {

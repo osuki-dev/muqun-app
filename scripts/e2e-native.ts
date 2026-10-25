@@ -456,7 +456,7 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
     container ??
     nodes.find(
       (node) =>
-        node.identifier?.endsWith('-sheet') &&
+        (node.identifier?.endsWith('-sheet') || node.identifier === 'git-diff-view') &&
         node.visibleToUser !== false &&
         node.rect &&
         node.rect.x <= x &&
