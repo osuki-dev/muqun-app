@@ -533,6 +533,11 @@ function ComputerCardView({
 
         {followed ? (
           <View style={styles.block}>
+            {openRows === 0 && card.finished.length === 0 ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`No tasks yet`}
+              </Text>
+            ) : null}
             {/* One keyed list, not one per section: a task moving between Now
               and Just finished (it finished, or it was reopened) is the same
               row element, moved by its layout transition, never re-created. */}

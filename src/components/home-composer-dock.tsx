@@ -2144,14 +2144,7 @@ export function HomeComposerDock({
             accessibilityLiveRegion="polite"
             style={styles.replyContext}>
             <Text variant="caption" color={theme.colors.textMuted}>{t`Reply to`}</Text>
-            <View
-              style={[
-                styles.replyTarget,
-                {
-                  borderRadius: profile.chrome.control,
-                  backgroundColor: background(theme.colors.primarySubtle),
-                },
-              ]}>
+            <View style={styles.replyTarget}>
               <Text
                 variant="caption"
                 weight="semibold"
@@ -2294,8 +2287,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     maxWidth: '100%',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
   },
   error: { padding: 8, marginBottom: 4, width: '100%' },
   unsure: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
