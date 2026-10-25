@@ -1000,3 +1000,38 @@ test('simultaneous pulls for one history cursor share one request', async () => 
   await Promise.all([first, second]);
   h.socket.dispose();
 });
+
+test('reader cursors keep history page flights separate and identical retries coalesce', async () => {
+  const h = harness();
+  const a = h.socket.requestHistory('computer', 'session', 'page', { cursor: 'reader-a' });
+  const retry = h.socket.requestHistory('computer', 'session', 'page', { cursor: 'reader-a' });
+  const b = h.socket.requestHistory('computer', 'session', 'page', { cursor: 'reader-b' });
+  expect(retry).toBe(a);
+  expect(b).not.toBe(a);
+  h.latest().deliver(hello());
+  const requests = h
+    .latest()
+    .sent.map((row) => JSON.parse(row))
+    .filter((row) => row.t === 'history_request');
+  expect(requests).toHaveLength(2);
+  expect(requests.map((row) => row.request.cursor)).toEqual(['reader-a', 'reader-b']);
+  for (const { request } of requests) {
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'history_response',
+        request_id: request.request_id,
+        source_id: 'computer',
+        asid: 'session',
+        status: 200,
+        body: { data: { items: [], exhausted: false, history_cursor: request.cursor } },
+      })
+    );
+  }
+  expect((await a).body).toEqual({
+    data: { items: [], exhausted: false, history_cursor: 'reader-a' },
+  });
+  expect((await b).body).toEqual({
+    data: { items: [], exhausted: false, history_cursor: 'reader-b' },
+  });
+  h.socket.dispose();
+});

@@ -247,7 +247,8 @@ export type AgentSocketClientFrame =
       request: {
         request_id: string;
         asid: string;
-        operation: 'snapshot' | 'earlier' | 'delta';
+        operation: 'snapshot' | 'earlier' | 'delta' | 'window' | 'page';
+        cursor?: string;
         refresh?: boolean;
         after?: number;
       };
