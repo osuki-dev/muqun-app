@@ -373,6 +373,7 @@ export interface AgentComposerProps {
   canSendWhileRunning?: boolean;
   /** Queue support is independent of steering into the current turn. */
   canQueueWhileRunning?: boolean;
+  canSteerWhileRunning?: boolean;
   canMentionFiles?: boolean;
   /**
    * Where `@` looks for files, when not this session's project: Home's dock
@@ -653,6 +654,7 @@ export const AgentComposer = memo(function AgentComposer({
   running,
   canSendWhileRunning = true,
   canQueueWhileRunning = true,
+  canSteerWhileRunning = true,
   canMentionFiles = true,
   searchFiles,
   interactionBlockedReason,
@@ -818,7 +820,11 @@ export const AgentComposer = memo(function AgentComposer({
       ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
       : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
-  const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
+  const deliveryMode = !canSteerWhileRunning
+    ? 'queue'
+    : canQueueWhileRunning
+      ? requestedDeliveryMode
+      : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const toolbarMenuOpen = toolbarMenu?.open ?? false;
   // The toolbar menu's button belongs to the caller, so its opening is seen
@@ -2078,7 +2084,21 @@ export const AgentComposer = memo(function AgentComposer({
             fade says there is more, and the content's own right padding keeps
             the last chip whole under it.
           */}
-              {hideParameterRow ? null : compact ? (
+              {hideParameterRow && running && promptAllowed ? (
+                <View style={[styles.segmentRow, segmentRowLead]}>
+                  <TextSegment
+                    testID="agent-composer-delivery-btn"
+                    accessibilityRole="button"
+                    disabled={!canQueueWhileRunning || !canSteerWhileRunning}
+                    onPress={() =>
+                      setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'))
+                    }>
+                    <Text variant="caption" color={theme.colors.primary}>
+                      {deliveryMode === 'queue' ? t`Queue` : t`Steer`}
+                    </Text>
+                  </TextSegment>
+                </View>
+              ) : hideParameterRow ? null : compact ? (
                 // The quiet line: caption type in the subtle tone, under row 1's
                 // body-size primary line, then the compact gap to the field.
                 // One step more to the field than between the two text rows:
@@ -2287,6 +2307,7 @@ export const AgentComposer = memo(function AgentComposer({
                     {chipIds.has('delivery') ? (
                       <PressableScale
                         testID="agent-composer-delivery-btn"
+                        disabled={!canQueueWhileRunning || !canSteerWhileRunning}
                         onPress={() => {
                           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
