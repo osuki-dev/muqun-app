@@ -211,8 +211,8 @@ export type HomeThreadSendPlan =
       kind: 'session';
       sessionId: string;
       asid: string;
-      /** Set while the agent is running: the session screen steers then. */
-      delivery?: 'steer';
+      /** The supported delivery mode selected while the agent is running. */
+      delivery?: 'steer' | 'queue';
       switchMode?: string;
       switchModel?: HomeSessionParams['model'];
     }
@@ -242,6 +242,7 @@ export function homeThreadSendPlan(input: {
   live?: { status?: AgentRunStatus; interaction?: AgentSessionRuntime['interaction'] };
   /** The target agent's `inbox` and `promptSteering`. */
   features: { inbox: boolean; steering: boolean };
+  delivery?: 'steer' | 'queue';
   /** The dock's mode and model now, when they name the target's own agent. */
   pills?: HomeSessionParams;
 }): HomeThreadSendPlan {
@@ -259,13 +260,16 @@ export function homeThreadSendPlan(input: {
   if (live?.interaction === 'terminal') return { kind: 'terminal' };
   const running = live?.status !== undefined && RUNNING.includes(live.status);
   if (running && !features.inbox && !features.steering) return { kind: 'busy' };
+  const delivery = input.delivery ?? (features.steering ? 'steer' : 'queue');
+  if (running && delivery === 'queue' && !features.inbox) return { kind: 'busy' };
+  if (running && delivery === 'steer' && !features.steering) return { kind: 'busy' };
   const switches =
     input.pills && target.pills ? homeSessionSwitches(target.pills, input.pills) : {};
   return {
     kind: 'session',
     sessionId: target.sessionId,
     asid: target.asid,
-    ...(running ? { delivery: 'steer' as const } : {}),
+    ...(running ? { delivery } : {}),
     ...switches,
   };
 }

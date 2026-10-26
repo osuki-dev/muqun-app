@@ -26,12 +26,21 @@ import { scopedAgentCacheVariant, withScopedAgentId } from './agent-discovery';
  * Without it a multi-agent gateway answers with every agent's catalog merged,
  * which is not what a screen on one session wants; see `withScopedAgentId`.
  */
-export function agentCatalogPath(sessionId?: string, directory?: string, agentId?: string): string {
+export function agentCatalogPath(
+  sessionId?: string,
+  directory?: string,
+  agentId?: string,
+  asid?: string
+): string {
   const base = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`
     : '/api/agent-catalog';
   const dir = normalizeCatalogDirectory(directory);
-  return withScopedAgentId(dir ? `${base}?directory=${encodeURIComponent(dir)}` : base, agentId);
+  const path = withScopedAgentId(
+    dir ? `${base}?directory=${encodeURIComponent(dir)}` : base,
+    agentId
+  );
+  return asid ? `${path}${path.includes('?') ? '&' : '?'}asid=${encodeURIComponent(asid)}` : path;
 }
 
 /**
@@ -43,9 +52,14 @@ export function agentCatalogPath(sessionId?: string, directory?: string, agentId
  * default one included -- is another resource: the merged answer and one
  * agent's answer must never share an entry or an ETag.
  */
-export function agentCatalogCacheVariant(directory?: string, agentId?: string): string | null {
+export function agentCatalogCacheVariant(
+  directory?: string,
+  agentId?: string,
+  asid?: string
+): string | null {
   const dir = normalizeCatalogDirectory(directory);
-  return scopedAgentCacheVariant(dir ? `dir=${dir}` : null, agentId);
+  const variant = scopedAgentCacheVariant(dir ? `dir=${dir}` : null, agentId);
+  return asid ? JSON.stringify([variant, asid]) : variant;
 }
 
 /** An empty or whitespace-only directory is no directory at all. */
@@ -56,6 +70,7 @@ export function normalizeCatalogDirectory(directory?: string): string | undefine
 
 /** Which gateway session, workspace and agent a catalog on screen came from. */
 export interface AgentCatalogScope {
+  asid?: string;
   sessionId?: string;
   directory?: string;
   /** The agent the read named; absent on a gateway without discovery. */
@@ -87,6 +102,7 @@ export function shouldRefetchAgentCatalog(
 ): boolean {
   if (!previous) return true;
   if (previous.sessionId !== next.sessionId) return true;
+  if (previous.asid !== next.asid) return true;
   // Another agent is another catalog: its modes, models and defaults.
   if ((previous.agentId ?? '') !== (next.agentId ?? '')) return true;
   const nextDir = normalizeCatalogDirectory(next.directory);

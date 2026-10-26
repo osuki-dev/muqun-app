@@ -35,7 +35,27 @@ import {
   type AgentInfo,
   type GatewayDiscovery,
 } from '../agent-protocol';
-import { agentCatalogCacheVariant, agentCatalogPath } from '../agent-catalog-scope';
+import {
+  agentCatalogCacheVariant,
+  agentCatalogPath,
+  shouldRefetchAgentCatalog,
+} from '../agent-catalog-scope';
+
+test('session catalogs isolate native sessions and encode their route identity', () => {
+  expect(agentCatalogPath('herdr', '/work', 'deepseek', 'session/a?b')).toBe(
+    '/api/sessions/herdr/agent-catalog?directory=%2Fwork&agent_id=deepseek&asid=session%2Fa%3Fb'
+  );
+  expect(agentCatalogCacheVariant('/work', 'deepseek', 'a')).not.toBe(
+    agentCatalogCacheVariant('/work', 'deepseek', 'b')
+  );
+  expect(agentCatalogCacheVariant('/work', 'deepseek', 'a')).not.toBe(
+    agentCatalogCacheVariant('/work', 'deepseek')
+  );
+  expect(
+    shouldRefetchAgentCatalog({ asid: 'a', directory: '/work' }, { asid: 'b', directory: '/work' })
+  ).toBe(true);
+  expect(shouldRefetchAgentCatalog({ asid: 'a' }, {})).toBe(true);
+});
 
 // `agent-cache` reaches for MMKV at import time; the same throwing fake the
 // other cache tests register.

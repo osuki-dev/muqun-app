@@ -79,7 +79,11 @@ import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { canLoadEarlierAgentTimeline } from '@/lib/agent-discovery';
-import { getAgentSessionSnapshot, loadEarlierAgentTimeline } from '@/lib/agent-session';
+import {
+  getAgentSessionSnapshot,
+  loadEarlierAgentTimeline,
+  listAgentInbox,
+} from '@/lib/agent-session';
 import { useAgentFeatures } from '@/hooks/use-agent-features';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { removeTimelineItems } from '@/lib/agent-revert';
@@ -1129,6 +1133,31 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   // they want to be: the one time the drawer moves them.
   const sentAtMs = target.sentAtMs;
   const seenSend = useRef(sentAtMs);
+  useEffect(() => {
+    if (!sentAtMs || !features.inbox) return;
+    let active = true;
+    const owner = useGatewayConnectionStore.getState().record;
+    if (owner?.serverId !== serverId) return;
+    const previousInbox = store.getState().inbox;
+    void listAgentInbox(asid)
+      .then((items) => {
+        const current = useGatewayConnectionStore.getState().record;
+        if (
+          active &&
+          current?.serverId === serverId &&
+          sameComputer(current, owner) &&
+          current?.deviceId === owner.deviceId &&
+          store.getState().inbox === previousInbox
+        )
+          store.getState().setInbox(items);
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to refresh Home queue:', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [sentAtMs, features.inbox, serverId, asid, store]);
   useEffect(() => {
     if (sentAtMs === seenSend.current) return;
     seenSend.current = sentAtMs;

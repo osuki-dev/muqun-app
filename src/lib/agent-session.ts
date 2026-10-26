@@ -802,7 +802,13 @@ export async function sendAgentCommand(
   const body: Record<string, unknown> = { name: params.name.replace(/^\//, '') };
   if (params.arguments) body.arguments = params.arguments;
   if (params.delivery) body.delivery = params.delivery;
-  await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body);
+  const response = asRecord(
+    await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body)
+  );
+  const result = asRecord(response?.command_result);
+  if (result?.kind === 'error') {
+    throw new Error(typeof result.text === 'string' ? result.text : 'Failed to run command');
+  }
 }
 
 /**
@@ -1235,14 +1241,14 @@ export async function discardAgentVcsFile(
 /** The last catalog this device stored for the scope, including a stale one. */
 export function peekAgentCatalog(
   sessionId?: string,
-  options?: { directory?: string; agentId?: string }
+  options?: { directory?: string; agentId?: string; asid?: string }
 ): AgentCatalog | null {
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
     undefined,
     sessionId,
-    agentCatalogCacheVariant(directory, options?.agentId)
+    agentCatalogCacheVariant(directory, options?.agentId, options?.asid)
   );
   return getCachedAgentCatalogSync(cacheKey);
 }
@@ -1276,7 +1282,13 @@ function catalogFetch(endpoint: CatalogEndpoint | undefined, url: string, init: 
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: CatalogEndpoint,
-  options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
+  options?: {
+    directory?: string;
+    forceRefresh?: boolean;
+    requireFresh?: boolean;
+    agentId?: string;
+    asid?: string;
+  }
 ): Promise<AgentCatalog> {
   if (usesOfflineDemo(endpoint))
     return options?.directory === '/demo/muqun' ? demoAgentComposerCatalog() : EMPTY_CATALOG;
@@ -1285,7 +1297,7 @@ export async function getAgentCatalog(
     'catalog',
     endpoint?.url,
     sessionId,
-    agentCatalogCacheVariant(directory, options?.agentId)
+    agentCatalogCacheVariant(directory, options?.agentId, options?.asid)
   );
   const cached = getCachedEntry<AgentCatalog>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
@@ -1301,7 +1313,7 @@ export async function getAgentCatalog(
         if (options?.requireFresh) throw new Error('Gateway is not connected');
         return cached?.data ?? EMPTY_CATALOG;
       }
-      const path = agentCatalogPath(sessionId, directory, options?.agentId);
+      const path = agentCatalogPath(sessionId, directory, options?.agentId, options?.asid);
       const url = base ? `${base}${path}` : gatewayUrl(path);
       const headers: Record<string, string> = endpoint?.url
         ? {

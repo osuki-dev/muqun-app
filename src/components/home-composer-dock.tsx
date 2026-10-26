@@ -442,6 +442,9 @@ export function HomeComposerDock({
   // session card, cleared by the reader or when it ends.
   const thread = useHomeThreads((state) => (targetId ? state.byServer[targetId] : undefined));
   const threadKey = thread ? homeThreadKey(thread) : undefined;
+  const threadStatus = useHomeThreadLive((state) =>
+    threadKey && state.key === threadKey ? state.live.status : undefined
+  );
   const threadAgentId = thread?.kind === 'session' ? thread.agentId : undefined;
   const threadFeatures = useAgentFeatures(targetId, threadAgentId ?? null);
   // What the field offers on `/`, `$` and `@` follows the conversation the
@@ -576,12 +579,13 @@ export function HomeComposerDock({
     if (!ready || !selected || threadCatalogKey === null || !threadSessionId) return;
     let current = true;
     const scope = {
+      ...(threadAsid ? { asid: threadAsid } : {}),
       ...(threadDirectory ? { directory: threadDirectory } : {}),
       ...(threadCatalogAgentId ? { agentId: threadCatalogAgentId } : {}),
     };
     const peeked = peekAgentCatalog(threadSessionId, scope);
     if (peeked) setThreadCatalogRead({ key: threadCatalogKey, catalog: peeked });
-    getAgentCatalog(threadSessionId, undefined, scope)
+    getAgentCatalog(threadSessionId, undefined, { ...scope, forceRefresh: true })
       .then((read) => {
         if (current) setThreadCatalogRead({ key: threadCatalogKey, catalog: read });
       })
@@ -591,7 +595,15 @@ export function HomeComposerDock({
     return () => {
       current = false;
     };
-  }, [ready, selected, threadCatalogKey, threadSessionId, threadDirectory, threadCatalogAgentId]);
+  }, [
+    ready,
+    selected,
+    threadCatalogKey,
+    threadSessionId,
+    threadAsid,
+    threadDirectory,
+    threadCatalogAgentId,
+  ]);
   const threadCatalog =
     threadCatalogRead && threadCatalogRead.key === threadCatalogKey
       ? threadCatalogRead.catalog
@@ -849,13 +861,14 @@ export function HomeComposerDock({
   }
 
   /** What Send does with the dock's conversation now (`homeThreadSendPlan`). */
-  function threadPlan(current: HomeThreadTarget): HomeThreadSendPlan {
+  function threadPlan(current: HomeThreadTarget, delivery?: 'steer' | 'queue'): HomeThreadSendPlan {
     const key = homeThreadKey(current);
     const liveState = useHomeThreadLive.getState();
     const live = liveState.key === key ? liveState.live : undefined;
     const pills = threadPills(current);
     return homeThreadSendPlan({
       target: current,
+      ...(delivery ? { delivery } : {}),
       task: homeThreadTask(current, useServerTasksStore.getState().index[current.serverId]?.tasks),
       ...(live
         ? {
@@ -901,10 +914,11 @@ export function HomeComposerDock({
   function followUp(
     current: HomeThreadTarget,
     text: string,
-    attachments: string[]
+    attachments: string[],
+    delivery?: 'steer' | 'queue'
   ): Promise<boolean> {
     if (inFlightRef.current) return Promise.resolve(false);
-    const plan = threadPlan(current);
+    const plan = threadPlan(current, delivery);
     const refusal = threadRefusal(plan);
     if (refusal || (plan.kind !== 'session' && plan.kind !== 'pane')) {
       setError(refusal);
@@ -1596,10 +1610,14 @@ export function HomeComposerDock({
     );
   }
 
-  function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
+  function sendPrompt(
+    text: string,
+    attachments?: string[],
+    delivery?: 'steer' | 'queue'
+  ): Promise<boolean> {
     // A conversation is targeted: the message is a follow-up there.
     const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
-    if (current && ready) return followUp(current, text, attachments ?? []);
+    if (current && ready) return followUp(current, text, attachments ?? [], delivery);
     if (terminalAgent) {
       // The terminal entry of a provider whose ledger carries goals into a
       // pane: the task is the computer's, with the pane as its delivery.
@@ -2132,7 +2150,10 @@ export function HomeComposerDock({
       }
       inputTestID="home-composer-input"
       sendTestID="home-composer-send"
-      running={false}
+      running={threadSession !== undefined && (threadStatus === 'busy' || threadStatus === 'retry')}
+      canQueueWhileRunning={threadFeatures.inbox}
+      canSteerWhileRunning={threadFeatures.extra.promptSteering === true}
+      canSendWhileRunning={threadFeatures.inbox || threadFeatures.extra.promptSteering === true}
       disabled={target.kind === 'none'}
       interactionBlockedReason={offlineReason}
       blockedReasonInField
