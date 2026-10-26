@@ -116,15 +116,7 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
           }
           if (/[!\\]/.test(line[match.index - 1] ?? '')) continue;
           const uri = match[5] ?? match[6];
-          if (
-            !uri ||
-            !isHostPathSource(uri) ||
-            (!videoFileMime({ uri }) &&
-              !/\.(?:wav|mp3|m4a|aac|ogg|opus|flac|aiff?|png|jpe?g|webp|gif|pdf|zip|txt|md|json|csv|docx?|muqun-theme)$/i.test(
-                uri
-              ))
-          )
-            continue;
+          if (!uri || !isHostPathSource(uri) || uri.startsWith('#')) continue;
           const start = offset + match.index;
           flushTo(start);
           if (isThemeFilePath(uri)) themePaths.add(uri);

@@ -34,7 +34,14 @@ export async function exportFile(
   if (!photos && Platform.OS === 'android') {
     const destination = await Directory.pickDirectoryAsync();
     assertSaveActive(signal);
-    await destination.createFile(safeName, mime).write(bytes);
+    // SAF may append a suffix when a sniffed MIME disagrees with the name.
+    // Use Android's own extension lookup for the destination, without creating
+    // a cache file or maintaining another MIME/extension table.
+    const extension = safeName.includes('.') ? safeName.slice(safeName.lastIndexOf('.') + 1) : '';
+    const destinationMime =
+      new File(Paths.cache, extension ? `file.${extension}` : 'file').type ||
+      'application/octet-stream';
+    await destination.createFile(safeName, destinationMime).write(bytes);
     return;
   }
   const directory = new Directory(Paths.cache, `file-export-${Date.now()}-${sequence++}`);

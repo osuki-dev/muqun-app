@@ -2122,6 +2122,52 @@ export async function resolveAgentFileAsset(
   }
 }
 
+async function resolveMcpFileAtEndpoint(
+  asset: SessionAsset,
+  record: GatewayEndpoint,
+  baseUrl: string,
+  signal?: AbortSignal
+): Promise<SessionAsset> {
+  const ref = asset.mcpFile;
+  if (!ref?.path) return asset;
+  const response = await gatewayEndpointFetch(
+    { ...record, url: baseUrl },
+    `${baseUrl}/api/mcp/files/present`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${record.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: ref.path }),
+      signal,
+    }
+  );
+  if (!response.ok) throw new Error(`File unavailable (HTTP ${response.status})`);
+  const value = await response.json();
+  if (value.server_id !== ref.serverId) throw new Error('Computer identity did not match');
+  const resolved = sessionAssetsFromResponse(value.files)[0];
+  if (
+    !resolved ||
+    !resolved.download_url ||
+    !/^\/api\/agent-images\/[a-zA-Z0-9_-]+\/download$/.test(resolved.download_url)
+  )
+    throw new Error('Invalid file reference');
+  return { ...resolved, mcpFile: { serverId: ref.serverId, path: resolved.path } };
+}
+
+/** Remote and local links share the viewer and explicit-open file policy. */
+export async function resolveMcpFileAsset(
+  asset: SessionAsset,
+  signal?: AbortSignal
+): Promise<SessionAsset> {
+  const ref = asset.mcpFile;
+  if (!ref?.path) return asset;
+  const record = (await loadGateways()).find((item) => item.serverId === ref.serverId);
+  if (!record) throw new Error('Pair this computer before opening its files.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, (baseUrl) =>
+    resolveMcpFileAtEndpoint(asset, captured, baseUrl, signal)
+  );
+}
+
 /** Capture the source pairing before opening a tunnel; never switch the foreground computer. */
 async function readMcpFileBytes(
   asset: SessionAsset,
@@ -2132,18 +2178,25 @@ async function readMcpFileBytes(
   }
 ): Promise<Uint8Array> {
   const ref = asset.mcpFile!;
-  if (ref.expiresAt <= Date.now())
+  if (ref.expiresAt !== undefined && ref.expiresAt <= Date.now())
     throw new Error('This file preview has expired. Ask the agent to share it again.');
   const record = (await loadGateways()).find((item) => item.serverId === ref.serverId);
   if (!record) throw new Error('Pair this computer before opening its files.');
-  const name = gatewayUploadName(`/muqun-gateway/uploads/${ref.uploadName}`);
-  if (!name || name !== ref.uploadName) throw new Error('Invalid file reference');
+  const name = ref.uploadName
+    ? gatewayUploadName(`/muqun-gateway/uploads/${ref.uploadName}`)
+    : null;
+  if (!ref.path && (!name || name !== ref.uploadName)) throw new Error('Invalid file reference');
   const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
   return withRecordBaseUrl(captured, async (baseUrl) => {
     if (options.signal?.aborted) throw new Error('Operation cancelled');
-    const url = `${baseUrl}/api/uploads/${name}`;
+    const resolved = ref.path
+      ? await resolveMcpFileAtEndpoint(asset, captured, baseUrl, options.signal)
+      : asset;
+    const filePath = ref.path ? resolved.download_url! : `/api/uploads/${name}`;
+    const url = `${baseUrl}${filePath}`;
     const init = { headers: { Authorization: `Bearer ${captured.token}` }, signal: options.signal };
-    const limit = Math.min(options.maxBytes, (asset.kind === 'video' ? 64 : 25) * 1024 * 1024);
+    const limit = options.maxBytes;
+    if (resolved.size > limit) throw new Error('HTTP 413: This file is too large to open.');
     const response =
       captured.transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(
@@ -2162,7 +2215,7 @@ async function readMcpFileBytes(
           );
     if (!response.ok) throw new Error(`File unavailable (HTTP ${response.status})`);
     const mime = response.headers.get('content-type')?.split(';')[0];
-    if (mime !== asset.mime.split(';')[0]) throw new Error('The file type does not match');
+    if (mime !== resolved.mime.split(';')[0]) throw new Error('The file type does not match');
     const bytes = await readLimitedImageBody(response, limit, options.signal);
     options.onProgress?.(bytes.length, bytes.length);
     return bytes;

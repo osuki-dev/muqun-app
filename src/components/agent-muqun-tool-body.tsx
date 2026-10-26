@@ -1,8 +1,5 @@
 import { View, StyleSheet } from 'react-native';
-import { useState } from 'react';
-import { AssetViewer } from '@/components/asset-viewer';
-import { PressableScale } from '@/components/pressable-scale';
-import type { SessionAsset } from '@/lib/session-assets';
+import { InlineFileLink } from '@/components/inline-file-link';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
@@ -86,7 +83,6 @@ export function AgentMuqunToolBody({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const mono = useMonoFontFamily();
-  const [openedFile, setOpenedFile] = useState<SessionAsset | null>(null);
   const command = presentation.command ? capLines(presentation.command, 6) : undefined;
   const output = presentation.output ? capLines(presentation.output, 16) : undefined;
   const goal = presentation.goal ? capLines(presentation.goal, 4) : undefined;
@@ -94,21 +90,13 @@ export function AgentMuqunToolBody({
   return (
     <View testID="agent-muqun-body" style={styles.body}>
       {presentation.files.map((file) => (
-        <PressableScale
+        <InlineFileLink
           key={file.id}
-          accessibilityLabel={t`Open ${file.name}`}
-          onPress={() => setOpenedFile(file)}
-          style={[styles.output, { padding: 12, backgroundColor: theme.colors.surface }]}>
-          <Text numberOfLines={2}>{file.name}</Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {presentation.machine} · {Math.ceil(file.size / 1024)} KB
-          </Text>
-          <Text variant="caption" color={theme.colors.primary}>
-            {t`Preview file`} ↗
-          </Text>
-        </PressableScale>
+          file={{ uri: file.path, name: file.name }}
+          asid=""
+          remoteFile={file}
+        />
       ))}
-      {openedFile ? <AssetViewer asset={openedFile} onClose={() => setOpenedFile(null)} /> : null}
       {presentation.cwd ? <Fact label={t`Working directory`} value={presentation.cwd} /> : null}
       {durationMs !== undefined ? (
         <Fact label={t`Call duration`} value={formatToolDuration(durationMs)} />

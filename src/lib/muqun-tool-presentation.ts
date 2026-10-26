@@ -166,7 +166,7 @@ export function muqunToolPresentation(part: ToolPart): MuqunToolPresentation | n
   }
   return {
     operation,
-    files: operation === 'files.present' && !pending && !failed ? mcpFileAssets(result) : [],
+    files: !pending && !failed ? mcpFileAssets(result) : [],
     status,
     machine: text(result?.machine) ?? text(binding?.peer_name) ?? text(input.machine),
     taskId: text(result?.task_id) ?? text(input.task_id),
