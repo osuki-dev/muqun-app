@@ -1235,6 +1235,20 @@ export function parseTimelineRole(value: unknown): TimelineRole {
   return raw === 'user' || raw === 'system' ? raw : 'assistant';
 }
 
+/** Normalized upstream generation throughput for one completed assistant message. */
+export interface MessageGeneration {
+  scope: 'message';
+  tokens_per_second: number;
+}
+
+export function parseMessageGeneration(value: unknown): MessageGeneration | undefined {
+  const rec = asRecord(value);
+  if (rec?.scope !== 'message') return undefined;
+  const tokensPerSecond = asFiniteNumber(rec.tokens_per_second);
+  if (tokensPerSecond === undefined || tokensPerSecond <= 0) return undefined;
+  return { scope: 'message', tokens_per_second: tokensPerSecond };
+}
+
 export interface TimelineItem {
   id: string;
   message_id: string;
@@ -1244,6 +1258,8 @@ export interface TimelineItem {
   part: AgentPart;
   seq: number;
   updated_ms: number;
+  /** The Gateway's normalized per-message metric, never session totals or client timing. */
+  generation?: MessageGeneration;
   attachments?: string[];
   /**
    * The images a text part's markdown embeds by host path, each resolved by
@@ -1300,6 +1316,7 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
   const part = parseAgentPart(rec.part);
   if (!part) return null;
   const role = parseTimelineRole(rec.role);
+  const generation = role === 'assistant' ? parseMessageGeneration(rec.generation) : undefined;
   const suffix =
     role === 'user' && part.type === 'text' ? splitUploadedAttachmentSuffix(part.text) : null;
   const attachments = asStringArray(rec.attachments);
@@ -1325,6 +1342,7 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
         : displayPart,
     seq: asFiniteNumber(rec.seq) ?? 0,
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
+    ...(generation ? { generation } : {}),
     ...(attachments.length > 0 ? { attachments } : {}),
     ...(imageAssets.length > 0 ? { image_assets: imageAssets } : {}),
   };

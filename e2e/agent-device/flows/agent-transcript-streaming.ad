@@ -11,6 +11,9 @@ scroll bottom
 # the live tail before checking that a reader's history stays anchored.
 is visible "${TARGET}"
 
+# section streaming-speed
+is hidden "id=\"agent-generation-speed-demo-stream-answer\""
+
 # section history
 # A reader who moves above the live table must retain their place while it grows.
 scroll up --until "text=\"History anchor 01. This previously read paragraph must remain still while new output arrives below it.\""
@@ -30,6 +33,13 @@ is visible "text=\"DEMO_STREAM_COMPLETE\""
 # renderer. This does not assert animation identity or real protocol streaming.
 snapshot
 screenshot "shots/transcript-stream-complete-diff.png"
+
+# section settled-speed
+wait "id=\"agent-generation-speed-demo-stream-answer\"" 5000
+is visible "id=\"agent-generation-speed-demo-stream-answer\""
+is visible "text=\"123.4 tok/s\""
+screenshot "shots/transcript-generation-speed.png"
 press "id=\"demo-stream-restart\""
 wait 2000
 is visible "id=\"demo-streaming-list\""
+is hidden "id=\"agent-generation-speed-demo-stream-answer\""
