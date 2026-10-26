@@ -1,20 +1,50 @@
-import { assetKindFromMime, type SessionAsset } from './session-assets';
+import { assetKindFromMime, sessionAssetsFromResponse, type SessionAsset } from './session-assets';
 import { gatewayUploadName } from './uploaded-attachments';
 
-export interface McpFileReference {
-  serverId: string;
-  uploadName: string;
-  expiresAt: number;
-}
+export type McpFileReference = { serverId: string } & (
+  | { path: string; uploadName?: never; expiresAt?: never }
+  | { path?: never; uploadName: string; expiresAt: number }
+);
 
-/** Tool text is untrusted: accept an opaque upload name, never a URL or credential. */
+/** Tool text is untrusted: bind paths to a paired computer, never supplied URLs or credentials. */
 export function mcpFileAssets(result: Record<string, unknown> | null): SessionAsset[] {
   const serverId = result?.server_id;
   if (typeof serverId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(serverId)) return [];
   if (!Array.isArray(result?.files)) return [];
-  return result.files.slice(0, 8).flatMap((value: unknown) => {
+  return result.files.slice(0, 8).flatMap((value: unknown): SessionAsset[] => {
     if (!value || typeof value !== 'object') return [];
     const file = value as Record<string, unknown>;
+    if (typeof file.path === 'string') {
+      if (
+        !/^(?:\/|~\/)/.test(file.path) ||
+        file.path.startsWith('//') ||
+        file.path.length > 8192 ||
+        /[\u0000-\u001f\u007f]/.test(file.path)
+      )
+        return [];
+      const normalized = sessionAssetsFromResponse([file])[0];
+      if (
+        !normalized ||
+        normalized.name.length > 256 ||
+        /[\u0000-\u001f\u007f]/.test(normalized.name) ||
+        !Number.isSafeInteger(normalized.size) ||
+        normalized.size < 0
+      )
+        return [];
+      return [
+        {
+          id: `mcp:${serverId}:${normalized.id}`,
+          path: file.path,
+          name: normalized.name,
+          mime: normalized.mime,
+          kind: normalized.kind,
+          size: normalized.size,
+          modified_unix_ms: normalized.modified_unix_ms,
+          previewable: normalized.previewable,
+          mcpFile: { serverId, path: file.path },
+        },
+      ];
+    }
     const uploadName = file.upload_name;
     if (typeof uploadName !== 'string') return [];
     const path = `/muqun-gateway/uploads/${uploadName}`;
