@@ -1,0 +1,21 @@
+# Explicit file handoffs stay bound to their source, including failures.
+# section unpaired
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-26"
+wait "id=agent-subagent-detail-transcript" 10000
+press "id=agent-tool-toggle"
+wait "id=agent-muqun-body" 5000
+press "label=\"Open Screenshot.jpg\""
+wait "text=\"Pair this computer before opening its files.\"" 10000
+screenshot "shots/mcp-file-unpaired.png"
+press "label=\"Close preview\""
+back --system
+
+# section expired
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-27"
+wait "id=agent-subagent-detail-transcript" 10000
+press "id=agent-tool-toggle"
+press "label=\"Open Expired.jpg\""
+wait "text=\"This file preview has expired. Ask the agent to share it again.\"" 10000
+screenshot "shots/mcp-file-expired.png"
+press "label=\"Close preview\""
+back --system

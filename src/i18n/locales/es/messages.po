@@ -1029,6 +1029,7 @@ msgstr "Restablecimientos disponibles"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "Atrás"
 
@@ -2190,6 +2191,7 @@ msgid "Could not open destination"
 msgstr "No se pudo abrir el destino"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "No se pudo abrir el archivo"
@@ -4386,6 +4388,7 @@ msgstr "Sin imágenes fijas"
 msgid "No tasks in this session yet."
 msgstr "Todavía no hay tareas en esta sesión"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "Aún no hay tareas"
@@ -4628,6 +4631,7 @@ msgstr "Abrir"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
 #: src/components/inline-file-link.tsx
@@ -5114,6 +5118,10 @@ msgstr "Vista previa del simulador: no disponible a través del túnel SSH"
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "Ver y aplicar"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "Vista previa del archivo"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5642,9 +5650,11 @@ msgstr "Reanudar"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

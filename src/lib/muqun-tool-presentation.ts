@@ -1,4 +1,6 @@
 import { asRecord, type ToolPart } from './agent-protocol';
+import { mcpFileAssets } from './mcp-file-reference';
+import type { SessionAsset } from './session-assets';
 import { TOOL_OUTPUT_BYTE_CAP, toolInputRecord } from './agent-tool-output';
 
 import { muqunOperation, type MuqunOperation } from './internal-muqun-tools';
@@ -19,6 +21,7 @@ export type MuqunToolStatus =
 
 export interface MuqunToolPresentation {
   operation: MuqunOperation;
+  files: SessionAsset[];
   status: MuqunToolStatus;
   /** Display only. Neither a name nor an unscoped task ID authorizes navigation. */
   machine?: string;
@@ -163,6 +166,7 @@ export function muqunToolPresentation(part: ToolPart): MuqunToolPresentation | n
   }
   return {
     operation,
+    files: operation === 'files.present' && !pending && !failed ? mcpFileAssets(result) : [],
     status,
     machine: text(result?.machine) ?? text(binding?.peer_name) ?? text(input.machine),
     taskId: text(result?.task_id) ?? text(input.task_id),

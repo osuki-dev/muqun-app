@@ -1573,8 +1573,13 @@ export const AgentComposer = memo(function AgentComposer({
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
   const safeAreaFoot = keyboardHeight === 0 ? bottomInset : 0;
-  const fieldBottomInset = process.env.EXPO_OS === 'ios' ? safeAreaFoot : 0;
-  const dockFoot = (flushField ? safeAreaFoot - fieldBottomInset : 0) + (outerInsets?.bottom ?? 0);
+  // Home floats above the safe area; keep its card padding unchanged when
+  // the keyboard closes. Edge-to-edge session fields paint the inset inside.
+  const fieldBottomInset = process.env.EXPO_OS === 'ios' && !flushField ? safeAreaFoot : 0;
+  const dockFoot =
+    flushField && process.env.EXPO_OS === 'ios'
+      ? Math.max(safeAreaFoot, outerInsets?.bottom ?? 0)
+      : (flushField ? safeAreaFoot : 0) + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [surfaceLeft, setSurfaceLeft] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);

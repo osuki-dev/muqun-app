@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "mcp-files",
+      "program": "flows/mcp-files",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "muqun-tools",
       "program": "flows/muqun-tools",
       "tags": ["full", "agents"],
@@ -7119,6 +7125,11 @@
         "run": "flows/agent-session-tree.ad#visible"
       },
       { "run": "flows/agent-session-tree.ad#context-closed" }
+    ],
+    "flows/mcp-files": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/mcp-files.ad#unpaired" },
+      { "run": "flows/mcp-files.ad#expired" }
     ],
     "flows/muqun-tools": [
       {
