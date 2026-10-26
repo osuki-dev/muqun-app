@@ -1480,6 +1480,8 @@ msgstr "Đóng tác vụ mới"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "Đóng bản xem trước"
 
@@ -1499,11 +1501,6 @@ msgstr "Đóng ô soạn thảo"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "Đóng menu"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "Đóng trình giả lập"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1646,6 +1643,7 @@ msgstr "Tên máy tính"
 msgid "Computer not found"
 msgstr "Không tìm thấy máy tính"
 
+#: src/app/simfarm.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "Máy tính ngoại tuyến"
@@ -1750,6 +1748,7 @@ msgstr "Đã kết nối đến {address}"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1769,6 +1768,10 @@ msgstr "Đang kết nối qua SSH…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "Đang kết nối đến {address}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "Đang kết nối với trình mô phỏng"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2858,6 +2861,10 @@ msgstr "Nhập địa chỉ của Gateway thay thế"
 msgid "Enter the gateway's port on that host."
 msgstr "Nhập cổng của gateway trên host đó"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "Nhập cổng dịch vụ trình mô phỏng trên máy tính này"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "Nhập URL thủ công"
@@ -3029,6 +3036,10 @@ msgstr "Yêu cầu đầu tiên"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "Vừa khung hình"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "Vừa màn hình"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3840,7 +3851,6 @@ msgid "Long press to open it in full"
 msgstr "Nhấn giữ để mở toàn bộ"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "Tìm lại"
 
@@ -4361,6 +4371,10 @@ msgid "No simulator on port {port}"
 msgstr "Không có trình giả lập trên cổng {port}"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "Không tìm thấy trình mô phỏng. Hãy khởi động một trình mô phỏng trên máy tính này rồi kết nối lại"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "Không có trình giả lập nào trên máy đó"
 
@@ -4631,7 +4645,6 @@ msgstr "Mở"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
 #: src/components/inline-file-link.tsx
@@ -4893,6 +4906,7 @@ msgstr "Trang {pageNumber} · {lines} dòng"
 msgid "Pair {0} again"
 msgstr "Ghép nối lại {0}"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4900,6 +4914,10 @@ msgstr "Ghép nối lại {0}"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "Ghép nối máy tính"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "Ghép nối máy tính trước"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4917,6 +4935,10 @@ msgstr "Ghép nối máy tính"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Ghép nối ở bên dưới"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "Ghép nối máy tính chạy trình mô phỏng rồi quay lại đây để mở bản xem trước"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5371,7 +5393,9 @@ msgstr "Ngôn ngữ nhận dạng"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "Mức tối thiểu khuyến nghị để chữ dễ đọc: {minimumPercent}%"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "Kết nối lại"
@@ -5694,6 +5718,10 @@ msgstr "Đang thử lại…"
 msgid "Return"
 msgstr "Return"
 
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "Quay lại bản xem trước"
+
 #: src/components/home-overview.tsx
 msgid "Return to task"
 msgstr "Quay lại tác vụ"
@@ -5773,6 +5801,10 @@ msgstr "Hoàn tác {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "Hoàn tác đến đây"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "Xoay trình mô phỏng"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6359,13 +6391,24 @@ msgid "simfarm port"
 msgstr "Cổng simfarm"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "Giả lập"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "Kết nối trình mô phỏng"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "Điều khiển trình giả lập"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "Trình mô phỏng đã ngắt kết nối"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7123,6 +7166,10 @@ msgid "The shell exited."
 msgstr "Shell đã thoát"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "Không thể xoay trình mô phỏng. Vui lòng thử lại"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "Không thể hiển thị trình giả lập"
 
@@ -7312,7 +7359,6 @@ msgstr "Máy tính này chưa liệt kê thiết bị nào đã ghép nối"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This computer is no longer paired."
 msgstr "Máy tính này không còn được ghép nối"

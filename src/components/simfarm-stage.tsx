@@ -5,7 +5,6 @@ import { Canvas, Fill, Group, Image as SkiaImage } from 'react-native-skia';
 import {
   BackIcon,
   DisclosureDownIcon,
-  DisclosureUpIcon,
   HomeIcon,
   KeyboardIcon,
   DevicesIcon,
@@ -16,7 +15,7 @@ import {
   SessionStackIcon,
   CloseIcon,
 } from '@/icons';
-import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useState } from 'react';
 import {
   BackHandler,
   Platform,
@@ -36,6 +35,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingHandle, floatingHandleFrame } from '@/components/floating-handle';
+import { SimfarmTouchTracker } from '@/lib/simfarm-touch';
+import { SimfarmNotice } from '@/components/simfarm-notice';
 import { GlassChrome } from '@/components/glass-chrome';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
@@ -65,11 +66,7 @@ import {
   type SimfarmPlacement,
   type SimfarmPoint,
 } from '@/lib/simfarm-frame';
-import {
-  SIMFARM_TOUCH_PHASE,
-  type SimfarmButton,
-  type SimfarmTouchPhase,
-} from '@/lib/simfarm-protocol';
+import { type SimfarmButton, type SimfarmTouchPhase } from '@/lib/simfarm-protocol';
 import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream';
 
 /**
@@ -121,28 +118,33 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
 export function SimfarmStage({
   url,
   devices,
+  initialDeviceId,
   embedded,
   onClose,
+  onConfigure,
   onLost,
 }: {
   /** `ws://host:port/v1`, from `simfarmSocketUrl`. */
   url: string;
   /** What the probe already found, so the picker is populated on the first frame. */
   devices: SimfarmDevice[];
+  initialDeviceId?: string;
   embedded: boolean;
   onClose?: () => void;
+  onConfigure?: () => void;
   /**
    * The socket dropped and the reader asked to try again. The caller re-probes
    * and remounts this, which is the only way back: see `useSimfarmStream`.
    */
-  onLost: () => void;
+  onLost: (deviceId?: string) => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
-  const stream = useSimfarmStream(url, devices);
+  const stream = useSimfarmStream(url, devices, initialDeviceId);
+  const reconnect = useCallback(() => onLost(stream.wanted ?? undefined), [onLost, stream.wanted]);
 
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   /** How far past the fit the reader has pinched; on the UI runtime, see `placement`. */
@@ -157,6 +159,16 @@ export function SimfarmStage({
    */
   const topInset = embedded ? 0 : insets.top;
   const bottomInset = embedded ? 0 : insets.bottom;
+  const leftInset = embedded ? 0 : insets.left;
+  const rightInset = embedded ? 0 : insets.right;
+  const pictureTop = topInset + DEVICE_SELECTOR_SPACE;
+  const pictureViewport = useMemo(
+    () => ({
+      width: Math.max(0, viewport.width - leftInset - rightInset),
+      height: Math.max(0, viewport.height - pictureTop - bottomInset),
+    }),
+    [bottomInset, leftInset, pictureTop, rightInset, viewport]
+  );
   const closable = onClose !== undefined && !embedded;
 
   // ---------------------------------------------------------------------------
@@ -190,15 +202,14 @@ export function SimfarmStage({
   const [menuAt, setMenuAt] = useState<SimfarmMenuPlacement | null>(null);
   const openMenu = useCallback(
     (event: 'button' | 'offer') => {
-      const button = floatingHandleFrame(
-        viewport,
-        { x: handleX.get(), y: handleY.get() },
-        bottomInset
-      );
+      const button =
+        event === 'offer'
+          ? { x: leftInset + 12, y: topInset + 6, width: 44, height: 44 }
+          : floatingHandleFrame(viewport, { x: handleX.get(), y: handleY.get() }, bottomInset);
       setMenuAt(simfarmMenuPlacement(button, viewport, { top: topInset, bottom: bottomInset }));
       dispatch(event);
     },
-    [bottomInset, dispatch, handleX, handleY, topInset, viewport]
+    [bottomInset, dispatch, handleX, handleY, leftInset, topInset, viewport]
   );
 
   /**
@@ -271,12 +282,13 @@ export function SimfarmStage({
    */
   const placement = useDerivedValue<SimfarmPlacement | null>(() => {
     if (frame === null || viewport.height <= 0) return null;
-    return placeSimfarmFrame(
+    const placed = placeSimfarmFrame(
       frame,
-      viewport,
+      pictureViewport,
       zoom.get(),
-      offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get())
+      offset.get() ?? simfarmRestingOffset(frame, pictureViewport, zoom.get())
     );
+    return { ...placed, x: placed.x + leftInset, y: placed.y + pictureTop };
   });
 
   /**
@@ -404,40 +416,34 @@ export function SimfarmStage({
    * Nothing here talks to the chrome. A touch on the picture is the device's
    * and only the device's -- `simfarm-chrome.ts` has the rule and the reason.
    */
+  const [touchTracker] = useState(() => new SimfarmTouchTracker());
+  const cancelTouches = useEffectEvent(() => touchTracker.cancel(forward));
+  useLayoutEffect(() => () => cancelTouches(), [touchTracker]);
   const drive = useMemo(
     () =>
       Gesture.Manual()
         .runOnJS(true)
         .onTouchesDown((event, manager) => {
-          const touch = event.changedTouches[0];
-          if (touch === undefined) return;
-          if (event.numberOfTouches > 1) {
-            // A second finger means the reader is moving the picture rather
-            // than the device. End the touch the device is holding -- a finger
-            // left down is a device that stops responding -- and let the pan
-            // and the pinch have the rest of the gesture.
-            forward(SIMFARM_TOUCH_PHASE.END, touch.x, touch.y);
-            return;
-          }
-          manager.activate();
-          forward(SIMFARM_TOUCH_PHASE.BEGIN, touch.x, touch.y);
+          const point = event.changedTouches[0];
+          if (
+            point !== undefined &&
+            touchTracker.down(point, event.numberOfTouches, placement.get(), forward)
+          )
+            manager.activate();
         })
         .onTouchesMove((event) => {
-          if (event.numberOfTouches !== 1) return;
-          const touch = event.changedTouches[0];
-          if (touch !== undefined) forward(SIMFARM_TOUCH_PHASE.MOVE, touch.x, touch.y);
+          const point = event.changedTouches[0];
+          if (point !== undefined) touchTracker.move(point, event.numberOfTouches, forward);
         })
         .onTouchesUp((event, manager) => {
-          const touch = event.changedTouches[0];
-          if (touch !== undefined) forward(SIMFARM_TOUCH_PHASE.END, touch.x, touch.y);
-          manager.end();
+          touchTracker.up(event.changedTouches[0], event.numberOfTouches, forward);
+          if (event.numberOfTouches === 0) manager.end();
         })
-        .onTouchesCancelled((event, manager) => {
-          const touch = event.changedTouches[0];
-          if (touch !== undefined) forward(SIMFARM_TOUCH_PHASE.END, touch.x, touch.y);
+        .onTouchesCancelled((_event, manager) => {
+          touchTracker.cancel(forward);
           manager.end();
         }),
-    [forward]
+    [forward, placement, touchTracker]
   );
 
   /**
@@ -458,15 +464,15 @@ export function SimfarmStage({
           'worklet';
           const placed = placement.get();
           if (placed === null || frame === null) return;
-          const from = offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get());
+          const from = offset.get() ?? simfarmRestingOffset(frame, pictureViewport, zoom.get());
           offset.set(
-            clampSimfarmOffset(placed, viewport, {
+            clampSimfarmOffset(placed, pictureViewport, {
               x: from.x + event.changeX,
               y: from.y + event.changeY,
             })
           );
         }),
-    [frame, offset, placement, viewport, zoom]
+    [frame, offset, pictureViewport, placement, zoom]
   );
 
   const magnify = useMemo(
@@ -490,8 +496,8 @@ export function SimfarmStage({
   // ---------------------------------------------------------------------------
 
   const items = useMemo(
-    () => simfarmMenuItems(stream.device, { closable }),
-    [closable, stream.device]
+    () => simfarmMenuItems(stream.device, { closable, configurable: onConfigure !== undefined }),
+    [closable, onConfigure, stream.device]
   );
   /**
    * Inline rather than a helper taking `t`, which is the shape that looks
@@ -504,7 +510,11 @@ export function SimfarmStage({
       if (item === 'back') return t`Back`;
       if (item === 'app_switch') return t`Switch apps`;
       if (item === 'keyboard') return t`Type on the simulator`;
-      if (item === 'close') return t`Close the simulator`;
+      if (item === 'close') return t`Close preview`;
+      if (item === 'fit') return t`Fit to screen`;
+      if (item === 'reconnect') return t`Reconnect`;
+      if (item === 'rotate') return t`Rotate simulator`;
+      if (item === 'connection') return t`Simulator connection`;
       return t`Home`;
     },
     [t]
@@ -541,6 +551,7 @@ export function SimfarmStage({
       }
       if (error.kind === 'boot-timeout') return t`The simulator did not come up in time.`;
       if (error.kind === 'attach-failed') return t`The simulator could not be shown.`;
+      if (error.kind === 'rotate-failed') return t`The simulator could not be rotated. Try again.`;
       if (error.kind === 'shutdown-failed') return t`The simulator could not be shut down.`;
       if (error.kind === 'shutdown-timeout') return t`The simulator did not shut down in time.`;
       return t`The simulator could not be started.`;
@@ -550,49 +561,32 @@ export function SimfarmStage({
 
   if (stream.status === 'lost') {
     return (
-      <View
-        style={[
-          styles.fill,
-          styles.middle,
-          { backgroundColor: surfaceBackground(theme.colors.background) },
-        ]}>
-        {/* The one way off this screen on iOS is a close button, so the state
-            with no picture and no button still draws one: the sheet this used
-            to be could be swiped away, and a full-screen modal cannot. */}
-        {closable ? (
-          <View style={[styles.lostClose, { top: topInset + 10 }]}>
-            <GlassChrome shape="pill" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Close the simulator`}
-                testID="simfarm-close"
-                onPress={onClose}
-                style={styles.iconButtonHit}>
-                <CloseIcon size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
-        ) : null}
+      <SimfarmNotice
+        embedded={embedded}
+        onClose={onClose}
+        icon={<DevicesIcon size={40} color={theme.colors.textMuted} />}
+        title={t`Simulator disconnected`}>
         <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
           {t`The connection to the simulator stopped.`}
         </Text>
         <PressableScale
           accessibilityRole="button"
           testID="simfarm-reconnect"
-          onPress={onLost}
+          onPress={reconnect}
           style={[
             styles.reconnect,
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
           <RefreshIcon size={16} color={theme.colors.text} />
-          <Text variant="bodySmall">{t`Look again`}</Text>
+          <Text variant="bodySmall">{t`Reconnect`}</Text>
         </PressableScale>
-      </View>
+      </SimfarmNotice>
     );
   }
 
   return (
     <View
-      style={[styles.fill, { backgroundColor: surfaceBackground(theme.colors.background) }]}
+      style={[styles.fill, { backgroundColor: theme.colors.background }]}
       onLayout={onLayout}
       testID="simfarm-stage">
       <GestureDetector gesture={gesture}>
@@ -632,15 +626,12 @@ export function SimfarmStage({
               {/* The server's own words, untranslated: `boot` reaches very
                   different machinery per backend, and the sentence above is the
                   same for all of them. */}
-              {stream.error.detail !== null ? (
-                <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
-                  {stream.error.detail}
-                </Text>
-              ) : null}
             </>
           ) : stream.status === 'picking' ? (
             <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
-              {t`Choose a simulator from the menu.`}
+              {stream.devices.length === 0
+                ? t`No simulators found. Start one on this computer, then reconnect.`
+                : t`Choose a simulator from the menu.`}
             </Text>
           ) : stream.status === 'booting' ? (
             <>
@@ -657,7 +648,12 @@ export function SimfarmStage({
               </Text>
             </>
           ) : (
-            <Spinner size="sm" />
+            <>
+              <Spinner size="sm" />
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
+                {t`Connecting to the simulator`}
+              </Text>
+            </>
           )}
         </View>
       ) : null}
@@ -697,31 +693,18 @@ export function SimfarmStage({
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               },
             ]}>
-            {/* The header is the device and the picker: its name, the one
-                word that says why there is no picture, and a chevron for the
-                list it opens under itself. */}
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`Choose which simulator to show`}
-              accessibilityState={{ expanded: chrome.picking }}
-              testID="simfarm-device"
-              onPress={() => dispatch('header')}
-              style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
+            {/* Device selection has its own direct pill; this card has no nested menu. */}
+            <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
               <PhoneIcon size={16} color={theme.colors.textMuted} />
               <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
-                {name}
+                {chrome.picking ? t`Choose a simulator` : t`Simulator controls`}
               </Text>
               {hint !== null ? (
                 <Text variant="label" color={theme.colors.textMuted} testID="simfarm-device-state">
                   {hint}
                 </Text>
               ) : null}
-              {chrome.picking ? (
-                <DisclosureUpIcon size={14} color={theme.colors.textMuted} />
-              ) : (
-                <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
-              )}
-            </PressableScale>
+            </View>
 
             {chrome.picking ? (
               <>
@@ -801,6 +784,26 @@ export function SimfarmStage({
                     })
                   )}
                 </ScrollView>
+                <View style={[styles.pickerFoot, { borderTopColor: theme.colors.border }]}>
+                  <PressableScale
+                    accessibilityRole="button"
+                    testID="simfarm-picker-reconnect"
+                    onPress={reconnect}
+                    style={styles.menuRow}>
+                    <RefreshIcon size={17} color={theme.colors.primary} />
+                    <Text variant="bodySmall">{t`Reconnect`}</Text>
+                  </PressableScale>
+                  {closable ? (
+                    <PressableScale
+                      accessibilityRole="button"
+                      testID="simfarm-close"
+                      onPress={onClose}
+                      style={styles.menuRow}>
+                      <CloseIcon size={17} color={theme.colors.textMuted} />
+                      <Text variant="bodySmall">{t`Close preview`}</Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
                 {/* A shutdown that failed while a picture is on screen has no
                     other place to say so: the waiting area above draws the
                     error only when there is nothing else to draw. */}
@@ -813,16 +816,11 @@ export function SimfarmStage({
                       testID="simfarm-picker-error">
                       {explain(stream.error)}
                     </Text>
-                    {stream.error.detail !== null ? (
-                      <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
-                        {stream.error.detail}
-                      </Text>
-                    ) : null}
                   </View>
                 ) : null}
               </>
             ) : (
-              <View style={styles.menuBody}>
+              <ScrollView style={styles.menuBody} keyboardShouldPersistTaps="handled">
                 {items.map((item) => (
                   <PressableScale
                     key={item}
@@ -838,9 +836,28 @@ export function SimfarmStage({
                     onPress={() => {
                       if (item === 'keyboard') dispatch('keyboard');
                       else if (item === 'close') onClose?.();
+                      else if (item === 'fit') {
+                        zoom.set(SIMFARM_MIN_ZOOM);
+                        offset.set(null);
+                        dispatch('acted');
+                      } else if (item === 'rotate') {
+                        zoom.set(SIMFARM_MIN_ZOOM);
+                        offset.set(null);
+                        stream.rotate();
+                        dispatch('acted');
+                      } else if (item === 'reconnect') reconnect();
+                      else if (item === 'connection') onConfigure?.();
                       else press(item);
                     }}
-                    style={styles.menuRow}>
+                    style={[
+                      styles.menuRow,
+                      item === 'fit' || item === 'close'
+                        ? {
+                            borderTopWidth: StyleSheet.hairlineWidth,
+                            borderTopColor: theme.colors.border,
+                          }
+                        : null,
+                    ]}>
                     <ItemGlyph
                       item={item}
                       color={item === 'close' ? theme.colors.textMuted : theme.colors.primary}
@@ -848,10 +865,50 @@ export function SimfarmStage({
                     <Text variant="bodySmall">{itemName(item)}</Text>
                   </PressableScale>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </Animated.View>
         </>
+      ) : null}
+
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={name}
+        accessibilityHint={t`Choose which simulator to show`}
+        accessibilityState={{ expanded: chrome.menu && chrome.picking }}
+        disabled={stream.devices.length === 1 && stream.device !== null}
+        testID="simfarm-device"
+        onPress={() => openMenu('offer')}
+        style={[
+          styles.devicePill,
+          {
+            top: topInset + 6,
+            left: leftInset + 12,
+            maxWidth: Math.max(0, Math.min(320, viewport.width - leftInset - rightInset - 24)),
+            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            borderColor: theme.colors.border,
+          },
+        ]}>
+        <DevicesIcon size={17} color={theme.colors.textMuted} />
+        <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
+          {name}
+        </Text>
+        {stream.devices.length > 1 || stream.device === null ? (
+          <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
+        ) : null}
+      </PressableScale>
+
+      {stream.hasImage && stream.error !== null ? (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.liveError,
+            { top: topInset + 12, backgroundColor: theme.colors.background },
+          ]}>
+          <Text variant="bodySmall" color={theme.colors.danger} style={styles.centred}>
+            {explain(stream.error)}
+          </Text>
+        </View>
       ) : null}
 
       {chrome.typing ? (
@@ -916,7 +973,7 @@ export function SimfarmStage({
         topInset={topInset}
         bottomInset={bottomInset}
         hidden={chrome.typing}
-        onPress={() => (chrome.menu ? dispatch('button') : openMenu('button'))}
+        onPress={() => (chrome.menu && !chrome.picking ? dispatch('button') : openMenu('button'))}
         accessibilityLabel={t`Simulator controls`}
         accessibilityHint={t`Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move.`}
         accessibilityState={{ expanded: chrome.menu }}
@@ -933,6 +990,9 @@ function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
   if (item === 'back') return <BackIcon size={size} color={color} />;
   if (item === 'app_switch') return <SessionStackIcon size={size} color={color} />;
   if (item === 'keyboard') return <KeyboardIcon size={size} color={color} />;
+  if (item === 'fit' || item === 'reconnect' || item === 'rotate')
+    return <RefreshIcon size={size} color={color} />;
+  if (item === 'connection') return <DevicesIcon size={size} color={color} />;
   if (item === 'close') return <CloseIcon size={size} color={color} />;
   return <HomeIcon size={size} color={color} />;
 }
@@ -941,11 +1001,24 @@ function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
 const MENU_MARGIN = 12;
 /** Between the composer and the bottom inset. */
 const COMPOSER_GAP = 10;
+const DEVICE_SELECTOR_SPACE = 56;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  middle: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   centred: { textAlign: 'center' },
+  devicePill: {
+    position: 'absolute',
+    zIndex: 12,
+    elevation: 12,
+    minHeight: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   waiting: {
     position: 'absolute',
     top: 0,
@@ -957,6 +1030,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 32,
   },
+  liveError: { position: 'absolute', left: 24, right: 24, padding: 12, borderRadius: 12 },
   reconnect: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -965,22 +1039,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 999,
     borderCurve: 'continuous',
-  },
-  lostClose: { position: 'absolute', right: MENU_MARGIN },
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   backdrop: {
     position: 'absolute',
@@ -1013,7 +1071,7 @@ const styles = StyleSheet.create({
   menuTitle: { flexShrink: 1, flexGrow: 1, minWidth: 0 },
   menuBody: { paddingVertical: 4 },
   menuRow: {
-    minHeight: 42,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

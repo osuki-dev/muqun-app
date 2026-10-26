@@ -1480,6 +1480,8 @@ msgstr "關閉新增任務"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "關閉預覽"
 
@@ -1499,11 +1501,6 @@ msgstr "關閉輸入欄"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "關閉選單"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "關閉模擬器"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1646,6 +1643,7 @@ msgstr "電腦名稱"
 msgid "Computer not found"
 msgstr "找不到電腦"
 
+#: src/app/simfarm.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "電腦離線"
@@ -1750,6 +1748,7 @@ msgstr "已連線至 {address}"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1769,6 +1768,10 @@ msgstr "正在透過 SSH 連線…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "正在連線至 {address}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "正在連線模擬器"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2858,6 +2861,10 @@ msgstr "改為輸入 Gateway 的位址"
 msgid "Enter the gateway's port on that host."
 msgstr "請輸入該主機上 Gateway 的連接埠"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "輸入這台電腦上模擬器服務的連接埠"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "手動輸入網址"
@@ -3029,6 +3036,10 @@ msgstr "第一條指令"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "符合畫面"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "符合螢幕大小"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3840,7 +3851,6 @@ msgid "Long press to open it in full"
 msgstr "長按以完整開啟"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "重新尋找"
 
@@ -4361,6 +4371,10 @@ msgid "No simulator on port {port}"
 msgstr "連接埠 {port} 上沒有模擬器"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "找不到模擬器。請在這台電腦上啟動模擬器，再重新連線"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "那台電腦上沒有模擬器"
 
@@ -4631,7 +4645,6 @@ msgstr "開啟"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
 #: src/components/inline-file-link.tsx
@@ -4893,6 +4906,7 @@ msgstr "第 {pageNumber} 頁 · {lines} 行"
 msgid "Pair {0} again"
 msgstr "重新配對 {0}"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4900,6 +4914,10 @@ msgstr "重新配對 {0}"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "配對電腦"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "請先配對電腦"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4917,6 +4935,10 @@ msgstr "配對電腦"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "在下方配對一台"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "配對執行模擬器的電腦，再返回這裡開啟預覽"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5371,7 +5393,9 @@ msgstr "辨識語言"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "文字清晰的建議最低值:{minimumPercent}%"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "重新連線"
@@ -5694,6 +5718,10 @@ msgstr "正在重試…"
 msgid "Return"
 msgstr "Enter 鍵"
 
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "返回預覽"
+
 #: src/components/home-overview.tsx
 msgid "Return to task"
 msgstr "返回工作"
@@ -5773,6 +5801,10 @@ msgstr "將回溯 {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "將回溯到這裡"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "旋轉模擬器"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6359,13 +6391,24 @@ msgid "simfarm port"
 msgstr "simfarm 連接埠"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "模擬器"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "模擬器連線"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "模擬器控制項"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "模擬器連線已中斷"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7123,6 +7166,10 @@ msgid "The shell exited."
 msgstr "Shell 已結束"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "無法旋轉模擬器。請重試"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "無法顯示模擬器"
 
@@ -7312,7 +7359,6 @@ msgstr "這台電腦沒有列出任何已配對的裝置"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This computer is no longer paired."
 msgstr "這台電腦已經解除配對"

@@ -172,6 +172,7 @@ export interface SimfarmCapabilities {
   video: string[];
   text: boolean;
   buttons: string[];
+  rotate?: boolean;
   /**
    * Whether the provider can start this device when it is not running.
    *
@@ -206,8 +207,9 @@ export interface SimfarmDevice {
  * Not a preference. simfarm's own client reaches for h264 and falls back to
  * jpeg when `VideoDecoder` is missing, which over a plain-http tailnet is
  * always -- so the fallback was the real path even before this app drew
- * anything itself. Hermes has no video decoder at all, so jpeg is not a
- * fallback here, it is the requirement, and a device that cannot offer it says
+ * anything itself. This client currently implements the JPEG packet path; native
+ * video-frame support does not itself decode this WebSocket protocol. A device
+ * that cannot offer JPEG says
  * so in `capabilities.video` and gets a sentence instead of a black rectangle.
  */
 export const SIMFARM_CODEC = 'jpeg';
@@ -287,6 +289,7 @@ function parseCapabilities(value: unknown): SimfarmCapabilities {
     text: record.text === true,
     buttons: stringList(record.buttons),
     boot: record.boot === true,
+    ...(record.rotate === true ? { rotate: true } : {}),
   };
 }
 

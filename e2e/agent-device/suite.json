@@ -195,9 +195,16 @@
       "program": "flows/home-summary",
       "tags": ["full", "workspace", "settings"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "simulator",
+      "program": "flows/simulator",
+      "tags": ["full", "workspace", "simulator"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
+    "flows/simulator": [{ "run": "flows/simulator.ad" }],
     "flows/agent-composer-triggers": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-composer-triggers.ad" }
