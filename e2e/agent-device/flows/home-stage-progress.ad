@@ -38,3 +38,12 @@ wait stable 300 5000
 # section clear-draft
 fill id="home-composer-input" ""
 wait stable 400 5000
+
+# section search-empty
+fill id="home-continue-search" "NoMatchingStageSessionQA"
+wait stable 300 5000
+
+# section clear-search
+fill id="home-continue-search" ""
+keyboard dismiss
+wait stable 300 5000

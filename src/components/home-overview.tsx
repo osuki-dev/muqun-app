@@ -476,7 +476,6 @@ export function HomeOverview({
     })
   );
   // Needs you stays mounted while empty; the Pad cover asks whether it has a row.
-  const hasAttention = useHasHomeAttention({ servers: records, taskServerIds });
   const coverHeader = customTheme?.manifest.homePresentation?.header === 'cover';
   // Cards on screen when Home mounts are not arrivals; once the section has
   // emptied, the next card to come is one and enters (and pulses) as such.
@@ -941,8 +940,19 @@ export function HomeOverview({
   }, [record, stageProgressFixture]);
   const demoSearchEntries = demoContinueSearchEntries(homeContinueFixture, isDemoRecord(record));
   const recentEntries = demoSearchEntries ?? availableRecentEntries;
+  const stageLayout = homeLayout === 'stage' && !isPad;
+  const visibleServers = stageLayout
+    ? records.filter((server) => server.serverId === launchController.chosen?.serverId)
+    : records;
+  const visibleTaskServerIds = stageLayout
+    ? taskServerIds.filter((serverId) => serverId === launchController.chosen?.serverId)
+    : taskServerIds;
+  const hasAttention = useHasHomeAttention({
+    servers: visibleServers,
+    taskServerIds: visibleTaskServerIds,
+  });
   const [continueQuery, setContinueQuery] = useState('');
-  const searchContinue = homeContinueSearchEnabled(recentEntries.length);
+  const searchContinue = stageLayout || homeContinueSearchEnabled(recentEntries.length);
   const recentHeading = searchContinue ? (
     <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
   ) : undefined;
@@ -955,7 +965,11 @@ export function HomeOverview({
   );
   const recentFilter =
     recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
-  const recentShown = filterHomeRecent(recentEntries, recentFilter);
+  const recentShown = stageLayout
+    ? launchController.chosen
+      ? filterHomeRecent(recentEntries, launchController.chosen.serverId)
+      : []
+    : filterHomeRecent(recentEntries, recentFilter);
 
   function openServer(serverId: string, paneId?: string, sessionId?: string) {
     retryHomeRefresh(serverId);
@@ -1135,6 +1149,7 @@ export function HomeOverview({
   const targetComposer = (serverId: string) => {
     retryHomeRefresh(serverId);
     launchController.choose(serverId);
+    if (stageLayout) setContinueQuery('');
     // Swiping to a computer asks for its current status, even if the last
     // probe just failed. The store joins any check already in flight.
     const target = records.find((server) => server.serverId === serverId);
@@ -1205,8 +1220,8 @@ export function HomeOverview({
   const attentionSection =
     !loading && !hydrationError ? (
       <HomeAttention
-        servers={records}
-        taskServerIds={taskServerIds}
+        servers={visibleServers}
+        taskServerIds={visibleTaskServerIds}
         onOpen={openAttentionTarget}
         onOpenTask={openWaitingTask}
       />
@@ -1244,11 +1259,12 @@ export function HomeOverview({
         }}
       />
     ) : undefined;
-  // Continue keeps the full inventory in every layout. Classic uses compact
-  // rows above entry-only computer cards; Editorial uses numbered rows.
+  // Stage follows its selected computer; overview layouts keep their explicit filter.
+  // All layouts render the same session rows and actions.
   const recentSection =
-    !loading && !hydrationError && recentEntries.length > 0 ? (
+    !loading && !hydrationError && (stageLayout || recentEntries.length > 0) ? (
       <HomeRecentSessions
+        key={stageLayout ? launchController.chosen?.serverId : 'overview'}
         compact={classicLayout}
         pad={isPad}
         limit={5}
@@ -1259,7 +1275,7 @@ export function HomeOverview({
         available={recentShown}
         query={recentQuery}
         header={
-          recentFilterIds.length > 0 ? (
+          !stageLayout && recentFilterIds.length > 0 ? (
             <HomeRecentChips
               servers={records}
               serverIds={recentFilterIds}
@@ -1319,6 +1335,8 @@ export function HomeOverview({
   );
   const phoneToolbar = phoneToolbarFor(false);
   if (homeLayout === 'stage' && !isPad) {
+    // Stage owns decode/retry state and uses its actual viewport. A transient
+    // Editorial load failure must not hide Stage's source on later visits.
     // Stage: the theme's world fills the screen under a thin HUD; the
     // composer, Needs you and Recent are the same pieces every layout gets.
     const stageContent = (
@@ -1331,12 +1349,12 @@ export function HomeOverview({
             connectionStatuses={connectionStatuses}
             recentEntries={recentEntries}
             artwork={
-              hasEditorialArtwork && editorialArtworkResolution
+              !loading && !hydrationError && artworkResolution
                 ? {
-                    uri: editorialArtworkResolution.source,
-                    fit: editorialArtworkResolution.resolved.image.fit,
-                    focal: editorialArtworkResolution.resolved.image.focalPoint,
-                    opacity: editorialArtworkResolution.resolved.image.opacity,
+                    uri: artworkResolution.source,
+                    fit: artworkResolution.resolved.image.fit,
+                    focal: artworkResolution.resolved.image.focalPoint,
+                    opacity: artworkResolution.resolved.image.opacity,
                   }
                 : undefined
             }
@@ -1354,22 +1372,8 @@ export function HomeOverview({
             attention={attentionSection}
             fullList={
               <>
+                {recentHeading}
                 {recentSection}
-                {!loading && !hydrationError && !sshLoading ? (
-                  <HomeConnections
-                    servers={records}
-                    hosts={sshRows}
-                    onOpenServer={openServer}
-                    onSelectServer={targetComposer}
-                    onOpenHost={(hostId) => {
-                      void commands.openSsh(hostId);
-                    }}
-                    onManage={() => {
-                      void commands.manageConnections();
-                    }}
-                    activeConnection={activeConnection}
-                  />
-                ) : null}
               </>
             }
             emptyState={emptyState}

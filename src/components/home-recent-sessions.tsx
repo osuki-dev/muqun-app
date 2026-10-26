@@ -457,7 +457,7 @@ export function HomeRecentSessions({
           />
         ))}
       </View>
-      {searching && !displayed.length ? (
+      {!displayed.length ? (
         <Text
           testID="home-continue-no-matches"
           variant="bodySmall"
