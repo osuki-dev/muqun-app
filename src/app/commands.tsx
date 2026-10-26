@@ -116,7 +116,6 @@ import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
 import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
-import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import {
@@ -124,6 +123,7 @@ import {
   commandCollaborationDraft,
 } from '@/lib/quick-command-collaboration';
 import { useServerSimfarm } from '@/stores/server-simfarm';
+import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
@@ -233,6 +233,7 @@ export default function QuickCommandsScreen() {
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
   const manageOnly = params.manage === '1';
+  const simulatorAccess = useServerSimfarmAccess(params.serverId, !manageOnly);
   const lazygit = useLazygit({
     enabled: !manageOnly && params.canLazygit === '1',
     sessionId: params.sessionId,
@@ -510,11 +511,8 @@ export default function QuickCommandsScreen() {
   /**
    * Hand over to the simulator preview.
    *
-   * `canOpenWeb` travels on rather than being recomputed: the screen that
-   * opened this sheet is the one holding the health answer, and its gate has a
-   * term nothing downstream can see -- the demo is excluded before the
-   * transport is even consulted, because its record points at an address that
-   * does not exist. Re-deriving here would quietly drop that.
+   * Route hints only decide which tile to present. Warming a socket or opening
+   * the Pad split requires fresh health from the pane's own paired computer.
    */
   function openSimulatorPreview() {
     if (!available.canPreviewSimulator) return;
@@ -525,13 +523,10 @@ export default function QuickCommandsScreen() {
     // probe tries first). The probe still runs and still decides -- a socket
     // to a port with nothing on it dies on its own, and the gate the probe
     // applies is applied here too.
-    const allowed = params.canOpenWeb === '1';
+    const allowed = simulatorAccess.status === 'ready';
     const opening = !(isPadLayout && simfarmSplitOpen);
-    if (opening) {
-      const gateway = useGatewayConnectionStore.getState();
-      const record =
-        gateway.records.find((entry) => entry.serverId === params.serverId) ??
-        (gateway.record?.serverId === params.serverId ? gateway.record : undefined);
+    if (opening && allowed) {
+      const record = simulatorAccess.record;
       const port = params.serverId
         ? (useServerSimfarm.getState().byServer[params.serverId] ?? SIMFARM_DEFAULT_PORT)
         : SIMFARM_DEFAULT_PORT;
@@ -542,14 +537,14 @@ export default function QuickCommandsScreen() {
     // agent works, and a sheet covering the terminal gives back exactly the
     // one-at-a-time reading you already have on the desktop. A phone has no
     // second column to give, so it opens the sheet.
-    if (isPadLayout && params.serverId) {
+    if (isPadLayout && params.serverId && (!opening || allowed)) {
       toggleSimfarmSplit(params.serverId);
       router.back();
       return;
     }
     router.replace({
       pathname: '/simfarm',
-      params: { serverId: params.serverId, allowed: params.canOpenWeb === '1' ? '1' : '' },
+      params: { serverId: params.serverId },
     } as Href);
   }
 
