@@ -2084,21 +2084,7 @@ export const AgentComposer = memo(function AgentComposer({
             fade says there is more, and the content's own right padding keeps
             the last chip whole under it.
           */}
-              {hideParameterRow && running && promptAllowed ? (
-                <View style={[styles.segmentRow, segmentRowLead]}>
-                  <TextSegment
-                    testID="agent-composer-delivery-btn"
-                    accessibilityRole="button"
-                    disabled={!canQueueWhileRunning || !canSteerWhileRunning}
-                    onPress={() =>
-                      setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'))
-                    }>
-                    <Text variant="caption" color={theme.colors.primary}>
-                      {deliveryMode === 'queue' ? t`Queue` : t`Steer`}
-                    </Text>
-                  </TextSegment>
-                </View>
-              ) : hideParameterRow ? null : compact ? (
+              {hideParameterRow ? null : compact ? (
                 // The quiet line: caption type in the subtle tone, under row 1's
                 // body-size primary line, then the compact gap to the field.
                 // One step more to the field than between the two text rows:
