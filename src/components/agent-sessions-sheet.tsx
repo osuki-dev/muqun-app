@@ -12,6 +12,7 @@ import {
   MoreIcon,
   EditIcon,
   DeleteIcon,
+  DevicesIcon,
 } from '@/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -100,6 +101,9 @@ export interface AgentSessionsSheetProps {
   /** Delete one session, after the confirmation this sheet asks for. */
   onDeleteSession?: (asid: string) => void;
   onForkSession?: (session: AgentSessionInfo) => void;
+  /** Preview the simulators on this list's owning computer. */
+  onPreviewSimulator?: () => void;
+  simulatorLoading?: boolean;
   canMutateSession?: (action: AgentSessionAction, session: AgentSessionInfo) => boolean;
   /**
    * Open the worktree sheet on one session.
@@ -146,6 +150,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onRenameSession,
   onDeleteSession,
   onForkSession,
+  onPreviewSimulator,
+  simulatorLoading = false,
   canMutateSession,
   onMoveSession,
   canMoveSession,
@@ -427,6 +433,18 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const menuItems = (session: AgentSessionInfo): AgentActionMenuItem[] => {
     const title = sessionTitleOr(session, t`Untitled session`);
     const items: AgentActionMenuItem[] = [];
+    if (onPreviewSimulator)
+      items.push({
+        id: 'simulator',
+        label: t`Simulator`,
+        Icon: DevicesIcon,
+        disabled: simulatorLoading,
+        onPress: () => {
+          setMenuAsid(null);
+          onPreviewSimulator();
+        },
+        testID: `agent-session-simulator-${session.asid}`,
+      });
     if (onRenameSession && (canMutateSession?.('rename', session) ?? true))
       items.push({
         id: 'rename',
