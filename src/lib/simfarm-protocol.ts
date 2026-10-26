@@ -14,10 +14,8 @@
  *
  * Everything here is what a viewer needs and nothing more: attach, the video
  * frames, touch, text, the hardware buttons. Absent on purpose are the h264
- * path (Hermes has no video decoder, and the stream is requested as jpeg for
- * exactly that reason), the WeChat dialog channel, `rotate` -- the device is
- * turned on the machine it runs on, and a phone held in one hand is not where
- * that decision belongs -- and the wheel-scroll frame, because a finger dragged
+ * path (the native video stack is not yet wired to these encoded packets),
+ * the WeChat dialog channel, and the wheel-scroll frame, because a finger dragged
  * across a phone is a touch drag, and the device produces its own scrolling and
  * its own momentum from it.
  *

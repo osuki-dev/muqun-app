@@ -6913,6 +6913,7 @@ export function ServerTerminalWorkspace({
                 ]}>
                 <SimfarmPreview
                   embedded
+                  serverId={serverId}
                   gatewayUrl={record?.url}
                   allowed={simfarmSplit.allowed}
                   initialPort={simfarmPorts[record?.serverId ?? '']}

@@ -1,0 +1,8 @@
+# The shared Simulator route remains usable when its computer was unpaired.
+# This does not change any existing pairing or contact a simulator service.
+open "muqun://simfarm?serverId=missing-simulator-qa&allowed=1"
+wait "id=simfarm-pair" 10000
+is visible "id=simfarm-pair"
+is visible "id=simfarm-close"
+press "id=simfarm-close"
+wait absent "id=simfarm-pair" 5000
