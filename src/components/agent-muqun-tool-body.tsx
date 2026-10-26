@@ -1,4 +1,8 @@
 import { View, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { AssetViewer } from '@/components/asset-viewer';
+import { PressableScale } from '@/components/pressable-scale';
+import type { SessionAsset } from '@/lib/session-assets';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
@@ -14,6 +18,7 @@ import type {
 
 export const muqunOperationWord: Record<MuqunOperation, ReturnType<typeof msg>> = {
   'exec.run': msg`Run command`,
+  'files.present': msg`Preview file`,
   'tasks.delegate': msg`Start task`,
   'tasks.wait': msg`Wait for task`,
   'tasks.read': msg`Read task`,
@@ -81,12 +86,29 @@ export function AgentMuqunToolBody({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const mono = useMonoFontFamily();
+  const [openedFile, setOpenedFile] = useState<SessionAsset | null>(null);
   const command = presentation.command ? capLines(presentation.command, 6) : undefined;
   const output = presentation.output ? capLines(presentation.output, 16) : undefined;
   const goal = presentation.goal ? capLines(presentation.goal, 4) : undefined;
   const omitted = Boolean(command?.hidden || output?.hidden || goal?.hidden);
   return (
     <View testID="agent-muqun-body" style={styles.body}>
+      {presentation.files.map((file) => (
+        <PressableScale
+          key={file.id}
+          accessibilityLabel={t`Open ${file.name}`}
+          onPress={() => setOpenedFile(file)}
+          style={[styles.output, { padding: 12, backgroundColor: theme.colors.surface }]}>
+          <Text numberOfLines={2}>{file.name}</Text>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {presentation.machine} · {Math.ceil(file.size / 1024)} KB
+          </Text>
+          <Text variant="caption" color={theme.colors.primary}>
+            {t`Preview file`} ↗
+          </Text>
+        </PressableScale>
+      ))}
+      {openedFile ? <AssetViewer asset={openedFile} onClose={() => setOpenedFile(null)} /> : null}
       {presentation.cwd ? <Fact label={t`Working directory`} value={presentation.cwd} /> : null}
       {durationMs !== undefined ? (
         <Fact label={t`Call duration`} value={formatToolDuration(durationMs)} />
@@ -169,6 +191,7 @@ export function AgentMuqunToolBody({
       !output &&
       !presentation.error &&
       !presentation.note &&
+      presentation.files.length === 0 &&
       presentation.timelineCount === undefined &&
       presentation.machines.length === 0 &&
       presentation.status !== 'calling' ? (

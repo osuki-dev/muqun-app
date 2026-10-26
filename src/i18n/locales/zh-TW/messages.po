@@ -1029,6 +1029,7 @@ msgstr "可用重設次數"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "返回"
 
@@ -2190,6 +2191,7 @@ msgid "Could not open destination"
 msgstr "無法開啟目的地"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "無法開啟檔案"
@@ -4386,6 +4388,7 @@ msgstr "不支援靜態畫面"
 msgid "No tasks in this session yet."
 msgstr "此工作階段還沒有任務"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "尚無任務"
@@ -4628,6 +4631,7 @@ msgstr "開啟"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
+#: src/components/agent-muqun-tool-body.tsx
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
 #: src/components/inline-file-link.tsx
@@ -5114,6 +5118,10 @@ msgstr "預覽模擬器，透過 SSH 通道時無法使用"
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "預覽並套用"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "預覽檔案"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5642,9 +5650,11 @@ msgstr "恢復"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

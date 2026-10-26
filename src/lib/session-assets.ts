@@ -15,6 +15,8 @@ import { isVideoManifest, normalizedFileMime, videoFileMime } from './media-file
 export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
+  /** Explicit MCP handoff, resolved against its own saved pairing. */
+  mcpFile?: import('./mcp-file-reference').McpFileReference;
   id: string;
   /** Absolute path on the gateway host, which is also how output refers to it. */
   path: string;
@@ -220,7 +222,7 @@ export function assetFromContentHeaders(
   };
 }
 
-function assetKindFromMime(mime: string): AssetKind {
+export function assetKindFromMime(mime: string): AssetKind {
   if (mime.startsWith('image/')) return 'image';
   if (mime.startsWith('audio/')) return 'audio';
   if (mime.startsWith('video/') && !isVideoManifest({ mime })) return 'video';
