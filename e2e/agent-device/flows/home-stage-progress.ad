@@ -45,5 +45,5 @@ wait stable 300 5000
 
 # section clear-search
 fill id="home-continue-search" ""
-keyboard dismiss
+keyboard enter
 wait stable 300 5000
