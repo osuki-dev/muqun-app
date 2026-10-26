@@ -337,6 +337,36 @@
       },
       {
         "target": {
+          "id": "home-continue-search"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-connections"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#search-empty"
+      },
+      {
+        "target": {
+          "id": "home-continue-no-matches"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#clear-search"
+      },
+      {
+        "target": {
           "id": "home-recent-open-\\[\"muqun-demo\",\"demo-stage-linked\",\"codex\"\\]"
         },
         "mode": "visible",

@@ -36,7 +36,6 @@ import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useStructuralValue } from '@/hooks/use-structural-value';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { CloseIcon, SettingsIcon, TaskListIcon, TerminalWindowIcon } from '@/icons';
 import { connectionStatusDescription } from '@/i18n/labels';
@@ -313,7 +312,6 @@ export function HomeStageLayout({
 }: HomeStageLayoutProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
   const { height: windowHeight, fontScale } = useWindowDimensions();
   const wallpaper = useStageWallpaper();
@@ -668,20 +666,23 @@ export function HomeStageLayout({
           {
             top: topInset + 48,
             ...sideInsetPadding(sideInsets),
-            backgroundColor: background(theme.colors.background),
+            // A navigation sheet must obscure the interactive stage beneath it.
+            // Individual cards still use the user's surface transparency.
+            backgroundColor: theme.colors.background,
             borderTopLeftRadius: profile.chrome.sheet,
             borderTopRightRadius: profile.chrome.sheet,
           },
           sheetStyle,
         ]}>
         <HomeSheetHeader
-          title={t`Sessions`}
+          title={selected ? `${t`Sessions`} · ${selected.label}` : t`Sessions`}
           closeTestID="home-stage-list-close"
           onClose={() => openList(false)}
         />
         {listOpen ? (
           <ScrollView
-            contentContainerStyle={[homeSheetStyles.content, { paddingBottom: dockHeight + 24 }]}
+            style={{ marginBottom: dockHeight }}
+            contentContainerStyle={[homeSheetStyles.content, { paddingBottom: 24 }]}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
