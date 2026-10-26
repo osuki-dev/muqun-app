@@ -1359,7 +1359,6 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const tunnel = useGatewayTunnel(record, Boolean(record));
   const sessionId =
     useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
-  const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
   const [paneRetry, setPaneRetry] = useState(0);
   // The pane as the last screen to show it left it -- this drawer's own window
   // from an earlier open, or the terminal screen's -- painted at once and
@@ -1369,11 +1368,15 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const [remembered] = useState(() => {
     const window = sessionId ? mirroredPaneWindow(serverId, sessionId, paneId) : null;
     return window && window.shape === paneWindowShape('ansi', 'recent-unwrapped', false)
-      ? window.output
-      : '';
+      ? window
+      : null;
   });
-  const [held, setHeld] = useState<PaneReadWindow>({ output: remembered, capturedRows: 0 });
-  const [loaded, setLoaded] = useState(remembered !== '');
+  const [pane, setPane] = useState<HerdrEntity | undefined>(remembered?.pane);
+  const [held, setHeld] = useState<PaneReadWindow>({
+    output: remembered?.output ?? '',
+    capturedRows: 0,
+  });
+  const [loaded, setLoaded] = useState(Boolean(remembered?.output));
   const [failed, setFailed] = useState(false);
   const [streamUp, setStreamUp] = useState(false);
 
@@ -1447,7 +1450,9 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
         sessionId,
         paneId,
         paneWindowShape('ansi', shape.source, shape.ownsScreen),
-        next.output
+        next.output,
+        Date.now(),
+        pane
       );
       return next;
     });

@@ -641,6 +641,7 @@ function usableWarmWorkspace(
 type WarmPaneSeed = {
   output: string;
   cache: PaneCache;
+  pane?: HerdrEntity;
   /**
    * The pane the route named, with the session it is in, when both are known
    * before anything has been asked of the gateway. The screen lands on it at
@@ -680,6 +681,7 @@ function warmPaneSeed(
   let shape: string;
   let output: string;
   let scroll: unknown;
+  let pane: HerdrEntity | undefined;
   if (target && (!warm?.firstPane || warm.firstPane.paneId !== target.paneId)) {
     // The pane the route named, as the last screen to show it left it: the
     // drawer's window, or this screen's own from an earlier visit.
@@ -689,11 +691,12 @@ function warmPaneSeed(
     shape = mirrored.shape;
     output = mirrored.output;
     scroll = undefined;
+    pane = mirrored.pane;
   } else {
     if (!warm?.firstPane) return none;
     paneId = reconcileSelection(warm, initialSelection).paneId;
     if (!paneId || warm.firstPane.paneId !== paneId) return none;
-    const pane = warm.panes.find((entity) => entity.id === paneId);
+    pane = warm.panes.find((entity) => entity.id === paneId);
     // The shape has to match or the window is declined: a pane that has handed
     // its tty to an editor is read another way, and painting a stale main-screen
     // window over it would be worse than the blank it replaces. This is the same
@@ -720,7 +723,7 @@ function warmPaneSeed(
     rangeUnsupported: false,
     lastRead: null,
   };
-  return { output, cache: warmPaneWindow(emptyPaneCache, paneId, window), target };
+  return { output, cache: warmPaneWindow(emptyPaneCache, paneId, window), target, pane };
 }
 
 /**
@@ -2372,6 +2375,11 @@ export function ServerTerminalWorkspace({
     () => data.panes.find((item) => item.id === selection.paneId),
     [data.panes, selection.paneId]
   );
+  // A cached window must carry its grid into the first frame too. Its display
+  // facts do not confirm the session or enable any operation before health.
+  const displayPane =
+    selectedPane ??
+    (!data.health && warmSeed.pane?.id === selection.paneId ? warmSeed.pane : undefined);
   const selectedAgent = useMemo(
     () => data.agents.find((item) => field(item, 'pane_id') === selection.paneId),
     [data.agents, selection.paneId]
@@ -2753,7 +2761,7 @@ export function ServerTerminalWorkspace({
 
   // The pane's viewport height separates the served historical prefix from
   // its mutable screen. A missing metric keeps ordinary reads on their fallback.
-  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
+  const selectedPaneScreenRows = terminalViewportRows(displayPane?.raw.scroll) ?? 0;
   const capturedViewportReady = selectedPaneScreenRows > 0;
   // Does the open pane have captured rows above the window? One row is asked
   // for: both `not_captured` and an empty capture can precede the first sample.
@@ -2885,7 +2893,7 @@ export function ServerTerminalWorkspace({
   // would otherwise keep its 'shell' profile for as long as it lived, and a
   // resolved profile outranks the editor title fallback by design. Held back
   // until the opening frame is out (`openSettled`).
-  const selectedPaneTitle = selectedPane ? field(selectedPane, 'terminal_title_stripped') : null;
+  const selectedPaneTitle = displayPane ? field(displayPane, 'terminal_title_stripped') : null;
   const shortcuts = usePaneShortcuts({
     sessionId: data.sessionId,
     paneId: selection.paneId,
@@ -2992,8 +3000,8 @@ export function ServerTerminalWorkspace({
   // size, not the widest-line guess `parseTerminalSnapshot` falls back to when
   // this is absent. `undefined` (rather than 0) for a pane the gateway did not
   // report a width for, so the parser's own inference stays untouched.
-  const selectedPaneColumns = selectedPane
-    ? numberField(selectedPane, 'width') || undefined
+  const selectedPaneColumns = displayPane
+    ? numberField(displayPane, 'width') || undefined
     : undefined;
   // The other axis of the same report, and read for the same reason: the pane's
   // own grid is what the snapshot should be laid out on, rather than however
@@ -3001,8 +3009,8 @@ export function ServerTerminalWorkspace({
   // not say -- a herdr pane on a gateway older than the one that reads the
   // shell's own terminal size for it -- which leaves the parser's own
   // measurement in charge exactly as it is now.
-  const selectedPaneRows = selectedPane
-    ? numberField(selectedPane, 'height') || undefined
+  const selectedPaneRows = displayPane
+    ? numberField(displayPane, 'height') || undefined
     : undefined;
   // Where the program is actually working, when the gateway knows. Nothing
   // sends these yet; they are read as optional so a gateway that starts sending
@@ -3013,8 +3021,8 @@ export function ServerTerminalWorkspace({
   // `numberField` instead, every pane on today's gateway -- which sends neither
   // field -- would claim a cursor in its top-left corner and be placed there,
   // which is the exact position this change exists to stop.
-  const selectedPaneCursorColumn = optionalNumberField(selectedPane, 'cursor_x');
-  const selectedPaneCursorRow = optionalNumberField(selectedPane, 'cursor_y');
+  const selectedPaneCursorColumn = optionalNumberField(displayPane, 'cursor_x');
+  const selectedPaneCursorRow = optionalNumberField(displayPane, 'cursor_y');
 
   // nvim's own mode, read off the screen it just painted rather than asked
   // for -- tmux's formats carry nothing about it (`#{pane_mode}` is empty for
@@ -3786,7 +3794,9 @@ export function ServerTerminalWorkspace({
         dataRef.current.sessionId,
         requestPaneId,
         heldShapeRef.current,
-        outputStore.get().window.output
+        outputStore.get().window.output,
+        Date.now(),
+        panesRef.current.find((pane) => pane.id === requestPaneId)
       );
       if (lineLimit === INITIAL_PANE_OUTPUT_LINES) {
         const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
@@ -5523,8 +5533,8 @@ export function ServerTerminalWorkspace({
   // the header was the one place its name appeared; it no longer is -- the
   // switch indicator in the notice stack spells the whole address out -- and
   // naming it twice spent the width the pane name needs.
-  const detailTitle = selectedPane
-    ? panelTitle(selectedPane, selectedAgent)
+  const detailTitle = displayPane
+    ? panelTitle(displayPane, selectedAgent)
     : (routeRecord?.label ?? record?.label ?? t`Computer`);
   const shellTitle = padDetailIsPane
     ? detailTitle
