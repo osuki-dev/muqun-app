@@ -144,6 +144,9 @@ export function demoStreamingTimeline(characters: number): TimelineItem[] {
       seq: 14 + characters,
       updated_ms: 1,
       part: { type: 'text', text: DEMO_STREAMING_MARKDOWN.slice(0, characters) },
+      ...(characters >= DEMO_STREAMING_MARKDOWN.length
+        ? { generation: { scope: 'message' as const, tokens_per_second: 123.4 } }
+        : {}),
     },
   ];
 }

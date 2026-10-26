@@ -28,7 +28,7 @@
     {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
-      "tags": ["full", "agents"],
+      "tags": ["full", "agents", "generation"],
       "platforms": ["ios", "android"]
     },
     {
@@ -456,7 +456,9 @@
         "timeout": 20000,
         "run": "flows/agent-transcript-streaming.ad#ready"
       },
-      { "run": "flows/agent-transcript-streaming.ad#history" }
+      { "run": "flows/agent-transcript-streaming.ad#streaming-speed" },
+      { "run": "flows/agent-transcript-streaming.ad#history" },
+      { "run": "flows/agent-transcript-streaming.ad#settled-speed" }
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
