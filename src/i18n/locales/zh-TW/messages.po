@@ -1182,6 +1182,7 @@ msgstr "需要相機存取權"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2386,6 +2387,10 @@ msgstr "無法儲存語音設定，請重試"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "儲存失敗，請確認電腦在線且 Gateway 已更新"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "無法搜尋資料夾，請重試"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -3308,10 +3313,6 @@ msgstr "隱藏電腦清單"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
-
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "隱藏此提示"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -4308,6 +4309,10 @@ msgstr "沒有更早的已擷取輸出"
 msgid "No other assistants in this session yet."
 msgstr "這個工作階段裡還沒有其他助理"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "沒有其他可用的已配對電腦"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4474,7 +4479,7 @@ msgstr "未連線"
 
 #: src/components/simfarm-preview.tsx
 msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
-msgstr "尚未連線至模擬器預覽服務。請在這台電腦上啟動 Simfarm，或檢查下方連接埠。"
+msgstr "尚未連線至模擬器預覽服務。請在這台電腦上啟動 Simfarm，或檢查下方連接埠"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4699,6 +4704,10 @@ msgstr "開啟背景工作"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "開啟檔案"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "從電腦開啟"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -6012,6 +6021,14 @@ msgstr "按名稱或標籤搜尋"
 msgid "Search files"
 msgstr "搜尋檔案"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "搜尋資料夾或輸入路徑"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "搜尋資料夾或輸入路徑"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "搜尋模型"
@@ -6726,10 +6743,6 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "已提交"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7914,6 +7927,10 @@ msgstr "更新 Gateway 後即可預覽音訊輸出"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "更新 Gateway 後即可預覽影片輸出"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "更新 Gateway 後即可搜尋資料夾。你仍可篩選專案或輸入完整路徑"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

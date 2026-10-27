@@ -1182,6 +1182,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2386,6 +2387,10 @@ msgstr "ไม่สามารถบันทึกการตั้งค่
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "บันทึกไม่ได้ โปรดตรวจสอบว่าคอมพิวเตอร์ออนไลน์และอัปเดต Gateway แล้ว"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "ค้นหาโฟลเดอร์ไม่สำเร็จ โปรดลองอีกครั้ง"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -3308,10 +3313,6 @@ msgstr "ซ่อนรายการคอมพิวเตอร์"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
-
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "ซ่อนประกาศนี้"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -4308,6 +4309,10 @@ msgstr "ไม่มีเอาต์พุตที่บันทึกไว
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "ไม่มีคอมพิวเตอร์ที่จับคู่อื่นพร้อมใช้งาน"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4699,6 +4704,10 @@ msgstr "เปิดงานเบื้องหลัง"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "เปิดไฟล์"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "เปิดจากคอมพิวเตอร์"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -6012,6 +6021,14 @@ msgstr "ค้นหาตามชื่อหรือแท็ก"
 msgid "Search files"
 msgstr "ค้นหาไฟล์"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "ค้นหาโฟลเดอร์หรือป้อนพาธ"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "ค้นหาโฟลเดอร์หรือป้อนพาธ"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "ค้นหาโมเดล"
@@ -6726,10 +6743,6 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "ส่ง"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "ส่งแล้ว"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7914,6 +7927,10 @@ msgstr "อัปเดต Gateway เพื่อฟังตัวอย่า
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "อัปเดต Gateway เพื่อดูตัวอย่างวิดีโอ"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "อัปเดต Gateway เพื่อค้นหาโฟลเดอร์ คุณยังสามารถกรองโปรเจกต์หรือป้อนพาธแบบเต็มได้"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

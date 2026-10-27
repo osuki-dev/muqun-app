@@ -34,7 +34,7 @@
     "i18n:compile": "lingui compile --typescript",
     "i18n": "bun run i18n:extract && bun run i18n:compile",
     "doctor": "npx react-doctor@latest",
-    "i18n:check": "lingui check sync && lingui check missing"
+    "i18n:check": "lingui check sync && lingui check missing --mode catalog"
   },
   "dependencies": {
     "@expo/ui": "~58.0.23",

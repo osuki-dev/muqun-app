@@ -1182,6 +1182,7 @@ msgstr "É preciso acesso à câmara"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2386,6 +2387,10 @@ msgstr "Não foi possível salvar as configurações de voz. Tente novamente"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "Não foi possível guardar. Verifique se os computadores estão online e os Gateways atualizados"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "Não foi possível procurar pastas. Tente novamente"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -3308,10 +3313,6 @@ msgstr "Ocultar a lista de computadores"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Ocultar o simulador"
-
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "Oculta este aviso"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -4308,6 +4309,10 @@ msgstr "Não há saída capturada mais antiga"
 msgid "No other assistants in this session yet."
 msgstr "Ainda não há outros assistentes nesta sessão"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "Nenhum outro computador emparelhado está disponível"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4699,6 +4704,10 @@ msgstr "Abrir tarefas em segundo plano"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Abrir a lista de ficheiros"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "Abrir a partir de um computador"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -6012,6 +6021,14 @@ msgstr "Pesquisar por nome ou etiqueta"
 msgid "Search files"
 msgstr "Pesquisar ficheiros"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "Procurar pastas ou inserir um caminho"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "Procurar pastas ou inserir um caminho"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Pesquisar modelos"
@@ -6726,10 +6743,6 @@ msgstr "Subagente"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Enviar"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "Enviado"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7914,6 +7927,10 @@ msgstr "Atualize o Gateway para reproduzir a saída de áudio"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "Atualize o Gateway para visualizar vídeos"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "Atualize o Gateway para procurar pastas. Ainda pode filtrar projetos ou inserir um caminho completo"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

@@ -1182,6 +1182,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2386,6 +2387,10 @@ msgstr "Không thể lưu cài đặt giọng nói. Vui lòng thử lại"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "Không thể lưu. Hãy kiểm tra các máy tính đang trực tuyến và Gateway đã được cập nhật"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "Không thể tìm kiếm thư mục. Hãy thử lại"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
@@ -3308,10 +3313,6 @@ msgstr "Ẩn danh sách máy tính"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
-
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "Ẩn thông báo này"
 
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
@@ -4308,6 +4309,10 @@ msgstr "Không có đầu ra cũ hơn được ghi lại"
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "Không có máy tính đã ghép đôi nào khác khả dụng"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4699,6 +4704,10 @@ msgstr "Mở tác vụ nền"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Mở danh sách tệp"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "Mở từ máy tính"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -6012,6 +6021,14 @@ msgstr "Tìm kiếm theo tên hoặc thẻ"
 msgid "Search files"
 msgstr "Tìm tệp"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "Tìm thư mục hoặc nhập đường dẫn"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "Tìm thư mục hoặc nhập đường dẫn"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
 msgstr "Tìm kiếm mô hình"
@@ -6726,10 +6743,6 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Gửi"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "Đã gửi"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7914,6 +7927,10 @@ msgstr "Cập nhật Gateway để nghe đầu ra âm thanh"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "Cập nhật Gateway để xem trước video"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "Cập nhật Gateway để tìm kiếm thư mục. Bạn vẫn có thể lọc dự án hoặc nhập đường dẫn đầy đủ"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"
