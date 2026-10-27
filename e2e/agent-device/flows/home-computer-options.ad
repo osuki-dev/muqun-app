@@ -1,9 +1,10 @@
-# Home's computer picker must remain reachable above the dock on Android.
+# Home's computer picker must remain reachable above the dock.
 # The bundled offline fixture changes no real pairing or server selection.
-press "id=home-composer-parameters"
+# Use current native bounds rather than the helper's independent selector frame lookup.
+press "id=home-composer-parameters" --observed-center
 wait "id=home-composer-options-menu" 5000
 is visible "id=home-composer-option-target"
-press "id=home-composer-option-target"
+press "id=home-composer-option-target" --observed-center
 wait "id=home-target-sheet" 5000
 back --system
 wait absent "id=home-target-sheet" 5000
