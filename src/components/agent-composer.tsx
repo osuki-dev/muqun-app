@@ -1294,7 +1294,7 @@ export const AgentComposer = memo(function AgentComposer({
           async () => {
             const accepted = await onInvokeSkill(skillCall.name, skillCall.args);
             if (accepted === false) return;
-            setText('');
+            setText((current) => (current.trim() === trimmed ? '' : current));
           },
           () => {
             setSending(false);
@@ -1398,7 +1398,7 @@ export const AgentComposer = memo(function AgentComposer({
         // `void` from a caller that does not report is taken as accepted, which
         // is the behaviour every other composer in this app has.
         if (accepted === false) return;
-        setText('');
+        setText((current) => (current.trim() === trimmed ? '' : current));
         attachmentUploads.clearAttachments();
       },
       () => {
@@ -2650,7 +2650,7 @@ export const AgentComposer = memo(function AgentComposer({
                     shortPlaceholder:
                       fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
                     accessibilityLabel: inputAccessibilityLabel,
-                    editable: !sending && !disabled,
+                    editable: !disabled,
                     testID: inputTestID,
                     selection,
                     onSelectionChange: handleSelectionChange,
@@ -2737,6 +2737,7 @@ export const AgentComposer = memo(function AgentComposer({
               ]}>
               <AgentActionMenu
                 testID="agent-composer-command-menu"
+                style={{ marginHorizontal: 0 }}
                 error={
                   commandAccess.status === 'offline'
                     ? t`Computer offline`
