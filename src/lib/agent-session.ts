@@ -186,10 +186,10 @@ function usesOfflineDemo(endpoint?: { url?: string }): boolean {
  * What the envelope says the gateway can do, filed under the configured
  * server so the next screen can act on it without asking (`observe`).
  */
-function observeEnvelopeCapabilities(json: unknown): void {
+function observeEnvelopeCapabilities(json: unknown, sourceId = configuredGatewayServerId()): void {
   const capabilities = asRecord(json)?.capabilities;
   if (capabilities === undefined) return;
-  useServerCapabilities.getState().observe(configuredGatewayServerId(), capabilities);
+  useServerCapabilities.getState().observe(sourceId, capabilities);
 }
 
 /** The `data` of the gateway's envelope, or the body when it has none. */
@@ -696,6 +696,8 @@ export async function getAgentSessionSnapshot(
   if (windowed && cursor && res.status === 409) {
     const error = readApiError(await res.text());
     if (error.code === 'history_cursor_lost') {
+      if (configuredGatewayServerId() !== sourceId)
+        throw new Error('The selected computer changed. Open the session again.');
       // Reads are safe to repeat. A lost boundary cannot silently skip history.
       const snapshot = await getAgentSessionSnapshot(sessionId, asid, {
         ...options,
@@ -709,9 +711,11 @@ export async function getAgentSessionSnapshot(
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
   const json = await res.json();
+  if (configuredGatewayServerId() !== sourceId)
+    throw new Error('The selected computer changed. Open the session again.');
   // The snapshot is the first agent-session answer a workbench reads, so
   // what its envelope advertises decides how the subtree is fetched next.
-  observeEnvelopeCapabilities(json);
+  observeEnvelopeCapabilities(json, sourceId);
   return parseAgentSessionSnapshot(envelopeData(json));
 }
 

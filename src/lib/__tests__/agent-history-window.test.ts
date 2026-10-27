@@ -4,41 +4,64 @@ import { declaration, transpile } from '../../test-support/production-source';
 import { parseAgentSessionSnapshot, parseEarlierTimelinePage } from '../agent-protocol';
 import type { getAgentSessionSnapshot, loadEarlierAgentTimeline } from '../agent-session';
 
-function fixture(capabilities = ['agent_history_window_v1', 'agent_history_ws_v1']) {
+function fixture(
+  capabilities = ['agent_history_window_v1', 'agent_history_ws_v1'],
+  pending: {
+    serverId?: () => string;
+    beforeResponse?: () => Promise<void>;
+    beforeBody?: () => Promise<void>;
+  } = {}
+) {
   const requests: { operation: string; options: unknown }[] = [];
   const responses: { status: number; body: unknown }[] = [];
+  const observations: { sourceId: string | undefined; capabilities: unknown }[] = [];
   const read = runInNewContext(
     transpile(
       declaration('src/lib/agent-session.ts', 'getAgentSessionSnapshot') +
+        '\n' +
+        declaration('src/lib/agent-session.ts', 'observeEnvelopeCapabilities') +
         '\n' +
         declaration('src/lib/agent-session.ts', 'loadEarlierAgentTimeline') +
         '\n({ snapshot: getAgentSessionSnapshot, earlier: loadEarlierAgentTimeline })'
     ),
     {
       usesOfflineDemo: () => false,
-      configuredGatewayServerId: () => 'computer',
-      useServerCapabilities: { getState: () => ({ byServer: { computer: capabilities } }) },
+      configuredGatewayServerId: pending.serverId ?? (() => 'computer'),
+      useServerCapabilities: {
+        getState: () => ({
+          byServer: { computer: capabilities },
+          observe: (sourceId: string | undefined, capabilities: unknown) =>
+            observations.push({ sourceId, capabilities }),
+        }),
+      },
       agentSnapshotRefreshQuery: (refresh: boolean) => (refresh ? '?refresh=true' : ''),
       socketHistory: async (_asid: string, operation: string, options?: unknown) => {
         requests.push({ operation, options });
         const reply = responses.shift();
         if (!reply) throw new Error('Unexpected read');
+        await pending.beforeResponse?.();
         return {
           ok: reply.status === 200,
           status: reply.status,
-          json: async () => reply.body,
-          text: async () => JSON.stringify(reply.body),
+          json: async () => {
+            await pending.beforeBody?.();
+            return reply.body;
+          },
+          text: async () => {
+            await pending.beforeBody?.();
+            return JSON.stringify(reply.body);
+          },
         };
       },
       sessionRoute: () => '/legacy',
-      observeEnvelopeCapabilities: () => {},
+      asRecord: (value: unknown) => value,
       parseAgentSessionSnapshot,
       parseEarlierTimelinePage,
       envelopeData: (value: { data: unknown }) => value.data,
       readApiError: (text: string) => JSON.parse(text),
     }
   ) as { snapshot: typeof getAgentSessionSnapshot; earlier: typeof loadEarlierAgentTimeline };
-  return { ...read, requests, responses };
+  return { ...read, requests, responses, observations };
 }
 
 test('new snapshots carry a reader boundary, older Gateways retain their existing contract', async () => {
@@ -70,6 +93,58 @@ test('expired snapshot boundaries recover once with an explicit window reset', a
   ]);
   f.responses.push({ status: 409, body: { code: 'history_cursor_lost' } });
   await expect(f.snapshot('terminal', 'session')).rejects.toThrow('Failed to get agent session');
+});
+
+for (const boundary of ['beforeResponse', 'beforeBody'] as const) {
+  test(`cursor recovery cannot move to another computer while awaiting ${boundary}`, async () => {
+    let selectedServerId = 'computer';
+    const entered = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    const f = fixture(undefined, {
+      serverId: () => selectedServerId,
+      [boundary]: async () => {
+        entered.resolve();
+        await release.promise;
+      },
+    });
+    f.responses.push(
+      { status: 409, body: { code: 'history_cursor_lost' } },
+      { status: 200, body: { data: { timeline: [], history_cursor: 'other-computer' } } }
+    );
+    const snapshot = f.snapshot('terminal', 'session', { historyCursor: 'expired' });
+    await entered.promise;
+    selectedServerId = 'other-computer';
+    release.resolve();
+    await expect(snapshot).rejects.toThrow('The selected computer changed');
+    expect(f.requests).toHaveLength(1);
+    expect(f.responses).toHaveLength(1);
+  });
+}
+
+test('snapshot capabilities stay with their source and a delayed body cannot cross computers', async () => {
+  let selectedServerId = 'computer';
+  const entered = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const f = fixture(undefined, {
+    serverId: () => selectedServerId,
+    beforeBody: async () => {
+      entered.resolve();
+      await release.promise;
+    },
+  });
+  const body = { capabilities: ['agent_history_window_v1'], data: { timeline: [] } };
+  f.responses.push({ status: 200, body });
+  const snapshot = f.snapshot('terminal', 'session');
+  await entered.promise;
+  selectedServerId = 'other-computer';
+  release.resolve();
+  await expect(snapshot).rejects.toThrow('The selected computer changed');
+  expect(f.observations).toEqual([]);
+
+  selectedServerId = 'computer';
+  f.responses.push({ status: 200, body });
+  await f.snapshot('terminal', 'session');
+  expect(f.observations).toEqual([{ sourceId: 'computer', capabilities: body.capabilities }]);
 });
 
 test('page requests are scoped to the reader and lost cursors are never reported as exhausted', async () => {
