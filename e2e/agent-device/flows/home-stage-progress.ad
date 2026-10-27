@@ -10,6 +10,8 @@ press "${TARGET}"
 # section start
 open "muqun:///?stageProgressFixture=linked"
 wait stable 600 5000
+# Development warning banners can cover the dock; verify dismissal before input.
+react-native dismiss-overlay
 
 # section visible
 is visible "${TARGET}"

@@ -755,44 +755,6 @@ function scopedNativeRef(capture: Record<string, unknown>, identity: string, sco
   return `@${target.ref}${ref[1] === undefined ? `~s${generation}` : ''}`;
 }
 
-/** Opt-in coordinate delivery bypasses a platform selector's independent frame lookup.
- * Resolve once from a fresh guarded capture; never retry a dispatched press.
- */
-function observedNativeCenter(capture: Record<string, unknown>, identity: string): string[] {
-  const nodes = snapshotNodes(capture);
-  if (capture.appBundleId !== 'dev.osuki.muqun' || capture.truncated !== false)
-    throw new Error('Observed-center press requires a complete foreground Muqun capture');
-  const targets = nodes.filter((node) => exactSelectorMatches(node, identity));
-  if (targets.length !== 1) throw new Error('Observed-center press requires one exact target');
-  const target = targets[0];
-  const rect = target.rect;
-  if (
-    (target.bundleId !== undefined && target.bundleId !== 'dev.osuki.muqun') ||
-    nodeRole(target) !== 'button' ||
-    target.visibleToUser === false ||
-    target.hittable !== true ||
-    target.enabled === false ||
-    target.interactionBlocked ||
-    !rect ||
-    !Object.values(rect).every(Number.isFinite) ||
-    rect.width <= 0 ||
-    rect.height <= 0 ||
-    !withinScrollViewport(target, nodes)
-  )
-    throw new Error('Observed-center press target is not visible and hittable');
-  const viewport = appViewport(nodes);
-  const x = Math.round(rect.x + rect.width / 2);
-  const y = Math.round(rect.y + rect.height / 2);
-  if (
-    x < viewport.x ||
-    x >= viewport.x + viewport.width ||
-    y < viewport.y ||
-    y >= viewport.y + viewport.height
-  )
-    throw new Error('Observed-center press target is outside the viewport');
-  return [String(x), String(y)];
-}
-
 function selector(node: Node): string {
   const role = selectorRole(node);
   const prefix = role ? `role=${JSON.stringify(role)} ` : '';
@@ -1111,17 +1073,6 @@ export class NativeRunner {
         scopeId = args[3];
         args.splice(2, 2);
       }
-      const observedCenter = args.includes('--observed-center');
-      if (observedCenter) {
-        if (
-          args[0] !== 'press' ||
-          args.length !== 3 ||
-          args[2] !== '--observed-center' ||
-          !/^id=[^\s"]+$/.test(args[1])
-        )
-          throw new Error('Observed-center press requires press id=<exact ID> --observed-center');
-        args.pop();
-      }
       if (args.includes('--allow-microphone-prompt')) {
         args.splice(args.indexOf('--allow-microphone-prompt'), 1);
         if (args[0] !== 'wait' || !/^id="voice-visual-(?:recording|error)"$/.test(args[1] ?? ''))
@@ -1301,11 +1252,6 @@ export class NativeRunner {
         // One guarded capture supplies BOTH ancestry and generation. Never
         // retry a stale/rejected press or fall back to an ambiguous selector.
         await this.invoke(['press', scopedNativeRef(capture, args[1], scopeId)]);
-        continue;
-      }
-      if (observedCenter) {
-        const capture = await this.readyCapture(true);
-        await this.invoke(['press', ...observedNativeCenter(capture, args[1])]);
         continue;
       }
       if (guardedMutations.has(args[0])) guardedNodes = await this.readySnapshot(true);
