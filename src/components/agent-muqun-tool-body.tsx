@@ -1,4 +1,5 @@
 import { View, StyleSheet } from 'react-native';
+import { InlineFileLink } from '@/components/inline-file-link';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { msg } from '@lingui/core/macro';
@@ -14,6 +15,7 @@ import type {
 
 export const muqunOperationWord: Record<MuqunOperation, ReturnType<typeof msg>> = {
   'exec.run': msg`Run command`,
+  'files.present': msg`Preview file`,
   'tasks.delegate': msg`Start task`,
   'tasks.wait': msg`Wait for task`,
   'tasks.read': msg`Read task`,
@@ -87,6 +89,14 @@ export function AgentMuqunToolBody({
   const omitted = Boolean(command?.hidden || output?.hidden || goal?.hidden);
   return (
     <View testID="agent-muqun-body" style={styles.body}>
+      {presentation.files.map((file) => (
+        <InlineFileLink
+          key={file.id}
+          file={{ uri: file.path, name: file.name }}
+          asid=""
+          remoteFile={file}
+        />
+      ))}
       {presentation.cwd ? <Fact label={t`Working directory`} value={presentation.cwd} /> : null}
       {durationMs !== undefined ? (
         <Fact label={t`Call duration`} value={formatToolDuration(durationMs)} />
@@ -169,6 +179,7 @@ export function AgentMuqunToolBody({
       !output &&
       !presentation.error &&
       !presentation.note &&
+      presentation.files.length === 0 &&
       presentation.timelineCount === undefined &&
       presentation.machines.length === 0 &&
       presentation.status !== 'calling' ? (

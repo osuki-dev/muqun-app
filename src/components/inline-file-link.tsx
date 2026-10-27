@@ -6,7 +6,11 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import { AssetViewer } from '@/components/asset-viewer';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
-import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
+import {
+  configuredGatewayServerId,
+  resolveAgentFileAsset,
+  resolveMcpFileAsset,
+} from '@/lib/gateway-client';
 import { savePreviewImage, saveSessionAsset } from '@/lib/save-file';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -25,9 +29,11 @@ export function InlineFileLink({
   asid,
   imageAsset,
   imageSource,
+  remoteFile,
 }: {
   file: { uri: string; name: string };
   asid: string;
+  remoteFile?: SessionAsset;
   imageAsset?: MessageImageAsset;
   /** Already authorized by the message's thumbnail reader; never resolved here. */
   imageSource?: PreviewImageSource | null;
@@ -41,7 +47,7 @@ export function InlineFileLink({
         imageSource={imageSource ?? null}
       />
     );
-  return <RawFileLink file={file} asid={asid} />;
+  return <RawFileLink file={file} asid={asid} remoteFile={remoteFile} />;
 }
 
 /** A mapped thumbnail, open and save all use the same Gateway descriptor. */
@@ -95,7 +101,15 @@ function MappedImageFileLink({
   );
 }
 
-function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid: string }) {
+function RawFileLink({
+  file,
+  asid,
+  remoteFile,
+}: {
+  file: { uri: string; name: string };
+  asid: string;
+  remoteFile?: SessionAsset;
+}) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -115,7 +129,11 @@ function RawFileLink({ file, asid }: { file: { uri: string; name: string }; asid
   const resolve = () => {
     const controller = new AbortController();
     pending.current.add(controller);
-    return resolveAgentFileAsset(asid, file.uri, controller.signal, serverId)
+    return (
+      remoteFile
+        ? resolveMcpFileAsset(remoteFile, controller.signal)
+        : resolveAgentFileAsset(asid, file.uri, controller.signal, serverId)
+    )
       .then((result) => {
         if (controller.signal.aborted) throw new Error('Operation cancelled');
         return result;

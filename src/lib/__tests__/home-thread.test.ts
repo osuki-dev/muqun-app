@@ -86,6 +86,43 @@ function task(overrides: Partial<TaskView>): TaskView {
 }
 
 describe('what Send does', () => {
+  test('running delivery preserves the choice and rejects unsupported modes', () => {
+    const input = {
+      target: SESSION,
+      live: { status: 'busy' as const },
+      features: { inbox: true, steering: true },
+    };
+    expect(homeThreadSendPlan({ ...input, delivery: 'queue' })).toMatchObject({
+      kind: 'session',
+      delivery: 'queue',
+    });
+    expect(homeThreadSendPlan({ ...input, delivery: 'steer' })).toMatchObject({
+      kind: 'session',
+      delivery: 'steer',
+    });
+    expect(
+      homeThreadSendPlan({ ...input, features: { inbox: true, steering: false } })
+    ).toMatchObject({ kind: 'session', delivery: 'queue' });
+    expect(
+      homeThreadSendPlan({
+        ...input,
+        delivery: 'queue',
+        features: { inbox: false, steering: true },
+      })
+    ).toEqual({ kind: 'busy' });
+    expect(
+      homeThreadSendPlan({
+        ...input,
+        delivery: 'steer',
+        features: { inbox: true, steering: false },
+      })
+    ).toEqual({ kind: 'busy' });
+    expect(homeThreadSendPlan({ ...input, live: { status: 'idle' }, delivery: 'queue' })).toEqual({
+      kind: 'session',
+      sessionId: SESSION.sessionId,
+      asid: SESSION.asid,
+    });
+  });
   test('no target creates, as Home always did', () => {
     expect(homeThreadSendPlan({ target: undefined, features: NO_FEATURES })).toEqual({
       kind: 'create',

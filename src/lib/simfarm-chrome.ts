@@ -89,6 +89,7 @@ export function simfarmChromeNext(
 ): SimfarmChromeState {
   switch (event) {
     case 'button':
+      if (state.menu && state.picking) return { ...state, picking: false };
       return state.menu ? { ...state, menu: false, picking: false } : { ...state, menu: true };
     case 'outside':
     case 'chose':
@@ -140,13 +141,22 @@ export function simfarmBackPress(state: SimfarmChromeState): {
  * nobody previews. The composer needs a device that takes text; closing
  * needs a host with something to close, which the Pad column is not.
  */
-export type SimfarmMenuItem = 'home' | 'back' | 'app_switch' | 'keyboard' | 'close';
+export type SimfarmMenuItem =
+  | 'home'
+  | 'back'
+  | 'app_switch'
+  | 'keyboard'
+  | 'fit'
+  | 'rotate'
+  | 'connection'
+  | 'reconnect'
+  | 'close';
 
 const OFFERED_KEYS: (SimfarmButton & SimfarmMenuItem)[] = ['home', 'back', 'app_switch'];
 
 export function simfarmMenuItems(
   device: SimfarmDevice | null,
-  options: { closable: boolean }
+  options: { closable: boolean; configurable?: boolean }
 ): SimfarmMenuItem[] {
   const items: SimfarmMenuItem[] = [];
   if (device !== null) {
@@ -154,7 +164,11 @@ export function simfarmMenuItems(
       if (device.capabilities.buttons.includes(key)) items.push(key);
     }
     if (device.capabilities.text) items.push('keyboard');
+    if (device.capabilities.rotate === true) items.push('rotate');
   }
+  if (device !== null) items.push('fit');
+  items.push('reconnect');
+  if (options.configurable) items.push('connection');
   if (options.closable) items.push('close');
   return items;
 }

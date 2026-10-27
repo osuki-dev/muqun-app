@@ -153,7 +153,11 @@ import {
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
-import { shouldRefetchAgentCatalog, type AgentCatalogScope } from '@/lib/agent-catalog-scope';
+import {
+  isEmptyAgentCatalog,
+  shouldRefetchAgentCatalog,
+  type AgentCatalogScope,
+} from '@/lib/agent-catalog-scope';
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/agent-session-memory';
 import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
@@ -1370,11 +1374,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * re-render that changes nothing about the scope does not ask again.
    */
   const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
+  const [catalogRevision, setCatalogRevision] = useState(0);
   /** The agent the catalog on screen was read for; `null` until one answers. */
   const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<string | null>(null);
   useEffect(() => {
     const scope: AgentCatalogScope = {
       sessionId,
+      ...(activeAsid ? { asid: activeAsid } : {}),
       directory: activeDirectory,
       ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
     };
@@ -1382,6 +1388,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!shouldRefetchAgentCatalog(previous, scope)) return;
     catalogScopeRef.current = scope;
     const peeked = peekAgentCatalog(sessionId, {
+      ...(scope.asid ? { asid: scope.asid } : {}),
       ...(scope.directory ? { directory: scope.directory } : {}),
       ...(scope.agentId ? { agentId: scope.agentId } : {}),
     });
@@ -1401,6 +1408,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
     let mounted = true;
     getAgentCatalog(sessionId, undefined, {
+      forceRefresh: true,
+      ...(scope.asid ? { asid: scope.asid } : {}),
       ...(scope.directory ? { directory: scope.directory } : {}),
       ...(scope.agentId ? { agentId: scope.agentId } : {}),
     })
@@ -1410,7 +1419,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setCatalogAnsweredFor(scope.agentId ?? '');
         // An empty list from a project OpenCode has not loaded yet keeps this
         // scope's cached one; it never brings back another scope's.
-        if (catalog?.skills && catalog.skills.length > 0) setSkills(catalog.skills);
+        if (catalog && (!isEmptyAgentCatalog(catalog) || catalog.skills.length > 0)) {
+          setSkills(catalog.skills);
+        }
         setCommands(catalog?.commands ?? []);
         setCatalogModels(catalog?.models ?? []);
         setCatalogDefaults(catalog?.defaults ?? NO_CATALOG_DEFAULTS);
@@ -1431,7 +1442,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, activeDirectory, catalogAgentId, applySelectedModel]);
+  }, [sessionId, activeAsid, activeDirectory, catalogAgentId, applySelectedModel, catalogRevision]);
   /**
    * Whether the mode chip belongs on screen: the agent's features allow modes
    * and, once its catalog has answered, the catalog lists some. T3 has none.
@@ -2563,6 +2574,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
 
         case 'agent.resync':
+          if (event.reason === 'agent_catalog_changed') {
+            catalogScopeRef.current = null;
+            setCatalogRevision((revision) => revision + 1);
+          }
           // Housekeeping, not navigation: the reader's place is kept.
           void loadSnapshot('silent');
           break;
@@ -5950,6 +5965,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
+        commandServerId={serverId}
         voiceContext={visible ? JSON.stringify([serverId, sessionId, activeAsid ?? 'new']) : ''}
         mentionComputers={mentionComputers}
         disabled={isOffline}
@@ -5964,6 +5980,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         canSendWhileRunning={agentFeatures.inbox || agentFeatures.extra.promptSteering === true}
         canQueueWhileRunning={agentFeatures.inbox}
+        canSteerWhileRunning={agentFeatures.extra.promptSteering === true}
         canMentionFiles={agentFeatures.extra.fileMentions !== false}
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}

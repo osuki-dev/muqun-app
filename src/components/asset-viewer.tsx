@@ -99,6 +99,7 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const [source, setSource] = useState<AssetImageSource | null>(null);
+  const [error, setError] = useState<string | null>(null);
   // A mailbox, not a dependency. The caller hands `onClose` down as an inline
   // arrow, so its identity changes on every parent render -- and the terminal
   // workspace re-renders for every streamed frame. With the callback in the
@@ -117,14 +118,16 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
       .then((next) => {
         if (active) setSource(next);
       })
-      .catch(() => {
-        if (active) onCloseRef.current();
+      .catch((reason: unknown) => {
+        if (active && asset.mcpFile)
+          setError(reason instanceof Error ? reason.message : t`Could not open file`);
+        else if (active) onCloseRef.current();
       });
     return () => {
       active = false;
       controller.abort();
     };
-  }, [asset, onCloseRef]);
+  }, [asset, onCloseRef, t]);
   if (!source) {
     // The bytes have to arrive before the lightbox has anything to show, and
     // the wait is spent as the same black surface the lightbox opens on -- with
@@ -140,7 +143,11 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
         onRequestClose={onClose}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <View style={styles.encryptedLoading}>
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            {error ? (
+              <Text style={{ color: '#FFFFFF', padding: 24 }}>{error}</Text>
+            ) : (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            )}
             <PressableScale
               accessibilityLabel={t`Close preview`}
               onPress={onClose}

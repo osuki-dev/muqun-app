@@ -1,20 +1,18 @@
-import { Input, Spinner, useThemeTokens, Button, PressableScale, Text } from '@osuki-dev/ui';
+import { Input, Spinner, useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { GuideCommand } from '@/components/guide-command';
-import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { LockedIcon, DevicesIcon, CloseIcon } from '@/icons';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { LockedIcon, DevicesIcon } from '@/icons';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GlassChrome } from '@/components/glass-chrome';
+import { SimfarmNotice } from '@/components/simfarm-notice';
 import { SimfarmStage } from '@/components/simfarm-stage';
-import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
+import { SIMFARM_DEFAULT_PORT, simfarmRunCommand, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
-import { warmSimfarm } from '@/lib/simfarm-stream';
+import { reconnectSimfarm, warmSimfarm } from '@/lib/simfarm-stream';
 import { parsePort } from '@/lib/web-service';
+
+export { SimfarmNotice } from '@/components/simfarm-notice';
 
 /**
  * The simulator on the paired machine, drawn where the reader is standing.
@@ -67,6 +65,9 @@ import { parsePort } from '@/lib/web-service';
  */
 export function SimfarmPreview({
   gatewayUrl,
+  serverId,
+  platform,
+  terminalConnected = false,
   allowed,
   initialPort,
   onPortFound,
@@ -75,6 +76,11 @@ export function SimfarmPreview({
   embedded = false,
 }: {
   gatewayUrl: string | undefined;
+  serverId?: string;
+  /** Verified discovery for the target computer; unknown defaults to Android only. */
+  platform?: string;
+  /** Confirmed by the target's current health. Unknown must not offer Run. */
+  terminalConnected?: boolean;
   /** Whether this connection may be offered the preview; see `probeSimfarm`. */
   allowed: boolean;
   initialPort?: number;
@@ -117,6 +123,8 @@ export function SimfarmPreview({
    * remounts, and the two outcomes are the two this screen already draws.
    */
   const [session, setSession] = useState(0);
+  const [selectedDevice, setSelectedDevice] = useState<string | undefined>();
+  const [configuring, setConfiguring] = useState(false);
 
   const look = useCallback(
     async (candidate: number) => {
@@ -131,7 +139,10 @@ export function SimfarmPreview({
       if (attempt.current !== mine) return;
       setAnswer({ port: candidate, probe: result });
       setLooking(false);
-      if (result.found) onPortFound?.(candidate);
+      if (result.found) {
+        setConfiguring(false);
+        onPortFound?.(candidate);
+      }
     },
     [allowed, gatewayUrl, onPortFound]
   );
@@ -142,8 +153,10 @@ export function SimfarmPreview({
 
   const submitPort = useCallback(() => {
     const parsed = parsePort(portText);
-    if (parsed !== null) setAskedPort(parsed);
-  }, [portText]);
+    if (parsed === null) return;
+    if (parsed === askedPort) void look(parsed);
+    else setAskedPort(parsed);
+  }, [askedPort, look, portText]);
 
   const url = answer === null ? null : simfarmSocketUrl(gatewayUrl, answer.port);
 
@@ -153,16 +166,16 @@ export function SimfarmPreview({
   // reading and then rebuild it.
   if (answer === null) {
     return (
-      <PreviewNotice embedded={embedded} onClose={onClose}>
+      <SimfarmNotice embedded={embedded} onClose={onClose}>
         <Spinner size="sm" />
         <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.middle}>
           {t`Looking for a simulator`}
         </Text>
-      </PreviewNotice>
+      </SimfarmNotice>
     );
   }
 
-  if (answer.probe.found && url !== null) {
+  if (answer.probe.found && url !== null && !configuring) {
     return (
       <SimfarmStage
         // Bumped when the stream drops, so pressing Look again there gets a
@@ -170,9 +183,13 @@ export function SimfarmPreview({
         key={session}
         url={url}
         devices={answer.probe.devices}
+        initialDeviceId={selectedDevice}
         embedded={embedded}
         onClose={onClose}
-        onLost={() => {
+        onConfigure={() => setConfiguring(true)}
+        onLost={(deviceId) => {
+          setSelectedDevice(deviceId);
+          reconnectSimfarm(url);
           setSession((count) => count + 1);
           void look(answer.port);
         }}
@@ -187,7 +204,7 @@ export function SimfarmPreview({
   // -- and so it says which connection would work instead.
   if (answer.probe.found === false && answer.probe.reason === 'blocked') {
     return (
-      <PreviewNotice
+      <SimfarmNotice
         embedded={embedded}
         onClose={onClose}
         icon={<LockedIcon size={40} color={theme.colors.textMuted} />}
@@ -199,7 +216,7 @@ export function SimfarmPreview({
             HTTPS, and the preview appears on its own.
           </Trans>
         </Text>
-      </PreviewNotice>
+      </SimfarmNotice>
     );
   }
 
@@ -207,159 +224,77 @@ export function SimfarmPreview({
   const port = answer.port;
 
   return (
-    <PreviewNotice
+    <SimfarmNotice
       embedded={embedded}
       onClose={onClose}
       icon={<DevicesIcon size={40} color={theme.colors.textMuted} />}
-      title={t`No simulator on port ${port}`}>
+      title={configuring ? t`Simulator connection` : t`No simulator on port ${port}`}>
       <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.middle}>
-        <Trans>
-          simfarm is the small program on that machine that serves this preview. Either it is not
-          running, or it is listening on another port.
-        </Trans>
+        {answer.probe.found ? (
+          t`Enter the simulator service port on this computer.`
+        ) : (
+          <Trans>
+            Not connected to the simulator preview service. Start Simfarm on this computer, or check
+            the port below.
+          </Trans>
+        )}
       </Text>
-      <RunCommand />
-      <View style={styles.portRow}>
-        <Text variant="label" color={theme.colors.textMuted}>
-          {t`Port`}
-        </Text>
-        <Input
-          value={portText}
-          onChangeText={setPortText}
-          keyboardType="number-pad"
-          returnKeyType="go"
-          // Outline, like every other field the app asks a question in: the
-          // underline default draws a filled slab, which beside a pill button
-          // reads as a disabled control rather than as somewhere to type.
-          variant="outline"
-          placeholder={String(SIMFARM_DEFAULT_PORT)}
-          accessibilityLabel={t`simfarm port`}
-          testID="simfarm-port"
-          // `containerStyle`, not `style`: this Input hands `style` to the
-          // TextInput inside its own full-width wrapper, so a width there sized
-          // the text box and left the wrapper as wide as the screen. The row
-          // then overflowed both edges -- the port lost its first digit on the
-          // left and Look again was cut off on the right.
-          containerStyle={styles.port}
-          onSubmitEditing={submitPort}
-        />
-        <Button
-          // The design system's button at its own height, with the horizontal
-          // padding brought in: this one sits beside a four-digit field rather
-          // than alone under a paragraph, and at the token padding it was half
-          // again as wide as the field it acts on.
-          style={styles.lookAgain}
-          loading={looking}
-          loadingLabel={t`Looking`}
-          disabled={parsePort(portText) === null}
-          testID="simfarm-look-again"
-          onPress={submitPort}>
-          {t`Look again`}
-        </Button>
-      </View>
-    </PreviewNotice>
-  );
-}
-
-/**
- * The shape every state that is not a simulator is drawn in.
- *
- * A header when this is a modal, and under it one bounded column centred in
- * whatever is left. The column is capped rather than stretched because these
- * are two sentences and a field: on a Pad's full width an uncapped paragraph
- * runs to a line nobody tracks back from, and the field and its button drift to
- * opposite edges. 420 is the measure the rest of the app's centred copy uses.
- */
-function PreviewNotice({
-  icon,
-  title,
-  embedded,
-  onClose,
-  children,
-}: {
-  icon?: ReactNode;
-  title?: string;
-  embedded: boolean;
-  onClose?: () => void;
-  children: ReactNode;
-}) {
-  const surfaceBackground = useSurfaceBackground();
-  const theme = useThemeTokens();
-  const { t } = useLingui();
-  // The modal reaches the top of the screen with the status bar hidden, so
-  // the header pays the inset itself: what is left up there is the camera
-  // cutout, and a title under a Dynamic Island is a title with a hole in it.
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View style={[styles.fill, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      {/* Only in the modal, and only on the states that are not the simulator.
-          The preview itself stays headerless on purpose -- what is inside it is
-          a device drawn at 1:1, and a bar over it would crop the thing the
-          screen exists to show. These states have room, and a full screen with
-          no name on it is the part of this that read as broken. */}
-      {onClose && !embedded ? (
-        <View
-          style={[
-            styles.header,
-            {
-              paddingTop: insets.top + 10,
-              paddingLeft: 16 + insets.left,
-              paddingRight: 16 + insets.right,
-            },
-          ]}>
-          <View style={styles.headerRow}>
-            <Text variant="bodySmall" style={styles.headerTitle}>
-              <Trans>Simulator</Trans>
-            </Text>
-            {/* The same chrome as the Files sheet, from the same component:
-                two screens whose close buttons were different materials would
-                read as two apps. `sheet`, not `floating` -- see `GlassChrome`. */}
-            <GlassChrome face="sheet" shape="pill" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Close the simulator`}
-                testID="simfarm-close"
-                onPress={onClose}
-                style={styles.iconButtonHit}>
-                <CloseIcon size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
+      <View style={styles.setup}>
+        {!answer.probe.found ? (
+          <RunCommand
+            serverId={serverId}
+            command={simfarmRunCommand(platform)}
+            terminalConnected={terminalConnected}
+          />
+        ) : null}
+        <View style={styles.portSection}>
+          <Text variant="label" color={theme.colors.textMuted}>
+            {t`Port`}
+          </Text>
+          <View style={styles.portRow}>
+            <Input
+              value={portText}
+              onChangeText={setPortText}
+              keyboardType="number-pad"
+              returnKeyType="go"
+              // Outline, like every other field the app asks a question in: the
+              // underline default draws a filled slab, which beside a pill button
+              // reads as a disabled control rather than as somewhere to type.
+              variant="outline"
+              placeholder={String(SIMFARM_DEFAULT_PORT)}
+              accessibilityLabel={t`simfarm port`}
+              testID="simfarm-port"
+              // `containerStyle`, not `style`: this Input hands `style` to the
+              // TextInput inside its own full-width wrapper, so a width there sized
+              // the text box and left the wrapper as wide as the screen. The row
+              // then overflowed both edges -- the port lost its first digit on the
+              // left and Look again was cut off on the right.
+              containerStyle={styles.port}
+              onSubmitEditing={submitPort}
+            />
+            <Button
+              variant="secondary"
+              // The design system's button at its own height, with the horizontal
+              // padding brought in: this one sits beside a four-digit field rather
+              // than alone under a paragraph, and at the token padding it was half
+              // again as wide as the field it acts on.
+              style={styles.lookAgain}
+              loading={looking}
+              loadingLabel={t`Looking`}
+              disabled={parsePort(portText) === null}
+              testID="simfarm-look-again"
+              onPress={submitPort}>
+              {t`Look again`}
+            </Button>
           </View>
         </View>
-      ) : null}
-      {/* Centred by the content container rather than by the view, because the
-          port field is the one control here and the number pad covers exactly
-          where a centred column puts it. `flexGrow` keeps the column in the
-          middle while there is room and lets the scroller lift it once there is
-          not, which is the same instrument every other field in this app sits
-          in (`open-web-service-sheet.tsx`, `ssh-host-list.tsx`). */}
-      <KeyboardAwareScrollView
-        bottomOffset={KEYBOARD_BOTTOM_OFFSET}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          styles.body,
-          embedded ? styles.embeddedPad : styles.modalPad,
-          embedded ? null : { paddingBottom: insets.bottom + 24 },
-        ]}>
-        <View style={styles.column}>
-          {icon ? (
-            <View
-              style={[
-                styles.glyph,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              {icon}
-            </View>
-          ) : null}
-          {title ? (
-            <Text variant="subheading" style={styles.middle}>
-              {title}
-            </Text>
-          ) : null}
-          {children}
-        </View>
-      </KeyboardAwareScrollView>
-    </View>
+        {configuring && answer.probe.found ? (
+          <Button testID="simfarm-configure-cancel" onPress={() => setConfiguring(false)}>
+            {t`Return to preview`}
+          </Button>
+        ) : null}
+      </View>
+    </SimfarmNotice>
   );
 }
 
@@ -373,93 +308,42 @@ function PreviewNotice({
  * is copyable rather than only printed, and it stays selectable so the reader
  * with no shared clipboard can still read it off and type it.
  */
-function RunCommand() {
+function RunCommand({
+  serverId,
+  command,
+  terminalConnected,
+}: {
+  serverId: string | undefined;
+  command: string;
+  terminalConnected: boolean;
+}) {
   const { t } = useLingui();
   // The machine with no simfarm is the one this preview asks: the computer
   // the app is pointed at.
-  const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
   return (
     <GuideCommand
       serverId={serverId}
-      command={SIMFARM_RUN_COMMAND}
+      command={command}
+      terminalDown={!terminalConnected}
       testID="simfarm-run-command"
       copyLabel={t`Copy the command that starts simfarm`}
       copiedLabel={t`Command copied`}
       copyHint={t`Copies it, ready to paste into a terminal`}
-      // Two lines, not one shrunk to fit: it wraps at the widths this is read
-      // at -- a phone and a Pad's narrower column.
-      numberOfLines={2}
     />
   );
 }
 
-/** The glyph's disc, and the glyph inside it at the SSH empty state's size. */
-const GLYPH_SIZE = 72;
-
-/** The focused field's clearance above the keyboard and its toolbar. */
-const KEYBOARD_BOTTOM_OFFSET = 88;
-
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   middle: { textAlign: 'center' },
-  header: {
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-    gap: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  headerTitle: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: 20,
-    lineHeight: 25,
-    includeFontPadding: false,
-  },
-  // Shape only; the fill comes from `GlassChrome`, as it does in the Files
-  // sheet and in the server page's header circles.
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
-  column: { width: '100%', maxWidth: 420, alignItems: 'center', gap: 12 },
-  glyph: {
-    width: GLYPH_SIZE,
-    height: GLYPH_SIZE,
-    borderRadius: GLYPH_SIZE / 2,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  modalPad: { paddingHorizontal: 24 },
-  embeddedPad: { paddingHorizontal: 12, paddingBottom: 12 },
-  // Wraps rather than overflows: the narrowest host is the Pad column, where
-  // the label, the field and the button do not always fit on one line.
+  setup: { width: '100%', gap: 24, marginTop: 8 },
+  portSection: { gap: 8 },
   portRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 4,
-    maxWidth: '100%',
+    gap: 12,
+    width: '100%',
   },
-  port: { width: 92 },
-  lookAgain: { paddingHorizontal: 16 },
+  port: { flex: 1, minWidth: 100 },
+  lookAgain: { flexGrow: 1, minHeight: 48, paddingHorizontal: 20 },
 });

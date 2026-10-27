@@ -10,6 +10,8 @@ press "${TARGET}"
 # section start
 open "muqun:///?stageProgressFixture=linked"
 wait stable 600 5000
+# Development warning banners can cover the dock; verify dismissal before input.
+react-native dismiss-overlay
 
 # section visible
 is visible "${TARGET}"
@@ -32,9 +34,18 @@ longpress "${TARGET}" 700
 wait stable 300 5000
 
 # section draft
-fill id="home-composer-input" "Unsent Stage QA draft"
+fill id="home-composer-input" "Unsent Stage QA draft" --delay-ms 80
 wait stable 300 5000
 
 # section clear-draft
 fill id="home-composer-input" ""
 wait stable 400 5000
+
+# section search-empty
+fill id="home-continue-search" "NoMatchingStageSessionQA"
+wait stable 300 5000
+
+# section clear-search
+fill id="home-continue-search" ""
+keyboard enter
+wait stable 300 5000

@@ -1,5 +1,6 @@
 const OPERATIONS = [
   'exec.run',
+  'files.present',
   'tasks.delegate',
   'tasks.wait',
   'tasks.read',

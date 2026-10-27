@@ -1551,6 +1551,26 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   );
 });
 
+function AgentGenerationFooter({
+  messageId,
+  tokensPerSecond,
+}: {
+  messageId: string;
+  tokensPerSecond: number;
+}) {
+  const theme = useThemeTokens();
+  return (
+    <View style={styles.generationFooter}>
+      <Text
+        testID={`agent-generation-speed-${messageId}`}
+        variant="caption"
+        color={theme.colors.textMuted}>
+        {tokensPerSecond.toFixed(1)} tok/s
+      </Text>
+    </View>
+  );
+}
+
 /**
  * One assistant or system message, laid out the way OpenCode's own output is:
  * every part in order inside a single block — the reasoning as short collapsed
@@ -1685,7 +1705,21 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   flush();
 
   if (rows.length === 0) return null;
-  return <>{rows}</>;
+  const generationItem =
+    group.role === 'assistant' && !streamingItemId && !reasoningLive
+      ? group.items.findLast((item) => item.generation !== undefined)
+      : undefined;
+  return (
+    <>
+      {rows}
+      {generationItem?.generation ? (
+        <AgentGenerationFooter
+          messageId={generationItem.message_id}
+          tokensPerSecond={generationItem.generation.tokens_per_second}
+        />
+      ) : null}
+    </>
+  );
 });
 
 /** Parts that paint their own surface and therefore stand as their own row. */
@@ -1727,6 +1761,10 @@ const styles = StyleSheet.create({
     paddingVertical: TRANSCRIPT_GRID.plateInsetY,
     paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: 6,
+  },
+  generationFooter: {
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+    paddingBottom: TRANSCRIPT_ROW_GAP / 2,
   },
   userBlock: {
     borderLeftWidth: 2,

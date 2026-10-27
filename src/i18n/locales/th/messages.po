@@ -1029,6 +1029,7 @@ msgstr "จำนวนครั้งที่รีเซ็ตได้"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "ย้อนกลับ"
 
@@ -1479,6 +1480,8 @@ msgstr "ปิดงานใหม่"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "ปิดตัวอย่าง"
 
@@ -1498,11 +1501,6 @@ msgstr "ปิดช่องเขียนข้อความ"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "ปิดเมนู"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "ปิดเครื่องจำลอง"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1550,6 +1548,7 @@ msgid "Colour mode"
 msgstr "โหมดสี"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1645,6 +1644,8 @@ msgstr "ชื่อคอมพิวเตอร์"
 msgid "Computer not found"
 msgstr "ไม่พบคอมพิวเตอร์"
 
+#: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
@@ -1749,6 +1750,7 @@ msgstr "เชื่อมต่อกับ {address} แล้ว"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1768,6 +1770,10 @@ msgstr "กำลังเชื่อมต่อผ่าน SSH…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "กำลังเชื่อมต่อกับ {address}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "กำลังเชื่อมต่อกับเครื่องจำลอง"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2190,6 +2196,7 @@ msgid "Could not open destination"
 msgstr "เปิดปลายทางไม่ได้"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "เปิดไฟล์ไม่ได้"
@@ -2856,6 +2863,10 @@ msgstr "ป้อนที่อยู่ Gateway แทน"
 msgid "Enter the gateway's port on that host."
 msgstr "ป้อนพอร์ตของ Gateway บนโฮสต์นั้น"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "ป้อนพอร์ตบริการเครื่องจำลองบนคอมพิวเตอร์นี้"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "ป้อน URL ด้วยตนเอง"
@@ -3027,6 +3038,10 @@ msgstr "คำสั่งแรก"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "ปรับแผนภาพให้พอดี"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "ปรับให้พอดีหน้าจอ"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3838,7 +3853,6 @@ msgid "Long press to open it in full"
 msgstr "กดค้างเพื่อเปิดแบบเต็ม"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "ค้นหาอีกครั้ง"
 
@@ -4359,6 +4373,10 @@ msgid "No simulator on port {port}"
 msgstr "ไม่มีเครื่องจำลองที่พอร์ต {port}"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "ไม่พบเครื่องจำลอง โปรดเปิดเครื่องจำลองบนคอมพิวเตอร์นี้แล้วเชื่อมต่อใหม่"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "ไม่มีเครื่องจำลองบนเครื่องนั้น"
 
@@ -4386,6 +4404,7 @@ msgstr "ไม่มีภาพนิ่ง"
 msgid "No tasks in this session yet."
 msgstr "ยังไม่มีงานในเซสชันนี้"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "ยังไม่มีงาน"
@@ -4452,6 +4471,10 @@ msgstr "ไม่ได้เชื่อมต่อ"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "ไม่ได้เชื่อมต่อ"
+
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "ยังไม่ได้เชื่อมต่อกับบริการแสดงตัวอย่างโปรแกรมจำลอง เริ่ม Simfarm บนคอมพิวเตอร์เครื่องนี้ หรือตรวจสอบพอร์ตด้านล่าง"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4745,6 +4768,10 @@ msgstr "เปิดเซสชัน"
 msgid "Open session tree"
 msgstr "เปิดแผนผังเซสชัน"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "เปิดโปรแกรมจำลอง"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4791,6 +4818,10 @@ msgstr "เปิดเพื่อตรวจสอบสถานะปัจ
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "เปิดรายละเอียดการเรียกใช้เครื่องมือ"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "เปิดเว็บ"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -4889,6 +4920,7 @@ msgstr "หน้า {pageNumber} · {lines} บรรทัด"
 msgid "Pair {0} again"
 msgstr "จับคู่ {0} อีกครั้ง"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4896,6 +4928,10 @@ msgstr "จับคู่ {0} อีกครั้ง"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "จับคู่คอมพิวเตอร์"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "จับคู่คอมพิวเตอร์ก่อน"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4913,6 +4949,10 @@ msgstr "จับคู่คอมพิวเตอร์"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "จับคู่ได้ที่ด้านล่าง"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "จับคู่คอมพิวเตอร์ที่ใช้เครื่องจำลอง แล้วกลับมาที่นี่เพื่อเปิดตัวอย่าง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5114,6 +5154,10 @@ msgstr "ดูตัวอย่างเครื่องจำลอง ไ�
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "ดูตัวอย่างและใช้"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "ดูตัวอย่างไฟล์"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5363,7 +5407,9 @@ msgstr "ภาษาที่รู้จำ"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "ค่าต่ำสุดที่แนะนำเพื่อให้อ่านข้อความได้ชัดเจน: {minimumPercent}%"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "เชื่อมต่อใหม่"
@@ -5642,9 +5688,11 @@ msgstr "ดำเนินการต่อ"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5683,6 +5731,10 @@ msgstr "กำลังลองใหม่…"
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Return"
+
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "กลับไปที่ตัวอย่าง"
 
 #: src/components/home-overview.tsx
 msgid "Return to task"
@@ -5763,6 +5815,10 @@ msgstr "กำลังย้อนกลับ {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "ย้อนกลับถึงตรงนี้"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "หมุนเครื่องจำลอง"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6341,21 +6397,26 @@ msgid "Sign in with"
 msgstr "เข้าสู่ระบบด้วย"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm คือโปรแกรมขนาดเล็กบนเครื่องนั้นที่ให้บริการตัวอย่างนี้ อาจยังไม่ได้ทำงานหรือกำลังรับการเชื่อมต่อที่พอร์ตอื่น"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "พอร์ต simfarm"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "เครื่องจำลอง"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "การเชื่อมต่อเครื่องจำลอง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "ตัวควบคุมเครื่องจำลอง"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "เครื่องจำลองตัดการเชื่อมต่อแล้ว"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7113,6 +7174,10 @@ msgid "The shell exited."
 msgstr "เชลล์สิ้นสุดการทำงาน"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "ไม่สามารถหมุนเครื่องจำลองได้ โปรดลองอีกครั้ง"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "แสดงเครื่องจำลองไม่ได้"
 
@@ -7137,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "บริการเสียงส่งข้อความถอดเสียงที่ไม่ถูกต้องกลับมา"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
 
@@ -7302,8 +7368,8 @@ msgstr "คอมพิวเตอร์เครื่องนี้ไม่
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "คอมพิวเตอร์นี้ไม่ได้จับคู่อีกต่อไป"
 
@@ -7649,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

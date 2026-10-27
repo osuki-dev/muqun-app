@@ -3,6 +3,8 @@ import { useQuestionComposerDraft } from '@/hooks/use-question-composer-draft';
 import { AssetViewer } from '@/components/asset-viewer';
 import type { HomeComposerOutset } from '@/theme/home-composer-outset';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
+import { useRouter } from 'expo-router';
+import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { CompactionPill } from '@/components/agent-compaction-pill';
 import type { CompactionActivity } from '@/lib/agent-compaction';
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -34,6 +36,8 @@ import {
   StopIcon,
   DeleteIcon,
   QuickActionIcon,
+  DevicesIcon,
+  NetworkIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -373,6 +377,7 @@ export interface AgentComposerProps {
   canSendWhileRunning?: boolean;
   /** Queue support is independent of steering into the current turn. */
   canQueueWhileRunning?: boolean;
+  canSteerWhileRunning?: boolean;
   canMentionFiles?: boolean;
   /**
    * Where `@` looks for files, when not this session's project: Home's dock
@@ -574,6 +579,8 @@ export interface AgentComposerProps {
   pinDock?: boolean;
   /** Home consolidates its choices in one control beside the attachment button. */
   toolbarLeading?: React.ReactNode;
+  /** The conversation's computer, independent of Home's current selection. */
+  commandServerId?: string;
   /**
    * The floating card `toolbarLeading`'s button opens. It takes the attachment
    * menu's anchor, card and tap-outside catcher; opening either closes the
@@ -653,6 +660,7 @@ export const AgentComposer = memo(function AgentComposer({
   running,
   canSendWhileRunning = true,
   canQueueWhileRunning = true,
+  canSteerWhileRunning = true,
   canMentionFiles = true,
   searchFiles,
   interactionBlockedReason,
@@ -728,6 +736,7 @@ export const AgentComposer = memo(function AgentComposer({
   dockUnderlay,
   pinDock = false,
   toolbarLeading,
+  commandServerId,
   toolbarMenu,
   fieldBackground,
   fieldBackgroundColor,
@@ -756,6 +765,7 @@ export const AgentComposer = memo(function AgentComposer({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const { showToast } = useToast();
+  const router = useRouter();
   const surfaceBackground = useSurfaceBackground();
   /**
    * The message field is prose, so it follows the reader's interface font --
@@ -818,15 +828,26 @@ export const AgentComposer = memo(function AgentComposer({
       ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
       : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
-  const deliveryMode = canQueueWhileRunning ? requestedDeliveryMode : 'steer';
+  const deliveryMode = !canSteerWhileRunning
+    ? 'queue'
+    : canQueueWhileRunning
+      ? requestedDeliveryMode
+      : 'steer';
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [commandMenuServer, setCommandMenuServer] = useState<string | null>(null);
+  const commandMenuOpen = Boolean(commandServerId && commandMenuServer === commandServerId);
+  // Only opening the menu probes this computer. Mounting a conversation adds no health request.
+  const commandAccess = useServerSimfarmAccess(commandServerId, commandMenuOpen);
   const toolbarMenuOpen = toolbarMenu?.open ?? false;
   // The toolbar menu's button belongs to the caller, so its opening is seen
   // here as a prop change; it closes the attachment menu in the same render.
   const [seenToolbarMenuOpen, setSeenToolbarMenuOpen] = useState(toolbarMenuOpen);
   if (seenToolbarMenuOpen !== toolbarMenuOpen) {
     setSeenToolbarMenuOpen(toolbarMenuOpen);
-    if (toolbarMenuOpen) setAttachmentMenuOpen(false);
+    if (toolbarMenuOpen) {
+      setAttachmentMenuOpen(false);
+      setCommandMenuServer(null);
+    }
   }
   const closeToolbarMenu = () => {
     if (toolbarMenuOpen) toolbarMenu?.onOpenChange(false);
@@ -1573,13 +1594,19 @@ export const AgentComposer = memo(function AgentComposer({
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardState((state) => state.height);
   const safeAreaFoot = keyboardHeight === 0 ? bottomInset : 0;
-  const fieldBottomInset = process.env.EXPO_OS === 'ios' ? safeAreaFoot : 0;
-  const dockFoot = (flushField ? safeAreaFoot - fieldBottomInset : 0) + (outerInsets?.bottom ?? 0);
+  // Home floats above the safe area; keep its card padding unchanged when
+  // the keyboard closes. Edge-to-edge session fields paint the inset inside.
+  const fieldBottomInset = process.env.EXPO_OS === 'ios' && !flushField ? safeAreaFoot : 0;
+  const dockFoot =
+    flushField && process.env.EXPO_OS === 'ios'
+      ? Math.max(safeAreaFoot, outerInsets?.bottom ?? 0)
+      : (flushField ? safeAreaFoot : 0) + (outerInsets?.bottom ?? 0);
   const [surfaceHeight, setSurfaceHeight] = useState(0);
   const [surfaceLeft, setSurfaceLeft] = useState(0);
   const [inputRowHeight, setInputRowHeight] = useState(0);
   const [inputRowLeft, setInputRowLeft] = useState(0);
   const [inputRowWidth, setInputRowWidth] = useState(0);
+  const [actionRowHeight, setActionRowHeight] = useState(0);
   /** The field's left edge in the dock, where the toolbar menus start. */
   const fieldLeft = surfaceLeft + inputRowLeft;
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
@@ -1589,6 +1616,7 @@ export const AgentComposer = memo(function AgentComposer({
     hideFieldDecoration ||
     attachmentUploads.attachments.length > 0 ||
     attachmentMenuOpen ||
+    commandMenuOpen ||
     toolbarMenuOpen ||
     modeMenuOpen ||
     inboxOpen ||
@@ -1632,6 +1660,7 @@ export const AgentComposer = memo(function AgentComposer({
   const segmentHitSlop = useSegmentHitSlop();
   const toggleMode = () => {
     setAttachmentMenuOpen(false);
+    setCommandMenuServer(null);
     if (onOpenModeSheet) {
       setModeMenuOpen(false);
       onOpenModeSheet();
@@ -1660,6 +1689,31 @@ export const AgentComposer = memo(function AgentComposer({
   // The session strip and the action row run under the side status bar to the
   // material's edge and rest clear of it.
   const rowBleed = materialBleed ? { left: sideLeft, right: sideRight } : NO_SIDE_INSETS;
+
+  const sessionCommandButton = commandServerId ? (
+    <PressableScale
+      testID="agent-composer-commands"
+      accessibilityRole="button"
+      accessibilityLabel={t`Command`}
+      accessibilityState={{ expanded: commandMenuOpen }}
+      onPress={() => {
+        closeToolbarMenu();
+        setAttachmentMenuOpen(false);
+        setModeMenuOpen(false);
+        setInboxOpen(false);
+        setCommandMenuServer(commandMenuOpen ? null : commandServerId);
+      }}
+      style={[
+        styles.actionBtnWithLabel,
+        { borderRadius: profile.chrome.roundControl },
+        { backgroundColor: surfaceBackground(chromeGlass) },
+      ]}>
+      <QuickActionIcon size={14} color={commandMenuOpen ? theme.colors.primary : chromeText} />
+      <Text variant="caption" color={chromeText} style={styles.actionBtnLabel}>
+        {t`Command`}
+      </Text>
+    </PressableScale>
+  ) : null;
 
   return (
     <>
@@ -1701,12 +1755,13 @@ export const AgentComposer = memo(function AgentComposer({
         fill, no dim. The floating card is the menu; a panel drawn around it
         read as a block pasted over the page.
       */}
-        {attachmentMenuOpen || toolbarMenuOpen || modeMenuOpen || inboxOpen ? (
+        {attachmentMenuOpen || modeMenuOpen || inboxOpen ? (
           <Pressable
             testID="agent-composer-popup-scrim"
             style={[styles.backdrop, { top: -windowHeight }]}
             onPress={() => {
               setAttachmentMenuOpen(false);
+              setCommandMenuServer(null);
               closeToolbarMenu();
               setModeMenuOpen(false);
               setInboxOpen(false);
@@ -1733,28 +1788,6 @@ export const AgentComposer = memo(function AgentComposer({
               { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
             ]}>
             <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-          </View>
-        ) : null}
-
-        {/* The toolbar's other menu (Home's task options), in the same place
-          and card. Wider, so a value such as a model and its effort fits on
-          its row, but never past the field's right edge; and bounded by the room
-          above the keyboard, scrolling inside rather than under the header. */}
-        {toolbarMenu && toolbarMenuOpen ? (
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.attachmentAnchor,
-              { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
-            ]}>
-            <FloatingMenu
-              testID={toolbarMenu.testID}
-              width={
-                inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined
-              }
-              maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
-              {toolbarMenu.content}
-            </FloatingMenu>
           </View>
         ) : null}
 
@@ -2079,7 +2112,10 @@ export const AgentComposer = memo(function AgentComposer({
                 // One step more to the field than between the two text rows:
                 // the field is a different thing.
                 <View
+                  testID="agent-composer-action-row"
+                  onLayout={(event) => setActionRowHeight(event.nativeEvent.layout.height)}
                   style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
+                  {sessionCommandButton}
                   {segmentMode ? (
                     <TextSegment
                       testID="agent-composer-mode-btn"
@@ -2112,6 +2148,8 @@ export const AgentComposer = memo(function AgentComposer({
                 </View>
               ) : (
                 <View
+                  testID="agent-composer-action-row"
+                  onLayout={(event) => setActionRowHeight(event.nativeEvent.layout.height)}
                   style={[
                     styles.actionRowViewport,
                     { marginLeft: -rowBleed.left, marginRight: -rowBleed.right },
@@ -2127,6 +2165,7 @@ export const AgentComposer = memo(function AgentComposer({
                       },
                     ]}
                     style={styles.actionRowScroll}>
+                    {sessionCommandButton}
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (
                       <PressableScale
@@ -2196,7 +2235,10 @@ export const AgentComposer = memo(function AgentComposer({
                     {chipIds.has('inbox') ? (
                       <PressableScale
                         testID="agent-composer-inbox-pill"
-                        onPress={() => setInboxOpen((open) => !open)}
+                        onPress={() => {
+                          setCommandMenuServer(null);
+                          setInboxOpen((open) => !open);
+                        }}
                         accessibilityRole="button"
                         accessibilityState={{ expanded: inboxOpen }}
                         accessibilityLabel={t`${inbox.length} queued`}
@@ -2282,6 +2324,7 @@ export const AgentComposer = memo(function AgentComposer({
                     {chipIds.has('delivery') ? (
                       <PressableScale
                         testID="agent-composer-delivery-btn"
+                        disabled={!canQueueWhileRunning || !canSteerWhileRunning}
                         onPress={() => {
                           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
@@ -2583,6 +2626,7 @@ export const AgentComposer = memo(function AgentComposer({
                             }
                             onPress={() => {
                               closeToolbarMenu();
+                              setCommandMenuServer(null);
                               setAttachmentMenuOpen((open) => !open);
                             }}
                             size={16}
@@ -2657,6 +2701,108 @@ export const AgentComposer = memo(function AgentComposer({
           />
         ) : null}
       </Animated.View>
+      {/* Full-height bounds keep the toolbar popup touchable above the dock on Android. */}
+      {commandMenuOpen || toolbarMenuOpen ? (
+        <Animated.View
+          pointerEvents={revealed ? 'box-none' : 'none'}
+          accessibilityElementsHidden={!revealed}
+          importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
+          style={[
+            styles.dockUnderlay,
+            underlayStyle,
+            outerInsets && { left: outerInsets.horizontal, right: outerInsets.horizontal },
+          ]}>
+          <Pressable
+            testID="agent-composer-popup-scrim"
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              setCommandMenuServer(null);
+              closeToolbarMenu();
+            }}
+          />
+          {commandMenuOpen && commandServerId ? (
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.attachmentAnchor,
+                {
+                  left: fieldLeft,
+                  bottom:
+                    inputRowHeight +
+                    dockBottomPadding +
+                    actionRowHeight +
+                    styles.actionRowViewport.marginBottom +
+                    ATTACHMENT_MENU_GAP,
+                },
+              ]}>
+              <AgentActionMenu
+                testID="agent-composer-command-menu"
+                error={
+                  commandAccess.status === 'offline'
+                    ? t`Computer offline`
+                    : commandAccess.status === 'unpaired'
+                      ? t`This computer is no longer paired.`
+                      : commandAccess.status === 'blocked' && commandAccess.reason === 'ssh-tunnel'
+                        ? t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`
+                        : commandAccess.status === 'blocked'
+                          ? t`Unavailable`
+                          : undefined
+                }
+                items={[
+                  {
+                    id: 'web',
+                    label: t`Open Web`,
+                    Icon: NetworkIcon,
+                    disabled: commandAccess.status !== 'ready',
+                    onPress: () => {
+                      setCommandMenuServer(null);
+                      router.push({
+                        pathname: '/web-service',
+                        params: { serverId: commandServerId },
+                      });
+                    },
+                    testID: 'agent-composer-command-web',
+                  },
+                  {
+                    id: 'simulator',
+                    label: t`Open simulator`,
+                    Icon: DevicesIcon,
+                    onPress: () => {
+                      setCommandMenuServer(null);
+                      router.push({ pathname: '/simfarm', params: { serverId: commandServerId } });
+                    },
+                    testID: 'agent-composer-command-simulator',
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
+          {/* The toolbar's other menu (Home's task options), in the same place
+          and card. Wider, so a value such as a model and its effort fits on
+          its row, but never past the field's right edge; and bounded by the room
+          above the keyboard, scrolling inside rather than under the header. */}
+          {toolbarMenu && toolbarMenuOpen ? (
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.attachmentAnchor,
+                {
+                  left: fieldLeft,
+                  bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP,
+                },
+              ]}>
+              <FloatingMenu
+                testID={toolbarMenu.testID}
+                width={
+                  inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined
+                }
+                maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
+                {toolbarMenu.content}
+              </FloatingMenu>
+            </View>
+          ) : null}
+        </Animated.View>
+      ) : null}
     </>
   );
 });

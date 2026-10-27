@@ -1029,6 +1029,7 @@ msgstr "Verfügbare Zurücksetzungen"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "Zurück"
 
@@ -1479,6 +1480,8 @@ msgstr "Neue Aufgabe schließen"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "Vorschau schließen"
 
@@ -1498,11 +1501,6 @@ msgstr "Eingabefeld schließen"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "Menü schließen"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "Simulator schließen"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1550,6 +1548,7 @@ msgid "Colour mode"
 msgstr "Farbmodus"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1645,6 +1644,8 @@ msgstr "Computername"
 msgid "Computer not found"
 msgstr "Computer nicht gefunden"
 
+#: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "Computer offline"
@@ -1749,6 +1750,7 @@ msgstr "Verbunden mit {address}"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1768,6 +1770,10 @@ msgstr "Verbinde über SSH …"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "Verbinde mit {address}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "Verbindung zum Simulator wird hergestellt"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2190,6 +2196,7 @@ msgid "Could not open destination"
 msgstr "Ziel konnte nicht geöffnet werden"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "Datei konnte nicht geöffnet werden"
@@ -2856,6 +2863,10 @@ msgstr "Gib stattdessen die Adresse des Gateways ein"
 msgid "Enter the gateway's port on that host."
 msgstr "Gib den Port des Gateways auf diesem Host ein"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "Gib den Port des Simulatordienstes auf diesem Computer ein"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "URL manuell eingeben"
@@ -3027,6 +3038,10 @@ msgstr "Erster Auftrag"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "Diagramm einpassen"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "An Bildschirm anpassen"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3838,7 +3853,6 @@ msgid "Long press to open it in full"
 msgstr "Lange drücken, um sie vollständig zu öffnen"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "Erneut suchen"
 
@@ -4359,6 +4373,10 @@ msgid "No simulator on port {port}"
 msgstr "Kein Simulator auf Port {port}"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "Keine Simulatoren gefunden. Starte einen auf diesem Computer und verbinde dich erneut"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "Keine Simulatoren auf diesem Rechner"
 
@@ -4386,6 +4404,7 @@ msgstr "Keine Einzelbilder"
 msgid "No tasks in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine Aufgaben"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "Noch keine Aufgaben"
@@ -4452,6 +4471,10 @@ msgstr "Nicht verbunden"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "NICHT VERBUNDEN"
+
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "Keine Verbindung zum Simulator-Vorschaudienst. Starte Simfarm auf diesem Computer oder prüfe den Port unten"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4745,6 +4768,10 @@ msgstr "Sitzung öffnen"
 msgid "Open session tree"
 msgstr "Sitzungsbaum öffnen"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "Simulator öffnen"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4791,6 +4818,10 @@ msgstr "Öffnen, um den aktuellen Status zu prüfen"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "Details des Toolaufrufs öffnen"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "Web öffnen"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -4889,6 +4920,7 @@ msgstr "Seite {pageNumber} · {lines} Zeilen"
 msgid "Pair {0} again"
 msgstr "{0} erneut koppeln"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4896,6 +4928,10 @@ msgstr "{0} erneut koppeln"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "Computer koppeln"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "Zuerst einen Computer koppeln"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4913,6 +4949,10 @@ msgstr "Computer koppeln"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Kopple unten einen"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "Kopple den Computer, auf dem dein Simulator läuft, und kehre dann zur Vorschau zurück"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5114,6 +5154,10 @@ msgstr "Simulator ansehen – über den SSH-Tunnel nicht verfügbar"
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "Ansehen und anwenden"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "Dateivorschau"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5363,7 +5407,9 @@ msgstr "Erkennungssprache"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "Empfohlenes Minimum für lesbaren Text: {minimumPercent} %"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "Neu verbinden"
@@ -5642,9 +5688,11 @@ msgstr "Fortsetzen"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5683,6 +5731,10 @@ msgstr "Erneuter Versuch…"
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Eingabetaste"
+
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "Zurück zur Vorschau"
 
 #: src/components/home-overview.tsx
 msgid "Return to task"
@@ -5763,6 +5815,10 @@ msgstr "{summary} werden zurückgenommen"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "Wird bis hierher zurückgenommen"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "Simulator drehen"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6341,21 +6397,26 @@ msgid "Sign in with"
 msgstr "Anmelden mit"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm ist das kleine Programm auf diesem Rechner, das diese Vorschau liefert. Entweder läuft es nicht, oder es lauscht auf einem anderen Port"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm-Port"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "Simulator"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "Simulatorverbindung"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "Simulator-Bedienelemente"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "Simulator getrennt"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7113,6 +7174,10 @@ msgid "The shell exited."
 msgstr "Die Shell wurde beendet"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "Der Simulator konnte nicht gedreht werden. Versuche es erneut"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "Der Simulator konnte nicht angezeigt werden"
 
@@ -7137,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "Der Sprachdienst hat ein ungültiges Transkript zurückgegeben"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Der SSH-Tunnel trägt den Port des Gateways und keinen anderen, der Simulator und der Browser sind von hier also nicht erreichbar. Verbinde dich über das lokale Netz oder Tailscale"
 
@@ -7302,8 +7368,8 @@ msgstr "Dieser Computer hat keine gekoppelten Geräte aufgelistet"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "Dieser Computer ist nicht mehr gekoppelt"
 
@@ -7649,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "Auf dem Simulator tippen"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

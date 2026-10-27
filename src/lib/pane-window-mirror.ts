@@ -1,4 +1,5 @@
 import type { PaneOutputSource } from '@/lib/gateway-client';
+import type { GatewayEntity } from '@/lib/gateway-entities';
 
 /**
  * The last window any screen read of a pane, so the next screen to show that
@@ -24,6 +25,8 @@ export type MirroredPaneWindow = {
   shape: string;
   output: string;
   atMs: number;
+  /** Display facts from the same pane read; never evidence of connectivity. */
+  pane?: GatewayEntity;
 };
 
 /**
@@ -65,13 +68,17 @@ export function rememberMirroredPaneWindow(
   paneId: string,
   shape: string,
   output: string,
-  nowMs = Date.now()
+  nowMs = Date.now(),
+  pane?: GatewayEntity
 ): void {
   if (!serverId || !sessionId || !paneId || !output) return;
   const id = key(serverId, sessionId, paneId);
+  const previous = windows.get(id);
+  const displayPane =
+    pane?.id === paneId ? pane : previous?.shape === shape ? previous.pane : undefined;
   // Re-insert so the most recently written pane is last in iteration order.
   windows.delete(id);
-  windows.set(id, { shape, output, atMs: nowMs });
+  windows.set(id, { shape, output, atMs: nowMs, ...(displayPane ? { pane: displayPane } : {}) });
   while (windows.size > MAX_WINDOWS) {
     const oldest = windows.keys().next();
     if (oldest.done) break;

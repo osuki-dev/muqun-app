@@ -216,7 +216,7 @@ export function homeSendModelGate(input: {
 /**
  * The computer the dock sends to: the one the reader picked (in the target
  * picker, by tapping a card, or kept while work elsewhere was opened), else
- * the remembered front card, then the selected one, else the only one.
+ * the remembered front card, then the selected one, else the first paired computer.
  * Explicit picks always win over the remembered card. Opening a task on another computer
  * selects that computer for its screen; the dock keeps the one it had,
  * because Home pins it first (A4 D3).
@@ -231,7 +231,7 @@ export function homeDockTargetId(input: {
   if (pickedId && serverIds.includes(pickedId)) return pickedId;
   if (rememberedId && serverIds.includes(rememberedId)) return rememberedId;
   if (selectedId && serverIds.includes(selectedId)) return selectedId;
-  return serverIds.length === 1 ? serverIds[0] : undefined;
+  return serverIds[0];
 }
 
 /** Where a dock pick of mode and model is remembered: one computer's one agent. */

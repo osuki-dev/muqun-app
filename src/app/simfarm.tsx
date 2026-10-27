@@ -1,11 +1,9 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The simulator preview's route.
  *
- * Thin, and thin for the same reason `web-service.tsx` is: nothing here talks to
- * the gateway. It reads an address out of a paired record and the preview builds
- * a URL from it, so there is no connection to select and nothing to await. All a
- * route knows is which server was meant.
+ * The route binds to its computer's paired record and checks that computer's
+ * current Gateway health before offering the simulator service. A deep link
+ * cannot grant access, and opening this screen never changes Home's selection.
  *
  * The port comes from the mirror when one has been found before and is otherwise
  * left to the preview's own default -- the probe is what decides, and it writes
@@ -56,31 +54,28 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * (`simfarmEdgeBands`).
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { Button, Spinner, Text } from '@osuki-dev/ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect } from 'react';
-import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
+import { AppState, BackHandler, Platform } from 'react-native';
 
-import { SimfarmPreview } from '@/components/simfarm-preview';
-import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { SimfarmNotice, SimfarmPreview } from '@/components/simfarm-preview';
+import { DevicesIcon } from '@/icons';
+import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { useServerSimfarm } from '@/stores/server-simfarm';
+import { useAgents } from '@/stores/agents';
 
 export default function SimfarmScreen() {
-  const surfaceBackground = useSurfaceBackground();
-  const theme = useThemeTokens();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   const { t } = useLingui();
-  const params = useLocalSearchParams<{ serverId: string; allowed?: string }>();
-
-  const records = useGatewayConnectionStore((state) => state.records);
-  const current = useGatewayConnectionStore((state) => state.record);
-  // The selected record is consulted too, so the demo -- which is never written
-  // to the paired list -- resolves rather than reading as an unpaired server.
-  const record =
-    records.find((entry) => entry.serverId === params.serverId) ??
-    (current?.serverId === params.serverId ? current : undefined);
+  const params = useLocalSearchParams<{ serverId: string }>();
+  const access = useServerSimfarmAccess(params.serverId);
+  const { record } = access;
+  const platform = useAgents((state) =>
+    record ? state.index.servers[record.serverId]?.platform : undefined
+  );
 
   const ports = useServerSimfarm((state) => state.byServer);
   const hydrate = useServerSimfarm((state) => state.hydrate);
@@ -127,16 +122,41 @@ export default function SimfarmScreen() {
   return (
     <>
       <StatusBar hidden animated hideTransitionAnimation="slide" />
-      {!record ? (
-        <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-          <Text selectable variant="bodySmall" color={theme.colors.danger}>
-            {t`This computer is no longer paired.`}
+      {access.status === 'loading' ? (
+        <SimfarmNotice embedded={false} onClose={close} title={t`Connecting`}>
+          <Spinner size="sm" />
+        </SimfarmNotice>
+      ) : access.status === 'unpaired' || !record ? (
+        <SimfarmNotice
+          embedded={false}
+          onClose={close}
+          icon={<DevicesIcon size={40} />}
+          title={t`Pair a computer first`}>
+          <Text selectable variant="bodySmall" style={{ textAlign: 'center' }}>
+            {t`Pair the computer that runs your simulator, then return here to open its preview.`}
           </Text>
-        </View>
+          <Button testID="simfarm-pair" onPress={() => router.push('/explore')}>
+            {t`Pair a computer`}
+          </Button>
+        </SimfarmNotice>
+      ) : access.status === 'offline' ? (
+        <SimfarmNotice
+          embedded={false}
+          onClose={close}
+          icon={<DevicesIcon size={40} />}
+          title={t`Computer offline`}>
+          <Text variant="bodySmall" style={{ textAlign: 'center' }}>
+            {record.label}
+          </Text>
+          <Button testID="simfarm-gateway-retry" onPress={access.refresh}>{t`Reconnect`}</Button>
+        </SimfarmNotice>
       ) : (
         <SimfarmPreview
           gatewayUrl={record.url}
-          allowed={params.allowed === '1'}
+          serverId={record.serverId}
+          platform={platform}
+          terminalConnected={access.terminalConnected === true}
+          allowed={access.status === 'ready'}
           initialPort={ports[record.serverId]}
           onPortFound={onPortFound}
           // The modal is the only host with something to dismiss, so it is the
@@ -148,7 +168,3 @@ export default function SimfarmScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  notice: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-});

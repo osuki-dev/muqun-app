@@ -1029,6 +1029,7 @@ msgstr "사용 가능한 초기화 횟수"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "뒤로"
 
@@ -1479,6 +1480,8 @@ msgstr "새 작업 닫기"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "미리보기 닫기"
 
@@ -1498,11 +1501,6 @@ msgstr "입력란 닫기"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "메뉴 닫기"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "시뮬레이터 닫기"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1550,6 +1548,7 @@ msgid "Colour mode"
 msgstr "색상 모드"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1645,6 +1644,8 @@ msgstr "컴퓨터 이름"
 msgid "Computer not found"
 msgstr "컴퓨터를 찾을 수 없음"
 
+#: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "컴퓨터 오프라인"
@@ -1749,6 +1750,7 @@ msgstr "{address}에 연결됨"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1768,6 +1770,10 @@ msgstr "SSH를 통해 연결하는 중…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "{address}에 연결하는 중"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "시뮬레이터에 연결 중"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2190,6 +2196,7 @@ msgid "Could not open destination"
 msgstr "대상을 열 수 없습니다"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "파일을 열 수 없습니다"
@@ -2856,6 +2863,10 @@ msgstr "대신 Gateway 주소를 입력하세요"
 msgid "Enter the gateway's port on that host."
 msgstr "그 호스트의 Gateway 포트를 입력하세요"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "이 컴퓨터의 시뮬레이터 서비스 포트를 입력하세요"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "URL 직접 입력"
@@ -3027,6 +3038,10 @@ msgstr "첫 지시"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "화면에 맞춤"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "화면에 맞추기"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3838,7 +3853,6 @@ msgid "Long press to open it in full"
 msgstr "길게 눌러 전체 화면으로 열기"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "다시 찾기"
 
@@ -4359,6 +4373,10 @@ msgid "No simulator on port {port}"
 msgstr "{port} 포트에 시뮬레이터가 없습니다"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "시뮬레이터를 찾을 수 없습니다. 이 컴퓨터에서 시뮬레이터를 실행한 후 다시 연결하세요"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "해당 컴퓨터에 시뮬레이터가 없습니다"
 
@@ -4386,6 +4404,7 @@ msgstr "정지 화면 없음"
 msgid "No tasks in this session yet."
 msgstr "이 세션에는 아직 작업이 없습니다"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "아직 작업이 없습니다"
@@ -4452,6 +4471,10 @@ msgstr "연결되지 않음"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "연결 안 됨"
+
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "시뮬레이터 미리보기 서비스에 연결되지 않았습니다. 이 컴퓨터에서 Simfarm을 시작하거나 아래 포트를 확인하세요"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4745,6 +4768,10 @@ msgstr "세션 열기"
 msgid "Open session tree"
 msgstr "세션 트리 열기"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "시뮬레이터 열기"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4791,6 +4818,10 @@ msgstr "열어서 현재 상태를 확인하세요"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "도구 호출 세부 정보 열기"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "웹 열기"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -4889,6 +4920,7 @@ msgstr "{pageNumber}페이지 · {lines}줄"
 msgid "Pair {0} again"
 msgstr "{0} 다시 페어링"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4896,6 +4928,10 @@ msgstr "{0} 다시 페어링"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "컴퓨터 페어링"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "먼저 컴퓨터를 페어링하세요"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4913,6 +4949,10 @@ msgstr "컴퓨터 페어링"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "아래에서 페어링하세요"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "시뮬레이터를 실행하는 컴퓨터를 페어링한 후 여기로 돌아와 미리보기를 여세요"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5114,6 +5154,10 @@ msgstr "시뮬레이터 미리보기, SSH 터널에서는 사용할 수 없음"
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "미리 보고 적용"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "파일 미리 보기"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5363,7 +5407,9 @@ msgstr "인식 언어"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "글자를 읽을 수 있는 권장 최솟값: {minimumPercent}%"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "다시 연결"
@@ -5642,9 +5688,11 @@ msgstr "재개"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5683,6 +5731,10 @@ msgstr "다시 시도하는 중…"
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "엔터 키"
+
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "미리보기로 돌아가기"
 
 #: src/components/home-overview.tsx
 msgid "Return to task"
@@ -5763,6 +5815,10 @@ msgstr "{summary}을(를) 되돌립니다"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "여기까지 되돌립니다"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "시뮬레이터 회전"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6341,21 +6397,26 @@ msgid "Sign in with"
 msgstr "로그인 방식"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm은 이 미리 보기를 제공하는 그 컴퓨터의 작은 프로그램입니다. 실행 중이 아니거나 다른 포트에서 기다리고 있습니다"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm 포트"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "시뮬레이터"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "시뮬레이터 연결"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "시뮬레이터 컨트롤"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "시뮬레이터 연결 끊김"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7113,6 +7174,10 @@ msgid "The shell exited."
 msgstr "셸이 종료되었습니다"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "시뮬레이터를 회전할 수 없습니다. 다시 시도하세요"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "시뮬레이터를 표시할 수 없습니다"
 
@@ -7137,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "음성 서비스가 잘못된 음성 인식 결과를 반환했습니다"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 포트는 전달하지 않아, 여기서는 시뮬레이터와 브라우저에 닿을 수 없습니다. 로컬 네트워크나 Tailscale로 연결하세요"
 
@@ -7302,8 +7368,8 @@ msgstr "이 컴퓨터는 페어링된 기기를 나열하지 않았습니다"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "이 컴퓨터는 더 이상 페어링되어 있지 않습니다"
 
@@ -7649,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

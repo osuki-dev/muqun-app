@@ -56,7 +56,7 @@ import { useServerChannels } from '@/stores/server-channels';
 /** Minimum row height shared by phone and Pad; labels can grow with text size. */
 const DOCK_ROW_HEIGHT = 40;
 
-/** Target choice is local to Home; a selection alone never switches a live connection. */
+/** All Home layouts share a remembered target; selecting it never switches a live connection. */
 export function useHomeLaunchController({
   servers,
   selectedServerId,
@@ -71,8 +71,8 @@ export function useHomeLaunchController({
   onPair: () => Promise<unknown>;
 }) {
   const router = useRouter();
-  const [chosenId, setChosenId] = useState<string | null>(null);
   const rememberedId = useHomeTaskCards((state) => state.deckFront);
+  const rememberTarget = useHomeTaskCards((state) => state.setDeckFront);
   const [pickerRequestId, setPickerRequestId] = useState<number | null>(null);
   // This is visual feedback only; the shared command controller owns the
   // operation guard across layouts, buttons, and unmounts.
@@ -90,19 +90,25 @@ export function useHomeLaunchController({
       : null;
   const chosenTargetId = homeDockTargetId({
     serverIds: servers.map((server) => server.serverId),
-    pickedId: returnedServerId ?? chosenId,
+    pickedId: returnedServerId,
     rememberedId,
     ...(selectedServerId ? { selectedId: selectedServerId } : {}),
   });
   const chosen = servers.find((server) => server.serverId === chosenTargetId);
+  const chosenIsDemo = chosen ? isDemoRecord(chosen) : false;
   const chosenConnection = chosen ? (connectionStatuses[chosen.serverId] ?? 'unknown') : undefined;
   const chosenOffline = reachabilityOfStatus(chosenConnection ?? 'unknown') === 'offline';
 
   useEffect(() => {
+    // Pin the initial/deleted-target fallback too: a session opened elsewhere
+    // may change the live connection before Home receives another explicit pick.
+    if (chosenTargetId && !chosenIsDemo && rememberedId !== chosenTargetId)
+      rememberTarget(chosenTargetId);
+  }, [chosenTargetId, chosenIsDemo, rememberedId, rememberTarget]);
+  useEffect(() => {
     if (pickerRequestId === null || pickerCompletedRequestId !== pickerRequestId) return;
-    if (pickerCompletedServerId) setChosenId(pickerCompletedServerId);
     setPickerRequestId(null);
-  }, [pickerCompletedRequestId, pickerCompletedServerId, pickerRequestId]);
+  }, [pickerCompletedRequestId, pickerRequestId]);
   useEffect(() => {
     if (pickerRequestId !== null && pickerRequestId === pickerOpenRequestId) {
       updatePickerReachability(pickerRequestId, reachabilityByServer);
@@ -144,14 +150,15 @@ export function useHomeLaunchController({
 
   /** Choose a target directly, as Home's composer does from an `@` mention. */
   function choose(serverId: string) {
-    if (servers.some((server) => server.serverId === serverId)) setChosenId(serverId);
+    const server = servers.find((server) => server.serverId === serverId);
+    if (server && !isDemoRecord(server)) rememberTarget(serverId);
   }
   /**
    * Keep the dock on the computer it names now, before something else (opening
    * a task on another computer) moves the app's selection.
    */
   function pinTarget() {
-    if (chosen) setChosenId(chosen.serverId);
+    if (chosen && !isDemoRecord(chosen)) rememberTarget(chosen.serverId);
   }
 
   return {

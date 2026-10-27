@@ -76,3 +76,17 @@ test('legacy video links share container hints without interpreting code, playli
     ).filter((part) => part.kind === 'video')
   ).toEqual([]);
 });
+
+test('explicit file links do not require a filename extension allowlist', () => {
+  expect(
+    files(
+      '[CSR](/tmp/request.certSigningRequest) [binary](~/Downloads/archive.unknown) [readme](./README)'
+    )
+  ).toEqual(['/tmp/request.certSigningRequest', '~/Downloads/archive.unknown', './README']);
+  expect(
+    files(
+      '[web](https://example.com/file) [anchor](#section) [network](//host/file) [script](javascript:alert)'
+    )
+  ).toEqual([]);
+  expect(files('`[CSR](/tmp/request.certSigningRequest)`')).toEqual([]);
+});

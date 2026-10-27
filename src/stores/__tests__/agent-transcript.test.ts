@@ -115,6 +115,31 @@ describe('agent transcript ownership', () => {
     store.getState().configure({ windowStart: 0, status: 'busy' });
     for (const key of state.keys) expect(store.getState().rows[key]).toBe(state.rows[key]);
   });
+  test('message generation belongs only to the final visible fragment of diagram markdown', () => {
+    for (const suffix of ['After diagram', '', '\n\n']) {
+      const store = createAgentTranscriptStore();
+      const generation = { scope: 'message' as const, tokens_per_second: 123.4 };
+      const message = item('answer', {
+        part: {
+          type: 'text',
+          text: `Before diagram\n\n\`\`\`mermaid\nflowchart LR\nA --> B\n\`\`\`\n${suffix}`,
+        },
+        generation,
+      });
+      store.getState().setTimeline([message]);
+      const state = store.getState();
+      const fragments = state.keys.flatMap((key) => state.rows[key].items);
+      expect(fragments.length).toBeGreaterThan(1);
+      expect(fragments.filter((fragment) => fragment.generation !== undefined)).toEqual(
+        fragments.slice(-1)
+      );
+      expect(fragments.at(-1)?.generation).toBe(generation);
+      expect(state.timeline[0]).toBe(message);
+      expect(message.generation).toBe(generation);
+      store.getState().configure({ windowStart: 0, status: 'busy' });
+      expect(store.getState().streamingKey).toBe(state.keys.at(-1));
+    }
+  });
   test('session replacement publishes its window and rows in one notification', () => {
     const store = createAgentTranscriptStore();
     store.getState().setTimeline(

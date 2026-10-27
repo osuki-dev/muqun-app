@@ -1,42 +1,7 @@
 /**
- * Where the simulator's picture is drawn, and which pixel of it a finger hit.
- *
- * Two questions, one file, because they are the same arithmetic read in
- * opposite directions. Getting the first one wrong makes the device small; only
- * getting the second one wrong *in the same way* makes it small and unusable,
- * which is the state this replaced -- so the placement a touch is resolved
- * against is the placement that was drawn, by construction, and never a second
- * copy of the sum.
- *
- * ## The fit rule
- *
- * **A portrait viewport fills its width. A landscape one fills its height.**
- *
- * The rule this replaced was simfarm's own, and it was written for a window on
- * a desk: reserve a 72px rail column, 24px of margin and a 56px pill row, then
- * take the largest of 50% / 75% / 100% that still fits. Measured on the phone
- * this was reported from -- a 402x812pt sheet showing a 402x874pt iPhone -- that
- * ladder lands on 50%: a 201pt-wide picture with 375pt of empty background
- * above and below it, and type nobody can read. There is nothing to reserve
- * here. The whole surface belongs to the picture.
- *
- * Filling the width means a device taller than the surface hangs over its ends,
- * which is why `clampOffset` and a two-finger drag exist. That is the trade the
- * report asked for and it is the right way round: the reader came to look at
- * the app, and the 7% of a phone that is status bar and home indicator is the
- * part they can reach for when they want it.
- *
- * The landscape half is not symmetry for its own sake. On a Pad, or a phone
- * turned sideways, filling the width with an upright phone would put a picture
- * three screens tall in front of someone -- so the short side wins there, which
- * is the same sentence as "the binding dimension wins" with the axes swapped.
- *
- * ## Why it is pure
- *
- * Because the failure it prevents is silent. A frame drawn at the wrong scale
- * looks like a design choice; a touch mapped through the wrong rectangle looks
- * like a tap that did nothing, which is exactly what was reported. Neither
- * announces itself, and neither needs a device to test.
+ * One rectangle for both the simulator image and its normalized input.
+ * The initial view contains the entire device. Two-finger zoom and pan reveal
+ * detail; restoring zoom 1 returns to the complete view.
  */
 import { type SimfarmEdge } from '@/lib/simfarm-protocol';
 
@@ -75,9 +40,8 @@ export interface SimfarmPlacement extends SimfarmSize, SimfarmPoint {
 /**
  * How far in the reader may zoom past the fit.
  *
- * 1 is the floor because below the fit there would be background on every side
- * again, which is the thing being fixed. 4 is where an iPhone's 402pt reaches
- * about four times life size -- past that a pinch is scrolling around a blur.
+ * 1 contains the complete device. 4 allows detail inspection without an
+ * unbounded image that is difficult to navigate back from.
  */
 export const SIMFARM_MIN_ZOOM = 1;
 export const SIMFARM_MAX_ZOOM = 4;
@@ -138,17 +102,12 @@ export function simfarmEdgeBands(
   };
 }
 
-/**
- * The scale at which the picture fills the surface: width in portrait, height
- * in landscape. See the note above for why it is not `min` of the two.
- */
+/** Scale to show the whole device, including a landscape tablet on a phone. */
 export function simfarmFitScale(frame: SimfarmSize, viewport: SimfarmSize): number {
   'worklet';
   if (frame.width <= 0 || frame.height <= 0) return 1;
   if (viewport.width <= 0 || viewport.height <= 0) return 1;
-  return viewport.height >= viewport.width
-    ? viewport.width / frame.width
-    : viewport.height / frame.height;
+  return Math.min(viewport.width / frame.width, viewport.height / frame.height);
 }
 
 /**
@@ -182,17 +141,7 @@ export function clampSimfarmOffset(
  * from a preview whose taps land somewhere else, which is the defect this
  * whole change is about.
  *
- * ## The top edge
- *
- * Horizontally the picture is centred, which on a portrait surface is the
- * whole width and on a landscape one is the picture between two bands of
- * ground. Vertically it is never centred: its top is the surface's top. This
- * is a picture of a phone on a phone, and the way to hold one is with the
- * status bars lined up -- so a picture taller than the surface starts at the
- * top and hangs its overflow off the bottom, where the pan can reach it, and
- * a picture shorter than the surface starts at the top with the theme's
- * ground below it. The surface itself runs from the very top of the screen,
- * under the hidden status bar and the camera cutout; the stage says why.
+ * Fitted images are centered. Enlarged images pan within their overflow.
  */
 export function placeSimfarmFrame(
   frame: SimfarmSize,
@@ -205,15 +154,12 @@ export function placeSimfarmFrame(
   const width = frame.width * scale;
   const height = frame.height * scale;
   const panned = clampSimfarmOffset({ width, height }, viewport, offset);
-  // The centred position, and then never below the top edge: a shorter
-  // picture's spare room is all ground under it, and a taller one's pan has
-  // already been clamped to the overflow, so it is at or above zero anyway.
   const centred = (viewport.height - height) / 2 + panned.y;
   return {
     width,
     height,
     x: (viewport.width - width) / 2 + panned.x,
-    y: Math.min(0, centred),
+    y: centred,
     scale,
   };
 }
@@ -228,21 +174,7 @@ export function placeSimfarmFrame(
  * ending it at the edge keeps it a gesture instead of dropping the finish and
  * leaving the device holding a touch that never lifted.
  */
-/**
- * Where an untouched picture rests: with its top at the top of the viewport.
- *
- * `placeSimfarmFrame` centres the overflow of a picture taller than the
- * viewport, which puts its top half-an-overflow above the screen -- the
- * simulated status bar cut off. So the overflow is hung off the bottom
- * instead, where the two-finger drag reveals it. The horizontal is always
- * centred: the fit rule fills the width, so there is nothing to hang until
- * the reader zooms.
- *
- * The answer is an offset in `clampSimfarmOffset`'s terms, so it is exactly
- * the value the pan would have reached by dragging to the top, and the clamp
- * can never disagree with it. A picture that fits needs no offset at all: the
- * placement already puts it at the top.
- */
+/** Enlarged images start at the top; the complete fitted image is centered. */
 export function simfarmRestingOffset(
   frame: SimfarmSize,
   viewport: SimfarmSize,
@@ -251,6 +183,16 @@ export function simfarmRestingOffset(
   'worklet';
   const scale = simfarmFitScale(frame, viewport) * clamp(zoom, SIMFARM_MIN_ZOOM, SIMFARM_MAX_ZOOM);
   return { x: 0, y: Math.max(0, (frame.height * scale - viewport.height) / 2) };
+}
+
+/** Black margins belong to the viewer; only a gesture starting on the image is forwarded. */
+export function simfarmContainsPoint(point: SimfarmPoint, placement: SimfarmPlacement): boolean {
+  return (
+    point.x >= placement.x &&
+    point.x <= placement.x + placement.width &&
+    point.y >= placement.y &&
+    point.y <= placement.y + placement.height
+  );
 }
 
 export function simfarmNormalizedPoint(
