@@ -165,7 +165,6 @@ const SubtitleLine = memo(function SubtitleLine({
       exiting={calmFadeOut()}
       style={styles.line}>
       <PressableScale
-        testID={`home-stage-subtitle-open-${line.key}`}
         accessibilityRole="button"
         accessibilityLabel={`${who}, ${t`Working`}, ${line.text}`}
         disabled={!onOpen}

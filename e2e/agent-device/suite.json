@@ -288,7 +288,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-open-session:\\[\"codex\",\"demo-stage-linked\"\\]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
@@ -322,7 +322,7 @@
       },
       {
         "target": {
-          "id": "home-stage-subtitle-open-session:\\[\"codex\",\"demo-stage-independent\"\\]"
+          "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-independent\"\\]"
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
