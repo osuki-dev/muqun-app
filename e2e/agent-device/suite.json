@@ -484,7 +484,16 @@
       },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
-    "subflows/home-search-settle": [{ "run": "flows/home-continue-search.ad#settle-typed" }],
+    "subflows/home-search-settle": [
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed-ios" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed" }]
+      }
+    ],
     "subflows/home-continue-search": [
       { "run": "flows/home-continue-search.ad#choose-layout" },
       {

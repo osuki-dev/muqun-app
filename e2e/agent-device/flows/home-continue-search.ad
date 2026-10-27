@@ -40,6 +40,11 @@ fill id="home-continue-search" "no-such-demo-session"
 keyboard enter
 wait stable 300 5000
 
+# section settle-typed-ios
+# Use the visible native Search key; the iOS Enter helper can time out after dispatch.
+press "id=Search visible=true"
+wait stable 300 5000
+
 # section session-menu
 # Search leaves exactly one demo row. The unsaved Demo computer has no recorded
 # delete capability, so its menu must offer dismissal without a destructive action.
