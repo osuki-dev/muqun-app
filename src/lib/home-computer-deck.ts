@@ -70,19 +70,16 @@ export function deckTilt(serverId: string): number {
 /**
  * The deck's order for the computers that have cards now: the order it
  * already had, less the ones that left, with arrivals behind in the cards'
- * own order. The first time, the remembered front comes first.
+ * own order. The shared Home target leads even after an earlier local move.
  */
 export function deckOrder(
   previous: readonly string[] | null,
   ids: readonly string[],
   front?: string | null
 ): string[] {
-  if (!previous) {
-    const rest = ids.filter((id) => id !== front);
-    return front && ids.includes(front) ? [front, ...rest] : [...ids];
-  }
-  const kept = previous.filter((id) => ids.includes(id));
-  return [...kept, ...ids.filter((id) => !kept.includes(id))];
+  const kept = previous?.filter((id) => ids.includes(id)) ?? [];
+  const order = [...kept, ...ids.filter((id) => !kept.includes(id))];
+  return front && order.includes(front) ? [front, ...order.filter((id) => id !== front)] : order;
 }
 
 /** The order after `move`. */

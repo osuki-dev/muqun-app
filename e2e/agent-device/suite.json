@@ -244,6 +244,9 @@
         "run": "flows/home-stage-progress.ad#visible"
       },
       {
+        "run": "flows/home-computer-options.ad"
+      },
+      {
         "target": {
           "id": "home-stage-subtitle-session:\\[\"codex\",\"demo-stage-linked\"\\]"
         },

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  DECK_ROTATE,
   DECK_STALL_MS,
   deckCommits,
   deckMoved,
@@ -30,6 +31,13 @@ describe('home computer deck', () => {
     expect(deckCommits(-50, 0, 1200, -1)).toBe(true);
     expect(deckCommits(-20, -550, width, -1)).toBe(true);
     expect(deckCommits(-5, -550, width, -1)).toBe(false);
+  });
+
+  test('a shared target change leads an already moved deck and deleted computers cannot return', () => {
+    const held = deckMoved(['a', 'b', 'c'], DECK_ROTATE);
+    expect(held).toEqual(['b', 'c', 'a']);
+    expect(deckOrder(held, ['a', 'b', 'c'], 'a')).toEqual(['a', 'b', 'c']);
+    expect(deckOrder(held, ['a', 'c'], 'b')).toEqual(['c', 'a']);
   });
 
   test('the watchdog gives up a move only once it has stood still, finger up, past the limit', () => {
