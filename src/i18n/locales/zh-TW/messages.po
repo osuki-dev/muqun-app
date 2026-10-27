@@ -1548,6 +1548,7 @@ msgid "Colour mode"
 msgstr "色彩模式"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1644,6 +1645,7 @@ msgid "Computer not found"
 msgstr "找不到電腦"
 
 #: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "電腦離線"
@@ -4470,6 +4472,10 @@ msgstr "未連線"
 msgid "NOT CONNECTED"
 msgstr "未連線"
 
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "尚未連線至模擬器預覽服務。請在這台電腦上啟動 Simfarm，或檢查下方連接埠。"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not every file was added"
@@ -4762,6 +4768,10 @@ msgstr "開啟工作階段"
 msgid "Open session tree"
 msgstr "開啟工作階段樹狀結構"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "開啟模擬器"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4808,6 +4818,10 @@ msgstr "開啟以檢查目前狀態"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "開啟工具呼叫詳細資料"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "開啟 Web"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -6383,16 +6397,10 @@ msgid "Sign in with"
 msgstr "登入方式"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm 是那台機器上負責提供這個預覽的小程式。它可能沒有在執行，也可能監聽在別的連接埠"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm 連接埠"
 
 #: src/app/commands.tsx
-#: src/components/agent-sessions-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "模擬器"
@@ -7194,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "語音服務傳回了無效的轉寫結果"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以從這裡碰不到模擬器和瀏覽器。改用區域網路或 Tailscale 連線"
 
@@ -7360,6 +7369,7 @@ msgstr "這台電腦沒有列出任何已配對的裝置"
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "這台電腦已經解除配對"
 
@@ -7705,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

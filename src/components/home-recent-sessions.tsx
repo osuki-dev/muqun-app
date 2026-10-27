@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
-import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon, DevicesIcon } from '@/icons';
+import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon } from '@/icons';
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
@@ -11,7 +11,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -99,7 +99,6 @@ import {
   type HomeDeletableTarget,
 } from '@/lib/home-session-delete';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
 import {
@@ -568,8 +567,6 @@ function RecentSessionRow({
         ? undefined
         : target?.serverId;
   const computer = homeContinueComputerLabel(servers, serverId);
-  const simulatorServerId = target?.kind === 'agent-session' ? target.serverId : undefined;
-  const simulatorAccess = useServerSimfarmAccess(simulatorServerId, menu !== null);
   const cwd =
     entry.destination.type === 'pane'
       ? entry.destination.cwd
@@ -808,19 +805,6 @@ function RecentSessionRow({
     );
   });
   const menuItems: AgentActionMenuItem[] = [];
-  if (simulatorServerId) {
-    menuItems.push({
-      id: 'simulator',
-      label: t`Simulator`,
-      Icon: DevicesIcon,
-      disabled: deleting || simulatorAccess.status === 'loading',
-      onPress: () => {
-        setMenu(null);
-        router.push({ pathname: '/simfarm', params: { serverId: simulatorServerId } });
-      },
-      testID: 'home-recent-simulator',
-    });
-  }
   if (onReply) {
     menuItems.push({
       id: 'reply',
