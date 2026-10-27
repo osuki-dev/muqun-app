@@ -445,6 +445,9 @@ export function HomeComposerDock({
   const threadStatus = useHomeThreadLive((state) =>
     threadKey && state.key === threadKey ? state.live.status : undefined
   );
+  const threadConfiguration = useHomeThreadLive((state) =>
+    threadKey && state.key === threadKey ? state.live.configuration : undefined
+  );
   const threadAgentId = thread?.kind === 'session' ? thread.agentId : undefined;
   const threadFeatures = useAgentFeatures(targetId, threadAgentId ?? null);
   // What the field offers on `/`, `$` and `@` follows the conversation the
@@ -711,28 +714,9 @@ export function HomeComposerDock({
       : t`Model`;
   const canPickMode = features.modes && modes.length > 0;
 
-  /**
-   * The pills a follow-up compares against: what they said when the session
-   * became the target. Only for the dock's own agent, whose catalog they
-   * name, and once that catalog has been read.
-   */
-  const threadPills = (current: HomeThreadTarget): HomeSessionParams | undefined => {
-    if (terminalAgent || catalog === undefined || current.kind !== 'session') return undefined;
-    if (current.agentId && agentId && normalizeAgentId(current.agentId) !== agentId)
-      return undefined;
-    return sessionParams;
-  };
-  const threadPillsMissing = thread?.kind === 'session' && !thread.pills;
-  const recordThreadPills = useEffectEvent(() => {
-    const current = targetId ? useHomeThreads.getState().byServer[targetId] : undefined;
-    if (!current || current.pills) return;
-    const pills = threadPills(current);
-    if (pills) useHomeThreads.getState().update(current, { ...current, pills });
-  });
-  const catalogReady = catalog !== undefined;
-  useEffect(() => {
-    if (threadPillsMissing && catalogReady) recordThreadPills();
-  }, [threadPillsMissing, catalogReady, threadKey]);
+  // Replying never applies new-conversation defaults to an existing session.
+  // Explicit configuration edits belong to the session screen.
+  const threadPills = (current: HomeThreadTarget): HomeSessionParams | undefined => current.pills;
 
   const selectModel = useStableHandler((model: ModelRef) => {
     if (targetId) chooseModel(targetId, agentId, model);
@@ -2014,21 +1998,46 @@ export function HomeComposerDock({
         return t`${agentName} is offline`;
       })()
     : undefined;
+  const replyConfiguration =
+    threadSession && threadConfiguration?.asid === threadSession.asid
+      ? threadConfiguration
+      : undefined;
+  const replyModel = replyConfiguration?.model;
+  const replyModelInfo = replyModel
+    ? threadCatalog?.models.find(
+        (model) =>
+          model.id === replyModel.model_id &&
+          (!replyModel.provider_id || model.provider_id === replyModel.provider_id)
+      )
+    : undefined;
+  const replyFolder = replyConfiguration?.directory ?? threadDirectory;
   const options = (
     <HomeComposerOptions
       computer={targetServer ? computerLabel : t`No computer online`}
-      agent={agentName}
-      folder={folderLabel}
-      model={modelName}
-      mode={shown.mode ?? 'build'}
-      modes={modes}
+      agent={thread ? threadAgentName : agentName}
+      folder={
+        threadSession
+          ? replyFolder
+            ? homeFolderName(replyFolder, { last: t`Last folder`, home: t`Home folder` })
+            : '—'
+          : folderLabel
+      }
+      model={
+        threadSession
+          ? replyModel
+            ? formatModelName(replyModel, '', replyModelInfo?.name)
+            : '—'
+          : modelName
+      }
+      mode={threadSession ? (replyConfiguration?.mode ?? '—') : (shown.mode ?? 'build')}
+      modes={threadSession ? selectableModes(threadCatalog?.modes ?? []) : modes}
       offline={!ready}
       onComputer={() => {
         beginChoice();
         openTargetPicker();
       }}
       onAgent={
-        targetServer
+        targetServer && !thread
           ? () => {
               beginChoice();
               router.push({
@@ -2039,7 +2048,7 @@ export function HomeComposerDock({
           : undefined
       }
       onFolder={
-        targetServer && ready && selected
+        targetServer && ready && selected && !thread
           ? () => {
               beginChoice();
               router.push({
@@ -2054,8 +2063,8 @@ export function HomeComposerDock({
             }
           : undefined
       }
-      onModel={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
-      onMode={canPickMode && !terminalAgent ? selectMode : undefined}
+      onModel={!thread && features.modelSelection && !terminalAgent ? openModelSheet : undefined}
+      onMode={!thread && canPickMode && !terminalAgent ? selectMode : undefined}
       replyTitle={replyTitle}
       onNewConversation={() => {
         setOptionsOpen(false);
@@ -2134,10 +2143,10 @@ export function HomeComposerDock({
       voiceContext={JSON.stringify([
         HOME_AGENT_SESSION_ID,
         targetId,
-        agentId,
-        folder ?? defaultCwd,
-        shown.mode,
-        selectedModel,
+        threadSession ? threadAgentId : agentId,
+        threadSession ? replyFolder : (folder ?? defaultCwd),
+        threadSession ? replyConfiguration?.mode : shown.mode,
+        threadSession ? replyModel : selectedModel,
       ])}
       mentionComputers={
         thread

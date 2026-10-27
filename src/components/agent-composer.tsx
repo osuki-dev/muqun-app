@@ -24,7 +24,6 @@ import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   BackIcon,
-  DoneIcon,
   TaskIcon,
   DisclosureDownIcon,
   ProcessorIcon,
@@ -98,7 +97,6 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
-  type PendingAttachment,
   describeBlockedSend,
   takePickTruncationNotice,
 } from '@/lib/attachments';
@@ -152,9 +150,6 @@ import {
   deliverAgentAttachmentPrompt,
   type AgentAttachmentSendRequest,
 } from '@/lib/agent-attachment-send';
-
-/** How long a direct send's receipt stays before it fades. */
-const SUBMITTED_NOTICE_MS = 5000;
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -819,7 +814,6 @@ export const AgentComposer = memo(function AgentComposer({
     request: AgentAttachmentSendRequest;
     token: symbol;
     delivery: 'steer' | 'queue' | undefined;
-    submittedAttachments?: PendingAttachment[];
   } | null>(null);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
@@ -890,10 +884,7 @@ export const AgentComposer = memo(function AgentComposer({
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
   const { clearAttachments } = attachmentUploads;
-  const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
-  const submittingAttachments = Boolean(
-    sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
-  );
+  const submittingAttachments = Boolean(sending && pendingAttachmentSend);
   // Only staged files belong in the composer. An ACK clears them through the
   // owned submission callback; it does not establish a canonical timeline row.
   const visibleAttachments = attachmentUploads.attachments;
@@ -920,7 +911,7 @@ export const AgentComposer = memo(function AgentComposer({
     // owned first-session create advances the captured owner and keeps it.
     if (!pendingAttachmentSend || pendingAttachmentSend.request.isCurrent()) return;
     const wasSending = attachmentSendGuard.release(pendingAttachmentSend.token);
-    if (wasSending || pendingAttachmentSend.submittedAttachments) {
+    if (wasSending) {
       setPendingAttachmentSend(null);
       setPreviewAttachmentId(null);
       if (wasSending) {
@@ -937,20 +928,6 @@ export const AgentComposer = memo(function AgentComposer({
     clearAttachments,
   ]);
   useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
-  // The receipt of a direct send is a moment, not a fixture.
-  const acknowledgedFiles = pendingAttachmentSend?.submittedAttachments;
-  useEffect(() => {
-    if (!acknowledgedFiles) return;
-    const timer = setTimeout(
-      () =>
-        setPendingAttachmentSend((previous) =>
-          previous?.submittedAttachments === acknowledgedFiles ? null : previous
-        ),
-      SUBMITTED_NOTICE_MS
-    );
-    return () => clearTimeout(timer);
-  }, [acknowledgedFiles]);
-
   const removeStagedAttachment = (id: string) => {
     if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
   };
@@ -1269,7 +1246,6 @@ export const AgentComposer = memo(function AgentComposer({
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
     if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
-    setPendingAttachmentSend((previous) => (previous?.submittedAttachments ? null : previous));
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1328,15 +1304,6 @@ export const AgentComposer = memo(function AgentComposer({
             trimmed,
             attachmentUploads.awaitUploads,
             () => {
-              // A queued send becomes an inbox row, which is its receipt.
-              if (delivery !== 'queue') {
-                const submittedAttachments = readStagedAttachments().map((item) =>
-                  item.status === 'done' ? item : { ...item, status: 'done' as const }
-                );
-                setPendingAttachmentSend((previous) =>
-                  previous?.token === token ? { ...previous, submittedAttachments } : previous
-                );
-              }
               setText((current) => (current.trim() === trimmed ? '' : current));
               attachmentUploads.clearAttachments();
             },
@@ -1357,9 +1324,7 @@ export const AgentComposer = memo(function AgentComposer({
         },
         () => {
           if (attachmentSendGuard.release(token)) {
-            setPendingAttachmentSend((previous) =>
-              previous?.token === token && !previous.submittedAttachments ? null : previous
-            );
+            setPendingAttachmentSend((previous) => (previous?.token === token ? null : previous));
             setSending(false);
           }
         }
@@ -1418,7 +1383,6 @@ export const AgentComposer = memo(function AgentComposer({
     onSend,
     captureAttachmentSend,
     attachmentSendGuard,
-    readStagedAttachments,
     setPreviewAttachmentId,
     showToast,
     t,
@@ -2531,47 +2495,6 @@ export const AgentComposer = memo(function AgentComposer({
                       <Trans>Sending attachment message…</Trans>
                     )}
                   </Text>
-                </Animated.View>
-              ) : null}
-
-              {/* A direct send's receipt: what went, with its files. It leaves on
-                its own; a tap only hides it sooner, and nothing here looks like
-                a way to take the message back. A queued send has none: its
-                inbox row is the receipt. */}
-              {pendingAttachmentSend?.submittedAttachments ? (
-                <Animated.View
-                  key={pendingAttachmentSend.submittedAttachments.map((item) => item.id).join(',')}
-                  entering={fadeIn('short')}
-                  exiting={fadeOut('short')}>
-                  <PressableScale
-                    testID="agent-composer-attachment-acknowledged"
-                    accessibilityRole="button"
-                    accessibilityLiveRegion="polite"
-                    accessibilityLabel={t`Submitted`}
-                    accessibilityHint={t`Hides this notice`}
-                    onPress={() => setPendingAttachmentSend(null)}
-                    style={[
-                      styles.uploadWait,
-                      flushField && {
-                        backgroundColor: surfaceBackground(theme.colors.surface),
-                        borderRadius: profile.chrome.noticeBanner,
-                      },
-                    ]}>
-                    <DoneIcon size={16} color={theme.colors.textMuted} />
-                    <View style={styles.noticeText}>
-                      <Text variant="caption" color={theme.colors.textMuted}>
-                        <Trans>Submitted</Trans>
-                      </Text>
-                    </View>
-                    <AttachmentThumbnailRow
-                      entries={pendingAttachmentSend.submittedAttachments.map((item) => ({
-                        key: item.id,
-                        name: item.name,
-                        uri: item.localUri,
-                        image: isImageAttachment(item.mime),
-                      }))}
-                    />
-                  </PressableScale>
                 </Animated.View>
               ) : null}
 
