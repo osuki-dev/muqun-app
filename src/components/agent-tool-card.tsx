@@ -1001,7 +1001,11 @@ export const AgentToolCard = memo(function AgentToolCard({
       truncated={truncated}
       {...(!muqun && errorLine ? { error: errorLine } : {})}
       background={detached}
-      {...(onOpenDetail ? { onOpenDetail } : {})}
+      {...(kind === 'subagent' && part.child_session_id && onOpenChildSession
+        ? { onOpenDetail: handleOpenChild }
+        : onOpenDetail
+          ? { onOpenDetail }
+          : {})}
       onExpand={onExpand}
       chips={muqun ? undefined : chips}
       actions={actions}

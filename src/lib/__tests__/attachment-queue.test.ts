@@ -117,6 +117,23 @@ describe('the upload pool', () => {
 });
 
 describe('per-entry transitions', () => {
+  test('a three-photo pick drains through the Gateway single-device slot in order', () => {
+    let queue = stage(pick('first.jpg'), pick('second.jpg'), pick('third.jpg'));
+    for (const entry of queue) {
+      expect(startableIds(queue)).toEqual([entry.id]);
+      queue = markUploading(queue, entry.id);
+      expect(startableIds(queue)).toEqual([]);
+      queue = markUploaded(queue, entry.id, { path: `/uploads/${entry.name}` });
+    }
+    expect(isBusy(queue)).toBe(false);
+    expect(hasFailures(queue)).toBe(false);
+    expect(uploadedPaths(queue)).toEqual([
+      '/uploads/first.jpg',
+      '/uploads/second.jpg',
+      '/uploads/third.jpg',
+    ]);
+  });
+
   test('an upload that lands carries its path and the name the gateway chose', () => {
     let queue = stage(pick('a.jpg'));
     const { id } = queue[0];

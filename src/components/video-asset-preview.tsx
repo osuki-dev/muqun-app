@@ -1,3 +1,4 @@
+import { useFileResolver } from './file-computer-picker';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -12,7 +13,7 @@ import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { saveSessionAsset } from '@/lib/save-file';
-import { configuredGatewayServerId, resolveAgentFileAsset } from '@/lib/gateway-client';
+import { configuredGatewayServerId } from '@/lib/gateway-client';
 import type { SessionAsset } from '@/lib/session-assets';
 import { AudioPlaybackSession, type AudioPlaybackState } from '@/lib/audio-playback-session';
 import { videoFileMime } from '@/lib/media-file';
@@ -38,6 +39,7 @@ export function InlineVideoFile({
   asid: string;
   poster?: ImageSource;
 }) {
+  const resolveFile = useFileResolver();
   const { ref, visible } = useInlineMediaVisibility();
   const [serverId] = useState(configuredGatewayServerId);
   const asset: SessionAsset = {
@@ -57,7 +59,7 @@ export function InlineVideoFile({
         asset={asset}
         visible={visible}
         poster={poster}
-        resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal, serverId)}
+        resolve={(signal) => resolveFile(asid, file.uri, signal, serverId)}
       />
     </Animated.View>
   );

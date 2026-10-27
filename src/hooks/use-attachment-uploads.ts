@@ -123,7 +123,7 @@ export function useAttachmentUploads(
       try {
         // Compression sits here rather than at picking so it costs one file at
         // a time, inside the slot the upload pool already handed out: a
-        // nine-photo pick re-encodes three at a time instead of decoding nine
+        // nine-photo pick re-encodes one at a time instead of decoding nine
         // camera frames at once, and the strip is showing "uploading" while it
         // happens rather than freezing on the picker's return.
         const source = await compressPickedImage({

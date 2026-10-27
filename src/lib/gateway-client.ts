@@ -1,3 +1,4 @@
+import { mcpFileAssets } from './mcp-file-reference';
 import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { paneComposerExtrasFromAnswer, type PaneSkill } from './pane-composer';
 import { decodeBase64Url, encodeBase64Url } from './base64url';
@@ -2041,8 +2042,10 @@ export async function readAssetText(
 export async function resolveAgentAudioAsset(
   asid: string,
   uri: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  serverId = configuredGatewayServerId()
 ): Promise<SessionAsset> {
+  assertFileGateway(serverId);
   if (isDemoActive()) {
     const asset = demoSessionAssets().find((entry) => entry.id === 'as-demo-audio');
     if (!asset || !uri.endsWith('sample-tone.wav')) throw new Error('Audio output unavailable.');
@@ -2057,6 +2060,7 @@ export async function resolveAgentAudioAsset(
   if (!Array.isArray(capabilities) || !capabilities.includes('agent_audio_assets')) {
     throw new AudioPlaybackError('unsupported');
   }
+  assertFileGateway(serverId);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/agent-sessions/${encodeURIComponent(asid)}/audio-asset?uri=${encodeURIComponent(uri)}`
@@ -2068,7 +2072,35 @@ export async function resolveAgentAudioAsset(
   const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
   if (!asset || asset.kind !== 'audio' || !asset.previewable)
     throw new Error('Audio output unavailable.');
-  return asset;
+  assertFileGateway(serverId);
+  return { ...asset, gatewayServerId: serverId ?? undefined };
+}
+
+/** The Gateway requests a source choice; this is not an authorization grant. */
+export class FileComputerSelection extends Error {
+  constructor(readonly path: string) {
+    super('Choose the computer that contains this file.');
+  }
+}
+
+export async function resolveComputerFile(path: string, serverId: string, signal: AbortSignal) {
+  const asset = mcpFileAssets({
+    server_id: serverId,
+    files: [
+      {
+        id: path,
+        path,
+        name: path.split('/').pop() ?? path,
+        mime: 'application/octet-stream',
+        kind: 'binary',
+        size: 0,
+        modified_unix_ms: 0,
+        previewable: false,
+      },
+    ],
+  })[0];
+  if (!asset) throw new Error('Invalid file reference');
+  return resolveMcpFileAsset(asset, signal);
 }
 
 export async function resolveAgentFileAsset(
@@ -2099,14 +2131,25 @@ export async function resolveAgentFileAsset(
       throw new AudioPlaybackError('unsupported');
     }
     assertFileGateway(serverId);
+    const sourceSelection = capabilities.includes('agent_file_source_selection_v1');
     const response = await gatewayFetch(
       gatewayUrl(
-        `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+        `/api/agent-sessions/${encodeURIComponent(asid)}/${sourceSelection ? 'file-source' : 'file-asset'}?uri=${encodeURIComponent(uri)}`
       ),
       { headers: gatewayAuthHeaders(), signal }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const envelope = await response.json();
+    assertFileGateway(serverId);
+    const source = envelope?.data?.file_source;
+    if (
+      sourceSelection &&
+      source?.state === 'choose_computer' &&
+      typeof source.path === 'string' &&
+      source.path.length <= 8192
+    ) {
+      throw new FileComputerSelection(source.path);
+    }
     const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
     if (!asset) throw new Error('File output unavailable.');
     assertFileGateway(serverId);

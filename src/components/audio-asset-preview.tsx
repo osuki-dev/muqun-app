@@ -1,3 +1,5 @@
+import { useFileResolver } from './file-computer-picker';
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -11,7 +13,7 @@ import { AppState, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useInlineMediaVisibility } from '@/hooks/use-inline-media-visibility';
 import { AudioProgress } from '@/components/audio-progress';
-import { resolveAgentAudioAsset } from '@/lib/gateway-client';
+import { configuredGatewayServerId, resolveAgentAudioAsset } from '@/lib/gateway-client';
 import { audioWaveform } from '@/lib/audio-waveform';
 import { AudioPlaybackContext } from '@/components/audio-playback-context';
 import { createAudioPlaybackEntry } from '@/lib/audio-playback-pool';
@@ -38,6 +40,17 @@ export function InlineAudioFile({
   file: { uri: string; mime?: string; name?: string };
   asid: string;
 }) {
+  const resolveFile = useFileResolver();
+  const [serverId] = useState(configuredGatewayServerId);
+  const resolveAudio = async (signal: AbortSignal) => {
+    try {
+      return await resolveFile(asid, file.uri, signal, serverId);
+    } catch (error) {
+      // Older audio-only Gateways retain their existing endpoint.
+      if (!(error instanceof AudioPlaybackError) || signal.aborted) throw error;
+      return resolveAgentAudioAsset(asid, file.uri, signal, serverId);
+    }
+  };
   const { ref, visible } = useInlineMediaVisibility();
   const asset = useMemo<SessionAsset>(
     () => ({
@@ -54,11 +67,7 @@ export function InlineAudioFile({
   );
   return (
     <Animated.View ref={ref} style={styles.inlineWrap} testID="inline-audio-output">
-      <AudioAssetPreview
-        asset={asset}
-        visible={visible}
-        resolve={(signal) => resolveAgentAudioAsset(asid, file.uri, signal)}
-      />
+      <AudioAssetPreview asset={asset} visible={visible} resolve={resolveAudio} />
     </Animated.View>
   );
 }

@@ -813,6 +813,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     })) ?? [];
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
+  const transcriptChildren = useStore(transcriptStore, (state) =>
+    JSON.stringify([
+      ...new Set(
+        state.timeline.flatMap(({ part }) =>
+          part.type === 'tool' && part.child_session_id ? [part.child_session_id] : []
+        )
+      ),
+    ])
+  );
   const toolIds = useStore(transcriptStore, (state) => state.toolIds);
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
@@ -5308,15 +5317,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * one carries.
    */
   const childrenRootRef = useRef<string | undefined>(undefined);
+  const childrenTranscriptRef = useRef('[]');
   useEffect(() => {
     const rootChanged = childrenRootRef.current !== activeRootAsid;
-    if (!rootChanged && isRunning) return;
+    const childrenChanged = childrenTranscriptRef.current !== transcriptChildren;
+    if (!rootChanged && !childrenChanged && isRunning) return;
     childrenRootRef.current = activeRootAsid;
+    childrenTranscriptRef.current = transcriptChildren;
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent -- refreshChildren loads the workbench-owned child index; it is not a parent state callback.
     void refreshChildren(activeRootAsid).catch(() => {});
     // Not on `activeDirectory`: a workspace change re-keys the roots and
     // arrives here as a new root; on its own it re-walked the same tree.
-  }, [refreshChildren, activeRootAsid, isRunning]);
+  }, [refreshChildren, activeRootAsid, isRunning, transcriptChildren]);
 
   const currentSession = useMemo(() => {
     return sessions.find((s) => s.asid === activeAsid) ?? sessionInfo;

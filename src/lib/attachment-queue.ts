@@ -52,10 +52,10 @@ export function uploadLimitMb(bytes: number): number {
 }
 
 /**
- * Enough to keep a home network busy without a nine-photo pick opening nine
- * sockets against a gateway that is usually somebody's laptop.
+ * The Gateway admits one large request per device. Keep a multi-file pick
+ * queued locally instead of making its own uploads compete for that slot.
  */
-export const MAX_CONCURRENT_UPLOADS = 3;
+export const MAX_CONCURRENT_UPLOADS = 1;
 
 const TOO_LARGE_MESSAGE = 'File too large';
 

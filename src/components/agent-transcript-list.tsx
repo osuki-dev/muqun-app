@@ -1,3 +1,4 @@
+import { FileComputerPicker } from './file-computer-picker';
 import {
   createContext,
   memo,
@@ -438,24 +439,26 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     ? KeyboardAwareLegendList<string>
     : (LegendList<string> as unknown as typeof KeyboardAwareLegendList<string>);
   return (
-    <RowContext.Provider value={context}>
-      <List
-        {...props}
-        {...(keyboardAware || !renderScrollComponent ? null : { renderScrollComponent })}
-        maintainScrollAtEnd={toolBrowsing ? false : props.maintainScrollAtEnd}
-        onScroll={handleScroll}
-        onItemSizeChanged={handleItemSizeChanged}
-        onScrollBeginDrag={handleScrollBeginDrag}
-        onScrollEndDrag={handleScrollEndDrag}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
-        ref={listRef}
-        viewabilityConfig={DIAGRAM_VIEWABILITY}
-        onViewableItemsChanged={onViewableItemsChanged}
-        data={keys}
-        keyExtractor={keyOfRow}
-        renderItem={renderRow}
-        recycleItems
-      />
-    </RowContext.Provider>
+    <FileComputerPicker key={namespace}>
+      <RowContext.Provider value={context}>
+        <List
+          {...props}
+          {...(keyboardAware || !renderScrollComponent ? null : { renderScrollComponent })}
+          maintainScrollAtEnd={toolBrowsing ? false : props.maintainScrollAtEnd}
+          onScroll={handleScroll}
+          onItemSizeChanged={handleItemSizeChanged}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          onScrollEndDrag={handleScrollEndDrag}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          ref={listRef}
+          viewabilityConfig={DIAGRAM_VIEWABILITY}
+          onViewableItemsChanged={onViewableItemsChanged}
+          data={keys}
+          keyExtractor={keyOfRow}
+          renderItem={renderRow}
+          recycleItems
+        />
+      </RowContext.Provider>
+    </FileComputerPicker>
   );
 });
