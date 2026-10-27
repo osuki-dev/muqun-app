@@ -34,7 +34,7 @@ longpress "${TARGET}" 700
 wait stable 300 5000
 
 # section draft
-fill id="home-composer-input" "Unsent Stage QA draft"
+fill id="home-composer-input" "Unsent Stage QA draft" --delay-ms 80
 wait stable 300 5000
 
 # section clear-draft
