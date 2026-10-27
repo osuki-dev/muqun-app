@@ -96,10 +96,8 @@ uses the build's Lingui and React Compiler pipeline.
 - Limit `'use no memo'` to documented escape hatches with a reason beside them.
 
 Measure performance in Release builds on the same QA device and state, with at
-least two runs per side. Profiling builds use `MUQUN_RELEASE_PROFILER=1` at
-native build time and `EXPO_PUBLIC_RELEASE_PROFILER=1` at bundle time; store
-builds must contain neither profiling module nor profiling JS. Clear the native
-flag and rerun pod installation before an iOS store build.
+least two runs per side. Use external platform profiling tools; store builds
+must contain no profiling modules or controls.
 
 Skia is `react-native-skia` 3.x with Graphite (Android Vulkan, minSdk 26).
 Paths are immutable: use `Skia.PathBuilder` and `detach()`. Rerun `pod install`

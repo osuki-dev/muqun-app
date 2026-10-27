@@ -162,25 +162,6 @@ function ThemeFileOpener() {
   return null;
 }
 
-/**
- * The profiling control, in a Debug bundle or a Release profiling bundle only.
- * Set EXPO_PUBLIC_RELEASE_PROFILER=0 to keep native QA controls unobstructed.
- *
- * A `require` behind a condition Metro can fold, not an import: `__DEV__` and
- * `process.env.EXPO_PUBLIC_*` are inlined when a bundle is built, so a store
- * bundle sees `false`, and the control, `@/lib/release-profiler` and the
- * library's JS never enter it. See src/lib/release-profiler.ts.
- */
-type ProfilerControlModule = typeof import('@/components/release-profiler-control');
-
-const ReleaseProfilerControl =
-  (__DEV__ && process.env.EXPO_PUBLIC_RELEASE_PROFILER !== '0') ||
-  process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
-    ? // oxlint-disable-next-line typescript/no-require-imports
-      (require('@/components/release-profiler-control') as ProfilerControlModule)
-        .ReleaseProfilerControl
-    : null;
-
 /** How long a toast stays, unless the caller says otherwise. */
 const TOAST_DURATION_MS = 5000;
 /**
@@ -697,7 +678,6 @@ function RootContent() {
           </ReskinSurface>
         </ReskinTransitionProvider>
         {/* Outside the re-skin surface so a transition never photographs it. */}
-        {ReleaseProfilerControl ? <ReleaseProfilerControl /> : null}
       </ToastProvider>
     </ThemeProvider>
   );

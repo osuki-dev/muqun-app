@@ -6,8 +6,7 @@
  * the gap between frames, draw calls, the quality rung and the pixel ratio.
  *
  * Never in a store bundle. `stage-runtime.tsx` requires this module behind
- * `EXPO_PUBLIC_STAGE_PERF=1` in a Debug bundle or a Release profiling bundle
- * (`EXPO_PUBLIC_RELEASE_PROFILER=1`); both are inlined when a bundle is
+ * `EXPO_PUBLIC_STAGE_PERF=1` in a Debug bundle; both conditions are inlined when a bundle is
  * built, so anywhere else the condition folds to `false` and Metro drops the
  * `require` before it collects dependencies.
  *

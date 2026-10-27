@@ -197,7 +197,6 @@
       "expo-screen-orientation",
       "./plugins/with-native-locales.js",
       "./plugins/with-advance-width-line-breaks.js",
-      "./plugins/with-release-profiler-stub.cjs",
       [
         "expo-secure-store",
         {
