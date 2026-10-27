@@ -78,31 +78,16 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
  * them together meant a component where the empty states and a live video
  * stream shared a render.
  *
- * ## The picture fills the phone, from the top edge
+ * ## Picture and controls
  *
- * The fit rule is in `simfarm-frame.ts` with the reasoning; what belongs here
- * is the consequence. There is no header, no footer, no reserved column and no
- * band: the surface is the whole screen, the host is a full-screen modal with
- * its status bar hidden (the route says why), and the picture starts at
- * y = 0 -- under the hidden status bar, under the camera cutout -- exactly the
- * way the phone in the picture would if it were the phone in the hand. It used
- * to start below the top inset, which left a strip of ground with a handle in
- * it above the picture, and on the phone this was reported from that strip
- * was the first thing on the screen. What the top edge costs is that the
- * simulated status bar sits behind the real cutout; what it buys is that
- * nothing is above the app under test. A phone taller than the surface hangs
- * over the bottom, which is what the two-finger drag is for.
+ * The device selector occupies a compact row inside the safe area. The
+ * remaining viewport contains the whole device at its original aspect ratio,
+ * centered without cropping. Pinch and pan inspect details; Fit restores the
+ * complete view. Embedded previews use the workspace's existing safe area.
+ * Drawing and touch mapping share the same placement rectangle.
  *
- * ## One button, one menu
- *
- * The only chrome is the app's floating button (`FloatingHandle`) with the
- * simulator glyph on it, and the menu a tap on it opens: the device, the
- * keys, the composer and the way out. `simfarm-chrome.ts` is the table of
- * what each tap does and where the menu goes. The button floats above the
- * picture and never forwards a touch to it -- it is drawn over the canvas and
- * takes the press -- and while the menu is open a backdrop under it takes
- * every other touch, so the app under test is not being driven by taps meant
- * to put the menu away.
+ * The movable floating handle opens device actions. While its menu is open,
+ * a backdrop consumes outside taps so dismissing it cannot operate the device.
  *
  * ## What React draws, and what it does not
  *
@@ -154,8 +139,8 @@ export function SimfarmStage({
   const [draft, setDraft] = useState('');
 
   /**
-   * The insets the *button* and the *menu* keep clear -- not the picture. The
-   * Pad column is inside the workspace, which has already paid them.
+   * Keep the fitted picture and controls clear of the host's cutouts.
+   * The embedded workspace has already applied its safe area.
    */
   const topInset = embedded ? 0 : insets.top;
   const bottomInset = embedded ? 0 : insets.bottom;
@@ -204,7 +189,7 @@ export function SimfarmStage({
     (event: 'button' | 'offer') => {
       const button =
         event === 'offer'
-          ? { x: leftInset + 12, y: topInset + 6, width: 44, height: 44 }
+          ? { x: leftInset + 12, y: topInset + 2, width: 44, height: 44 }
           : floatingHandleFrame(viewport, { x: handleX.get(), y: handleY.get() }, bottomInset);
       setMenuAt(simfarmMenuPlacement(button, viewport, { top: topInset, bottom: bottomInset }));
       dispatch(event);
@@ -271,9 +256,8 @@ export function SimfarmStage({
 
   /**
    * In the stage's own coordinates, which are the ones a touch arrives in --
-   * the surface the fit is worked out against is the whole stage, so the
-   * rectangle drawn into and the rectangle a finger is resolved against are
-   * the same rectangle by construction.
+   * the fitted viewport excludes the selector and safe area. Its origin is
+   * added once so drawing and input resolve against the same rectangle.
    *
    * Worked out on the UI runtime, where the zoom and the pan live, so a pinch
    * or a drag moves the picture without a render; a touch reads the same
@@ -882,7 +866,7 @@ export function SimfarmStage({
         style={[
           styles.devicePill,
           {
-            top: topInset + 6,
+            top: topInset + 2,
             left: leftInset + 12,
             maxWidth: Math.max(0, Math.min(320, viewport.width - leftInset - rightInset - 24)),
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
@@ -903,7 +887,7 @@ export function SimfarmStage({
           pointerEvents="none"
           style={[
             styles.liveError,
-            { top: topInset + 12, backgroundColor: theme.colors.background },
+            { top: pictureTop + 12, backgroundColor: theme.colors.background },
           ]}>
           <Text variant="bodySmall" color={theme.colors.danger} style={styles.centred}>
             {explain(stream.error)}
@@ -1001,7 +985,8 @@ function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
 const MENU_MARGIN = 12;
 /** Between the composer and the bottom inset. */
 const COMPOSER_GAP = 10;
-const DEVICE_SELECTOR_SPACE = 56;
+// A 44pt target with 2pt clearance on either side; the picture gets the rest.
+const DEVICE_SELECTOR_SPACE = 48;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },

@@ -1548,6 +1548,7 @@ msgid "Colour mode"
 msgstr "โหมดสี"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1644,6 +1645,7 @@ msgid "Computer not found"
 msgstr "ไม่พบคอมพิวเตอร์"
 
 #: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
@@ -4470,6 +4472,10 @@ msgstr "ไม่ได้เชื่อมต่อ"
 msgid "NOT CONNECTED"
 msgstr "ไม่ได้เชื่อมต่อ"
 
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "ยังไม่ได้เชื่อมต่อกับบริการแสดงตัวอย่างโปรแกรมจำลอง เริ่ม Simfarm บนคอมพิวเตอร์เครื่องนี้ หรือตรวจสอบพอร์ตด้านล่าง"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not every file was added"
@@ -4762,6 +4768,10 @@ msgstr "เปิดเซสชัน"
 msgid "Open session tree"
 msgstr "เปิดแผนผังเซสชัน"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "เปิดโปรแกรมจำลอง"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4808,6 +4818,10 @@ msgstr "เปิดเพื่อตรวจสอบสถานะปัจ
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "เปิดรายละเอียดการเรียกใช้เครื่องมือ"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "เปิดเว็บ"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -6383,16 +6397,10 @@ msgid "Sign in with"
 msgstr "เข้าสู่ระบบด้วย"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm คือโปรแกรมขนาดเล็กบนเครื่องนั้นที่ให้บริการตัวอย่างนี้ อาจยังไม่ได้ทำงานหรือกำลังรับการเชื่อมต่อที่พอร์ตอื่น"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "พอร์ต simfarm"
 
 #: src/app/commands.tsx
-#: src/components/agent-sessions-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "เครื่องจำลอง"
@@ -7194,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "บริการเสียงส่งข้อความถอดเสียงที่ไม่ถูกต้องกลับมา"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
 
@@ -7360,6 +7369,7 @@ msgstr "คอมพิวเตอร์เครื่องนี้ไม่
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "คอมพิวเตอร์นี้ไม่ได้จับคู่อีกต่อไป"
 
@@ -7705,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

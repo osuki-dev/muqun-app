@@ -41,11 +41,8 @@ export function SimfarmNotice({
   return (
     // Opacity audit: floor -- a full-screen preview must cover the previous route.
     <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
-      {/* Only in the modal, and only on the states that are not the simulator.
-          The preview itself stays headerless on purpose -- what is inside it is
-          a device drawn at 1:1, and a bar over it would crop the thing the
-          screen exists to show. These states have room, and a full screen with
-          no name on it is the part of this that read as broken. */}
+      {/* Setup states need a title and a direct way back. The live viewer
+          instead uses its compact device selector and device controls. */}
       {onClose && !embedded ? (
         <View
           style={[

@@ -465,6 +465,28 @@ describe('moving a session to a worktree', () => {
 describe('the mirror', () => {
   const mirrored = mirrorDiscovery(discovery, 1_700_000_000_000);
 
+  test('retains each computer platform without borrowing another computer or the phone platform', () => {
+    let index = withMirroredDiscovery(
+      emptyAgentsMirror(),
+      'mac',
+      mirrorDiscovery({ ...discovery, platform: 'macos' }, 1)
+    );
+    index = withMirroredDiscovery(
+      index,
+      'linux',
+      mirrorDiscovery({ ...discovery, platform: 'linux' }, 1)
+    );
+    index = withMirroredDiscovery(
+      index,
+      'unknown',
+      mirrorDiscovery({ ...discovery, platform: undefined }, 1)
+    );
+    const restored = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
+    expect(restored.servers.mac?.platform).toBe('macos');
+    expect(restored.servers.linux?.platform).toBe('linux');
+    expect(restored.servers.unknown?.platform).toBeUndefined();
+  });
+
   test('drops what only a paired device was told, and the lists the catalog serves', () => {
     const deepseek = mirrored.agents?.agents[0];
     expect(deepseek).toBeDefined();

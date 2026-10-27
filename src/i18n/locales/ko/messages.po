@@ -1548,6 +1548,7 @@ msgid "Colour mode"
 msgstr "색상 모드"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1644,6 +1645,7 @@ msgid "Computer not found"
 msgstr "컴퓨터를 찾을 수 없음"
 
 #: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "컴퓨터 오프라인"
@@ -4470,6 +4472,10 @@ msgstr "연결되지 않음"
 msgid "NOT CONNECTED"
 msgstr "연결 안 됨"
 
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "시뮬레이터 미리보기 서비스에 연결되지 않았습니다. 이 컴퓨터에서 Simfarm을 시작하거나 아래 포트를 확인하세요"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not every file was added"
@@ -4762,6 +4768,10 @@ msgstr "세션 열기"
 msgid "Open session tree"
 msgstr "세션 트리 열기"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "시뮬레이터 열기"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4808,6 +4818,10 @@ msgstr "열어서 현재 상태를 확인하세요"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "도구 호출 세부 정보 열기"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "웹 열기"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -6383,16 +6397,10 @@ msgid "Sign in with"
 msgstr "로그인 방식"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm은 이 미리 보기를 제공하는 그 컴퓨터의 작은 프로그램입니다. 실행 중이 아니거나 다른 포트에서 기다리고 있습니다"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm 포트"
 
 #: src/app/commands.tsx
-#: src/components/agent-sessions-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "시뮬레이터"
@@ -7194,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "음성 서비스가 잘못된 음성 인식 결과를 반환했습니다"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 포트는 전달하지 않아, 여기서는 시뮬레이터와 브라우저에 닿을 수 없습니다. 로컬 네트워크나 Tailscale로 연결하세요"
 
@@ -7360,6 +7369,7 @@ msgstr "이 컴퓨터는 페어링된 기기를 나열하지 않았습니다"
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "이 컴퓨터는 더 이상 페어링되어 있지 않습니다"
 
@@ -7705,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

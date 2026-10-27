@@ -1548,6 +1548,7 @@ msgid "Colour mode"
 msgstr "カラーモード"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1644,6 +1645,7 @@ msgid "Computer not found"
 msgstr "コンピュータが見つかりません"
 
 #: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "コンピュータはオフライン"
@@ -4470,6 +4472,10 @@ msgstr "未接続"
 msgid "NOT CONNECTED"
 msgstr "未接続"
 
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "シミュレーターのプレビューサービスに接続できません。このコンピューターで Simfarm を起動するか、下のポートを確認してください"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not every file was added"
@@ -4762,6 +4768,10 @@ msgstr "セッションを開く"
 msgid "Open session tree"
 msgstr "セッションツリーを開く"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "シミュレーターを開く"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4808,6 +4818,10 @@ msgstr "開いて現在の状態を確認"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "ツール呼び出しの詳細を開く"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "Web を開く"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -6383,16 +6397,10 @@ msgid "Sign in with"
 msgstr "サインイン方法"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm は、このプレビューを配信するマシン側の小さなプログラムです。起動していないか、別のポートで待ち受けています"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm のポート"
 
 #: src/app/commands.tsx
-#: src/components/agent-sessions-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "シミュレータ"
@@ -7194,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "音声サービスから無効な文字起こしが返されました"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
 
@@ -7360,6 +7369,7 @@ msgstr "このコンピュータはペアリング済みのデバイスを一覧
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "このコンピュータはもうペアリングされていません"
 
@@ -7705,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

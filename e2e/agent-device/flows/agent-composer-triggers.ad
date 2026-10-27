@@ -1,6 +1,18 @@
 # The ordinary offline AgentWorkbench and AgentComposer, without sending a prompt.
 open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
 wait "id=agent-composer-input" 15000
+is visible "id=agent-composer-action-row"
+press "id=agent-composer-commands"
+wait "id=agent-composer-command-menu" 5000
+is visible "id=agent-composer-command-web"
+is visible "id=agent-composer-command-simulator"
+snapshot
+screenshot "shots/agent-session-command-menu.png"
+# The demo has no paired transport proof. The route must keep its own gate.
+press "id=agent-composer-command-simulator"
+wait "id=simfarm-pair" 10000
+press "id=simfarm-close"
+wait "id=agent-composer-input" 10000
 fill "id=agent-composer-input" "@"
 wait "id=file-mention-app.json" 10000
 wait 400

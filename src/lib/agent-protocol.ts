@@ -2407,6 +2407,8 @@ export interface TransportsDiscovery {
 
 /** Every plane of one `GET /api/discovery` answer this app reads. */
 export interface GatewayDiscovery {
+  /** The target computer's OS, reported by Gateway; never the phone's OS. */
+  platform?: string;
   agents: AgentsDiscovery | null;
   terminal: TerminalDiscovery | null;
   ssh: SshDiscovery | null;
@@ -2536,7 +2538,9 @@ export function parseGatewayDiscovery(value: unknown): GatewayDiscovery {
   const planes = asRecord(rec.planes) ?? {};
   const transports = parseTransportsDiscovery(rec.transports);
   const uploads = parseUploadLimits(rec.uploads);
+  const platform = asString(rec.platform);
   return {
+    ...(platform ? { platform } : {}),
     agents: parseAgentsDiscovery(rec),
     terminal: parseTerminalDiscovery(planes.terminal),
     ssh: parseSshDiscovery(planes.ssh),

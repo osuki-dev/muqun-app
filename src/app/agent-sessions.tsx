@@ -15,7 +15,6 @@ import {
   type SessionPagesState,
 } from '@/lib/agent-session-page';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
-import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 
 const EMPTY_PAGE: SessionPagesState = {
   sessions: [],
@@ -69,7 +68,6 @@ function OwnedAgentSessionsScreen() {
   const sessionId = useAgentSheetBridge((state) => state.sessionId);
   const serverId = useAgentSheetBridge((state) => state.serverId);
   const agentId = useAgentSheetBridge((state) => state.listAgentId);
-  const simulatorAccess = useServerSimfarmAccess(serverId);
   const capabilities = useServerCapabilities((state) =>
     serverId ? state.byServer[serverId] : undefined
   );
@@ -191,10 +189,6 @@ function OwnedAgentSessionsScreen() {
       // the workbench's list heard about it.
       canMutateSession={canMutateSession}
       onForkSession={actions.forkSession}
-      simulatorLoading={simulatorAccess.status === 'loading'}
-      onPreviewSimulator={
-        serverId ? () => router.replace({ pathname: '/simfarm', params: { serverId } }) : undefined
-      }
       onRenameSession={(asid, title) => {
         const session = merged.find((row) => row.asid === asid);
         if (!session || !canMutateSession('rename', session)) return;

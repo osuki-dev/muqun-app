@@ -302,6 +302,7 @@ import {
 } from '@/lib/tab-swipe';
 import { allowsWebServiceOpen } from '@/lib/web-service';
 import { SimfarmPreview } from '@/components/simfarm-preview';
+import { simulatorTerminalConnected } from '@/lib/simulator-access';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
@@ -3043,6 +3044,7 @@ export function ServerTerminalWorkspace({
   // than the field, which keeps the SSH encoder as the judge.
   useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected' && openSettled);
   const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
+  const simulatorPlatform = useAgents((state) => state.index.servers[serverId]?.platform);
   const backendVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
   // A gateway with no terminal backend running answers with an empty session
   // rather than an error, and a pane never arrives on its own -- so without
@@ -6914,6 +6916,8 @@ export function ServerTerminalWorkspace({
                 <SimfarmPreview
                   embedded
                   serverId={serverId}
+                  platform={simulatorPlatform}
+                  terminalConnected={simulatorTerminalConnected(data.health, serverId)}
                   gatewayUrl={record?.url}
                   allowed={simfarmSplit.allowed}
                   initialPort={simfarmPorts[record?.serverId ?? '']}

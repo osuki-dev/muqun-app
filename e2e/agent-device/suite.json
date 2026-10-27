@@ -16,7 +16,7 @@
     {
       "name": "agent-composer-triggers",
       "program": "flows/agent-composer-triggers",
-      "tags": ["full", "agents"],
+      "tags": ["full", "agents", "simulator"],
       "platforms": ["ios", "android"]
     },
     {

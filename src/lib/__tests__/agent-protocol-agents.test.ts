@@ -302,6 +302,15 @@ describe('the whole discovery answer', () => {
     expect(parseGatewayDiscovery({ ok: true, planes: {} }).uploads).toBeUndefined();
   });
 
+  test('keeps the target platform from discovery and refuses malformed platform values', () => {
+    expect(parseGatewayDiscovery({ data: { platform: 'macos', planes: {} } }).platform).toBe(
+      'macos'
+    );
+    expect(parseGatewayDiscovery({ platform: 'linux', planes: {} }).platform).toBe('linux');
+    for (const platform of [undefined, null, {}, [], 1, true])
+      expect(parseGatewayDiscovery({ platform, planes: {} }).platform).toBeUndefined();
+  });
+
   test('an answer without planes has no planes, and is not an error', () => {
     expect(parseGatewayDiscovery({ ok: true })).toEqual({
       agents: null,

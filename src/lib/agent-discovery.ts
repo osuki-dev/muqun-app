@@ -302,6 +302,7 @@ export type MirroredAgentsDiscovery = Omit<AgentsDiscovery, 'agents'> & {
 
 /** What one server's last discovery answer left behind. */
 export interface MirroredServerDiscovery {
+  platform?: string;
   agents: MirroredAgentsDiscovery | null;
   terminal: TerminalDiscovery | null;
   ssh: SshDiscovery | null;
@@ -352,6 +353,7 @@ export function mirrorDiscovery(
   observedAtMs: number
 ): MirroredServerDiscovery {
   return {
+    ...(discovery.platform ? { platform: discovery.platform } : {}),
     agents: discovery.agents
       ? { ...discovery.agents, agents: discovery.agents.agents.map(mirrorAgent) }
       : null,
@@ -476,6 +478,7 @@ function parseMirroredServer(value: unknown): MirroredServerDiscovery | null {
   const transports = parseTransportsDiscovery(value.transports);
   const uploads = parseUploadLimits(value.uploads);
   return {
+    ...(typeof value.platform === 'string' && value.platform ? { platform: value.platform } : {}),
     agents,
     terminal,
     ssh,

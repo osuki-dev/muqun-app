@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { SimfarmNotice } from '@/components/simfarm-notice';
 import { SimfarmStage } from '@/components/simfarm-stage';
-import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
+import { SIMFARM_DEFAULT_PORT, simfarmRunCommand, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
 import { reconnectSimfarm, warmSimfarm } from '@/lib/simfarm-stream';
 import { parsePort } from '@/lib/web-service';
@@ -66,6 +66,8 @@ export { SimfarmNotice } from '@/components/simfarm-notice';
 export function SimfarmPreview({
   gatewayUrl,
   serverId,
+  platform,
+  terminalConnected = false,
   allowed,
   initialPort,
   onPortFound,
@@ -75,6 +77,10 @@ export function SimfarmPreview({
 }: {
   gatewayUrl: string | undefined;
   serverId?: string;
+  /** Verified discovery for the target computer; unknown defaults to Android only. */
+  platform?: string;
+  /** Confirmed by the target's current health. Unknown must not offer Run. */
+  terminalConnected?: boolean;
   /** Whether this connection may be offered the preview; see `probeSimfarm`. */
   allowed: boolean;
   initialPort?: number;
@@ -228,55 +234,66 @@ export function SimfarmPreview({
           t`Enter the simulator service port on this computer.`
         ) : (
           <Trans>
-            simfarm is the small program on that machine that serves this preview. Either it is not
-            running, or it is listening on another port.
+            Not connected to the simulator preview service. Start Simfarm on this computer, or check
+            the port below.
           </Trans>
         )}
       </Text>
-      {!answer.probe.found ? <RunCommand serverId={serverId} /> : null}
-      <View style={styles.portRow}>
-        <Text variant="label" color={theme.colors.textMuted}>
-          {t`Port`}
-        </Text>
-        <Input
-          value={portText}
-          onChangeText={setPortText}
-          keyboardType="number-pad"
-          returnKeyType="go"
-          // Outline, like every other field the app asks a question in: the
-          // underline default draws a filled slab, which beside a pill button
-          // reads as a disabled control rather than as somewhere to type.
-          variant="outline"
-          placeholder={String(SIMFARM_DEFAULT_PORT)}
-          accessibilityLabel={t`simfarm port`}
-          testID="simfarm-port"
-          // `containerStyle`, not `style`: this Input hands `style` to the
-          // TextInput inside its own full-width wrapper, so a width there sized
-          // the text box and left the wrapper as wide as the screen. The row
-          // then overflowed both edges -- the port lost its first digit on the
-          // left and Look again was cut off on the right.
-          containerStyle={styles.port}
-          onSubmitEditing={submitPort}
-        />
-        <Button
-          // The design system's button at its own height, with the horizontal
-          // padding brought in: this one sits beside a four-digit field rather
-          // than alone under a paragraph, and at the token padding it was half
-          // again as wide as the field it acts on.
-          style={styles.lookAgain}
-          loading={looking}
-          loadingLabel={t`Looking`}
-          disabled={parsePort(portText) === null}
-          testID="simfarm-look-again"
-          onPress={submitPort}>
-          {t`Look again`}
-        </Button>
+      <View style={styles.setup}>
+        {!answer.probe.found ? (
+          <RunCommand
+            serverId={serverId}
+            command={simfarmRunCommand(platform)}
+            terminalConnected={terminalConnected}
+          />
+        ) : null}
+        <View style={styles.portSection}>
+          <Text variant="label" color={theme.colors.textMuted}>
+            {t`Port`}
+          </Text>
+          <View style={styles.portRow}>
+            <Input
+              value={portText}
+              onChangeText={setPortText}
+              keyboardType="number-pad"
+              returnKeyType="go"
+              // Outline, like every other field the app asks a question in: the
+              // underline default draws a filled slab, which beside a pill button
+              // reads as a disabled control rather than as somewhere to type.
+              variant="outline"
+              placeholder={String(SIMFARM_DEFAULT_PORT)}
+              accessibilityLabel={t`simfarm port`}
+              testID="simfarm-port"
+              // `containerStyle`, not `style`: this Input hands `style` to the
+              // TextInput inside its own full-width wrapper, so a width there sized
+              // the text box and left the wrapper as wide as the screen. The row
+              // then overflowed both edges -- the port lost its first digit on the
+              // left and Look again was cut off on the right.
+              containerStyle={styles.port}
+              onSubmitEditing={submitPort}
+            />
+            <Button
+              variant="secondary"
+              // The design system's button at its own height, with the horizontal
+              // padding brought in: this one sits beside a four-digit field rather
+              // than alone under a paragraph, and at the token padding it was half
+              // again as wide as the field it acts on.
+              style={styles.lookAgain}
+              loading={looking}
+              loadingLabel={t`Looking`}
+              disabled={parsePort(portText) === null}
+              testID="simfarm-look-again"
+              onPress={submitPort}>
+              {t`Look again`}
+            </Button>
+          </View>
+        </View>
+        {configuring && answer.probe.found ? (
+          <Button testID="simfarm-configure-cancel" onPress={() => setConfiguring(false)}>
+            {t`Return to preview`}
+          </Button>
+        ) : null}
       </View>
-      {configuring && answer.probe.found ? (
-        <Button testID="simfarm-configure-cancel" onPress={() => setConfiguring(false)}>
-          {t`Return to preview`}
-        </Button>
-      ) : null}
     </SimfarmNotice>
   );
 }
@@ -291,38 +308,42 @@ export function SimfarmPreview({
  * is copyable rather than only printed, and it stays selectable so the reader
  * with no shared clipboard can still read it off and type it.
  */
-function RunCommand({ serverId }: { serverId: string | undefined }) {
+function RunCommand({
+  serverId,
+  command,
+  terminalConnected,
+}: {
+  serverId: string | undefined;
+  command: string;
+  terminalConnected: boolean;
+}) {
   const { t } = useLingui();
   // The machine with no simfarm is the one this preview asks: the computer
   // the app is pointed at.
   return (
     <GuideCommand
       serverId={serverId}
-      command={SIMFARM_RUN_COMMAND}
+      command={command}
+      terminalDown={!terminalConnected}
       testID="simfarm-run-command"
       copyLabel={t`Copy the command that starts simfarm`}
       copiedLabel={t`Command copied`}
       copyHint={t`Copies it, ready to paste into a terminal`}
-      // Two lines, not one shrunk to fit: it wraps at the widths this is read
-      // at -- a phone and a Pad's narrower column.
-      numberOfLines={2}
     />
   );
 }
 
 const styles = StyleSheet.create({
   middle: { textAlign: 'center' },
-  // Wraps rather than overflows: the narrowest host is the Pad column, where
-  // the label, the field and the button do not always fit on one line.
+  setup: { width: '100%', gap: 24, marginTop: 8 },
+  portSection: { gap: 8 },
   portRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 4,
-    maxWidth: '100%',
+    gap: 12,
+    width: '100%',
   },
-  port: { width: 92 },
-  lookAgain: { paddingHorizontal: 16 },
+  port: { flex: 1, minWidth: 100 },
+  lookAgain: { flexGrow: 1, minHeight: 48, paddingHorizontal: 20 },
 });

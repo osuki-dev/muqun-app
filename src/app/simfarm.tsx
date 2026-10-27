@@ -65,6 +65,7 @@ import { SimfarmNotice, SimfarmPreview } from '@/components/simfarm-preview';
 import { DevicesIcon } from '@/icons';
 import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { useServerSimfarm } from '@/stores/server-simfarm';
+import { useAgents } from '@/stores/agents';
 
 export default function SimfarmScreen() {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -72,6 +73,9 @@ export default function SimfarmScreen() {
   const params = useLocalSearchParams<{ serverId: string }>();
   const access = useServerSimfarmAccess(params.serverId);
   const { record } = access;
+  const platform = useAgents((state) =>
+    record ? state.index.servers[record.serverId]?.platform : undefined
+  );
 
   const ports = useServerSimfarm((state) => state.byServer);
   const hydrate = useServerSimfarm((state) => state.hydrate);
@@ -150,6 +154,8 @@ export default function SimfarmScreen() {
         <SimfarmPreview
           gatewayUrl={record.url}
           serverId={record.serverId}
+          platform={platform}
+          terminalConnected={access.terminalConnected === true}
           allowed={access.status === 'ready'}
           initialPort={ports[record.serverId]}
           onPortFound={onPortFound}
