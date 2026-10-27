@@ -58,6 +58,10 @@ Visibility assertions use native `is exists` with `visible=true`: multiple
 visible copies of a heading still satisfy an exact-text visibility assertion.
 Mutating actions retain the native unique-target policy and never retry taps.
 Selector roles follow the pinned native matcher, not snapshot display aliases.
+For controls whose platform selector resolves a different frame, opt in with
+`press "id=<exact ID>" --observed-center`. The runner captures and guards one
+unique visible, hittable button, then sends one native point press at its measured
+center. It rejects unavailable geometry and never falls back or retries a press.
 
 ## Suite structure
 
@@ -78,7 +82,7 @@ The target matcher preserves whole-string regular expressions, including
 trailing spaces in composer insertion assertions. A missing target is established
 only by a readable capture; capture errors fail even optional steps. Selected
 and checked state remain assertions, not screenshots. Native selectors perform
-mutations and reject ambiguous controls. Prefer semantic controls; coordinates
+mutations and reject ambiguous controls. Prefer semantic controls; fixed coordinates
 are reserved for canvas gestures and bounded drags within observed content.
 
 Target controls by `testID`, not by accessibility label. agent-device picks an

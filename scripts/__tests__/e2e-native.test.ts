@@ -26,6 +26,138 @@ import {
   type Suite,
 } from '../e2e-native';
 
+describe('observed-center press delivery', () => {
+  const command = 'press "id=home-composer-parameters" --observed-center';
+  const capture = () => ({
+    appBundleId: 'dev.osuki.muqun',
+    truncated: false,
+    androidSnapshot: {},
+    nodes: [
+      { index: 0, ref: 'e1', kind: 'application', rect: { x: 0, y: 0, width: 402, height: 874 } },
+      {
+        index: 1,
+        parentIndex: 0,
+        ref: 'e2',
+        kind: 'button',
+        identifier: 'home-composer-parameters',
+        hittable: true,
+        rect: { x: 60, y: 796, width: 44, height: 44 },
+      },
+    ] as Parameters<typeof withinScrollViewport>[0][],
+  });
+  const run = async (
+    text: string,
+    invoke: (args: string[]) => Promise<Record<string, unknown>>
+  ) => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-observed-center-'));
+    try {
+      await writeFile(path.join(base, 'point.ad'), text);
+      await new NativeRunner(suite, base, '/unused', invoke, {}).runSection('point.ad', {});
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  };
+
+  test('fresh guarded bounds produce exactly one point press without selector re-resolution', async () => {
+    const calls: string[][] = [];
+    let captures = 0;
+    await run(`${command}\n${command}`, async (args) => {
+      calls.push(args);
+      if (args[0] === 'snapshot') {
+        const data = capture();
+        data.nodes[1].rect!.x += 20 * captures++;
+        return data;
+      }
+      return args[0] === 'alert' ? { kind: 'alertStatus', alert: null } : {};
+    });
+    expect(calls).toEqual([
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '82', '818'],
+      ['snapshot'],
+      ['alert', 'get'],
+      ['press', '102', '818'],
+    ]);
+  });
+
+  test('ambiguous, unavailable, invalid or incomplete geometry never dispatches a press', async () => {
+    const bad: ((data: ReturnType<typeof capture>) => void)[] = [
+      (d) => {
+        d.nodes.push({ ...d.nodes[1], index: 2, ref: 'e3' });
+      },
+      (d) => {
+        d.nodes[1].identifier = 'missing';
+      },
+      (d) => {
+        d.nodes[1].hittable = false;
+      },
+      (d) => {
+        d.nodes[1].enabled = false;
+      },
+      (d) => {
+        d.nodes[1].visibleToUser = false;
+      },
+      (d) => {
+        d.nodes[1].interactionBlocked = 'covered';
+      },
+      (d) => {
+        d.nodes[1].bundleId = 'other.app';
+      },
+      (d) => {
+        d.nodes[1].rect!.x = 500;
+      },
+      (d) => {
+        d.nodes[1].rect!.width = Number.NaN;
+      },
+      (d) => {
+        d.truncated = true;
+      },
+      (d) => {
+        d.appBundleId = 'other.app';
+      },
+    ];
+    for (const change of bad) {
+      const data = capture();
+      change(data);
+      const calls: string[][] = [];
+      await expect(
+        run(command, async (args) => {
+          calls.push(args);
+          return args[0] === 'snapshot' ? data : { kind: 'alertStatus', alert: null };
+        })
+      ).rejects.toThrow('Observed-center press');
+      expect(calls.some((args) => args[0] === 'press')).toBe(false);
+    }
+  });
+
+  test('malformed grammar refuses before IO and a rejected point press is never retried', async () => {
+    for (const text of [
+      'press id=home-composer-parameters --observed-center --count 2',
+      'press --observed-center id=home-composer-parameters',
+      'press "label=Task options" --observed-center',
+    ]) {
+      let calls = 0;
+      await expect(
+        run(text, async () => {
+          calls++;
+          return {};
+        })
+      ).rejects.toThrow('Observed-center press');
+      expect(calls).toBe(0);
+    }
+    let presses = 0;
+    const error = new NativeCommandError({ code: 'COMMAND_FAILED', message: 'dispatch rejected' });
+    const failure = await run(command, async (args) => {
+      if (args[0] === 'snapshot') return capture();
+      if (args[0] === 'alert') return { kind: 'alertStatus', alert: null };
+      presses++;
+      throw error;
+    }).catch((failure) => failure);
+    expect(failure).toBe(error);
+    expect(presses).toBe(1);
+  });
+});
+
 const suite: Suite = {
   version: 1,
   flows: [
