@@ -186,10 +186,10 @@ function usesOfflineDemo(endpoint?: { url?: string }): boolean {
  * What the envelope says the gateway can do, filed under the configured
  * server so the next screen can act on it without asking (`observe`).
  */
-function observeEnvelopeCapabilities(json: unknown): void {
+function observeEnvelopeCapabilities(json: unknown, sourceId = configuredGatewayServerId()): void {
   const capabilities = asRecord(json)?.capabilities;
   if (capabilities === undefined) return;
-  useServerCapabilities.getState().observe(configuredGatewayServerId(), capabilities);
+  useServerCapabilities.getState().observe(sourceId, capabilities);
 }
 
 /** The `data` of the gateway's envelope, or the body when it has none. */
@@ -696,6 +696,8 @@ export async function getAgentSessionSnapshot(
   if (windowed && cursor && res.status === 409) {
     const error = readApiError(await res.text());
     if (error.code === 'history_cursor_lost') {
+      if (configuredGatewayServerId() !== sourceId)
+        throw new Error('The selected computer changed. Open the session again.');
       // Reads are safe to repeat. A lost boundary cannot silently skip history.
       const snapshot = await getAgentSessionSnapshot(sessionId, asid, {
         ...options,
@@ -709,9 +711,11 @@ export async function getAgentSessionSnapshot(
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
   const json = await res.json();
+  if (configuredGatewayServerId() !== sourceId)
+    throw new Error('The selected computer changed. Open the session again.');
   // The snapshot is the first agent-session answer a workbench reads, so
   // what its envelope advertises decides how the subtree is fetched next.
-  observeEnvelopeCapabilities(json);
+  observeEnvelopeCapabilities(json, sourceId);
   return parseAgentSessionSnapshot(envelopeData(json));
 }
 
@@ -802,7 +806,13 @@ export async function sendAgentCommand(
   const body: Record<string, unknown> = { name: params.name.replace(/^\//, '') };
   if (params.arguments) body.arguments = params.arguments;
   if (params.delivery) body.delivery = params.delivery;
-  await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body);
+  const response = asRecord(
+    await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body)
+  );
+  const result = asRecord(response?.command_result);
+  if (result?.kind === 'error') {
+    throw new Error(typeof result.text === 'string' ? result.text : 'Failed to run command');
+  }
 }
 
 /**
@@ -1235,14 +1245,14 @@ export async function discardAgentVcsFile(
 /** The last catalog this device stored for the scope, including a stale one. */
 export function peekAgentCatalog(
   sessionId?: string,
-  options?: { directory?: string; agentId?: string }
+  options?: { directory?: string; agentId?: string; asid?: string }
 ): AgentCatalog | null {
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
     undefined,
     sessionId,
-    agentCatalogCacheVariant(directory, options?.agentId)
+    agentCatalogCacheVariant(directory, options?.agentId, options?.asid)
   );
   return getCachedAgentCatalogSync(cacheKey);
 }
@@ -1276,7 +1286,13 @@ function catalogFetch(endpoint: CatalogEndpoint | undefined, url: string, init: 
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: CatalogEndpoint,
-  options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
+  options?: {
+    directory?: string;
+    forceRefresh?: boolean;
+    requireFresh?: boolean;
+    agentId?: string;
+    asid?: string;
+  }
 ): Promise<AgentCatalog> {
   if (usesOfflineDemo(endpoint))
     return options?.directory === '/demo/muqun' ? demoAgentComposerCatalog() : EMPTY_CATALOG;
@@ -1285,7 +1301,7 @@ export async function getAgentCatalog(
     'catalog',
     endpoint?.url,
     sessionId,
-    agentCatalogCacheVariant(directory, options?.agentId)
+    agentCatalogCacheVariant(directory, options?.agentId, options?.asid)
   );
   const cached = getCachedEntry<AgentCatalog>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
@@ -1301,7 +1317,7 @@ export async function getAgentCatalog(
         if (options?.requireFresh) throw new Error('Gateway is not connected');
         return cached?.data ?? EMPTY_CATALOG;
       }
-      const path = agentCatalogPath(sessionId, directory, options?.agentId);
+      const path = agentCatalogPath(sessionId, directory, options?.agentId, options?.asid);
       const url = base ? `${base}${path}` : gatewayUrl(path);
       const headers: Record<string, string> = endpoint?.url
         ? {

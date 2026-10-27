@@ -177,7 +177,8 @@ import {
   isDemoRecord,
   setDemoActive,
 } from './demo-gateway';
-import type { GatewayRecord } from './gateway-storage';
+import { loadGateways, type GatewayRecord } from './gateway-storage';
+import { gatewayUploadName } from './uploaded-attachments';
 import { demoCapturedHistory } from './demo-captured-history';
 import { withSessionAvailability } from './session-switcher';
 import { validatePairingTransport, type PairingPayload } from './pairing';
@@ -1559,6 +1560,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
 }
 
 export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor | null {
+  if (asset.mcpFile) return null;
   if (asset.gatewayServerId && asset.gatewayServerId !== configuredGatewayServerId()) return null;
   // Listing metadata without derivative fields retains the established asset path.
   if (
@@ -1864,6 +1866,7 @@ export function assetContentUrl(assetId: string): string {
  * cache file by hand would buy nothing and cost a full in-memory round trip.
  */
 export function assetImageSource(asset: SessionAsset): AssetImageSource | null {
+  if (asset.mcpFile) return null;
   const uri = assetContentUrl(asset.id);
   if (isDemoActive()) return { uri, cacheKey: asset.id };
   // expo-image cannot decrypt an AEAD envelope. Encrypted records load through
@@ -1929,6 +1932,13 @@ export async function readAssetImageSource(
   asset: SessionAsset,
   options: { signal?: AbortSignal } = {}
 ): Promise<AssetImageSource> {
+  if (asset.mcpFile) {
+    const bytes = await readAssetBytes(asset, { ...options, maxBytes: 25 * 1024 * 1024 });
+    return {
+      uri: `data:${asset.mime};base64,${QuickCrypto.Buffer.from(bytes).toString('base64')}`,
+      cacheKey: asset.id,
+    };
+  }
   const direct = assetImageSource(asset);
   if (direct) return direct;
   const response = await encryptedGatewayFetch(
@@ -1975,6 +1985,10 @@ export async function readAssetText(
   asset: SessionAsset,
   options: { signal?: AbortSignal } = {}
 ): Promise<string> {
+  if (asset.mcpFile)
+    return new TextDecoder().decode(
+      await readAssetBytes(asset, { ...options, maxBytes: MAX_ASSET_TEXT_BYTES })
+    );
   if (isDemoActive()) return demoAssetText(asset.id);
   if (asset.size > MAX_ASSET_TEXT_BYTES) {
     throw new Error('HTTP 413: This file is too large to open here.');
@@ -2108,6 +2122,106 @@ export async function resolveAgentFileAsset(
   }
 }
 
+async function resolveMcpFileAtEndpoint(
+  asset: SessionAsset,
+  record: GatewayEndpoint,
+  baseUrl: string,
+  signal?: AbortSignal
+): Promise<SessionAsset> {
+  const ref = asset.mcpFile;
+  if (!ref?.path) return asset;
+  const response = await gatewayEndpointFetch(
+    { ...record, url: baseUrl },
+    `${baseUrl}/api/mcp/files/present`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${record.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: ref.path }),
+      signal,
+    }
+  );
+  if (!response.ok) throw new Error(`File unavailable (HTTP ${response.status})`);
+  const value = await response.json();
+  if (value.server_id !== ref.serverId) throw new Error('Computer identity did not match');
+  const resolved = sessionAssetsFromResponse(value.files)[0];
+  if (
+    !resolved ||
+    !resolved.download_url ||
+    !/^\/api\/agent-images\/[a-zA-Z0-9_-]+\/download$/.test(resolved.download_url)
+  )
+    throw new Error('Invalid file reference');
+  return { ...resolved, mcpFile: { serverId: ref.serverId, path: resolved.path } };
+}
+
+/** Remote and local links share the viewer and explicit-open file policy. */
+export async function resolveMcpFileAsset(
+  asset: SessionAsset,
+  signal?: AbortSignal
+): Promise<SessionAsset> {
+  const ref = asset.mcpFile;
+  if (!ref?.path) return asset;
+  const record = (await loadGateways()).find((item) => item.serverId === ref.serverId);
+  if (!record) throw new Error('Pair this computer before opening its files.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, (baseUrl) =>
+    resolveMcpFileAtEndpoint(asset, captured, baseUrl, signal)
+  );
+}
+
+/** Capture the source pairing before opening a tunnel; never switch the foreground computer. */
+async function readMcpFileBytes(
+  asset: SessionAsset,
+  options: {
+    signal?: AbortSignal;
+    maxBytes: number;
+    onProgress?: (received: number, total: number | null) => void;
+  }
+): Promise<Uint8Array> {
+  const ref = asset.mcpFile!;
+  if (ref.expiresAt !== undefined && ref.expiresAt <= Date.now())
+    throw new Error('This file preview has expired. Ask the agent to share it again.');
+  const record = (await loadGateways()).find((item) => item.serverId === ref.serverId);
+  if (!record) throw new Error('Pair this computer before opening its files.');
+  const name = ref.uploadName
+    ? gatewayUploadName(`/muqun-gateway/uploads/${ref.uploadName}`)
+    : null;
+  if (!ref.path && (!name || name !== ref.uploadName)) throw new Error('Invalid file reference');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    if (options.signal?.aborted) throw new Error('Operation cancelled');
+    const resolved = ref.path
+      ? await resolveMcpFileAtEndpoint(asset, captured, baseUrl, options.signal)
+      : asset;
+    const filePath = ref.path ? resolved.download_url! : `/api/uploads/${name}`;
+    const url = `${baseUrl}${filePath}`;
+    const init = { headers: { Authorization: `Bearer ${captured.token}` }, signal: options.signal };
+    const limit = options.maxBytes;
+    if (resolved.size > limit) throw new Error('HTTP 413: This file is too large to open.');
+    const response =
+      captured.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(
+            url,
+            init,
+            assetTextTimeoutMs(asset.size),
+            { ...captured, url: baseUrl },
+            () => !options.signal?.aborted,
+            limit
+          )
+        : await fetchWithin(
+            assetTextTimeoutMs(asset.size),
+            'Timed out reading the file.',
+            url,
+            init
+          );
+    if (!response.ok) throw new Error(`File unavailable (HTTP ${response.status})`);
+    const mime = response.headers.get('content-type')?.split(';')[0];
+    if (mime !== resolved.mime.split(';')[0]) throw new Error('The file type does not match');
+    const bytes = await readLimitedImageBody(response, limit, options.signal);
+    options.onProgress?.(bytes.length, bytes.length);
+    return bytes;
+  });
+}
+
 export async function readAssetBytes(
   asset: SessionAsset,
   options: {
@@ -2135,6 +2249,7 @@ export async function readAssetBytes(
       handle.close();
     }
   }
+  if (asset.mcpFile) return readMcpFileBytes(asset, options);
   const serverId = configuredGatewayServerId();
   assertAssetGateway(asset, serverId);
   const demoBytes = isDemoActive() ? demoAudioBytes(asset.id) : null;

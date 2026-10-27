@@ -38,6 +38,7 @@ import {
   toolDurationMs,
   validateFormField,
   type FormField,
+  type MessageGeneration,
   type TimelineItem,
 } from '../agent-protocol';
 
@@ -470,6 +471,63 @@ describe('parseAgentPart — the rest of the union', () => {
 });
 
 describe('timeline', () => {
+  test('message generation speed survives snapshots and streaming upserts', () => {
+    const generation: MessageGeneration = { scope: 'message', tokens_per_second: 123.45 };
+    const row = {
+      id: 'msg_1:t0',
+      message_id: 'msg_1',
+      role: 'assistant',
+      part: { type: 'text', text: 'Finished response' },
+      generation,
+    };
+    const snapshot = parseAgentSessionSnapshot({ timeline: [row] });
+    expect(snapshot.timeline[0]?.generation).toEqual(generation);
+    const event = parseAgentDomainEvent('agent.timeline.upsert', { asid: 'ses_1', items: [row] });
+    expect(event?.type === 'agent.timeline.upsert' && event.items[0]?.generation).toEqual(
+      generation
+    );
+  });
+
+  test('invalid generation metrics do not discard the message or invent a speed', () => {
+    const invalid = [
+      ...HOSTILE,
+      { tokens_per_second: 123 },
+      { scope: 'session', tokens_per_second: 123 },
+      { scope: 'message', tokens_per_second: '123' },
+      { scope: 'message', tokens_per_second: 0 },
+      { scope: 'message', tokens_per_second: -1 },
+      { scope: 'message', tokens_per_second: Number.NaN },
+      { scope: 'message', tokens_per_second: Number.POSITIVE_INFINITY },
+      { scope: 'message', decodeTokens: 200, decodeMs: 1000 },
+    ];
+    for (const generation of invalid) {
+      const row = parseTimelineItem({
+        id: 'msg_1:t0',
+        role: 'assistant',
+        part: { type: 'text', text: 'Still readable' },
+        generation,
+        sessionStats: { decodeTokens: 300, decodeMs: 1000 },
+        tokens: { output: 100 },
+        time: { created: 1000, completed: 2000 },
+      });
+      expect(row?.part).toEqual({ type: 'text', text: 'Still readable' });
+      expect(row?.generation).toBeUndefined();
+    }
+  });
+
+  test('user and system rows never carry an assistant generation metric', () => {
+    for (const role of ['user', 'system'] as const) {
+      const row = parseTimelineItem({
+        id: 'msg_1:t0',
+        role,
+        part: { type: 'text', text: 'No generation metric' },
+        generation: { scope: 'message', tokens_per_second: 123 },
+      });
+      expect(row?.role).toBe(role);
+      expect(row?.generation).toBeUndefined();
+    }
+  });
+
   test('a row needs an id and a readable part', () => {
     expect(parseTimelineItem({ id: 'a', part: { type: 'text', text: 'x' } })).toMatchObject({
       id: 'a',

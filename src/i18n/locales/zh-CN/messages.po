@@ -1029,6 +1029,7 @@ msgstr "可用重置次数"
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Back"
 msgstr "返回"
 
@@ -1479,6 +1480,8 @@ msgstr "关闭新任务"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/simfarm-notice.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close preview"
 msgstr "关闭预览"
 
@@ -1498,11 +1501,6 @@ msgstr "关闭输入栏"
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
 msgstr "关闭菜单"
-
-#: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
-msgid "Close the simulator"
-msgstr "关闭模拟器"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Close this terminal on its computer. Safe terminal closing from Home is not supported yet."
@@ -1550,6 +1548,7 @@ msgid "Colour mode"
 msgstr "色彩模式"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 #: src/components/task-result-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Command"
@@ -1645,6 +1644,8 @@ msgstr "电脑名称"
 msgid "Computer not found"
 msgstr "找不到电脑"
 
+#: src/app/simfarm.tsx
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer offline"
 msgstr "电脑离线"
@@ -1749,6 +1750,7 @@ msgstr "已连接到 {address}"
 #: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1768,6 +1770,10 @@ msgstr "正在通过 SSH 连接…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "正在连接到 {address}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Connecting to the simulator"
+msgstr "正在连接模拟器"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Connecting…"
@@ -2190,6 +2196,7 @@ msgid "Could not open destination"
 msgstr "无法打开目标"
 
 #: src/components/agent-workbench.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/inline-file-link.tsx
 msgid "Could not open file"
 msgstr "无法打开文件"
@@ -2856,6 +2863,10 @@ msgstr "改为输入 Gateway 的地址"
 msgid "Enter the gateway's port on that host."
 msgstr "请输入该主机上 Gateway 的端口"
 
+#: src/components/simfarm-preview.tsx
+msgid "Enter the simulator service port on this computer."
+msgstr "输入这台电脑上模拟器服务的端口"
+
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "手动输入网址"
@@ -3027,6 +3038,10 @@ msgstr "第一条指令"
 #: src/app/diagram-viewer.tsx
 msgid "Fit diagram"
 msgstr "适应画面"
+
+#: src/components/simfarm-stage.tsx
+msgid "Fit to screen"
+msgstr "适应屏幕"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -3838,7 +3853,6 @@ msgid "Long press to open it in full"
 msgstr "长按以完整打开"
 
 #: src/components/simfarm-preview.tsx
-#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "重新查找"
 
@@ -4359,6 +4373,10 @@ msgid "No simulator on port {port}"
 msgstr "端口 {port} 上没有模拟器"
 
 #: src/components/simfarm-stage.tsx
+msgid "No simulators found. Start one on this computer, then reconnect."
+msgstr "未找到模拟器。请在这台电脑上启动一个模拟器，然后重新连接"
+
+#: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "那台机器上没有模拟器"
 
@@ -4386,6 +4404,7 @@ msgstr "不支持静态画面"
 msgid "No tasks in this session yet."
 msgstr "此会话还没有任务"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "No tasks yet"
 msgstr "暂无任务"
@@ -4452,6 +4471,10 @@ msgstr "未连接"
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
 msgstr "未连接"
+
+#: src/components/simfarm-preview.tsx
+msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
+msgstr "未连接到模拟器预览服务。请在这台电脑上启动 Simfarm，或检查下方端口。"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4745,6 +4768,10 @@ msgstr "打开会话"
 msgid "Open session tree"
 msgstr "打开会话树"
 
+#: src/components/agent-composer.tsx
+msgid "Open simulator"
+msgstr "打开模拟器"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
@@ -4791,6 +4818,10 @@ msgstr "打开以检查当前状态"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Open tool call details"
 msgstr "打开工具调用详情"
+
+#: src/components/agent-composer.tsx
+msgid "Open Web"
+msgstr "打开 Web"
 
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
@@ -4889,6 +4920,7 @@ msgstr "第 {pageNumber} 页 · {lines} 行"
 msgid "Pair {0} again"
 msgstr "重新配对 {0}"
 
+#: src/app/simfarm.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -4896,6 +4928,10 @@ msgstr "重新配对 {0}"
 #: src/components/settings-servers.tsx
 msgid "Pair a computer"
 msgstr "配对电脑"
+
+#: src/app/simfarm.tsx
+msgid "Pair a computer first"
+msgstr "先配对一台电脑"
 
 #: src/components/pair-again-notice.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4913,6 +4949,10 @@ msgstr "配对电脑"
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "在下方配对一台"
+
+#: src/app/simfarm.tsx
+msgid "Pair the computer that runs your simulator, then return here to open its preview."
+msgstr "配对运行模拟器的电脑，然后返回这里打开预览"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this computer again"
@@ -5114,6 +5154,10 @@ msgstr "预览模拟器，通过 SSH 隧道时不可用"
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
 msgstr "预览并应用"
+
+#: src/components/agent-muqun-tool-body.tsx
+msgid "Preview file"
+msgstr "预览文件"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
@@ -5363,7 +5407,9 @@ msgstr "识别语言"
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "文字清晰的建议最低值:{minimumPercent}%"
 
+#: src/app/simfarm.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "重新连接"
@@ -5642,9 +5688,11 @@ msgstr "恢复"
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
+#: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
+#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -5683,6 +5731,10 @@ msgstr "正在重试…"
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Enter 键"
+
+#: src/components/simfarm-preview.tsx
+msgid "Return to preview"
+msgstr "返回预览"
 
 #: src/components/home-overview.tsx
 msgid "Return to task"
@@ -5763,6 +5815,10 @@ msgstr "将回滚 {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Rolling back to here"
 msgstr "将回滚到这里"
+
+#: src/components/simfarm-stage.tsx
+msgid "Rotate simulator"
+msgstr "旋转模拟器"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -6341,21 +6397,26 @@ msgid "Sign in with"
 msgstr "登录方式"
 
 #: src/components/simfarm-preview.tsx
-msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm 是那台机器上负责提供这个预览的小程序。它可能没有在运行，也可能在监听别的端口"
-
-#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm 端口"
 
 #: src/app/commands.tsx
-#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-notice.tsx
 msgid "Simulator"
 msgstr "模拟器"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Simulator connection"
+msgstr "模拟器连接"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
 msgstr "模拟器控件"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator disconnected"
+msgstr "模拟器连接已断开"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -7113,6 +7174,10 @@ msgid "The shell exited."
 msgstr "Shell 已退出"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be rotated. Try again."
+msgstr "无法旋转模拟器。请重试"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
 msgstr "无法显示模拟器"
 
@@ -7137,6 +7202,7 @@ msgid "The speech service returned an invalid transcript."
 msgstr "语音服务返回了无效的转写结果"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 隧道只承载 Gateway 这一个端口，不含其他，所以从这里无法访问模拟器和浏览器。请改用本地网络或 Tailscale 连接"
 
@@ -7302,8 +7368,8 @@ msgstr "这台电脑没有列出任何已配对的设备"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
+#: src/components/agent-composer.tsx
 msgid "This computer is no longer paired."
 msgstr "这台电脑已经取消配对"
 
@@ -7649,6 +7715,7 @@ msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
 #: src/app/pane-history.tsx
+#: src/components/agent-composer.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/task-result-sheet.tsx
 #: src/i18n/labels.ts

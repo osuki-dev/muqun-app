@@ -144,6 +144,9 @@ export function demoStreamingTimeline(characters: number): TimelineItem[] {
       seq: 14 + characters,
       updated_ms: 1,
       part: { type: 'text', text: DEMO_STREAMING_MARKDOWN.slice(0, characters) },
+      ...(characters >= DEMO_STREAMING_MARKDOWN.length
+        ? { generation: { scope: 'message' as const, tokens_per_second: 123.4 } }
+        : {}),
     },
   ];
 }
@@ -382,7 +385,7 @@ export function demoAgentSessionTree(): {
     agent_name: 'Demo researcher',
     agent_role: 'research',
   };
-  const leaves = Array.from({ length: 25 }, (_, index) =>
+  const leaves = Array.from({ length: 27 }, (_, index) =>
     session(
       `demo-tree-leaf-${index + 1}`,
       nested.asid,
@@ -699,6 +702,42 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
       toolName?: string;
     }
   > = {
+    'demo-tree-leaf-26': {
+      name: 'files.present',
+      input: { path: '~/Desktop/Screenshot.jpg', machine: 'mini' },
+      result: {
+        state: 'done',
+        server_id: 'demo-unpaired-mini',
+        machine: 'mini',
+        files: [
+          {
+            upload_name: '11111111-2222-4333-8444-555555555555.jpg',
+            name: 'Screenshot.jpg',
+            mime: 'image/jpeg',
+            size: 1234,
+            expires_at_ms: 4102444800000,
+          },
+        ],
+      },
+    },
+    'demo-tree-leaf-27': {
+      name: 'files.present',
+      input: { path: '~/Desktop/Expired.jpg', machine: 'mini' },
+      result: {
+        state: 'done',
+        server_id: 'demo-unpaired-mini',
+        machine: 'mini',
+        files: [
+          {
+            upload_name: '11111111-2222-4333-8444-555555555555.jpg',
+            name: 'Expired.jpg',
+            mime: 'image/jpeg',
+            size: 1234,
+            expires_at_ms: 1,
+          },
+        ],
+      },
+    },
     'demo-tree-leaf-9': {
       name: 'exec.run',
       input: {

@@ -1,0 +1,12 @@
+# Home's computer picker must remain reachable above the dock.
+# The bundled offline fixture changes no real pairing or server selection.
+press "id=home-composer-parameters"
+wait "id=home-composer-options-menu" 5000
+is visible "id=home-composer-option-target"
+press "id=home-composer-option-target"
+wait "id=home-target-sheet" 5000
+back --system
+wait absent "id=home-target-sheet" 5000
+is visible "id=home-composer-input"
+press "id=home-composer-parameters"
+wait absent "id=home-composer-options-menu" 5000

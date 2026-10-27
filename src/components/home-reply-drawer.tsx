@@ -79,7 +79,11 @@ import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { canLoadEarlierAgentTimeline } from '@/lib/agent-discovery';
-import { getAgentSessionSnapshot, loadEarlierAgentTimeline } from '@/lib/agent-session';
+import {
+  getAgentSessionSnapshot,
+  loadEarlierAgentTimeline,
+  listAgentInbox,
+} from '@/lib/agent-session';
 import { useAgentFeatures } from '@/hooks/use-agent-features';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { removeTimelineItems } from '@/lib/agent-revert';
@@ -1130,6 +1134,31 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const sentAtMs = target.sentAtMs;
   const seenSend = useRef(sentAtMs);
   useEffect(() => {
+    if (!sentAtMs || !features.inbox) return;
+    let active = true;
+    const owner = useGatewayConnectionStore.getState().record;
+    if (owner?.serverId !== serverId) return;
+    const previousInbox = store.getState().inbox;
+    void listAgentInbox(asid)
+      .then((items) => {
+        const current = useGatewayConnectionStore.getState().record;
+        if (
+          active &&
+          current?.serverId === serverId &&
+          sameComputer(current, owner) &&
+          current?.deviceId === owner.deviceId &&
+          store.getState().inbox === previousInbox
+        )
+          store.getState().setInbox(items);
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to refresh Home queue:', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [sentAtMs, features.inbox, serverId, asid, store]);
+  useEffect(() => {
     if (sentAtMs === seenSend.current) return;
     seenSend.current = sentAtMs;
     follow.reset();
@@ -1330,7 +1359,6 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const tunnel = useGatewayTunnel(record, Boolean(record));
   const sessionId =
     useServerAgents((state) => target.sessionId ?? state.byServer[serverId]?.sessionId) ?? '';
-  const [pane, setPane] = useState<HerdrEntity | undefined>(undefined);
   const [paneRetry, setPaneRetry] = useState(0);
   // The pane as the last screen to show it left it -- this drawer's own window
   // from an earlier open, or the terminal screen's -- painted at once and
@@ -1340,11 +1368,15 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
   const [remembered] = useState(() => {
     const window = sessionId ? mirroredPaneWindow(serverId, sessionId, paneId) : null;
     return window && window.shape === paneWindowShape('ansi', 'recent-unwrapped', false)
-      ? window.output
-      : '';
+      ? window
+      : null;
   });
-  const [held, setHeld] = useState<PaneReadWindow>({ output: remembered, capturedRows: 0 });
-  const [loaded, setLoaded] = useState(remembered !== '');
+  const [pane, setPane] = useState<HerdrEntity | undefined>(remembered?.pane);
+  const [held, setHeld] = useState<PaneReadWindow>({
+    output: remembered?.output ?? '',
+    capturedRows: 0,
+  });
+  const [loaded, setLoaded] = useState(Boolean(remembered?.output));
   const [failed, setFailed] = useState(false);
   const [streamUp, setStreamUp] = useState(false);
 
@@ -1418,7 +1450,9 @@ function DrawerPane({ target }: { target: Extract<HomeThreadTarget, { kind: 'pan
         sessionId,
         paneId,
         paneWindowShape('ansi', shape.source, shape.ownsScreen),
-        next.output
+        next.output,
+        Date.now(),
+        pane
       );
       return next;
     });

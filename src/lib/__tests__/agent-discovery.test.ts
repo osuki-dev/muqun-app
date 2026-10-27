@@ -35,7 +35,27 @@ import {
   type AgentInfo,
   type GatewayDiscovery,
 } from '../agent-protocol';
-import { agentCatalogCacheVariant, agentCatalogPath } from '../agent-catalog-scope';
+import {
+  agentCatalogCacheVariant,
+  agentCatalogPath,
+  shouldRefetchAgentCatalog,
+} from '../agent-catalog-scope';
+
+test('session catalogs isolate native sessions and encode their route identity', () => {
+  expect(agentCatalogPath('herdr', '/work', 'deepseek', 'session/a?b')).toBe(
+    '/api/sessions/herdr/agent-catalog?directory=%2Fwork&agent_id=deepseek&asid=session%2Fa%3Fb'
+  );
+  expect(agentCatalogCacheVariant('/work', 'deepseek', 'a')).not.toBe(
+    agentCatalogCacheVariant('/work', 'deepseek', 'b')
+  );
+  expect(agentCatalogCacheVariant('/work', 'deepseek', 'a')).not.toBe(
+    agentCatalogCacheVariant('/work', 'deepseek')
+  );
+  expect(
+    shouldRefetchAgentCatalog({ asid: 'a', directory: '/work' }, { asid: 'b', directory: '/work' })
+  ).toBe(true);
+  expect(shouldRefetchAgentCatalog({ asid: 'a' }, {})).toBe(true);
+});
 
 // `agent-cache` reaches for MMKV at import time; the same throwing fake the
 // other cache tests register.
@@ -444,6 +464,28 @@ describe('moving a session to a worktree', () => {
 
 describe('the mirror', () => {
   const mirrored = mirrorDiscovery(discovery, 1_700_000_000_000);
+
+  test('retains each computer platform without borrowing another computer or the phone platform', () => {
+    let index = withMirroredDiscovery(
+      emptyAgentsMirror(),
+      'mac',
+      mirrorDiscovery({ ...discovery, platform: 'macos' }, 1)
+    );
+    index = withMirroredDiscovery(
+      index,
+      'linux',
+      mirrorDiscovery({ ...discovery, platform: 'linux' }, 1)
+    );
+    index = withMirroredDiscovery(
+      index,
+      'unknown',
+      mirrorDiscovery({ ...discovery, platform: undefined }, 1)
+    );
+    const restored = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
+    expect(restored.servers.mac?.platform).toBe('macos');
+    expect(restored.servers.linux?.platform).toBe('linux');
+    expect(restored.servers.unknown?.platform).toBeUndefined();
+  });
 
   test('drops what only a paired device was told, and the lists the catalog serves', () => {
     const deepseek = mirrored.agents?.agents[0];

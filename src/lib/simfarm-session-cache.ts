@@ -176,6 +176,12 @@ export class SimfarmSessionCache {
     }
   }
 
+  /** Explicit reconnect replaces the cached transport as well as the screen. */
+  reconnect(url: string): void {
+    const entry = this.entries.get(url);
+    if (entry !== undefined) this.drop(entry);
+  }
+
   /** How many sessions are open, held or not. */
   get size(): number {
     return this.entries.size;

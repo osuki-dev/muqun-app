@@ -107,6 +107,7 @@ export interface SimfarmStreamError {
     | 'boot-failed'
     | 'boot-timeout'
     | 'attach-failed'
+    | 'rotate-failed'
     | 'shutdown-failed'
     | 'shutdown-timeout';
   detail: string | null;
@@ -173,6 +174,7 @@ export class SimfarmSession {
    * arrived" is not on its own enough to act on.
    */
   private pendingAttach: { id: number; deviceId: string } | null = null;
+  private pendingRotate: number | null = null;
   /**
    * The boot in flight. `requestId` is cleared once the server has answered
    * `ok`, and the whole record is cleared once the device is attached or the
@@ -297,6 +299,9 @@ export class SimfarmSession {
       this.onShutdownReply(reply);
     } else if (this.pendingAttach !== null && this.pendingAttach.id === reply.id) {
       this.onAttachReply(reply);
+    } else if (this.pendingRotate === reply.id) {
+      this.pendingRotate = null;
+      if (!reply.ok) this.update({ error: { kind: 'rotate-failed', detail: null } });
     }
   }
 
@@ -466,6 +471,23 @@ export class SimfarmSession {
     this.send(encodeSimfarmButton({ streamId: id, button, down: false }));
   }
 
+  /** Rotation is a provider capability; display geometry changes only on its screen event. */
+  rotate(): void {
+    if (this.streamId === null || this.state.device?.capabilities.rotate !== true) return;
+    const portrait = (this.state.screen?.height ?? 0) >= (this.state.screen?.width ?? 0);
+    const id = this.nextId++;
+    this.pendingRotate = id;
+    this.update({ error: null });
+    this.send(
+      encodeSimfarmControl({
+        id,
+        op: 'rotate',
+        streamId: this.streamId,
+        orientation: portrait ? 'landscape_left' : 'portrait',
+      })
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // internals
   // ---------------------------------------------------------------------------
@@ -478,8 +500,9 @@ export class SimfarmSession {
       return;
     }
     if (!this.autoAttach || this.state.wanted !== null) return;
-    const first = listed.find((entry) => entry.booted && simfarmCanStream(entry));
-    if (first !== undefined) this.attach(first.id);
+    const available = listed.filter((entry) => entry.booted && simfarmCanStream(entry));
+    const only = available.length === 1 ? available[0] : undefined;
+    if (only !== undefined) this.attach(only.id);
     else this.update({ status: 'picking' });
   }
 

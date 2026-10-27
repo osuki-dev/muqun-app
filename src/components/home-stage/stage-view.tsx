@@ -255,13 +255,13 @@ export function StageView({
   useEffect(() => {
     if (!paused) retryGpu();
   }, [paused, retryIdentity]);
-  // Home is back: a lost device is noticed before a canvas is made on it,
-  // and pictures that failed get their next try.
+  // A Home visit or explicit theme change gives failed pictures their bounded
+  // retry. A live theme preview need not blur and refocus Home.
   useEffect(() => {
     if (paused) return;
     if (checkStageGpuLost()) setGpuLost(true);
     retryStageArt();
-  }, [paused]);
+  }, [paused, retryIdentity]);
   const [diving, setDiving] = useState(false);
   const [gpuAvailable] = useState(
     () => Platform.OS !== 'web' && TurboModuleRegistry.get('WebGPUModule') !== null

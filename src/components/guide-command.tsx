@@ -264,7 +264,11 @@ export function GuideCommand({
           ) : (
             <StartIcon size={15} color={theme.colors.onPrimary} />
           )}
-          <Text variant="bodySmall" weight="bold" color={theme.colors.onPrimary}>
+          <Text
+            variant="bodySmall"
+            weight="bold"
+            color={theme.colors.onPrimary}
+            style={styles.runLabel}>
             {t`Run on ${computerLabel}`}
           </Text>
         </PressableScale>
@@ -323,8 +327,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SHEET_LADDER.gap,
+    paddingHorizontal: SHEET_LADDER.snug,
+    paddingVertical: SHEET_LADDER.snug,
     borderCurve: 'continuous',
   },
+  runLabel: { flexShrink: 1, textAlign: 'center' },
   command: {
     flexDirection: 'row',
     alignItems: 'center',

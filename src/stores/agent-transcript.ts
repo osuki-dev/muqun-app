@@ -23,8 +23,10 @@ export function createAgentTranscriptStore() {
       return parts.length > 1 && parts.some((part) => part.source !== undefined)
         ? parts
             .filter((part) => part.markdown.trim().length > 0)
-            .map((part) => ({
+            .map((part, index, visibleParts) => ({
               ...item,
+              // A message's footer follows its final fragment, not every diagram.
+              generation: index === visibleParts.length - 1 ? item.generation : undefined,
               row_key:
                 part.start === 0
                   ? (item.row_key ?? item.id)

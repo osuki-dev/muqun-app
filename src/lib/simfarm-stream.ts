@@ -112,6 +112,7 @@ export interface SimfarmStream extends SimfarmSessionState {
   }) => void;
   type: (text: string) => void;
   press: (button: SimfarmButton) => void;
+  rotate: () => void;
 }
 
 /** The socket for `url`, wired to `session`, for the cache to open. */
@@ -138,6 +139,10 @@ function openSocket(url: string, session: SimfarmSession): void {
 }
 
 const cache = new SimfarmSessionCache({ open: openSocket });
+
+export function reconnectSimfarm(url: string): void {
+  cache.reconnect(url);
+}
 
 /**
  * The two events after which an idle socket is not worth keeping: the app
@@ -180,7 +185,11 @@ export function warmSimfarm(url: string | null, allowed: boolean): void {
  * socket has said anything -- the alternative is a spinner on a screen that is
  * about to be a list of two, which reads as slower than it is.
  */
-export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): SimfarmStream {
+export function useSimfarmStream(
+  url: string | null,
+  seed: SimfarmDevice[],
+  preferredDeviceId?: string
+): SimfarmStream {
   const [state, setState] = useState<SimfarmSessionState>(() => initialSimfarmSessionState(seed));
   const image = useSharedValue<SkImage | null>(null);
   const [hasImage, setHasImage] = useState(false);
@@ -201,6 +210,9 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
     const hold = cache.acquire(url, seed);
     const { entry } = hold;
     session.current = entry.session;
+    if (preferredDeviceId !== undefined && seed.some((device) => device.id === preferredDeviceId)) {
+      entry.session.select(preferredDeviceId);
+    }
 
     const ring = new SimfarmFrameRing<SkImage>(SIMFARM_FRAME_RING);
     // Whether the last frame handed over was a picture, so React is told
@@ -250,16 +262,17 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
       show(null);
       hold.release();
     };
-  }, [image, seed, url]);
+  }, [image, preferredDeviceId, seed, url]);
 
   const select = useCallback((deviceId: string) => session.current?.select(deviceId), []);
   const shutdown = useCallback((deviceId: string) => session.current?.shutdown(deviceId), []);
   const touch = useCallback<SimfarmStream['touch']>((input) => session.current?.touch(input), []);
   const type = useCallback((text: string) => session.current?.type(text), []);
   const press = useCallback((button: SimfarmButton) => session.current?.press(button), []);
+  const rotate = useCallback(() => session.current?.rotate(), []);
 
   return useMemo(
-    () => ({ ...state, image, hasImage, select, shutdown, touch, type, press }),
-    [hasImage, image, press, select, shutdown, state, touch, type]
+    () => ({ ...state, image, hasImage, select, shutdown, touch, type, press, rotate }),
+    [hasImage, image, press, rotate, select, shutdown, state, touch, type]
   );
 }

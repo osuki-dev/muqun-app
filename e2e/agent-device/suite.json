@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "mcp-files",
+      "program": "flows/mcp-files",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "muqun-tools",
       "program": "flows/muqun-tools",
       "tags": ["full", "agents"],
@@ -10,7 +16,7 @@
     {
       "name": "agent-composer-triggers",
       "program": "flows/agent-composer-triggers",
-      "tags": ["full", "agents"],
+      "tags": ["full", "agents", "simulator"],
       "platforms": ["ios", "android"]
     },
     {
@@ -22,7 +28,7 @@
     {
       "name": "agent-transcript-streaming",
       "program": "flows/agent-transcript-streaming",
-      "tags": ["full", "agents"],
+      "tags": ["full", "agents", "generation"],
       "platforms": ["ios", "android"]
     },
     {
@@ -189,9 +195,16 @@
       "program": "flows/home-summary",
       "tags": ["full", "workspace", "settings"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "simulator",
+      "program": "flows/simulator",
+      "tags": ["full", "workspace", "simulator"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
+    "flows/simulator": [{ "run": "flows/simulator.ad" }],
     "flows/agent-composer-triggers": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-composer-triggers.ad" }
@@ -229,6 +242,9 @@
         "mode": "visible",
         "timeout": 15000,
         "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "run": "flows/home-computer-options.ad"
       },
       {
         "target": {
@@ -331,6 +347,36 @@
       },
       {
         "target": {
+          "id": "home-continue-search"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-connections"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#search-empty"
+      },
+      {
+        "target": {
+          "id": "home-continue-no-matches"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "run": "flows/home-stage-progress.ad#clear-search"
+      },
+      {
+        "target": {
           "id": "home-recent-open-\\[\"muqun-demo\",\"demo-stage-linked\",\"codex\"\\]"
         },
         "mode": "visible",
@@ -420,7 +466,9 @@
         "timeout": 20000,
         "run": "flows/agent-transcript-streaming.ad#ready"
       },
-      { "run": "flows/agent-transcript-streaming.ad#history" }
+      { "run": "flows/agent-transcript-streaming.ad#streaming-speed" },
+      { "run": "flows/agent-transcript-streaming.ad#history" },
+      { "run": "flows/agent-transcript-streaming.ad#settled-speed" }
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
@@ -439,7 +487,16 @@
       },
       { "run": "flows/home-continue-search.ad#cleanup" }
     ],
-    "subflows/home-search-settle": [{ "run": "flows/home-continue-search.ad#settle-typed" }],
+    "subflows/home-search-settle": [
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed-ios" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/home-continue-search.ad#settle-typed" }]
+      }
+    ],
     "subflows/home-continue-search": [
       { "run": "flows/home-continue-search.ad#choose-layout" },
       {
@@ -7119,6 +7176,11 @@
         "run": "flows/agent-session-tree.ad#visible"
       },
       { "run": "flows/agent-session-tree.ad#context-closed" }
+    ],
+    "flows/mcp-files": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/mcp-files.ad#unpaired" },
+      { "run": "flows/mcp-files.ad#expired" }
     ],
     "flows/muqun-tools": [
       {

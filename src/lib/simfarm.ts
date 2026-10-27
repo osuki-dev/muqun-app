@@ -46,7 +46,7 @@ import { allowsWebServiceOpen, webServiceUrl } from '@/lib/web-service';
 export const SIMFARM_DEFAULT_PORT = 8801;
 
 /**
- * The one command that starts a simfarm the phone can actually reach.
+ * The command that starts a simfarm the phone can actually reach.
  *
  * Printed in the preview's empty state, for the same reason the pairing screen
  * prints the Gateway's install line: the reader is holding a phone in front of
@@ -70,6 +70,10 @@ export const SIMFARM_DEFAULT_PORT = 8801;
  * typed. `--host 0.0.0.0` and a real provider list are simfarm's own documented
  * shape for reaching it from another machine.
  *
+ * iOS is included only when this target's discovery explicitly says macOS;
+ * every other or unknown platform gets Android only. The phone's OS and the
+ * computer's name are not evidence of its simulator providers.
+ *
  * WeChat is left off deliberately. It is the one backend that needs launch
  * flags on another application before it can be probed at all, so putting it in
  * the line everybody copies would hand most readers a start-up error for a
@@ -80,7 +84,10 @@ export const SIMFARM_DEFAULT_PORT = 8801;
  * carrying it would be a flag that changes nothing in the case it is printed
  * for -- and the port field below the command is where a different number goes.
  */
-export const SIMFARM_RUN_COMMAND = 'npx simfarm --host 0.0.0.0 --providers ios,android';
+export function simfarmRunCommand(platform: unknown): string {
+  const providers = platform === 'macos' ? 'ios,android' : 'android';
+  return `npx simfarm --host 0.0.0.0 --providers ${providers}`;
+}
 
 /**
  * Whether this connection is one where offering the preview is honest.
@@ -172,6 +179,7 @@ export interface SimfarmCapabilities {
   video: string[];
   text: boolean;
   buttons: string[];
+  rotate?: boolean;
   /**
    * Whether the provider can start this device when it is not running.
    *
@@ -206,8 +214,9 @@ export interface SimfarmDevice {
  * Not a preference. simfarm's own client reaches for h264 and falls back to
  * jpeg when `VideoDecoder` is missing, which over a plain-http tailnet is
  * always -- so the fallback was the real path even before this app drew
- * anything itself. Hermes has no video decoder at all, so jpeg is not a
- * fallback here, it is the requirement, and a device that cannot offer it says
+ * anything itself. This client currently implements the JPEG packet path; native
+ * video-frame support does not itself decode this WebSocket protocol. A device
+ * that cannot offer JPEG says
  * so in `capabilities.video` and gets a sentence instead of a black rectangle.
  */
 export const SIMFARM_CODEC = 'jpeg';
@@ -287,6 +296,7 @@ function parseCapabilities(value: unknown): SimfarmCapabilities {
     text: record.text === true,
     buttons: stringList(record.buttons),
     boot: record.boot === true,
+    ...(record.rotate === true ? { rotate: true } : {}),
   };
 }
 

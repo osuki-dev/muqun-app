@@ -35,8 +35,14 @@ scroll down 0.2 --until "id=home-continue-search"
 fill id="home-continue-search" "no-such-demo-session"
 
 # section settle-typed
-# The search filters on every edit. Verify the resulting rows below without
-# dispatching Return, which can stall XCTest over the animated Home.
+# This local search has no submit handler. End editing before scrolling so
+# the software keyboard cannot cover the next query on a short display.
+keyboard enter
+wait stable 300 5000
+
+# section settle-typed-ios
+# Use the visible native Search key; the iOS Enter helper can time out after dispatch.
+press "id=Search visible=true"
 wait stable 300 5000
 
 # section session-menu
