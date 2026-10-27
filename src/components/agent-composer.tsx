@@ -1755,7 +1755,7 @@ export const AgentComposer = memo(function AgentComposer({
         fill, no dim. The floating card is the menu; a panel drawn around it
         read as a block pasted over the page.
       */}
-        {attachmentMenuOpen || toolbarMenuOpen || modeMenuOpen || inboxOpen ? (
+        {attachmentMenuOpen || modeMenuOpen || inboxOpen ? (
           <Pressable
             testID="agent-composer-popup-scrim"
             style={[styles.backdrop, { top: -windowHeight }]}
@@ -1788,28 +1788,6 @@ export const AgentComposer = memo(function AgentComposer({
               { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
             ]}>
             <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-          </View>
-        ) : null}
-
-        {/* The toolbar's other menu (Home's task options), in the same place
-          and card. Wider, so a value such as a model and its effort fits on
-          its row, but never past the field's right edge; and bounded by the room
-          above the keyboard, scrolling inside rather than under the header. */}
-        {toolbarMenu && toolbarMenuOpen ? (
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.attachmentAnchor,
-              { left: fieldLeft, bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
-            ]}>
-            <FloatingMenu
-              testID={toolbarMenu.testID}
-              width={
-                inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined
-              }
-              maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
-              {toolbarMenu.content}
-            </FloatingMenu>
           </View>
         ) : null}
 
@@ -2724,7 +2702,7 @@ export const AgentComposer = memo(function AgentComposer({
         ) : null}
       </Animated.View>
       {/* Full-height bounds keep the toolbar popup touchable above the dock on Android. */}
-      {commandMenuOpen && commandServerId ? (
+      {commandMenuOpen || toolbarMenuOpen ? (
         <Animated.View
           pointerEvents={revealed ? 'box-none' : 'none'}
           accessibilityElementsHidden={!revealed}
@@ -2737,63 +2715,92 @@ export const AgentComposer = memo(function AgentComposer({
           <Pressable
             testID="agent-composer-popup-scrim"
             style={StyleSheet.absoluteFill}
-            onPress={() => setCommandMenuServer(null)}
+            onPress={() => {
+              setCommandMenuServer(null);
+              closeToolbarMenu();
+            }}
           />
-          <View
-            pointerEvents="box-none"
-            style={[
-              styles.attachmentAnchor,
-              {
-                left: fieldLeft,
-                bottom:
-                  inputRowHeight +
-                  dockBottomPadding +
-                  actionRowHeight +
-                  styles.actionRowViewport.marginBottom +
-                  ATTACHMENT_MENU_GAP,
-              },
-            ]}>
-            <AgentActionMenu
-              testID="agent-composer-command-menu"
-              error={
-                commandAccess.status === 'offline'
-                  ? t`Computer offline`
-                  : commandAccess.status === 'unpaired'
-                    ? t`This computer is no longer paired.`
-                    : commandAccess.status === 'blocked' && commandAccess.reason === 'ssh-tunnel'
-                      ? t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`
-                      : commandAccess.status === 'blocked'
-                        ? t`Unavailable`
-                        : undefined
-              }
-              items={[
+          {commandMenuOpen && commandServerId ? (
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.attachmentAnchor,
                 {
-                  id: 'web',
-                  label: t`Open Web`,
-                  Icon: NetworkIcon,
-                  disabled: commandAccess.status !== 'ready',
-                  onPress: () => {
-                    setCommandMenuServer(null);
-                    router.push({
-                      pathname: '/web-service',
-                      params: { serverId: commandServerId },
-                    });
-                  },
-                  testID: 'agent-composer-command-web',
+                  left: fieldLeft,
+                  bottom:
+                    inputRowHeight +
+                    dockBottomPadding +
+                    actionRowHeight +
+                    styles.actionRowViewport.marginBottom +
+                    ATTACHMENT_MENU_GAP,
                 },
+              ]}>
+              <AgentActionMenu
+                testID="agent-composer-command-menu"
+                error={
+                  commandAccess.status === 'offline'
+                    ? t`Computer offline`
+                    : commandAccess.status === 'unpaired'
+                      ? t`This computer is no longer paired.`
+                      : commandAccess.status === 'blocked' && commandAccess.reason === 'ssh-tunnel'
+                        ? t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`
+                        : commandAccess.status === 'blocked'
+                          ? t`Unavailable`
+                          : undefined
+                }
+                items={[
+                  {
+                    id: 'web',
+                    label: t`Open Web`,
+                    Icon: NetworkIcon,
+                    disabled: commandAccess.status !== 'ready',
+                    onPress: () => {
+                      setCommandMenuServer(null);
+                      router.push({
+                        pathname: '/web-service',
+                        params: { serverId: commandServerId },
+                      });
+                    },
+                    testID: 'agent-composer-command-web',
+                  },
+                  {
+                    id: 'simulator',
+                    label: t`Open simulator`,
+                    Icon: DevicesIcon,
+                    onPress: () => {
+                      setCommandMenuServer(null);
+                      router.push({ pathname: '/simfarm', params: { serverId: commandServerId } });
+                    },
+                    testID: 'agent-composer-command-simulator',
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
+          {/* The toolbar's other menu (Home's task options), in the same place
+          and card. Wider, so a value such as a model and its effort fits on
+          its row, but never past the field's right edge; and bounded by the room
+          above the keyboard, scrolling inside rather than under the header. */}
+          {toolbarMenu && toolbarMenuOpen ? (
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.attachmentAnchor,
                 {
-                  id: 'simulator',
-                  label: t`Open simulator`,
-                  Icon: DevicesIcon,
-                  onPress: () => {
-                    setCommandMenuServer(null);
-                    router.push({ pathname: '/simfarm', params: { serverId: commandServerId } });
-                  },
-                  testID: 'agent-composer-command-simulator',
+                  left: fieldLeft,
+                  bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP,
                 },
-              ]}
-            />
-          </View>
+              ]}>
+              <FloatingMenu
+                testID={toolbarMenu.testID}
+                width={
+                  inputRowWidth > 0 ? Math.min(inputRowWidth, TOOLBAR_MENU_MAX_WIDTH) : undefined
+                }
+                maxHeight={Math.max(POPUP_MIN_HEIGHT, popupMaxHeight - TOOLBAR_MENU_CLEARANCE)}>
+                {toolbarMenu.content}
+              </FloatingMenu>
+            </View>
+          ) : null}
         </Animated.View>
       ) : null}
     </>

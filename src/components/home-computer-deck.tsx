@@ -131,7 +131,6 @@ export function HomeComputerDeck({
   const reduced = useReducedMotion();
   const isFocused = useIsFocused();
   const remembered = useHomeTaskCards((state) => state.deckFront);
-  const setDeckFront = useHomeTaskCards((state) => state.setDeckFront);
   const [held, setHeld] = useState<string[] | null>(null);
   const [scrub, setScrub] = useState<Scrub | null>(null);
   // The move as it is now, ahead of React: every handler reads and changes it
@@ -290,7 +289,6 @@ export function HomeComputerDeck({
   }, [cancelled, isFocused]);
 
   const committed = useStableHandler((front: string) => {
-    setDeckFront(front);
     onSelectServer(front);
   });
   // Switch at once: no photographs, no dissolve, no cross-fade.
