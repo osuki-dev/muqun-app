@@ -2079,7 +2079,6 @@ export const AgentComposer = memo(function AgentComposer({
                   testID="agent-composer-action-row"
                   onLayout={(event) => setActionRowHeight(event.nativeEvent.layout.height)}
                   style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
-                  {sessionCommandButton}
                   {segmentMode ? (
                     <TextSegment
                       testID="agent-composer-mode-btn"
@@ -2109,6 +2108,7 @@ export const AgentComposer = memo(function AgentComposer({
                       <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                     </TextSegment>
                   ) : null}
+                  {sessionCommandButton}
                 </View>
               ) : (
                 <View
@@ -2129,7 +2129,6 @@ export const AgentComposer = memo(function AgentComposer({
                       },
                     ]}
                     style={styles.actionRowScroll}>
-                    {sessionCommandButton}
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (
                       <PressableScale
@@ -2420,6 +2419,7 @@ export const AgentComposer = memo(function AgentComposer({
                       </PressableScale>
                     ) : null}
 
+                    {sessionCommandButton}
                     {chipIds.has('stop') ? (
                       <PressableScale
                         onPress={onAbort}

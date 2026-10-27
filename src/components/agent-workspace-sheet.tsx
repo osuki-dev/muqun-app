@@ -39,6 +39,8 @@ import { withAlpha } from '@/lib/color';
 import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
 const STAGGERED_ROWS = 8;
 
@@ -113,6 +115,12 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
    */
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const directorySearch = useServerCapabilities((state) =>
+    Boolean(serverId && state.byServer[serverId]?.includes('agent_directory_search_v1'))
+  );
+  const [searching, setSearching] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [listing, setListing] = useState<DirectoryListing>(EMPTY_DIRECTORY_LISTING);
   /** The query the field holds now, so an answer to an older one is dropped. */
   const currentQueryRef = useRef('');
@@ -156,26 +164,37 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   useEffect(() => {
     const query = searchQuery.trim();
     currentQueryRef.current = query;
-    if (!shouldSuggestDirectories(query)) {
-      setListing(EMPTY_DIRECTORY_LISTING);
+    const pathQuery = shouldSuggestDirectories(query);
+    setListing(EMPTY_DIRECTORY_LISTING);
+    setSearchFailed(false);
+    if (!query || (!pathQuery && !directorySearch)) {
+      setSearching(false);
       return;
     }
+    setSearching(true);
     let active = true;
     const current = () => active && currentQueryRef.current === query;
     const timer = setTimeout(() => {
-      getAgentDirectories(query, undefined, sessionId)
+      getAgentDirectories(pathQuery ? query : undefined, pathQuery ? undefined : query, sessionId)
         .then((answer) => {
-          if (current()) setListing(narrowLegacyListing(answer, query));
+          if (current()) {
+            setListing(narrowLegacyListing(answer, query));
+            setSearching(false);
+          }
         })
         .catch(() => {
-          if (current()) setListing(EMPTY_DIRECTORY_LISTING);
+          if (current()) {
+            setListing(EMPTY_DIRECTORY_LISTING);
+            setSearching(false);
+            setSearchFailed(true);
+          }
         });
     }, 150);
     return () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [searchQuery, sessionId]);
+  }, [searchQuery, sessionId, serverId, directorySearch]);
 
   /**
    * Every workspace worth a row: the named projects, and the directory the
@@ -229,8 +248,12 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
       header={
         <SheetSceneSearch
           testID="agent-workspace-search-input"
-          accessibilityLabel={t`Filter projects or type a path`}
-          placeholder={t`Filter projects, or type a path`}
+          accessibilityLabel={
+            directorySearch ? t`Search folders or type a path` : t`Filter projects or type a path`
+          }
+          placeholder={
+            directorySearch ? t`Search folders, or type a path` : t`Filter projects, or type a path`
+          }
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -246,6 +269,19 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
+          {searching ? <Spinner size="sm" color={theme.colors.primary} /> : null}
+          {searchFailed ? (
+            <Text
+              variant="caption"
+              color={theme.colors.textSubtle}>{t`Could not search folders. Try again.`}</Text>
+          ) : null}
+          {typedPath && !shouldSuggestDirectories(typedPath) && !directorySearch ? (
+            <Text
+              variant="caption"
+              color={
+                theme.colors.textSubtle
+              }>{t`Update the Gateway to search folders. You can still filter projects or enter a full path.`}</Text>
+          ) : null}
           {showTypedPath ? (
             <Animated.View layout={listLayout('short')}>
               <SheetSceneGroupHeading title={t`Open this path`} first />
