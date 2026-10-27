@@ -7,7 +7,16 @@ import { useRouter } from 'expo-router';
 import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { CompactionPill } from '@/components/agent-compaction-pill';
 import type { CompactionActivity } from '@/lib/agent-compaction';
-import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+} from 'react';
 import {
   Pressable,
   ScrollView,
@@ -1571,6 +1580,9 @@ export const AgentComposer = memo(function AgentComposer({
   const [inputRowLeft, setInputRowLeft] = useState(0);
   const [inputRowWidth, setInputRowWidth] = useState(0);
   const [actionRowHeight, setActionRowHeight] = useState(0);
+  const commandButtonRef = useRef<ComponentRef<typeof View>>(null);
+  const commandDockRef = useRef<ComponentRef<typeof View>>(null);
+  const [commandMenuRight, setCommandMenuRight] = useState(0);
   /** The field's left edge in the dock, where the toolbar menus start. */
   const fieldLeft = surfaceLeft + inputRowLeft;
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
@@ -1655,28 +1667,46 @@ export const AgentComposer = memo(function AgentComposer({
   const rowBleed = materialBleed ? { left: sideLeft, right: sideRight } : NO_SIDE_INSETS;
 
   const sessionCommandButton = commandServerId ? (
-    <PressableScale
-      testID="agent-composer-commands"
-      accessibilityRole="button"
-      accessibilityLabel={t`Command`}
-      accessibilityState={{ expanded: commandMenuOpen }}
-      onPress={() => {
-        closeToolbarMenu();
-        setAttachmentMenuOpen(false);
-        setModeMenuOpen(false);
-        setInboxOpen(false);
-        setCommandMenuServer(commandMenuOpen ? null : commandServerId);
-      }}
-      style={[
-        styles.actionBtnWithLabel,
-        { borderRadius: profile.chrome.roundControl },
-        { backgroundColor: surfaceBackground(chromeGlass) },
-      ]}>
-      <QuickActionIcon size={14} color={commandMenuOpen ? theme.colors.primary : chromeText} />
-      <Text variant="caption" color={chromeText} style={styles.actionBtnLabel}>
-        {t`Command`}
-      </Text>
-    </PressableScale>
+    <View ref={commandButtonRef} collapsable={false}>
+      <PressableScale
+        testID="agent-composer-commands"
+        accessibilityRole="button"
+        accessibilityLabel={t`Command`}
+        accessibilityState={{ expanded: commandMenuOpen }}
+        onPress={() => {
+          closeToolbarMenu();
+          setAttachmentMenuOpen(false);
+          setModeMenuOpen(false);
+          setInboxOpen(false);
+          if (commandMenuOpen) {
+            setCommandMenuServer(null);
+            return;
+          }
+          // Measure at the tap, after horizontal scrolling has moved the button.
+          commandButtonRef.current?.measureInWindow((x, _y, width) => {
+            commandDockRef.current?.measureInWindow((dockX, _dockY, dockWidth) => {
+              const menuWidth = Math.min(190, inputRowWidth || dockWidth);
+              setCommandMenuRight(
+                Math.max(
+                  8,
+                  Math.min(dockWidth - (x + width - dockX), dockWidth - menuWidth - fieldLeft)
+                )
+              );
+              setCommandMenuServer(commandServerId);
+            });
+          });
+        }}
+        style={[
+          styles.actionBtnWithLabel,
+          { borderRadius: profile.chrome.roundControl },
+          { backgroundColor: surfaceBackground(chromeGlass) },
+        ]}>
+        <QuickActionIcon size={14} color={commandMenuOpen ? theme.colors.primary : chromeText} />
+        <Text variant="caption" color={chromeText} style={styles.actionBtnLabel}>
+          {t`Command`}
+        </Text>
+      </PressableScale>
+    </View>
   ) : null;
 
   return (
@@ -1696,6 +1726,7 @@ export const AgentComposer = memo(function AgentComposer({
         </Animated.View>
       ) : null}
       <Animated.View
+        ref={commandDockRef}
         pointerEvents={revealed ? 'auto' : 'none'}
         accessibilityElementsHidden={!revealed}
         importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
@@ -2649,7 +2680,9 @@ export const AgentComposer = memo(function AgentComposer({
               style={[
                 styles.attachmentAnchor,
                 {
+                  right: commandMenuRight,
                   left: fieldLeft,
+                  maxWidth: inputRowWidth || undefined,
                   bottom:
                     inputRowHeight +
                     dockBottomPadding +
@@ -2660,7 +2693,7 @@ export const AgentComposer = memo(function AgentComposer({
               ]}>
               <AgentActionMenu
                 testID="agent-composer-command-menu"
-                style={{ marginHorizontal: 0 }}
+                style={{ marginHorizontal: 0, alignSelf: 'flex-end', maxWidth: '100%' }}
                 error={
                   commandAccess.status === 'offline'
                     ? t`Computer offline`
