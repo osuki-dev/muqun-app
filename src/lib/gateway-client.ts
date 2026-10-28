@@ -209,6 +209,7 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import { copyCachedOriginalImageFile, downloadOriginalImageFile } from './image-original-file';
 import {
   IMAGE_RANGE_BYTES,
+  IMAGE_DOWNLOAD_TIMEOUT_MS,
   readLimitedImageBody,
   assertImageEnvelopeLimit,
   fetchBoundedImageResponse,
@@ -276,7 +277,7 @@ async function fetchWithin(
   let response: Response;
   try {
     response = await Promise.race([
-      nitroFetch(input, { ...init, signal: budget.signal }),
+      nitroFetch(input, { ...init, signal: budget.signal, timeoutMs }),
       budget.deadline,
     ]);
   } catch (failure) {
@@ -1404,13 +1405,15 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     headers?: Record<string, string>
   ) => {
     assertCurrent();
+    const timeoutMs =
+      limit === IMAGE_VERSION_BYTES ? ASSET_CONTENT_TIMEOUT_MS : IMAGE_DOWNLOAD_TIMEOUT_MS;
     const init = { headers: { ...source.headers, ...headers }, signal, redirect: 'error' as const };
     const response =
       transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(
             source.uri,
             init,
-            ASSET_CONTENT_TIMEOUT_MS,
+            timeoutMs,
             {
               url: baseUrl,
               token: token ?? '',
@@ -1420,7 +1423,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
             () => gatewayImageConnectionKey() === pairingKey,
             limit
           )
-        : await fetchImageWithin(ASSET_CONTENT_TIMEOUT_MS, source.uri, init);
+        : await fetchImageWithin(timeoutMs, source.uri, init);
     try {
       assertCurrent();
       return response;
@@ -1941,7 +1944,10 @@ export async function readUploadImageSource(
   const response = await encryptedGatewayFetch(
     uploadContentUrl(name),
     { headers: gatewayAuthHeaders(), signal: options.signal },
-    ASSET_CONTENT_TIMEOUT_MS
+    IMAGE_DOWNLOAD_TIMEOUT_MS,
+    undefined,
+    undefined,
+    25 * 1024 * 1024
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
@@ -1970,7 +1976,10 @@ export async function readAssetImageSource(
   const response = await encryptedGatewayFetch(
     assetContentUrl(asset.id),
     { headers: gatewayAuthHeaders(), signal: options.signal },
-    ASSET_CONTENT_TIMEOUT_MS
+    IMAGE_DOWNLOAD_TIMEOUT_MS,
+    undefined,
+    undefined,
+    25 * 1024 * 1024
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
