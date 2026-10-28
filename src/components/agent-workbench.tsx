@@ -190,6 +190,7 @@ import {
   classifyAgentRequestError,
   classifyAgentSessionGone,
   isAgentOfflineError,
+  isAgentDeliveryUnconfirmed,
 } from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
@@ -197,7 +198,6 @@ import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { describeGatewayFailure } from '@/lib/network-error';
 import { hasObservedCapability, SESSION_DESCENDANTS_CAPABILITY } from '@/lib/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
@@ -3217,12 +3217,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             },
             (err) => {
               console.warn('Failed to create session on prompt send:', err);
-              if (ownsSource())
+              if (ownsSource()) {
+                const unconfirmed = isAgentDeliveryUnconfirmed(err);
+                if (unconfirmed) void refreshSessions().catch(() => {});
                 showToast({
                   variant: 'danger',
-                  title: t`Could not start a session`,
-                  message: agentErrorRef.current(err),
+                  title: unconfirmed
+                    ? t`Could not confirm submission`
+                    : t`Could not start a session`,
+                  message: unconfirmed
+                    ? t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`
+                    : agentErrorRef.current(err),
                 });
+              }
               return false;
             }
           ),
@@ -3314,20 +3321,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // prompt and answered too late, and a message the reader resends on
         // that reading arrives twice. The row stays until the snapshot says
         // whether it landed, and the toast says to check before sending again.
-        const unconfirmed = describeGatewayFailure(err).kind === 'timeout';
-        const delivered = optimistic && !unconfirmed;
+        const unconfirmed = isAgentDeliveryUnconfirmed(err);
+        const refused = optimistic && !unconfirmed;
         // Otherwise the row goes with the failure. A message that was never
         // delivered has no business sitting in the transcript, and the draft
         // comes back so the reader can try again rather than retype it.
-        if (delivered) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-        // Only text changed status optimistically. An attachment error is
-        // ambiguous: do not replace an already-arrived native row with a
-        // possibly older snapshot. Its native status/events remain authoritative.
-        if (optimistic) void loadSnapshot('silent');
+        if (refused) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        // Read authoritative state after an unknown receipt. This neither
+        // invents a canonical attachment row nor repeats the prompt.
+        if (optimistic || unconfirmed) void loadSnapshot('silent');
+        if (unconfirmed && promptDelivery) void refreshInbox().catch(() => {});
         showToast({
           variant: 'danger',
-          title: delivered ? t`Message not sent` : t`Could not confirm submission`,
-          message: delivered
+          title: refused ? t`Message not sent` : t`Could not confirm submission`,
+          message: refused
             ? agentErrorRef.current(err)
             : t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`,
           durationMs: 6000,

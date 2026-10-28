@@ -15,6 +15,7 @@ import {
 } from '@/lib/home-computer-cards';
 
 type KeyValueStore = {
+  durable?: false;
   getString: (key: string) => string | undefined;
   set: (key: string, value: string) => void;
 };
@@ -24,15 +25,22 @@ const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
 const HIDDEN_KEY = 'muqun.home.hidden-tasks.v1';
 const PENDING_KEY = 'muqun.home.pending-dispatches.v1';
 const DECK_FRONT_KEY = 'muqun.home.deck-front.v1';
-/** Sent rows kept across launches, newest last; the oldest goes first past this. */
-const MAX_PENDING = 50;
+/** Bound local draft serialization without evicting somebody else's unsettled work. */
+const MAX_PENDING_DRAFT_BYTES = 8 * 1024 * 1024;
+/** Reserve outcome/binding metadata before a new submission is transmitted. */
+const PENDING_OUTCOME_RESERVE_BYTES = 2048;
+
+export class HomeDraftStorageError extends Error {
+  constructor(readonly reason: 'full' | 'unavailable') {
+    super('Could not persist the outgoing draft');
+    this.name = 'HomeDraftStorageError';
+  }
+}
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
 const MAX_DISMISSED = 500;
 /** Bound local removals independently of per-finish acknowledgements. */
 const MAX_HIDDEN = 500;
 export { PENDING_DISPATCH_TTL_MS } from '@/lib/home-computer-cards';
-/** How many failed Sent rows are kept, holding their drafts, at most. */
-export const MAX_FAILED_ROWS = 10;
 
 function openStore(): KeyValueStore {
   try {
@@ -40,6 +48,7 @@ function openStore(): KeyValueStore {
   } catch {
     const memory = new Map<string, string>();
     return {
+      durable: false,
       getString: (key) => memory.get(key),
       set: (key, value) => {
         memory.set(key, value);
@@ -107,6 +116,7 @@ function loadPending(nowMs: number): PendingDispatch[] {
         goal: item.goal,
         atMs: item.atMs,
         ...(item.failed === true ? { failed: true as const } : {}),
+        ...(item.unconfirmed === true ? { unconfirmed: true as const } : {}),
         ...(typeof item.reason === 'string' ? { reason: item.reason } : {}),
         ...(isResend(item.resend) ? { resend: item.resend } : {}),
         ...(typeof item.asid === 'string' && item.asid ? { asid: item.asid } : {}),
@@ -114,7 +124,7 @@ function loadPending(nowMs: number): PendingDispatch[] {
       };
       if (pendingShown(row, nowMs)) rows.push(row);
     }
-    return rows.slice(-MAX_PENDING);
+    return rows;
   } catch {
     return [];
   }
@@ -141,10 +151,22 @@ function isReply(value: unknown): value is NonNullable<PendingDispatch['reply']>
   );
 }
 
-function savePending(pending: readonly PendingDispatch[]): void {
+function savePending(pending: readonly PendingDispatch[], required = false): void {
+  const serialized = JSON.stringify(pending);
+  if (
+    required &&
+    new TextEncoder().encode(serialized).length + pending.length * PENDING_OUTCOME_RESERVE_BYTES >
+      MAX_PENDING_DRAFT_BYTES
+  )
+    throw new HomeDraftStorageError('full');
+  const destination = store();
+  if (required && destination.durable === false) throw new HomeDraftStorageError('unavailable');
   try {
-    store().set(PENDING_KEY, JSON.stringify(pending.slice(-MAX_PENDING)));
+    // These are owned, unsettled submissions, including retryable drafts.
+    // A cache-size policy must not silently delete their only durable copy.
+    destination.set(PENDING_KEY, serialized);
   } catch {
+    if (required) throw new HomeDraftStorageError('unavailable');
     // Kept for this launch.
   }
 }
@@ -186,11 +208,13 @@ type HomeTaskCardsState = {
   /** Let go of acknowledgements whose task went back to work. */
   followLedgers: (index: ServerTasksIndex) => void;
   /** The dock sent a goal; the card shows it until the task frame lands. */
-  dispatched: (serverId: string, goal: string) => string;
+  dispatched: (serverId: string, goal: string, draft?: PendingResend) => string;
   /** The send failed, or the task came back with the answer. */
   settle: (id: string) => void;
   /** The send failed: the row stays, says why, and keeps what to send again. */
   failed: (id: string, reason: string, resend: PendingResend) => void;
+  /** Keep an unknown receipt and its draft, without offering it as a failed resend. */
+  unconfirmed: (id: string, asid: string | undefined, resend: PendingResend) => void;
   /** It went to a session directly: the row stands for it until its task appears. */
   bound: (id: string, asid: string) => void;
   /** Its session's agent replied: the row reads like a task in that state. */
@@ -286,37 +310,37 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((setState, get) => {
       saveDismissed(dismissed);
       set({ dismissed });
     },
-    dispatched(serverId, goal) {
+    dispatched(serverId, goal, draft) {
       const id = `dispatch-${++nextPendingId}`;
       const now = Date.now();
-      set((state) => ({
-        pending: [
-          // A retry replaces the row its failure left, rather than standing beside it.
-          ...state.pending.filter(
-            (item) =>
-              pendingShown(item, now) &&
-              !(item.failed && item.serverId === serverId && item.goal === goal)
-          ),
-          { id, serverId, goal, atMs: now },
-        ],
-      }));
+      const pending = [
+        // Equal text is not a submission identity: another draft may carry
+        // different files. Explicit retry settles its own row after acceptance.
+        ...get().pending.filter((item) => pendingShown(item, now)),
+        { id, serverId, goal, atMs: now, ...(draft ? { resend: draft } : {}) },
+      ];
+      // Refuse the new send before the network side effect, retaining both its
+      // composer and all previous drafts if storage or the byte budget fails.
+      savePending(pending, true);
+      setState({ pending });
       return id;
     },
     settle(id) {
       set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
     },
     failed(id, reason, resend) {
-      set((state) => {
-        const pending = state.pending.map((item) =>
+      set((state) => ({
+        pending: state.pending.map((item) =>
           item.id === id ? { ...item, failed: true as const, reason, resend } : item
-        );
-        // A failed row stays until acted on; past the cap the oldest goes first.
-        const failed = pending.filter((item) => item.failed).sort((a, b) => a.atMs - b.atMs);
-        const over = new Set(
-          failed.slice(0, Math.max(0, failed.length - MAX_FAILED_ROWS)).map((item) => item.id)
-        );
-        return { pending: over.size ? pending.filter((item) => !over.has(item.id)) : pending };
-      });
+        ),
+      }));
+    },
+    unconfirmed(id, asid, resend) {
+      set((state) => ({
+        pending: state.pending.map((item) =>
+          item.id === id ? { ...item, unconfirmed: true as const, asid, resend } : item
+        ),
+      }));
     },
     bound(id, asid) {
       set((state) => ({
@@ -326,8 +350,8 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((setState, get) => {
     replied(id, reply, atMs) {
       set((state) => ({
         pending: state.pending.map((item) =>
-          item.id === id && item.reply?.state !== reply
-            ? { ...item, reply: { state: reply, atMs } }
+          item.id === id && (item.reply?.state !== reply || item.unconfirmed)
+            ? { ...item, unconfirmed: undefined, reply: { state: reply, atMs } }
             : item
         ),
       }));

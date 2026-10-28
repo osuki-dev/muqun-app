@@ -237,9 +237,9 @@ const REQUEST_TIMEOUT_MS = 60_000;
  */
 const AGENT_WRITE_TIMEOUT_MS = 60_000;
 // An attachment is orders of magnitude larger than a control call, and the
-// gateway is usually reached over Wi-Fi or a tunnel, so it gets its own budget
-// rather than being cut off by the request timeout.
-const UPLOAD_TIMEOUT_MS = 60_000;
+// gateway allows a 180-second body transfer. Leave setup and response room on
+// Wi-Fi or a tunnel without extending ordinary reads or agent writes.
+const UPLOAD_TIMEOUT_MS = 240_000;
 
 export const INITIAL_PANE_OUTPUT_LINES = 240;
 export const PANE_OUTPUT_PAGE_LINES = 240;

@@ -339,11 +339,15 @@ test('encrypted serialization rechecks ownership before any network transmission
   await expect(result).rejects.toThrow('no longer active');
 });
 
-function uploads() {
+function uploads(holdStaged?: (reason: 'blur' | 'switch') => boolean) {
   let uploadingId = '';
   let record: GatewayRecord | null = a;
+  let records = [a, b];
   let listener:
-    | ((next: { record: GatewayRecord | null }, previous: { record: GatewayRecord | null }) => void)
+    | ((
+        next: { record: GatewayRecord | null; records: GatewayRecord[] },
+        previous: { record: GatewayRecord | null }
+      ) => void)
     | undefined;
   const compression = deferred<queue.PickedFile>();
   const upload = deferred<{ path: string }>();
@@ -351,43 +355,52 @@ function uploads() {
   const cleanups: (() => void)[] = [];
   let blur: (() => void) | undefined;
   let voiceRequest: object | null = null;
-  const source = declaration('src/hooks/use-attachment-uploads.ts', 'useAttachmentUploads');
-  const hook = runInNewContext(transpile(`${source}\nuseAttachmentUploads(record)`), {
-    ...queue,
-    DeliveryOwnership,
-    record,
-    markUploading: (entries: queue.PendingAttachment[], id: string) => {
-      uploadingId = id;
-      return queue.markUploading(entries, id);
-    },
-    useState: (initial: unknown) => [typeof initial === 'function' ? initial() : initial, () => {}],
-    useRef: (current: unknown) => ({ current }),
-    useCallback: (fn: unknown) => fn,
-    useEffect: (body: () => (() => void) | undefined) => {
-      const cleanup = body();
-      if (cleanup) cleanups.push(cleanup);
-    },
-    useFocusEffect: (body: () => () => void) => {
-      blur = body();
-    },
-    useGatewayConnectionStore: {
-      getState: () => ({ record }),
-      subscribe: (fn: typeof listener) => {
-        listener = fn;
-        return () => {};
+  const source = ['sameUploadRecord', 'useAttachmentUploads']
+    .map((name) => declaration('src/hooks/use-attachment-uploads.ts', name))
+    .join('\n');
+  const hook = runInNewContext(
+    transpile(`${source}\nuseAttachmentUploads(record, undefined, holdStaged)`),
+    {
+      ...queue,
+      DeliveryOwnership,
+      record,
+      holdStaged,
+      markUploading: (entries: queue.PendingAttachment[], id: string) => {
+        uploadingId = id;
+        return queue.markUploading(entries, id);
       },
-    },
-    useVoiceInput: { getState: () => ({ request: voiceRequest }) },
-    // No discovery in the fixture: every file is held to the app's own cap.
-    useAgents: (select: (state: { index: { servers: Record<string, never> } }) => unknown) =>
-      select({ index: { servers: {} } }),
-    compressPickedImage: () => compression.promise,
-    uploadAttachment: (destination: GatewayRecord) => {
-      calls.push(destination);
-      return upload.promise;
-    },
-    describeUploadFailure: () => 'fixture failure',
-  }) as AttachmentUploads;
+      useState: (initial: unknown) => [
+        typeof initial === 'function' ? initial() : initial,
+        () => {},
+      ],
+      useRef: (current: unknown) => ({ current }),
+      useCallback: (fn: unknown) => fn,
+      useEffect: (body: () => (() => void) | undefined) => {
+        const cleanup = body();
+        if (cleanup) cleanups.push(cleanup);
+      },
+      useFocusEffect: (body: () => () => void) => {
+        blur = body();
+      },
+      useGatewayConnectionStore: {
+        getState: () => ({ record, records }),
+        subscribe: (fn: typeof listener) => {
+          listener = fn;
+          return () => {};
+        },
+      },
+      useVoiceInput: { getState: () => ({ request: voiceRequest }) },
+      // No discovery in the fixture: every file is held to the app's own cap.
+      useAgents: (select: (state: { index: { servers: Record<string, never> } }) => unknown) =>
+        select({ index: { servers: {} } }),
+      preparePickedAttachment: () => compression.promise,
+      uploadAttachment: (destination: GatewayRecord) => {
+        calls.push(destination);
+        return upload.promise;
+      },
+      describeUploadFailure: () => 'fixture failure',
+    }
+  ) as AttachmentUploads;
   return {
     hook,
     calls,
@@ -402,7 +415,11 @@ function uploads() {
     switchRecord: (next: GatewayRecord) => {
       const previous = record;
       record = next;
-      listener?.({ record }, { record: previous });
+      listener?.({ record, records }, { record: previous });
+    },
+    replaceRecords: (next: GatewayRecord[]) => {
+      records = next;
+      listener?.({ record, records }, { record });
     },
   };
 }
@@ -411,6 +428,67 @@ const file: queue.PickedFile = {
   name: 'fixture.webp',
   mime: 'image/webp',
 };
+
+test.each(['compression', 'upload'] as const)(
+  'retained A upload settling during a temporary B selection drains after %s',
+  async (phase) => {
+    const h = uploads((reason) => reason === 'switch');
+    h.hook.addFiles([file]);
+    if (phase === 'upload') {
+      h.compression.resolve(file);
+      await turn();
+    }
+    h.switchRecord(b);
+    if (phase === 'compression') {
+      h.compression.resolve(file);
+      await turn();
+    }
+    h.upload.resolve({ path: '/a/private-image.webp' });
+    await turn();
+    h.switchRecord(a);
+    expect(await h.hook.awaitUploads()).toEqual(['/a/private-image.webp']);
+    expect(h.calls).toEqual([a]);
+  }
+);
+
+test('an unconfirmed retained upload fails once without replaying its POST', async () => {
+  const h = uploads(() => true);
+  h.hook.addFiles([file]);
+  h.compression.resolve(file);
+  await turn();
+  h.switchRecord(b);
+  h.upload.reject(new Error('connection lost after upload'));
+  await turn();
+  h.switchRecord(a);
+  expect(await h.hook.awaitUploads()).toBeNull();
+  expect(h.calls).toEqual([a]);
+});
+
+test.each(['removed', 'credentials', 'endpoint'] as const)(
+  'retained uploads are invalidated when the original pairing is %s',
+  async (change) => {
+    const h = uploads(() => true);
+    h.hook.addFiles([file]);
+    h.switchRecord(b);
+    const replacement =
+      change === 'removed'
+        ? [b]
+        : [
+            {
+              ...a,
+              ...(change === 'credentials'
+                ? { token: 'replaced' }
+                : { url: 'https://changed.invalid' }),
+            },
+            b,
+          ];
+    h.replaceRecords(replacement);
+    h.compression.resolve(file);
+    await turn();
+    expect(h.calls).toEqual([]);
+    expect(await h.hook.awaitUploads()).toEqual([]);
+  }
+);
 
 test('opening dictation preserves staged attachments until ordinary navigation', async () => {
   const h = uploads();

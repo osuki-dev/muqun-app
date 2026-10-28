@@ -34,10 +34,19 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
-import { boundSessionState, goalTitle, type PendingDispatch } from '@/lib/home-computer-cards';
+import {
+  boundSessionState,
+  goalTitle,
+  type PendingDispatch,
+  type PendingResend,
+} from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
-import { agentRequestErrorDetail, classifyAgentRequestError } from '@/lib/agent-request-error';
+import {
+  agentRequestErrorDetail,
+  classifyAgentRequestError,
+  isAgentDeliveryUnconfirmed,
+} from '@/lib/agent-request-error';
 import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
 import {
   createAgentSession,
@@ -106,7 +115,7 @@ import {
   taskForHomeDelivery,
 } from '@/lib/home-ledger-delivery';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
-import { useHomeTaskCards } from '@/stores/home-task-cards';
+import { HomeDraftStorageError, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
@@ -778,6 +787,19 @@ export function HomeComposerDock({
   const injectDraftRef = useRef<DraftInjector | null>(null);
   /** Empties the field if it still holds what a failed row just sent. */
   const clearDraftRef = useRef<((text: string) => void) | null>(null);
+  function stageDispatch(serverId: string, goal: string, draft?: PendingResend): string | null {
+    return recoverWithSync(
+      () => useHomeTaskCards.getState().dispatched(serverId, goal, draft),
+      (failure) => {
+        setError(
+          failure instanceof HomeDraftStorageError && failure.reason === 'full'
+            ? t`Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept.`
+            : t`Could not save this outgoing draft. Nothing was sent. Your draft is kept.`
+        );
+        return null;
+      }
+    );
+  }
   // "Reply from Home" on a card: the field takes focus to write the reply.
   const focusRequest = useHomeThreads((state) => state.focusRequest);
   const seenFocusRequest = useRef(focusRequest);
@@ -984,7 +1006,7 @@ export function HomeComposerDock({
               setError(t`That conversation has ended. Send again to start a new one.`);
               return false;
             }
-            if (describeGatewayFailure(failure).kind === 'timeout') {
+            if (isAgentDeliveryUnconfirmed(failure)) {
               setUnsure({ key, text, attachments });
               return false;
             }
@@ -1070,9 +1092,17 @@ export function HomeComposerDock({
         setError(null);
         const serverId = await sendTarget(again?.serverId);
         if (!serverId) return false;
-        if (sent) pendingId = useHomeTaskCards.getState().dispatched(serverId, sent.goal);
         const params = again ? again.params : sessionParams;
         const sendFolder = again ? again.folder : folder;
+        if (sent) {
+          pendingId = stageDispatch(serverId, sent.goal, {
+            text: sent.goal,
+            attachments: sent.attachments,
+            params,
+            ...(sendFolder ? { folder: sendFolder } : {}),
+          });
+          if (!pendingId) return false;
+        }
         // A retry reuses the session only where it would have made it.
         const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${sendFolder ?? ''}`;
         // The selection moved while this was in flight: the session and its
@@ -1087,6 +1117,7 @@ export function HomeComposerDock({
           );
         };
         let creating = false;
+        let attempted: HomeStartedSession | undefined;
         return recoverWith(
           async () => {
             if (!owns()) {
@@ -1126,6 +1157,7 @@ export function HomeComposerDock({
               setError(t`Computer unavailable.`);
               return false;
             }
+            attempted = started;
             await act(started.asid);
             startedRef.current = null;
             // Its first snapshot may predate the prompt: no welcome card for it.
@@ -1164,6 +1196,43 @@ export function HomeComposerDock({
           },
           async (failure) => {
             console.warn('Home could not start a session:', failure);
+            if (sent && pendingId && isAgentDeliveryUnconfirmed(failure)) {
+              // Creation or the prompt receipt was lost. Keep the full draft
+              // and any known session, without advertising a blind resend as
+              // a confirmed failure.
+              useHomeTaskCards.getState().unconfirmed(pendingId, attempted?.asid, {
+                text: sent.goal,
+                attachments: sent.attachments,
+                params,
+                ...(sendFolder ? { folder: sendFolder } : {}),
+              });
+              keepRow = true;
+              startedRef.current = null;
+              if (!attempted) {
+                setError(
+                  t`Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept.`
+                );
+                return false;
+              }
+              const target: HomeThreadTarget = {
+                kind: 'session',
+                serverId,
+                sessionId: HOME_AGENT_SESSION_ID,
+                asid: attempted.asid,
+                ...(attempted.sessionAgentId ? { agentId: attempted.sessionAgentId } : {}),
+                ...(attempted.directory ? { directory: attempted.directory } : {}),
+                title: goalTitle(sent.goal),
+                pills: params,
+                setAtMs: Date.now(),
+              };
+              startedThread(target);
+              setUnsure({
+                key: homeThreadKey(target),
+                text: sent.goal,
+                attachments: sent.attachments,
+              });
+              return false;
+            }
             // The row stays, says why, and keeps exactly what went, so a tap
             // sends it again; the draft, files included, stays in the field.
             // Marked before any guide opens, so its files are held across that.
@@ -1322,7 +1391,8 @@ export function HomeComposerDock({
               setError(t`Computer unavailable.`);
               return false;
             }
-            pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+            pendingId = stageDispatch(serverId, text);
+            if (!pendingId) return false;
             const { mentions, computerIds } = await mentionsIn(text, serverId);
             const created = await sendHomeLedger(
               serverId,
@@ -1474,7 +1544,8 @@ export function HomeComposerDock({
               setError(t`Computer unavailable.`);
               return false;
             }
-            pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+            pendingId = stageDispatch(serverId, text);
+            if (!pendingId) return false;
             if (viaLedger) {
               const { mentions, computerIds } = await mentionsIn(text, serverId);
               if (!owns()) {
@@ -1565,22 +1636,6 @@ export function HomeComposerDock({
     );
   }
 
-  /**
-   * A goal sent as a ledger task: the composer empties at once and the card's
-   * Sent row is the feedback (design §2). A send that fails puts the text
-   * back, with the reason under the bar -- unless the reader has started the
-   * next goal meanwhile: that stays, and the bar says which goal was not sent.
-   */
-  function dispatchTask(text: string, open: () => Promise<boolean>): Promise<boolean> {
-    if (inFlightRef.current) return Promise.resolve(false);
-    void open().then((accepted) => {
-      if (accepted || injectDraftRef.current?.(text, { ifEmpty: true })) return;
-      const notSent = [t`Could not send`, goalTitle(text)].join(META_SEPARATOR);
-      setError((reason) => (reason ? `${notSent}${META_SEPARATOR}${reason}` : notSent));
-    });
-    return Promise.resolve(true);
-  }
-
   /** A goal, with or without files; `again` preserves the failed row's destination. */
   function sendSessionPrompt(
     text: string,
@@ -1613,12 +1668,10 @@ export function HomeComposerDock({
             ?.find((profile) => profile.kind === terminalAgent.agentKind)
             ?.ledgerDelivery?.includes('pane'));
       if (paneListed && !attachments?.length) {
-        return dispatchTask(text, () =>
-          openLedgerTask(text, {
-            delivery: 'pane',
-            agentId: paneEntry?.id ?? terminalAgent.agentKind,
-          })
-        );
+        return openLedgerTask(text, {
+          delivery: 'pane',
+          agentId: paneEntry?.id ?? terminalAgent.agentKind,
+        });
       }
       const start = () =>
         startTerminalAgent(
@@ -1629,9 +1682,8 @@ export function HomeComposerDock({
           ledgerPane,
           folder
         );
-      // Optimistic dispatch can restore text only. Keep a file-bearing draft
-      // staged until the gateway actually accepts the complete first prompt.
-      return attachments?.length ? start() : dispatchTask(text, start);
+      // Keep the draft until durable staging and delivery both settle.
+      return start();
     }
     if (heldByModelGate()) return Promise.resolve(false);
     // A session entry: a ledger task bound to the provider's native session
@@ -1646,7 +1698,7 @@ export function HomeComposerDock({
       !attachments?.length &&
       !startedRef.current
     ) {
-      return dispatchTask(text, () => openLedgerTask(text, { delivery: 'session' }));
+      return openLedgerTask(text, { delivery: 'session' });
     }
     // Wait for acceptance so any failure retains the complete draft. Passing
     // the goal also binds Home's status row without opening another screen.
@@ -1716,6 +1768,7 @@ export function HomeComposerDock({
   // What a tap on a Sent row does: a failed send goes again exactly as it was,
   // to the computer it was for; one bound to its session opens it.
   const retryRow = useStableHandler((item: PendingDispatch) => {
+    if (item.unconfirmed) return;
     const resend = item.resend;
     if (!resend) return;
     // The retry goes to its own computer and the selection comes back after
@@ -1729,7 +1782,10 @@ export function HomeComposerDock({
           params: resend.params,
           ...(resend.folder ? { folder: resend.folder } : {}),
         });
-        if (sent) clearDraftRef.current?.(resend.text);
+        if (sent) {
+          useHomeTaskCards.getState().settle(item.id);
+          clearDraftRef.current?.(resend.text);
+        }
       },
       // Back to where the bar was, however the retry ended -- a throw too.
       async () => {
@@ -1836,7 +1892,19 @@ export function HomeComposerDock({
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
   });
-  const checkRow = useStableHandler((_item: PendingDispatch) => void checkDelivery());
+  const checkRow = useStableHandler((item: PendingDispatch) => {
+    if (item.unconfirmed) {
+      if (item.asid) openRow(item);
+      else {
+        refreshHomeNow(item.serverId);
+        setError(
+          t`Delivery is still unconfirmed. Check this computer's conversations before sending again.`
+        );
+      }
+      return;
+    }
+    void checkDelivery();
+  });
   useEffect(() => {
     const { setRowActions } = useHomeTaskCards.getState();
     setRowActions({ retry: retryRow, open: openRow, check: checkRow });
@@ -2304,7 +2372,11 @@ function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
   if (reason === 'switch') return retrySwitches > 0;
   return useHomeTaskCards
     .getState()
-    .pending.some((item) => item.failed === true && (item.resend?.attachments.length ?? 0) > 0);
+    .pending.some(
+      (item) =>
+        (item.failed === true || item.unconfirmed === true) &&
+        (item.resend?.attachments.length ?? 0) > 0
+    );
 }
 
 const styles = StyleSheet.create({

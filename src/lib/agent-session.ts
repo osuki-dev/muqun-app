@@ -571,7 +571,10 @@ export async function createAgentSession(
   if (params.agentId) body.agent_id = params.agentId;
   const data = await writeJson(path, 'Failed to create agent session', body);
   const info = parseAgentSessionInfo(data);
-  if (!info) throw new Error('Failed to create agent session: unreadable response');
+  if (!info)
+    throw Object.assign(new Error('Failed to create agent session: unreadable response'), {
+      code: 'EACKUNCONFIRMED',
+    });
   return info;
 }
 

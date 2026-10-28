@@ -46,12 +46,23 @@ describe('staging', () => {
     expect(both[0].id).not.toBe(both[1].id);
   });
 
-  test('an oversized pick fails at staging without opening a socket', () => {
-    const queue = stage(pick('huge.jpg', MAX_UPLOAD_BYTES + 1));
+  test('an oversized non-transformable pick fails before opening a socket', () => {
+    const queue = stage({ ...pick('huge.pdf', MAX_UPLOAD_BYTES + 1), mime: 'application/pdf' });
     expect(queue[0].status).toBe('error');
     expect(queue[0].failure).toBe('too-large');
     expect(startableIds(queue)).toEqual([]);
     expect(isBusy(queue)).toBe(false);
+  });
+
+  test('a compressible original over the wire cap enters preparation, including retry', () => {
+    let queue = stage(pick('scan.jpg', MAX_UPLOAD_BYTES + 1));
+    expect(queue[0].status).toBe('pending');
+    queue = markFailed(queue, queue[0].id, 'codec unavailable');
+    queue = requeue(queue, queue[0].id);
+    expect(queue[0].status).toBe('pending');
+    queue = markFailed(queue, queue[0].id, 'prepared bytes still too large', 'too-large');
+    expect(requeue(queue, queue[0].id)[0].failure).toBe('too-large');
+    expect(startableIds(requeue(queue, queue[0].id))).toEqual([]);
   });
 
   test('a file is held to the cap the gateway named for its type', () => {
@@ -64,7 +75,7 @@ describe('staging', () => {
     };
     const queue = stageFiles(
       [],
-      [video, pick('huge.jpg', MAX_UPLOAD_BYTES + 1)],
+      [video, { ...pick('huge.gif', MAX_UPLOAD_BYTES + 1), mime: 'image/gif' }],
       undefined,
       limits
     );
@@ -171,7 +182,7 @@ describe('per-entry transitions', () => {
   });
 
   test('retrying an oversized file refuses again instead of spending the uplink', () => {
-    let queue = stage(pick('huge.jpg', MAX_UPLOAD_BYTES + 1));
+    let queue = stage({ ...pick('huge.pdf', MAX_UPLOAD_BYTES + 1), mime: 'application/pdf' });
     queue = requeue(queue, queue[0].id);
     expect(queue[0].status).toBe('error');
     expect(startableIds(queue)).toEqual([]);
