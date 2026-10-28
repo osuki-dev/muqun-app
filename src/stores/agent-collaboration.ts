@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import {
   parseCollaborationTasks,
   recordCollaborationTask,
+  retainCollaborationTasks,
   type CollaborationTask,
   type CollaborationDraft,
 } from '@/lib/agent-collaboration';
@@ -80,8 +81,8 @@ export const useAgentCollaboration = create<CollaborationState>((set) => ({
     }),
   review: (id) =>
     set((state) => {
-      const tasks = state.tasks.map((task) =>
-        task.id === id ? { ...task, reviewed: true } : task
+      const tasks = retainCollaborationTasks(
+        state.tasks.map((task) => (task.id === id ? { ...task, reviewed: true } : task))
       );
       save(tasks);
       return { tasks };

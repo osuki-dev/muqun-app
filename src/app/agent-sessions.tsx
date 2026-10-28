@@ -168,6 +168,7 @@ function OwnedAgentSessionsScreen() {
   return (
     <AgentSessionsSheet
       sessions={merged}
+      limited={!paginated && page.sessions.length >= HOST_SESSION_LIMIT}
       remoteSearch={paginated}
       preserveOrder={paginated}
       loading={page.loading}

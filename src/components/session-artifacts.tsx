@@ -47,12 +47,15 @@ import { artifactGroupLabel } from '@/i18n/labels';
 import { groupByDay, type ArtifactRow } from '@/lib/artifact-groups';
 import {
   assetImageSource,
-  listSessionAssets,
+  listSessionAssetPage,
+  configuredGatewayServerId,
   MAX_SESSION_ASSET_LIMIT,
   SESSION_ASSET_PAGE_LIMIT,
   type AssetKind,
   type SessionAsset,
 } from '@/lib/gateway-client';
+import { mergeSessionAssetPage } from '@/lib/session-assets';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
@@ -76,9 +79,7 @@ import { carryBox, carryForward } from '@/lib/carry-forward';
  * is a paged list that grows at the far end, and both of the things that makes
  * hard are the library's own. `maintainVisibleContentPosition` with
  * `data: true` holds the reader's place across a change of *data* -- which is
- * what a page of older files is here, because the assets endpoint has no cursor
- * and "more" means asking for a wider window and being handed the whole listing
- * again. And the rows are handed out with their identity intact by
+ * what a page of older files is here. Rows keep their identity through
  * `groupByDay`, so a keystroke in the search field or a re-read of the window
  * re-renders the rows that actually changed rather than all of them.
  */
@@ -135,8 +136,7 @@ const ESTIMATED_ROW_HEIGHT = 60;
 
 /**
  * How near the end counts as "the reader has reached it", as a fraction of the
- * viewport. Half a screen: the listing re-reads the whole window to grow it, so
- * asking a little early is what keeps the next page from being a wait.
+ * viewport. Asking half a screen early avoids waiting at the page boundary.
  */
 const LOAD_MORE_THRESHOLD = 0.5;
 
@@ -144,9 +144,7 @@ const LOAD_MORE_THRESHOLD = 0.5;
  * Anchor on a change of *data*, not only on rows changing size -- the same
  * decision, and the same constant, as the chat transcript. The default covers
  * the second and skips the first, and the first is the one paging needs here:
- * widening the window answers with the same rows plus older ones, and the rows
- * the reader was looking at have to stay under their eyes while every row above
- * them is measured again.
+ * appending older files must preserve the reader's position.
  *
  * Never anchor to the empty row. It is the one row that is *replaced* rather
  * than moved -- a listing arrives and it is gone -- so holding it in place is
@@ -268,16 +266,18 @@ export function SessionArtifacts({
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<KindFilter>('all');
   const [openAsset, setOpenAsset] = useState<SessionAsset | null>(null);
-  /**
-   * How wide a listing to ask for, which is this sheet's whole notion of a
-   * page. The endpoint answers with the newest N and has no cursor, so the way
-   * to reach older files is to ask for a larger N and read the listing again --
-   * the same shape as the transcript's load-earlier, and the reason the list
-   * anchors on a change of data rather than on a prepend.
-   */
-  const [windowSize, setWindowSize] = useState(SESSION_ASSET_PAGE_LIMIT);
-  /** Whether a wider window could still answer with more than this one did. */
+  const serverId = configuredGatewayServerId();
+  const paginated = useServerCapabilities((state) =>
+    Boolean(serverId && state.byServer[serverId]?.includes('session_asset_pages'))
+  );
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [limited, setLimited] = useState(false);
   const [atEnd, setAtEnd] = useState(false);
+  const [search, setSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(paginated ? query.trim() : ''), 250);
+    return () => clearTimeout(timer);
+  }, [paginated, query]);
   const [loadingMore, setLoadingMore] = useState(false);
 
   /**
@@ -302,82 +302,96 @@ export function SessionArtifacts({
    */
   const inFlightRef = useRef<AbortController | null>(null);
 
-  // Keyed on the chip and on the window as well as the session: the filter is
-  // the gateway's job now, so changing it is a new question to ask rather than
-  // a narrower way of reading the answer already in hand, and so is asking for
-  // more of the listing.
-  const load = useCallback(async () => {
-    inFlightRef.current?.abort();
-    const controller = new AbortController();
-    inFlightRef.current = controller;
-    // No tab to scope to yet -- the first render or two, before the server
-    // screen's selection has settled -- so there is no request worth making.
-    // An empty id would only ever hit a URL with an empty segment. Showing
-    // the sheet's own empty state is the honest answer; once the selection
-    // catches up this effect runs again from the dependency below.
-    if (!tabId) {
-      setAssets([]);
-      setAtEnd(true);
-      setLoadedAt(Date.now());
-      setAvailable(true);
-      setError(null);
-      setLoading(false);
-      setLoadingMore(false);
-      return;
-    }
-    setLoading(true);
-    return settleAfter(
-      async () => {
-        return recoverWith(
-          async () => {
-            const page = await listSessionAssets(sessionId, tabId, {
-              kind: FILTER_KINDS[filter],
-              limit: windowSize,
-              signal: controller.signal,
-            });
-            if (controller.signal.aborted) return;
-            setAssets(page);
-            // A window that came back with room to spare is the whole listing, and a
-            // window at the endpoint's ceiling is as much of it as can be asked for.
-            // Either way there is nothing further to fetch, so the list stops asking.
-            setAtEnd(page.length < windowSize || windowSize >= MAX_SESSION_ASSET_LIMIT);
-            // Read once per load rather than per render: the day headings must not
-            // renumber themselves because a keystroke in the search field happened to
-            // land after local midnight.
-            setLoadedAt(Date.now());
-            setAvailable(true);
-            setError(null);
-          },
-          (failure) => {
-            // A listing this sheet itself gave up on is not a failure to report. It
-            // usually surfaces as the abort, but a request cancelled between the
-            // headers and the body can also come back as the budget's own timeout,
-            // so the controller is what decides -- not the shape of the error.
-            if (controller.signal.aborted) return;
-            setAssets([]);
-            // A window that failed says nothing about whether a wider one would, but
-            // it must not leave the list asking for one on every scroll.
-            setAtEnd(true);
-            if (isMissingEndpoint(failure)) {
-              setAvailable(false);
-              setError(null);
-              return;
-            }
-            setError(describeGatewayFailure(failure, t`Could not load files.`).message);
-          }
-        );
-      },
-      () => {
-        // Not the abandoned load's business either. Clearing these would hand the
-        // spinner belonging to the request still on the wire to the one that has
-        // already been given up on.
-        if (!controller.signal.aborted) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
+  // Each search/filter owns its request. Older pages append only to that query.
+  const load = useCallback(
+    async (cursor?: string) => {
+      inFlightRef.current?.abort();
+      const controller = new AbortController();
+      inFlightRef.current = controller;
+      // No tab to scope to yet -- the first render or two, before the server
+      // screen's selection has settled -- so there is no request worth making.
+      // An empty id would only ever hit a URL with an empty segment. Showing
+      // the sheet's own empty state is the honest answer; once the selection
+      // catches up this effect runs again from the dependency below.
+      if (!tabId) {
+        setAssets([]);
+        setAtEnd(true);
+        setLoadedAt(Date.now());
+        setAvailable(true);
+        setError(null);
+        setLoading(false);
+        setLoadingMore(false);
+        return;
       }
-    );
-  }, [filter, sessionId, t, windowSize, tabId]);
+      if (cursor) setLoadingMore(true);
+      else {
+        setLoading(true);
+        setNextCursor(null);
+        setAssets([]);
+      }
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              const page = await listSessionAssetPage(sessionId, tabId, {
+                kind: FILTER_KINDS[filter],
+                limit: paginated ? SESSION_ASSET_PAGE_LIMIT : MAX_SESSION_ASSET_LIMIT,
+                paginated,
+                cursor,
+                query: search,
+                signal: controller.signal,
+              });
+              if (controller.signal.aborted) return;
+              setAssets((previous) =>
+                cursor ? mergeSessionAssetPage(previous, page.assets) : page.assets
+              );
+              setNextCursor(page.nextCursor);
+              setAtEnd(page.nextCursor === null);
+              setLimited(page.limited);
+              // Read once per load rather than per render: the day headings must not
+              // renumber themselves because a keystroke in the search field happened to
+              // land after local midnight.
+              setLoadedAt(Date.now());
+              setAvailable(true);
+              setError(null);
+            },
+            (failure) => {
+              // A listing this sheet itself gave up on is not a failure to report. It
+              // usually surfaces as the abort, but a request cancelled between the
+              // headers and the body can also come back as the budget's own timeout,
+              // so the controller is what decides -- not the shape of the error.
+              if (controller.signal.aborted) return;
+              if (!cursor) setAssets([]);
+              // A window that failed says nothing about whether a wider one would, but
+              // it must not leave the list asking for one on every scroll.
+              setAtEnd(true);
+              if (isMissingEndpoint(failure)) {
+                setAvailable(false);
+                setError(null);
+                return;
+              }
+              setError(
+                failure instanceof Error && failure.message.startsWith('HTTP 410:')
+                  ? t`The file list changed. Refresh to continue browsing.`
+                  : describeGatewayFailure(failure, t`Could not load files.`).message
+              );
+            }
+          );
+        },
+        () => {
+          // Not the abandoned load's business either. Clearing these would hand the
+          // spinner belonging to the request still on the wire to the one that has
+          // already been given up on.
+          if (!controller.signal.aborted) {
+            inFlightRef.current = null;
+            setLoading(false);
+            setLoadingMore(false);
+          }
+        }
+      );
+    },
+    [filter, sessionId, t, tabId, paginated, search]
+  );
 
   useEffect(() => {
     void load();
@@ -425,31 +439,22 @@ export function SessionArtifacts({
     );
   }
 
-  /**
-   * The reader has come within half a screen of the oldest file in hand, so ask
-   * for a wider window.
-   *
-   * Guarded on a load already being in flight as well as on there being nothing
-   * left to ask for: the list calls this on every scroll pass that ends near
-   * the end, and a widening window is a re-read of the whole listing.
-   */
+  // Only the current query may append a page, with one request in flight.
   function loadMore() {
-    if (loading || loadingMore || atEnd) return;
-    setLoadingMore(true);
-    setWindowSize((current) =>
-      Math.min(current + SESSION_ASSET_PAGE_LIMIT, MAX_SESSION_ASSET_LIMIT)
-    );
+    if (
+      loading ||
+      loadingMore ||
+      atEnd ||
+      !nextCursor ||
+      (inFlightRef.current && !inFlightRef.current.signal.aborted)
+    )
+      return;
+    void load(nextCursor);
   }
 
-  /**
-   * A segment is a new question, so the window it was asked with goes back to
-   * the first page. Keeping a widened one would ask the gateway to scan for two
-   * hundred images because the reader had once paged through the documents.
-   */
   function chooseFilter(value: string) {
     if (!isKindFilter(value) || value === filter) return;
     setFilter(value);
-    setWindowSize(SESSION_ASSET_PAGE_LIMIT);
     setAtEnd(false);
   }
 
@@ -624,6 +629,18 @@ export function SessionArtifacts({
           // field focused.
           ListFooterComponent={
             <>
+              {limited ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {paginated
+                    ? t`Some folders could not be fully indexed. Open a file directly from its path if it is missing here.`
+                    : t`This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files.`}
+                </Text>
+              ) : null}
+              {error && assets.length > 0 ? (
+                <Text variant="caption" color={theme.colors.danger}>
+                  {error}
+                </Text>
+              ) : null}
               {loadingMore ? (
                 <View style={styles.footer}>
                   <ActivityIndicator size="small" color={theme.colors.textMuted} />

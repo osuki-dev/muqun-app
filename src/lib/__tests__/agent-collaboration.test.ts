@@ -11,6 +11,7 @@ import {
   taskAgent,
   partitionCollaborationTasks,
   recordCollaborationTask,
+  retainCollaborationTasks,
   supportsExistingAgentDelivery,
   readCollaborationOutput,
   compactCollaborationOutput,
@@ -191,7 +192,35 @@ test('history is scoped to both the paired server and session', () => {
   expect(parseCollaborationTasks(JSON.stringify([{ ...task, reviewed: 'yes' }]))).toEqual([]);
   expect(
     parseCollaborationTasks(JSON.stringify(Array.from({ length: 50 }, () => task)))
-  ).toHaveLength(40);
+  ).toHaveLength(50);
+});
+
+test('unreviewed assignments survive new work and restore while reviewed history stays bounded', () => {
+  const task: CollaborationTask = {
+    id: 'pending',
+    serverId: 'server',
+    sessionId: 'session',
+    sourcePaneId: 'source',
+    paneId: 'pane',
+    agentName: 'Reviewer',
+    prompt: 'Review',
+    createdAt: 1,
+  };
+  const reviewed = Array.from({ length: 50 }, (_, i) => ({
+    ...task,
+    id: `reviewed-${i}`,
+    reviewed: true,
+  }));
+  const pending = Array.from({ length: 50 }, (_, i) => ({
+    ...task,
+    id: `pending-${i}`,
+    superseded: true,
+  }));
+  const retained = retainCollaborationTasks([...reviewed, ...pending]);
+  expect(retained).toHaveLength(90);
+  expect(retained.slice(40)).toEqual(pending);
+  expect(parseCollaborationTasks(JSON.stringify([...reviewed, ...pending]))).toEqual(retained);
+  expect(recordCollaborationTask(retained, task)).toEqual([task, ...retained]);
 });
 
 test('context is opt-in, clearly delimited and bounded', () => {

@@ -12,6 +12,8 @@ import {
   findAssetById,
   findAssetByPath,
   sessionAssetsFromResponse,
+  sessionAssetPageFromResponse,
+  mergeSessionAssetPage,
   type SessionAsset,
 } from '@/lib/session-assets';
 
@@ -371,5 +373,63 @@ describe('PDF entry points', () => {
     expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, 'owner')).not.toThrow();
     expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, 'other')).toThrow();
     expect(() => assertAssetGateway({ gatewayServerId: 'owner' }, null)).toThrow();
+  });
+});
+
+describe('file page contracts', () => {
+  const entry = { id: 'one', path: '/workspace/one.png', modified_unix_ms: 1 };
+  test('uses only a server-issued cursor and preserves an incomplete inventory warning', () => {
+    const first = sessionAssetPageFromResponse(
+      {
+        data: {
+          assets: [entry],
+          next_cursor: 'opaque',
+          truncated: true,
+          inventory_limited: true,
+        },
+      },
+      true,
+      100
+    );
+    expect(first.nextCursor).toBe('opaque');
+    expect(first.limited).toBe(true);
+    const last = sessionAssetPageFromResponse(
+      {
+        data: {
+          assets: [],
+          next_cursor: null,
+          truncated: false,
+          inventory_limited: false,
+        },
+      },
+      true,
+      100
+    );
+    expect(last.nextCursor).toBeNull();
+    expect(last.limited).toBe(false);
+  });
+  test('legacy caps are visible and do not invent a page cursor', () => {
+    const result = sessionAssetPageFromResponse({ data: { assets: [entry] } }, false, 1);
+    expect(result.nextCursor).toBeNull();
+    expect(result.limited).toBe(true);
+    expect(sessionAssetPageFromResponse([], false, 1).limited).toBe(false);
+  });
+  test('an advertised page contract must not silently downgrade malformed metadata', () => {
+    for (const metadata of [
+      {},
+      { next_cursor: null, truncated: true },
+      { next_cursor: '', truncated: true },
+      { next_cursor: 'next', truncated: false },
+    ]) {
+      expect(() =>
+        sessionAssetPageFromResponse({ data: { assets: [entry], ...metadata } }, true, 100)
+      ).toThrow();
+    }
+  });
+  test('overlapping pages replace duplicate identities without shifting older rows', () => {
+    const first = asset({ id: 'one', path: '/one.png' });
+    const second = asset({ id: 'two', path: '/two.png' });
+    const changed = { ...first, size: 100 };
+    expect(mergeSessionAssetPage([first], [changed, second])).toEqual([changed, second]);
   });
 });
