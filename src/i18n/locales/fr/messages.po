@@ -2061,6 +2061,10 @@ msgstr "Impossible de vérifier la taille du téléchargement. Réessayez"
 msgid "Could not compact"
 msgstr "Compaction impossible"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "Impossible de confirmer la création de la session. Vérifiez les conversations de cet ordinateur avant de renvoyer. Votre brouillon est conservé"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "Impossible de confirmer l’envoi"
@@ -2375,6 +2379,10 @@ msgstr "Impossible d’enregistrer le raccourci"
 msgid "Could not save theme"
 msgstr "Impossible d’enregistrer le thème"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "Impossible d’enregistrer ce brouillon avant l’envoi. Rien n’a été envoyé. Votre brouillon est conservé"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "Impossible d’enregistrer ce réglage. Réessayez"
@@ -2391,7 +2399,6 @@ msgstr "Enregistrement impossible. Vérifiez que vos ordinateurs sont en ligne e
 msgid "Could not search folders. Try again."
 msgstr "Impossible de rechercher des dossiers. Réessayez"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2594,6 +2601,10 @@ msgstr "Supprimé"
 msgid "Deleting session…"
 msgstr "Suppression de la session…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "L’envoi n’est toujours pas confirmé. Vérifiez les conversations de cet ordinateur avant de renvoyer"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "Mode d’envoi : File d’attente. Toucher pour passer en direct (Steer)"
@@ -2607,6 +2618,10 @@ msgstr "Mode d’envoi : Direct (Steer). Toucher pour passer en file d’attente
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Livraison non confirmée"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "Envoi non confirmé. Afficher la conversation"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2991,6 +3006,11 @@ msgstr "Agent rapide spécialisé dans l'exploration de code"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "Récupérer une page web"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "Fichier trop volumineux ({0} Mo max.)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -4636,6 +4656,10 @@ msgstr "En ligne"
 msgid "ONLINE"
 msgstr "EN LIGNE"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "Seules les sessions récentes sont disponibles avec cette connexion. La recherche porte sur la liste chargée"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Seuls les {MAX_ATTACHMENTS_PER_PICK} premiers fichiers ont été ajoutés ; {dropped} laissés de côté"
@@ -5946,6 +5970,10 @@ msgstr "Enregistrée"
 msgid "Saved commands"
 msgstr "Commandes enregistrées"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "L’espace des brouillons enregistrés est plein. Traitez ou retirez les envois précédents avant de renvoyer. Votre brouillon est conservé"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Historique enregistré · État en direct indisponible"
@@ -6301,6 +6329,7 @@ msgstr "Afficher les détails de la caméra"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "Afficher la conversation"
 
@@ -6464,6 +6493,10 @@ msgstr "Certains fichiers n’ont pas pu être supprimés · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Certains fichiers n’ont pas été envoyés"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "Certains dossiers n’ont pas pu être entièrement indexés. Si un fichier manque ici, ouvrez-le directement depuis son chemin"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -7125,6 +7158,10 @@ msgstr "L'agent par défaut. Exécute les outils"
 msgid "The destination could not be opened."
 msgstr "Impossible d’ouvrir cette destination"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "La liste des fichiers a changé. Actualisez-la pour continuer à la parcourir"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Le fichier de police est introuvable. Ajoutez-le à nouveau"
@@ -7439,6 +7476,10 @@ msgstr "Ce Gateway ne répond pas à cette adresse"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Ce Gateway ne fournit plus de segments enregistrés. Les pages déjà lues sont conservées ici"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Ce Gateway affiche uniquement les fichiers récents. La recherche porte sur cette liste ; mettez à jour le Gateway pour parcourir les fichiers plus anciens"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

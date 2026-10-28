@@ -2061,6 +2061,10 @@ msgstr "Não foi possível verificar o tamanho do download. Tente novamente"
 msgid "Could not compact"
 msgstr "Não foi possível compactar"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "Não foi possível confirmar a criação da sessão. Verifique as conversas deste computador antes de voltar a enviar. O rascunho é mantido"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "Não foi possível confirmar o envio"
@@ -2375,6 +2379,10 @@ msgstr "Não foi possível salvar o atalho"
 msgid "Could not save theme"
 msgstr "Não foi possível salvar o tema"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "Não foi possível guardar este rascunho antes do envio. Nada foi enviado. O rascunho é mantido"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "Não foi possível guardar esta definição. Tente novamente"
@@ -2391,7 +2399,6 @@ msgstr "Não foi possível guardar. Verifique se os computadores estão online e
 msgid "Could not search folders. Try again."
 msgstr "Não foi possível procurar pastas. Tente novamente"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2594,6 +2601,10 @@ msgstr "Excluído"
 msgid "Deleting session…"
 msgstr "A eliminar sessão…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "A entrega continua por confirmar. Verifique as conversas deste computador antes de voltar a enviar"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "Modo de envio: Fila. Toque para mudar para Intervenção (Steer)"
@@ -2607,6 +2618,10 @@ msgstr "Modo de envio: Intervenção (Steer). Toque para mudar para Fila"
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Entrega não confirmada"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "Entrega não confirmada. Ver conversa"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2991,6 +3006,11 @@ msgstr "Agente rápido especializado em explorar código"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "Obter uma página web"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "Ficheiro demasiado grande (máx. {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -4636,6 +4656,10 @@ msgstr "Online, a responder"
 msgid "ONLINE"
 msgstr "ONLINE"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "Esta ligação só disponibiliza sessões recentes. A pesquisa abrange a lista carregada"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Apenas os primeiros {MAX_ATTACHMENTS_PER_PICK} arquivos foram adicionados; {dropped} ficaram de fora"
@@ -5946,6 +5970,10 @@ msgstr "Guardada"
 msgid "Saved commands"
 msgstr "Comandos guardados"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "O espaço para rascunhos guardados está cheio. Resolva ou remova os envios anteriores antes de voltar a enviar. O rascunho é mantido"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Histórico guardado · Estado em direto indisponível"
@@ -6301,6 +6329,7 @@ msgstr "Mostrar detalhes da câmara"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "Mostrar conversa"
 
@@ -6464,6 +6493,10 @@ msgstr "Não foi possível remover alguns ficheiros · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Alguns ficheiros não foram carregados"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "Algumas pastas não puderam ser totalmente indexadas. Se faltar um ficheiro aqui, abra-o diretamente pelo caminho"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -7125,6 +7158,10 @@ msgstr "O agente padrão. Executa ferramentas"
 msgid "The destination could not be opened."
 msgstr "Não foi possível abrir esse destino"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "A lista de ficheiros foi alterada. Atualize-a para continuar a explorar"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "O ficheiro do tipo de letra não existe. Adicione-o outra vez"
@@ -7439,6 +7476,10 @@ msgstr "Este Gateway não responde nesse endereço"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Este Gateway já não fornece segmentos guardados. As páginas já lidas são mantidas aqui"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Este Gateway só lista ficheiros recentes. A pesquisa abrange esta lista; atualize o Gateway para explorar ficheiros mais antigos"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

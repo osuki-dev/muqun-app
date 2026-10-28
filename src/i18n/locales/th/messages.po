@@ -2061,6 +2061,10 @@ msgstr "ตรวจสอบขนาดดาวน์โหลดไม่ไ
 msgid "Could not compact"
 msgstr "บีบอัดไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "ยืนยันการสร้างเซสชันไม่สำเร็จ โปรดตรวจสอบการสนทนาบนคอมพิวเตอร์นี้ก่อนส่งอีกครั้ง ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "ไม่สามารถยืนยันการส่งได้"
@@ -2375,6 +2379,10 @@ msgstr "บันทึกปุ่มลัดไม่ได้"
 msgid "Could not save theme"
 msgstr "บันทึกธีมไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "บันทึกฉบับร่างที่จะส่งนี้ไม่สำเร็จ ยังไม่ได้ส่งอะไร ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "บันทึกการตั้งค่านี้ไม่ได้ โปรดลองอีกครั้ง"
@@ -2391,7 +2399,6 @@ msgstr "บันทึกไม่ได้ โปรดตรวจสอบ�
 msgid "Could not search folders. Try again."
 msgstr "ค้นหาโฟลเดอร์ไม่สำเร็จ โปรดลองอีกครั้ง"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2594,6 +2601,10 @@ msgstr "ลบแล้ว"
 msgid "Deleting session…"
 msgstr "กำลังลบเซสชัน…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "ยังยืนยันการส่งไม่ได้ โปรดตรวจสอบการสนทนาบนคอมพิวเตอร์นี้ก่อนส่งอีกครั้ง"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "โหมดการส่ง: เข้าคิว แตะเพื่อเปลี่ยนเป็นการแทรกแซง (Steer)"
@@ -2607,6 +2618,10 @@ msgstr "โหมดการส่ง: แทรกแซงแบบเรี�
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "ยังไม่ยืนยันการส่ง"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "ยังไม่ได้รับการยืนยันการส่ง ดูการสนทนา"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2991,6 +3006,11 @@ msgstr "เอเจนต์ความเร็วสูงสำหรับ
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "ดึงหน้าเว็บ"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "ไฟล์มีขนาดใหญ่เกินไป (สูงสุด {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -4636,6 +4656,10 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "การเชื่อมต่อนี้แสดงได้เฉพาะเซสชันล่าสุด การค้นหาครอบคลุมเฉพาะรายการที่โหลดแล้ว"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "เพิ่มเฉพาะ {MAX_ATTACHMENTS_PER_PICK} ไฟล์แรก อีก {dropped} ไฟล์ไม่ได้เพิ่ม"
@@ -5946,6 +5970,10 @@ msgstr "บันทึกแล้ว"
 msgid "Saved commands"
 msgstr "คำสั่งที่บันทึกไว้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "พื้นที่จัดเก็บฉบับร่างเต็มแล้ว โปรดจัดการหรือนำรายการส่งก่อนหน้าออกก่อนส่งอีกครั้ง ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "ประวัติที่บันทึกไว้ · ไม่สามารถดูสถานะสดได้"
@@ -6301,6 +6329,7 @@ msgstr "แสดงรายละเอียดกล้อง"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "แสดงบทสนทนา"
 
@@ -6464,6 +6493,10 @@ msgstr "ลบไฟล์บางรายการไม่ได้ · {clea
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "ไฟล์บางรายการอัปโหลดไม่สำเร็จ"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "สร้างดัชนีบางโฟลเดอร์ได้ไม่ครบ หากไม่พบไฟล์ที่นี่ ให้เปิดไฟล์โดยตรงจากพาธ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -7125,6 +7158,10 @@ msgstr "เอเจนต์เริ่มต้น ทำงานตาม�
 msgid "The destination could not be opened."
 msgstr "เปิดปลายทางนี้ไม่ได้"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "รายการไฟล์มีการเปลี่ยนแปลง โปรดรีเฟรชเพื่อเรียกดูต่อ"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
@@ -7439,6 +7476,10 @@ msgstr "Gateway นี้ไม่ตอบกลับที่ที่อย�
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Gateway นี้ไม่มีส่วนที่บันทึกไว้ให้ใช้อีกแล้ว หน้าที่อ่านไปแล้วยังคงเก็บไว้ที่นี่"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Gateway นี้แสดงเฉพาะไฟล์ล่าสุด การค้นหาครอบคลุมเฉพาะรายการนี้ โปรดอัปเดต Gateway เพื่อเรียกดูไฟล์ที่เก่ากว่า"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

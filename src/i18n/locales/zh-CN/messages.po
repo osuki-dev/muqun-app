@@ -2061,6 +2061,10 @@ msgstr "无法检查下载大小，请重试"
 msgid "Could not compact"
 msgstr "无法压缩"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "无法确认会话是否已创建。重新发送前，请检查这台电脑上的会话。当前草稿已保留"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "无法确认提交"
@@ -2375,6 +2379,10 @@ msgstr "无法保存快捷命令"
 msgid "Could not save theme"
 msgstr "无法保存主题"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "无法保存待发送的草稿，未发送任何内容。当前草稿已保留"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "无法保存此设置，请重试"
@@ -2391,7 +2399,6 @@ msgstr "保存失败，请确认电脑在线且 Gateway 已更新"
 msgid "Could not search folders. Try again."
 msgstr "无法搜索文件夹，请重试"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2594,6 +2601,10 @@ msgstr "删除"
 msgid "Deleting session…"
 msgstr "正在删除会话…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "仍无法确认是否送达。重新发送前，请检查这台电脑上的会话"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "发送模式：排队。点击切换为实时插话"
@@ -2607,6 +2618,10 @@ msgstr "发送模式：实时插话。点击切换为排队"
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "发送未确认"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "尚未确认送达。查看会话"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2991,6 +3006,11 @@ msgstr "专用于探索代码库的高速智能体"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "获取网页"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "文件过大（最大 {0} MB）"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -4636,6 +4656,10 @@ msgstr "在线"
 msgid "ONLINE"
 msgstr "在线"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "当前连接仅能获取近期会话，搜索范围为已加载的列表"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "仅添加了前 {MAX_ATTACHMENTS_PER_PICK} 个文件，{dropped} 个未添加"
@@ -5946,6 +5970,10 @@ msgstr "已保存"
 msgid "Saved commands"
 msgstr "已保存的命令"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "已保存的草稿空间已满。请先处理或移除之前的提交，再重新发送。当前草稿已保留"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "已保存的历史记录 · 无法获取实时状态"
@@ -6301,6 +6329,7 @@ msgstr "显示相机详细信息"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "显示对话"
 
@@ -6464,6 +6493,10 @@ msgstr "部分文件无法清除 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些文件没有上传成功"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "部分文件夹未能完整索引。如果找不到文件，可通过文件路径直接打开"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -7125,6 +7158,10 @@ msgstr "默认智能体，执行工具"
 msgid "The destination could not be opened."
 msgstr "无法打开该目标"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "文件列表已变更，请刷新后继续浏览"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "找不到字体文件。请重新添加"
@@ -7439,6 +7476,10 @@ msgstr "这个 Gateway 不接受这个地址"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "此 Gateway 已不再提供已保存的片段。已读取的页面仍会保留在这里"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "此 Gateway 仅列出近期文件，搜索范围限于此列表。更新 Gateway 后可浏览更早的文件"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

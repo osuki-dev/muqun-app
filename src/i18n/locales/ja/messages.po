@@ -2061,6 +2061,10 @@ msgstr "ダウンロードサイズを確認できませんでした。もう一
 msgid "Could not compact"
 msgstr "圧縮できませんでした"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "セッションの作成を確認できませんでした。再送信する前に、このコンピューターの会話を確認してください。下書きは保持されています"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "送信を確認できませんでした"
@@ -2375,6 +2379,10 @@ msgstr "ショートカットを保存できませんでした"
 msgid "Could not save theme"
 msgstr "テーマを保存できませんでした"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "送信予定の下書きを保存できませんでした。何も送信されていません。下書きは保持されています"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "設定を保存できませんでした。もう一度お試しください"
@@ -2391,7 +2399,6 @@ msgstr "保存できませんでした。パソコンの接続と Gateway の更
 msgid "Could not search folders. Try again."
 msgstr "フォルダを検索できませんでした。もう一度お試しください"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2594,6 +2601,10 @@ msgstr "削除"
 msgid "Deleting session…"
 msgstr "セッションを削除しています…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "送信はまだ確認できていません。再送信する前に、このコンピューターの会話を確認してください"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "送信モード: キュー。タップしてリアルタイム割り込み (Steer) に切替"
@@ -2607,6 +2618,10 @@ msgstr "送信モード: リアルタイム割り込み (Steer)。タップし�
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "配信は未確認です"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "送信を確認できません。会話を表示"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2991,6 +3006,11 @@ msgstr "コードベースの探索に特化した高速エージェント"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "ウェブページを取得する"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "ファイルが大きすぎます（最大 {0} MB）"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -4636,6 +4656,10 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "この接続では最近のセッションのみ利用できます。検索対象は読み込み済みの一覧です"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{dropped}件は追加されていません"
@@ -5946,6 +5970,10 @@ msgstr "保存済み"
 msgid "Saved commands"
 msgstr "保存したコマンド"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "保存済みの下書きが容量上限に達しました。以前の送信を確認または一覧から削除してから再送信してください。下書きは保持されています"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "保存済み履歴 · 現在の状態は取得できません"
@@ -6301,6 +6329,7 @@ msgstr "カメラの詳細を表示"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "会話を表示"
 
@@ -6464,6 +6493,10 @@ msgstr "一部のファイルを削除できませんでした · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "一部のフォルダーは完全にインデックス化できませんでした。ここにないファイルはパスから直接開けます"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -7125,6 +7158,10 @@ msgstr "デフォルトのエージェント。ツールを実行します"
 msgid "The destination could not be opened."
 msgstr "その目的地を開けませんでした"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "ファイル一覧が変更されました。更新して閲覧を続けてください"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "フォントファイルが見つかりません。もう一度追加してください"
@@ -7439,6 +7476,10 @@ msgstr "この Gateway はそのアドレスに応答しません"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "この Gateway は保存済みの区間を提供しなくなりました。読み込み済みのページはここに残ります"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "この Gateway は最近のファイルのみ表示します。検索対象はこの一覧です。古いファイルを閲覧するには Gateway を更新してください"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
