@@ -15,13 +15,19 @@ Android and iOS builds; an OTA does not update installed native code.
   once upstream no longer pins a vulnerable Hono version. The deployed OTA
   service must also be rebuilt and deployed to receive server-side fixes.
 
-## Outstanding upstream advisories (2026-10-26)
+## Resolved build-tool advisory
+
+The lockfile now selects node-forge 1.4.2 within Expo CLI's existing compatible
+range, addressing GHSA-86w9-cpqp-85rv without an override. Rebuild candidates
+with this lockfile; an OTA cannot update an earlier build's tooling.
+
+## Outstanding upstream advisories (2026-10-28)
 
 These remain visible in `bun audit`; they are not suppressed:
 
-- GHSA-86w9-cpqp-85rv: Expo CLI uses node-forge 1.4.0. No fixed published
-  version is listed. This concerns RSA signature verification in build tooling;
-  updating the mobile bundle does not remediate it.
+- GHSA-gcqx-w48m-w2h4: build tooling retains deepmerge 4.3.1. No newer
+  published version is available. Do not merge untrusted configuration objects
+  into build configuration.
 - GHSA-mrhx-c7xc-m3w5: Expo CLI and transitive tooling retain Zod 3.25.76.
   The App directly uses fixed Zod 4.6.7. Do not override Zod 3 with Zod 4
   without migrating and validating the upstream consumers.
