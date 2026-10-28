@@ -4558,6 +4558,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ),
     [permissions, toolIds]
   );
+  const handleSendQueuedItem = useCallback(
+    (itemId: string) => {
+      const inboxId = queuedInboxId(itemId);
+      if (inboxId) handleSetInboxDelivery(inboxId, 'steer');
+    },
+    [queuedInboxId, handleSetInboxDelivery]
+  );
   const rowProps = useMemo(
     () => ({
       showReasoning,
@@ -4565,6 +4572,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onPreviewImage: previewImage,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
+      onSendQueued: agentFeatures.extra.promptSteering === true ? handleSendQueuedItem : undefined,
       // Roll-back is offered on any agent that can revert; one that cannot
       // stage gets the one-step path behind a confirmation.
       onUndoToHere: agentFeatures.revert ? handleStageRevert : undefined,
@@ -4575,6 +4583,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       markdownStyle,
       handleEditQueuedItem,
       handleCancelQueuedItem,
+      handleSendQueuedItem,
+      agentFeatures.extra.promptSteering,
       handleStageRevert,
       agentFeatures.revert,
       toolActions,

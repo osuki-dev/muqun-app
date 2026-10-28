@@ -25,6 +25,7 @@ import {
   SuggestedIcon,
   DeleteIcon,
   RestoreIcon,
+  QuickActionIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -1307,6 +1308,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage,
   onEditQueued,
   onCancelQueued,
+  onSendQueued,
   onUndoToHere,
   actions = NO_TOOL_ACTIONS,
   readOnly = false,
@@ -1317,6 +1319,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage: (uri: string) => void;
   onEditQueued: (itemId: string, text: string) => void;
   onCancelQueued: (itemId: string) => void;
+  onSendQueued?: (itemId: string) => void;
   /**
    * Stage a rollback to this message: everything from here on would go.
    *
@@ -1470,6 +1473,16 @@ export const AgentUserMessage = memo(function AgentUserMessage({
               </View>
               {!readOnly ? (
                 <>
+                  {onSendQueued && queued.inbox?.delivery !== 'steer' ? (
+                    <PressableScale
+                      testID={`queued-send-${queued.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Send now`}
+                      onPress={() => onSendQueued(queued.id)}
+                      style={styles.queuedActionBtn}>
+                      <QuickActionIcon size={13} color={theme.colors.primary} />
+                    </PressableScale>
+                  ) : null}
                   {/* Editing returns the text to the draft; files cannot follow
                     it there, so a prompt that carries them is only cancelled. */}
                   {attachments.length === 0 ? (
