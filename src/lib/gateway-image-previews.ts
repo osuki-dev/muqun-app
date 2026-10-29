@@ -1,4 +1,3 @@
-import type { SkImage } from 'react-native-skia';
 import type { MessageImageAsset } from './message-images';
 
 export const IMAGE_PREVIEWS_CAPABILITY = 'agent_image_previews_v1';
@@ -33,10 +32,8 @@ export interface PreviewImageSource {
 /** Optional fields preserve every existing local/original-only modal caller. */
 export interface PreviewImageDescriptor extends PreviewImageSource {
   id: string;
-  /** Already displayed thumbnail; borrowed from its mounted owner for opening motion. */
+  /** Already displayed thumbnail; borrowed from its mounted owner while the original loads. */
   thumbnail?: PreviewImageSource;
-  /** One-shot opening capture. The viewer owns and disposes the resolved photograph. */
-  openingCapture?: Promise<SkImage | null>;
   original?: PreviewImageSource;
   fallback?: PreviewImageSource;
   deferred?: boolean;

@@ -6,7 +6,7 @@ import { Canvas, Group, type SkImage } from 'react-native-skia';
 import { useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { SnapDust, SNAP_DUST_EFFECT } from '@/components/launch-snap';
+import { ParticleField, PARTICLE_EFFECT } from '@/components/particle-field';
 import { DURATION, timing } from '@/lib/motion';
 import type { PreviewImageSource } from '@/lib/gateway-image-previews';
 import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
@@ -29,7 +29,7 @@ export function ImagePreviewReveal({
 }) {
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
-  const enabled = !reduced && Boolean(SNAP_DUST_EFFECT) && Boolean(thumbnail || openingCapture);
+  const enabled = !reduced && Boolean(PARTICLE_EFFECT) && Boolean(thumbnail || openingCapture);
   const ref = useRef<ViewInstance>(null);
   const progress = useSharedValue(0.82);
   const [decoded, setDecoded] = useState(false);
@@ -100,7 +100,7 @@ export function ImagePreviewReveal({
                   { translateY: (height - frameHeight) / 2 },
                 ]}
                 clip={{ x: 0, y: 0, width: frameWidth, height: frameHeight }}>
-                <SnapDust
+                <ParticleField
                   image={snapshot}
                   tint={theme.colors.primary}
                   width={frameWidth}

@@ -4375,7 +4375,9 @@
           }
         ]
       },
-      { "run": "flows/settings-home-layout.ad#home-landmark" },
+      {
+        "run": "flows/settings-home-layout.ad#home-landmark"
+      },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -4467,6 +4469,39 @@
       },
       {
         "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#reopen-settings"
+      },
+      {
+        "target": {
+          "id": "settings-servers-row"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-again"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "target": {
           "id": "settings-home-layout-row"
         },
         "mode": "scroll",
@@ -4490,27 +4525,6 @@
       },
       {
         "target": {
-          "text": "Home layout, Editorial"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#editorial-selected"
-      },
-      {
-        "include": "subflows/close-settings-sheet",
-        "env": {
-          "SETTINGS_GROUP": "appearance"
-        }
-      },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/settings-home-layout.ad#leave-settings"
-      },
-      {
-        "target": {
           "id": "home-editorial-layout"
         },
         "mode": "visible",
@@ -4518,19 +4532,25 @@
         "run": "flows/settings-home-layout.ad#editorial-home"
       },
       {
-        "target": { "id": "home-pair-server" },
+        "target": {
+          "id": "home-pair-server"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-home-layout.ad#empty-pair-visible"
       },
       {
-        "target": { "text": "Try the demo" },
+        "target": {
+          "text": "Try the demo"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-home-layout.ad#empty-demo-visible"
       },
       {
-        "target": { "id": "home-launch-actions" },
+        "target": {
+          "id": "home-launch-actions"
+        },
         "mode": "hidden",
         "run": "flows/settings-home-layout.ad#empty-launches-hidden"
       },
@@ -4602,32 +4622,12 @@
         "run": "flows/settings-home-layout.ad#choose-stage"
       },
       {
-        "target": {
-          "text": "Home layout, Stage"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#stage-selected"
-      },
-      {
-        "include": "subflows/close-settings-sheet",
-        "env": {
-          "SETTINGS_GROUP": "appearance"
-        }
-      },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/settings-home-layout.ad#leave-stage-settings"
+        "run": "flows/settings-home-layout.ad#home-landmark"
       },
       {
         "when": {
-          "target": {
-            "id": "home-pad-toolbar-actions"
-          },
-          "absent": true
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
         },
         "steps": [
           {
@@ -4642,9 +4642,39 @@
       },
       {
         "when": {
-          "target": {
-            "id": "home-pad-toolbar-actions"
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-stage-layout"
+            },
+            "mode": "visible",
+            "timeout": 8000,
+            "run": "flows/settings-home-layout.ad#stage-home"
           }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "visible",
+            "run": "flows/settings-home-layout.ad#editorial-home"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
         },
         "steps": [
           {
@@ -4704,28 +4734,13 @@
         "run": "flows/settings-home-layout.ad#choose-classic"
       },
       {
-        "target": {
-          "text": "Home layout, Classic"
+        "run": "flows/settings-home-layout.ad#home-landmark"
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
         },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#classic-selected"
-      },
-      {
-        "include": "subflows/close-settings-sheet",
-        "env": {
-          "SETTINGS_GROUP": "appearance"
-        }
-      },
-      {
-        "target": {
-          "text": "Go back"
-        },
-        "mode": "press",
-        "run": "flows/settings-home-layout.ad#leave-classic-settings"
-      },
-      {
-        "when": { "target": { "id": "home-pad-toolbar-actions" }, "absent": true },
         "steps": [
           {
             "target": {
@@ -4738,7 +4753,41 @@
         ]
       },
       {
-        "when": { "target": { "id": "home-pad-toolbar-actions" } },
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "hidden",
+            "timeout": 8000,
+            "run": "flows/settings-home-layout.ad#classic-home"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "home-editorial-layout"
+            },
+            "mode": "visible",
+            "run": "flows/settings-home-layout.ad#editorial-home"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
         "steps": [
           {
             "target": {

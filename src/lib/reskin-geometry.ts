@@ -46,7 +46,9 @@ export const RIPPLE_SNAPSHOT_BUDGET_MS = 260;
  */
 export function snapshotBudget(platform: string, play: ReskinPlay): number | null {
   if (platform !== 'android') return SNAPSHOT_BUDGET_MS;
-  return play === 'ripple' || play === 'scan' ? RIPPLE_SNAPSHOT_BUDGET_MS : null;
+  return play === 'particles' || play === 'ripple' || play === 'scan'
+    ? RIPPLE_SNAPSHOT_BUDGET_MS
+    : null;
 }
 
 /**
@@ -209,7 +211,7 @@ function corners(size: ReskinSize): ReskinPoint[] {
  */
 export function resolveOrigin(
   origin: ReskinPoint | undefined,
-  kind: 'theme' | 'font'
+  kind: 'theme' | 'font' | 'layout'
 ): ReskinPoint {
   if (!origin || !Number.isFinite(origin.x) || !Number.isFinite(origin.y)) {
     return kind === 'theme' ? { x: 0, y: 0 } : { x: 0.5, y: 0.5 };
@@ -412,17 +414,24 @@ export function scanFront(progress: number, reach: number): number {
 }
 
 /** What the app is going to do about a re-skin. */
-export type ReskinPlay = 'ripple' | 'scan' | 'wash' | 'halftone' | 'crossfade' | 'none';
+export type ReskinPlay =
+  | 'particles'
+  | 'ripple'
+  | 'scan'
+  | 'wash'
+  | 'halftone'
+  | 'crossfade'
+  | 'none';
 
 /** How taking the picture went. */
 export type SnapshotOutcome = 'ok' | 'failed' | 'slow';
 
 /** Everything that decides which transition runs, if any. */
 export type ReskinConditions = {
-  kind: 'theme' | 'font';
+  kind: 'theme' | 'font' | 'layout';
   /** The device has asked for reduced motion. */
   reduceMotion: boolean;
-  /** This kind's runtime effect (ripple, scan) compiled on this device. */
+  /** The particle runtime effect compiled on this device. */
   effectReady: boolean;
   /** This kind's older effect (wash, halftone) compiled, for when the new one did not. */
   fallbackReady?: boolean;
@@ -447,26 +456,15 @@ export type ReskinConditions = {
  * millisecond dissolve has no travel in it at all and still spares the reader
  * the cut.
  *
- * A theme or mode change is a cross-fade: the old paper (Android's veil) or
- * the old screen (iOS's photograph) dissolves over the settled new interface
- * in one short beat. It was a ripple, and the ripple's full-screen shader ran
- * on Home at the same moment the page re-themed every row and the Stage
- * rebuilt its textures, and the landing stuttered on the owner's phone
- * (2026-10-23); the owner chose the dissolve over the effect. The ripple and
- * the wash stay compiled and drawable, but nothing selects them for a theme.
- *
- * A font change is a scan. A device whose scan would not compile gets the
- * older halftone if that one did, and the cross-fade if neither did -- the
- * picture is already taken, and a dissolve is the part of the effect that
- * needs no GPU program.
+ * Theme, font and layout changes share the same particle field. Shader failure
+ * and reduced motion select the short crossfade; neither can block the change.
  */
 export function selectReskinPlay(conditions: ReskinConditions): ReskinPlay {
   const { size } = conditions;
   if (conditions.snapshot !== 'ok') return 'none';
   if (!(size.width > 0) || !(size.height > 0)) return 'none';
-  if (conditions.reduceMotion || conditions.kind === 'theme') return 'crossfade';
-  if (conditions.effectReady) return 'scan';
-  if (conditions.fallbackReady) return 'halftone';
+  if (conditions.reduceMotion) return 'crossfade';
+  if (conditions.effectReady) return 'particles';
   return 'crossfade';
 }
 
@@ -507,7 +505,7 @@ export function recordSnapshotCost(
   return strikes + 1;
 }
 
-/** Theme reveals keep the new UI interactive after its covered commit. */
+/** Photographed particle reveals retain touch ownership until the live UI is visible. */
 export function reskinBlocksTouches(play: ReskinPlay, swapping: boolean): boolean {
-  return swapping || play === 'halftone' || play === 'scan';
+  return swapping || play === 'particles' || play === 'halftone' || play === 'scan';
 }

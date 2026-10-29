@@ -53,11 +53,20 @@ export function useSkiaDrawReady(
   useEffect(() => {
     if (!enabled) return;
     let live = true;
-    const frame = requestAnimationFrame(() => {
+    const deadline = Date.now() + 500;
+    let frame = 0;
+    // A mounted Canvas can precede Android's native surface target. Skia's
+    // synchronous snapshot uses that target's dimensions (initially zero).
+    // Retry on subsequent frames, serially and within a fixed deadline; never
+    // acknowledge a mount as a successful GPU draw.
+    const check = () => {
       void canvasDrawn(canvas.current).then((ready) => {
-        if (live) report.current?.(ready);
+        if (!live) return;
+        if (ready || Date.now() >= deadline) report.current?.(ready);
+        else frame = requestAnimationFrame(check);
       });
-    });
+    };
+    frame = requestAnimationFrame(check);
     return () => {
       live = false;
       cancelAnimationFrame(frame);

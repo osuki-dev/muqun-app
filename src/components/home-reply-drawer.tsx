@@ -1,3 +1,4 @@
+import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import { useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
@@ -92,6 +93,8 @@ import { replaceAgentTranscript, type AgentSessionRuntime } from '@/lib/agent-se
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 import {
   INITIAL_PANE_OUTPUT_LINES,
+  gatewayAuthHeaders,
+  gatewayUrl,
   loadPanes,
   readPaneOutput,
   type HerdrEntity,
@@ -968,6 +971,23 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const listRef = useRef<LegendListRef>(null);
   const { serverId, sessionId, asid } = target;
   const key = homeThreadKey(target);
+  const [imagePreview, setImagePreview] = useState<{
+    owner: string;
+    images: PreviewImage[];
+    index: number;
+  } | null>(null);
+  const previewImage = useStableHandler((uri: string, album?: readonly string[]) => {
+    const uris = album?.length ? album : [uri];
+    setImagePreview({
+      owner: key,
+      index: Math.max(0, uris.indexOf(uri)),
+      images: uris.map((source) => ({
+        id: source,
+        uri: source,
+        ...(source.startsWith(gatewayUrl('/')) ? { headers: gatewayAuthHeaders() } : {}),
+      })),
+    });
+  });
   const readRuntime = useLatestReader(runtime);
   const [agentId, setAgentId] = useState(target.agentId);
   const features = useAgentFeatures(serverId, agentId);
@@ -1221,13 +1241,13 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
     () => ({
       showReasoning: true,
       markdownStyle,
-      onPreviewImage: doNothing,
+      onPreviewImage: previewImage,
       onEditQueued: doNothing,
       onCancelQueued: doNothing,
-      actions: { audioSessionId: asid },
+      actions: { audioSessionId: asid, onPreviewImage: previewImage },
       readOnly: true,
     }),
-    [markdownStyle, asid]
+    [markdownStyle, asid, previewImage]
   );
   const maintainEnd = useMemo(() => ({ animated: !reduced }), [reduced]);
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -1320,6 +1340,13 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         style={styles.fill}
         contentContainerStyle={styles.transcriptContent}
       />
+      {imagePreview?.owner === key ? (
+        <ImagePreviewModal
+          images={imagePreview.images}
+          initialIndex={imagePreview.index}
+          onClose={() => setImagePreview(null)}
+        />
+      ) : null}
       <JumpToLatestPill
         testID="home-reply-latest"
         follow={follow}
