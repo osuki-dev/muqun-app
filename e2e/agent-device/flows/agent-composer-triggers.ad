@@ -13,6 +13,8 @@ press "id=agent-composer-command-simulator"
 wait "id=simfarm-pair" 10000
 press "id=simfarm-close"
 wait "id=agent-composer-input" 10000
+# Re-focus the real input after the native simulator sheet relinquishes focus.
+press "id=agent-composer-input"
 fill "id=agent-composer-input" "@"
 wait "id=file-mention-app.json" 10000
 wait 400

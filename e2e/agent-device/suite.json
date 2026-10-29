@@ -752,7 +752,7 @@
       },
       {
         "target": {
-          "text": "Acacia Afterglow|Could not reach the theme catalogue"
+          "text": "Acacia Afterglow(?:, (?:Current|Update|Installed))*|Could not reach the theme catalogue"
         },
         "mode": "visible",
         "timeout": 40000,
@@ -761,7 +761,7 @@
       {
         "when": {
           "target": {
-            "text": "Acacia Afterglow"
+            "id": "theme-browse-item:acacia-afterglow"
           }
         },
         "steps": [
@@ -4375,6 +4375,7 @@
           }
         ]
       },
+      { "run": "flows/settings-home-layout.ad#home-landmark" },
       {
         "include": "subflows/dismiss-logbox"
       },

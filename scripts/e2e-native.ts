@@ -436,7 +436,7 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
     nodeRole(grabber) === 'button' &&
     control.height > 0 &&
     control.height <= 44 &&
-    control.y >= viewport.y + 80 &&
+    control.y + control.height / 2 >= viewport.y + 80 &&
     control.y + control.height < viewport.y + viewport.height - 24 &&
     control.x >= viewport.x &&
     control.x + control.width <= viewport.x + viewport.width

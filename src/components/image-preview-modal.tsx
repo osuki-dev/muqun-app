@@ -87,6 +87,7 @@ export function ImagePreviewModal({
   onClose: () => void;
 }) {
   const theme = useThemeTokens();
+  const [shown, setShown] = useState(false);
   const [openingCaptures] = useState(
     () => new Set(images.flatMap((image) => (image.openingCapture ? [image.openingCapture] : [])))
   );
@@ -117,6 +118,7 @@ export function ImagePreviewModal({
   return (
     <Modal
       visible
+      onShow={() => setShown(true)}
       presentationStyle="fullScreen"
       statusBarTranslucent
       navigationBarTranslucent
@@ -128,7 +130,7 @@ export function ImagePreviewModal({
         'landscape-right',
       ]}
       onRequestClose={onClose}>
-      <StatusBar hidden />
+      {shown ? <StatusBar hidden /> : null}
       {/* Keep the native modal mounted on rotation; reset only its gesture surface. */}
       <GestureHandlerRootView
         style={[styles.root, { backgroundColor: theme.colors.background }]}
