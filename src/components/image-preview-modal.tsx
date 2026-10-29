@@ -1,5 +1,3 @@
-import { disposeViewPhotograph } from '@/lib/view-photograph';
-import { ImagePreviewReveal } from '@/components/image-preview-reveal';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
@@ -89,18 +87,6 @@ export function ImagePreviewModal({
 }) {
   const theme = useThemeTokens();
   const [shown, setShown] = useState(false);
-  const [openingCaptures] = useState(
-    () => new Set(images.flatMap((image) => (image.openingCapture ? [image.openingCapture] : [])))
-  );
-  useEffect(
-    () => () => {
-      for (const capture of openingCaptures)
-        void capture.then((image) => {
-          if (image) disposeViewPhotograph(image);
-        });
-    },
-    [openingCaptures]
-  );
   const window = useWindowDimensions();
   const [layout, setLayout] = useState<PreviewSize | null>(null);
   const [pendingSaves] = useState(() => new Set<AbortController>());
@@ -730,7 +716,6 @@ function PreviewPage({
     original: false,
   }));
   const { status, original } = load;
-  const [displayed, setDisplayed] = useState(false);
   const wantsPreview = Boolean(load.previewFallback && (load.request ?? 0) === originalRequested);
   const wantsOriginal = !wantsPreview && (original || originalRequested > 0);
   const asynchronous = Boolean(image.resolveSource);
@@ -808,48 +793,38 @@ function PreviewPage({
       }
       {...accessibility}>
       <Animated.View style={[styles.page, zoomStyle]}>
-        <ImagePreviewReveal
-          ready={displayed}
-          openingCapture={image.openingCapture}
-          thumbnail={image.thumbnail ?? (!image.resolveSource ? image : undefined)}
-          width={width}
-          height={height}>
-          {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
-            <Image
-              key={load.source.cacheKey ?? load.source.uri}
-              source={{
-                uri: load.source.uri,
-                headers: load.source.headers,
-                cacheKey: load.source.cacheKey,
-              }}
-              cachePolicy={image.deferred ? 'none' : undefined}
-              style={styles.image}
-              contentFit="contain"
-              // The reveal snapshots this decoded image. A native fade would bake
-              // its first translucent frame into the particles and darken the reveal.
-              transition={0}
-              onDisplay={() => setDisplayed(true)}
-              onLoad={({ source }) => {
-                onOriginalLoaded(Boolean(load.source?.originalLoaded));
-                sizes.set((current) =>
-                  current.map((size, page) =>
-                    page === index ? { width: source.width, height: source.height } : size
-                  )
-                );
-                setLoad((current) =>
-                  current.source === load.source &&
-                  (current.status !== 'loaded' || current.readySource !== current.source)
-                    ? { ...current, status: 'loaded', readySource: current.source ?? undefined }
-                    : current
-                );
-              }}
-              onError={() => {
-                const failed = load.source;
-                if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
-              }}
-            />
-          ) : null}
-        </ImagePreviewReveal>
+        {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
+          <Image
+            key={load.source.cacheKey ?? load.source.uri}
+            source={{
+              uri: load.source.uri,
+              headers: load.source.headers,
+              cacheKey: load.source.cacheKey,
+            }}
+            cachePolicy={image.deferred ? 'none' : undefined}
+            style={styles.image}
+            contentFit="contain"
+            transition={0}
+            onLoad={({ source }) => {
+              onOriginalLoaded(Boolean(load.source?.originalLoaded));
+              sizes.set((current) =>
+                current.map((size, page) =>
+                  page === index ? { width: source.width, height: source.height } : size
+                )
+              );
+              setLoad((current) =>
+                current.source === load.source &&
+                (current.status !== 'loaded' || current.readySource !== current.source)
+                  ? { ...current, status: 'loaded', readySource: current.source ?? undefined }
+                  : current
+              );
+            }}
+            onError={() => {
+              const failed = load.source;
+              if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
+            }}
+          />
+        ) : null}
       </Animated.View>
       {status === 'loading' && !image.thumbnail ? (
         <Animated.View

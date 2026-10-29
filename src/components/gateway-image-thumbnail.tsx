@@ -1,14 +1,6 @@
-import { photographView } from '@/lib/view-photograph';
-import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import {
-  Platform,
-  StyleSheet,
-  View,
-  type ViewInstance,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
@@ -154,9 +146,6 @@ export function GatewayImageThumbnail({
     };
   }, [needsRead, key]);
   const nativeKey = source ? `${key}:${source.uri}` : key;
-  const captureRef = useRef<ViewInstance>(null);
-  const [captureSize, setCaptureSize] = useState({ width: 0, height: 0 });
-  const [openingCapture, setOpeningCapture] = useState<PreviewImageDescriptor['openingCapture']>();
   const bitmap = source && failed !== nativeKey ? source : undefined;
   const content = compact ? (
     bitmap ? (
@@ -201,29 +190,12 @@ export function GatewayImageThumbnail({
             else fileActions.show();
           }}
           onPress={() => {
-            const capture =
-              bitmap && !previewState?.cropped
-                ? photographView(captureRef, captureSize.width, captureSize.height, {
-                    zeroCopy: Platform.OS !== 'android',
-                  }).catch(() => null)
-                : undefined;
-            if (binding && onPreview)
-              onPreview({ ...binding.image, thumbnail: bitmap, openingCapture: capture });
-            else {
-              setOpeningCapture(capture);
-              setOpen(true);
-            }
+            if (!binding) return;
+            if (onPreview) onPreview({ ...binding.image, thumbnail: bitmap });
+            else setOpen(true);
           }}
           style={frame}>
-          <View
-            ref={captureRef}
-            style={compact ? StyleSheet.absoluteFill : undefined}
-            collapsable={false}
-            onLayout={({ nativeEvent: { layout } }) =>
-              setCaptureSize({ width: layout.width, height: layout.height })
-            }>
-            {content}
-          </View>
+          <View style={compact ? StyleSheet.absoluteFill : undefined}>{content}</View>
         </PressableScale>
       ) : (
         <View style={frame}>{content}</View>
@@ -231,7 +203,7 @@ export function GatewayImageThumbnail({
       {interactive ? fileActions.menu : null}
       {open && binding ? (
         <ImagePreviewModal
-          images={[{ ...binding.image, thumbnail: bitmap, openingCapture }]}
+          images={[{ ...binding.image, thumbnail: bitmap }]}
           initialIndex={0}
           onClose={() => setOpen(false)}
         />
