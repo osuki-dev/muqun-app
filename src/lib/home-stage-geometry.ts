@@ -14,6 +14,7 @@ import {
   editorialArtworkRect,
   HOME_HERO_FEATHER,
 } from './hero-feather';
+import type { StageImageBounds } from './home-stage-layers';
 
 export type StageVec3 = readonly [number, number, number];
 
@@ -275,9 +276,8 @@ const ART_FADE_PT = 52;
 /**
  * A picture fitted whole may grow this much past the view's width (cropping
  * its sides at the focal point) when that fills more of the art's height: a
- * wide figure or inset picture, a short sky painting.
+ * wide inset picture or a short sky painting.
  */
-const FIGURE_ZOOM = 1.3;
 const INSET_ZOOM = 1.22;
 const SKY_ZOOM = 1.5;
 
@@ -474,11 +474,10 @@ export function stagePaintingPlacement(
  * The figure (a cover header's cut-out) or the inset picture (a standard
  * header's artwork).
  *
- * The figure's box is the view's width, from under the computer's name down
- * past the floor. Contained, the figure stands on the box's foot at its
- * focal x, as large as the box allows (a wide one up to `FIGURE_ZOOM` past
- * the width); covered, it fills the box keeping its top, as Editorial's.
- * Its feet fade into the HUD's foot.
+ * A contained figure fits its measured silhouette between the HUD and the
+ * work rows, keeping every extremity visible without fading its feet. Clear
+ * authoring margins cannot lift or shrink it. Covered figures keep the
+ * established title overlap and bottom fade, as Editorial's cover does.
  *
  * The inset picture is centred between the HUD and the floor, the view's
  * width (a little more for a wide picture, `INSET_ZOOM`) unless that is
@@ -492,11 +491,49 @@ export function stageHeroPlacement(
     focal: { x: number; y: number };
     box: 'cover' | 'standard';
     feather: 'cover' | 'inset' | 'framed';
+    bounds?: StageImageBounds;
+    solidBottom?: boolean;
   },
   viewport: StageViewport
 ): StageArtPlacement {
   const ratio = ratioOf(hero.aspect).width;
   if (hero.box === 'cover') {
+    if (hero.fit === 'contain') {
+      // Fit the visible silhouette, not its transparent authoring canvas. Its
+      // complete head and feet stay between the HUD and the first work row.
+      const top = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;
+      // Both ends remain in view during the full camera tilt and computer pan.
+      const side =
+        INSET_GAP_PT +
+        ((LOOK_SHIFT_X + PAN_SHIFT) * viewport.height) / stageViewSize(STAGE_HERO_DEPTH, 1).height;
+      const box = {
+        x: side,
+        y: top,
+        width: Math.max(0, viewport.width - side * 2),
+        height: Math.max(0, viewport.floor - INSET_GAP_PT - top),
+      };
+      const bounds = hero.bounds ?? { x: 0, y: 0, width: 1, height: 1 };
+      const content = within(
+        containedImageRect(
+          box,
+          { width: ratio * bounds.width, height: bounds.height },
+          { x: hero.focal.x, y: 1 }
+        ),
+        box
+      );
+      const width = content.width / bounds.width;
+      const height = content.height / bounds.height;
+      const drawn = {
+        x: content.x - bounds.x * width,
+        y: content.y - bounds.y * height,
+        width,
+        height,
+      };
+      // A scenic fragment can also have clear sky. Soften its painted bottom
+      // edge without dissolving the feet of an actual character cut-out.
+      const fadeFrom = hero.solidBottom ? content.y + content.height - INSET_GAP_PT * 2 : null;
+      return placeArt(box, drawn, fadeFrom, { x: 0, y: 0 });
+    }
     const top = viewport.inset + COVER_BOX_TOP_PT;
     const box = {
       x: 0,
@@ -504,10 +541,7 @@ export function stageHeroPlacement(
       width: viewport.width,
       height: Math.max(0, viewport.floor + ART_FOOT_PT - top),
     };
-    const drawn =
-      hero.fit === 'contain'
-        ? zoomedContain(box, ratio, FIGURE_ZOOM, { x: hero.focal.x, y: 1 })
-        : within(editorialArtworkRect(box, ratioOf(ratio), hero.fit, hero.focal), box);
+    const drawn = within(editorialArtworkRect(box, ratioOf(ratio), hero.fit, hero.focal), box);
     return placeArt(box, drawn, footFadeFrom(drawn, box, viewport.floor), { x: 0, y: 0 });
   }
   const roomTop = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;

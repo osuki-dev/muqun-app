@@ -2661,7 +2661,6 @@ msgstr "losgelöst bei {head}"
 msgid "Detached at {head}"
 msgstr "Losgelöst bei {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "Aufgaben ausklappen"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Toolaufruf erweitern"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Läuft ab am {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "In Arbeit"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Enthaltene Nutzung"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Die enthaltene Nutzung ist eingeschränkt. Kostenpflichtige oder alternative Nutzung kann weiterhin möglich sein"
 
@@ -3651,10 +3641,6 @@ msgstr "Sprache, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Groß"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Zuletzt geprüft"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Erfordert iOS 16.1 oder neuer"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Zurücksetzungsguthaben"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Zurücksetzungszeit nicht gemeldet"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "Nachricht senden"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Jetzt senden"
 
@@ -6270,10 +6253,6 @@ msgstr "Mehrere Coding-Agenten auf einem Rechner: OpenCode, DeepSeek und T3 Code
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Das Protokoll dieser Sitzung teilen"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Sitzungsübergreifend geteilt. Zum Aktualisieren neu abrufen"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

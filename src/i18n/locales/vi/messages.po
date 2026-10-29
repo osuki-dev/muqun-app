@@ -2661,7 +2661,6 @@ msgstr "tách rời tại {head}"
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "Mở rộng nhiệm vụ"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Mở rộng lệnh gọi công cụ"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Hết hạn lúc {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "Đang chạy"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Mức sử dụng bao gồm trong gói"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Mức sử dụng bao gồm trong gói bị hạn chế. Cách sử dụng trả phí hoặc thay thế có thể vẫn khả dụng"
 
@@ -3651,10 +3641,6 @@ msgstr "Ngôn ngữ, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Lớn"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Kiểm tra gần nhất"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Tín dụng đặt lại"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Chưa báo cáo thời gian đặt lại"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "Gửi tin nhắn"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Gửi ngay"
 
@@ -6270,10 +6253,6 @@ msgstr "Nhiều tác nhân lập trình trên một máy tính: OpenCode, DeepSe
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Chia sẻ bản ghi của phiên này"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Dùng chung giữa các phiên. Làm mới để cập nhật"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

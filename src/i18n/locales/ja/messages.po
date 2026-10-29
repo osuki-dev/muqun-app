@@ -2661,7 +2661,6 @@ msgstr "{head} で切り離し"
 msgid "Detached at {head}"
 msgstr "{head} で切り離し"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "タスクを展開"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "ツール呼び出しを展開"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "有効期限：{0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "進行中"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "プランに含まれる利用枠"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "プランに含まれる利用枠は制限されています。有料または別の利用方法は引き続き利用できる場合があります"
 
@@ -3651,10 +3641,6 @@ msgstr "言語、{languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "大"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "最終確認"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "リセットクレジット"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "リセット時刻は未報告"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "メッセージを送信"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "今すぐ送信"
 
@@ -6270,10 +6253,6 @@ msgstr "1台のコンピュータで複数のコーディングエージェン�
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "このセッションの記録を共有"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "セッション間で共有されます。更新すると最新情報を取得します"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

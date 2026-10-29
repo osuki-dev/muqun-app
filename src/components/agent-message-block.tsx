@@ -681,7 +681,10 @@ const MessageTextPart = memo(function MessageTextPart({
       ).values(),
     ];
     const index = album.findIndex((entry) => entry.id === image.id);
-    setPreview({ images: index >= 0 ? album : [image], index: Math.max(0, index) });
+    setPreview({
+      images: index >= 0 ? album.map((entry) => (entry.id === image.id ? image : entry)) : [image],
+      index: Math.max(0, index),
+    });
   };
   const previewMessageImage = (uri: string, album?: readonly string[]) => {
     const asset = imageAssets?.find(

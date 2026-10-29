@@ -2661,7 +2661,6 @@ msgstr "分离于 {head}"
 msgid "Detached at {head}"
 msgstr "分离于 {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "展开任务"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "展开工具调用"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "到期时间：{0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "进行中"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "套餐内用量"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "套餐内用量受限，付费或其他使用方式可能仍可用"
 
@@ -3651,10 +3641,6 @@ msgstr "语言，{languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "大"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "上次检查"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "重置点数"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "未提供重置时间"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "发送消息"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "立即发送"
 
@@ -6270,10 +6253,6 @@ msgstr "一台电脑可接入多个编程智能体：OpenCode、DeepSeek 和 T3 
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "分享这个会话的记录"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "各会话共享，刷新以更新"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

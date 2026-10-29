@@ -2661,7 +2661,6 @@ msgstr "отсоединён на {head}"
 msgid "Detached at {head}"
 msgstr "Отсоединён на {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "Развернуть задачи"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Развернуть вызов инструмента"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Истекает {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "В работе"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Включённое использование"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Включённое использование ограничено. Платные или другие варианты могут оставаться доступными"
 
@@ -3651,10 +3641,6 @@ msgstr "Язык, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Крупный"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Последняя проверка"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Требуется iOS 16.1 или новее"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Кредит сброса"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Время сброса не указано"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "Отправить сообщение"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Отправить сейчас"
 
@@ -6270,10 +6253,6 @@ msgstr "Несколько агентов для программировани�
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Поделиться расшифровкой этой сессии"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Общее для всех сеансов. Обновите для получения новых данных"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

@@ -1,5 +1,7 @@
+import { disposeViewPhotograph } from '@/lib/view-photograph';
+import { ImagePreviewReveal } from '@/components/image-preview-reveal';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { CloseIcon } from '@/icons';
@@ -28,6 +30,7 @@ import {
 import {
   ActivityIndicator,
   Modal,
+  StatusBar,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -44,7 +47,7 @@ import Animated, {
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DURATION, fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
+import { fadeIn, fadeOut, timing } from '@/lib/motion';
 
 const AXIS_LOCK_DISTANCE = 8;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -83,6 +86,19 @@ export function ImagePreviewModal({
   initialIndex: number;
   onClose: () => void;
 }) {
+  const theme = useThemeTokens();
+  const [openingCaptures] = useState(
+    () => new Set(images.flatMap((image) => (image.openingCapture ? [image.openingCapture] : [])))
+  );
+  useEffect(
+    () => () => {
+      for (const capture of openingCaptures)
+        void capture.then((image) => {
+          if (image) disposeViewPhotograph(image);
+        });
+    },
+    [openingCaptures]
+  );
   const window = useWindowDimensions();
   const [layout, setLayout] = useState<PreviewSize | null>(null);
   const [pendingSaves] = useState(() => new Set<AbortController>());
@@ -101,10 +117,10 @@ export function ImagePreviewModal({
   return (
     <Modal
       visible
-      transparent
+      presentationStyle="fullScreen"
       statusBarTranslucent
       navigationBarTranslucent
-      animationType="fade"
+      animationType="none"
       supportedOrientations={[
         'portrait',
         'portrait-upside-down',
@@ -112,9 +128,10 @@ export function ImagePreviewModal({
         'landscape-right',
       ]}
       onRequestClose={onClose}>
+      <StatusBar hidden />
       {/* Keep the native modal mounted on rotation; reset only its gesture surface. */}
       <GestureHandlerRootView
-        style={styles.root}
+        style={[styles.root, { backgroundColor: theme.colors.background }]}
         onLayout={({ nativeEvent: { layout: next } }) => {
           setLayout((current) =>
             current?.width === next.width && current.height === next.height
@@ -122,7 +139,7 @@ export function ImagePreviewModal({
               : { width: next.width, height: next.height }
           );
         }}>
-        <Animated.View entering={zoomIn('modal')} style={styles.root}>
+        <Animated.View style={styles.root}>
           <PreviewSelection
             key={sourceKey}
             images={images}
@@ -192,6 +209,7 @@ function PreviewSurface({
   pendingSaves: Set<AbortController>;
 }) {
   const { t } = useLingui();
+  const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const viewport = useMemo(() => ({ width, height }), [width, height]);
   const count = images.length;
@@ -574,7 +592,13 @@ function PreviewSurface({
   };
   return (
     <>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]} />
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: theme.colors.background },
+          backdropStyle,
+        ]}
+      />
       <GestureDetector gesture={gesture}>
         <Animated.View style={styles.viewport} testID="image-preview-viewport">
           {/* The detector stays still; its focal coordinates never include pager translation. */}
@@ -622,17 +646,25 @@ function PreviewSurface({
         </View>
       )}
       <PressableScale
+        testID="image-preview-close"
+        accessibilityRole="button"
         accessibilityLabel={t`Close preview`}
         onPress={onClose}
-        style={[styles.close, { top: insets.top + 10, right: 14 + insets.right }]}>
-        <CloseIcon size={20} color="#FFFFFF" />
+        style={[
+          styles.close,
+          { top: insets.top + 10, right: 14 + insets.right, backgroundColor: theme.colors.surface },
+        ]}>
+        <CloseIcon size={20} color={theme.colors.text} />
       </PressableScale>
       {canViewOriginal ? (
         <PressableScale
           accessibilityLabel={t`View original`}
           onPress={viewOriginal}
-          style={[styles.original, { top: insets.top + 10, left: 14 + insets.left }]}>
-          <Text variant="caption" style={{ color: '#FFFFFF' }}>{t`View original`}</Text>
+          style={[
+            styles.original,
+            { top: insets.top + 10, left: 14 + insets.left, backgroundColor: theme.colors.surface },
+          ]}>
+          <Text variant="caption" style={{ color: theme.colors.text }}>{t`View original`}</Text>
         </PressableScale>
       ) : null}
     </>
@@ -678,12 +710,14 @@ function PreviewPage({
   onOriginalLoaded: (loaded: boolean) => void;
 }) {
   const { t } = useLingui();
+  const theme = useThemeTokens();
   const [load, setLoad] = useState<PreviewLoadState>(() => ({
     source: image.resolveSource ? null : image,
     status: 'loading',
     original: false,
   }));
   const { status, original } = load;
+  const [displayed, setDisplayed] = useState(false);
   const wantsPreview = Boolean(load.previewFallback && (load.request ?? 0) === originalRequested);
   const wantsOriginal = !wantsPreview && (original || originalRequested > 0);
   const asynchronous = Boolean(image.resolveSource);
@@ -761,51 +795,56 @@ function PreviewPage({
       }
       {...accessibility}>
       <Animated.View style={[styles.page, zoomStyle]}>
-        {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
-          <Image
-            key={load.source.cacheKey ?? load.source.uri}
-            source={{
-              uri: load.source.uri,
-              headers: load.source.headers,
-              cacheKey: load.source.cacheKey,
-            }}
-            cachePolicy={image.deferred ? 'none' : undefined}
-            style={styles.image}
-            contentFit="contain"
-            // The decode's own fade. It was 120 ms, which is not a step on any
-            // scale this app uses. There is deliberately no `placeholder`: a
-            // blurhash is the right answer and the gateway does not send one, so
-            // writing a fake one here would be a lie about the file. Until it
-            // does, the wait is stated by the frame below rather than guessed at.
-            transition={DURATION.micro}
-            onLoad={({ source }) => {
-              onOriginalLoaded(Boolean(load.source?.originalLoaded));
-              sizes.set((current) =>
-                current.map((size, page) =>
-                  page === index ? { width: source.width, height: source.height } : size
-                )
-              );
-              setLoad((current) =>
-                current.source === load.source &&
-                (current.status !== 'loaded' || current.readySource !== current.source)
-                  ? { ...current, status: 'loaded', readySource: current.source ?? undefined }
-                  : current
-              );
-            }}
-            onError={() => {
-              const failed = load.source;
-              if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
-            }}
-          />
-        ) : null}
+        <ImagePreviewReveal
+          ready={displayed}
+          openingCapture={image.openingCapture}
+          thumbnail={image.thumbnail ?? (!image.resolveSource ? image : undefined)}
+          width={width}
+          height={height}>
+          {load.source && shouldLoadImagePreview(image, active, status === 'loaded') ? (
+            <Image
+              key={load.source.cacheKey ?? load.source.uri}
+              source={{
+                uri: load.source.uri,
+                headers: load.source.headers,
+                cacheKey: load.source.cacheKey,
+              }}
+              cachePolicy={image.deferred ? 'none' : undefined}
+              style={styles.image}
+              contentFit="contain"
+              // The reveal snapshots this decoded image. A native fade would bake
+              // its first translucent frame into the particles and darken the reveal.
+              transition={0}
+              onDisplay={() => setDisplayed(true)}
+              onLoad={({ source }) => {
+                onOriginalLoaded(Boolean(load.source?.originalLoaded));
+                sizes.set((current) =>
+                  current.map((size, page) =>
+                    page === index ? { width: source.width, height: source.height } : size
+                  )
+                );
+                setLoad((current) =>
+                  current.source === load.source &&
+                  (current.status !== 'loaded' || current.readySource !== current.source)
+                    ? { ...current, status: 'loaded', readySource: current.source ?? undefined }
+                    : current
+                );
+              }}
+              onError={() => {
+                const failed = load.source;
+                if (failed) setLoad((current) => failedPreviewLoad(current, image, failed));
+              }}
+            />
+          ) : null}
+        </ImagePreviewReveal>
       </Animated.View>
-      {status === 'loading' ? (
+      {status === 'loading' && !image.thumbnail ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('short')}
           style={styles.pageState}
           pointerEvents="none">
-          <ActivityIndicator size="small" color="#FFFFFF" />
+          <ActivityIndicator size="small" color={theme.colors.text} />
         </Animated.View>
       ) : null}
       {status === 'failed' ? (
@@ -814,11 +853,9 @@ function PreviewPage({
           exiting={fadeOut('micro')}
           style={styles.pageState}
           pointerEvents="none">
-          {/* The kit's `Text`, not React Native's: this is a sentence the
-              reader reads, so it is set in the face they chose. The colour
-              stays hard-coded because this one is read against the viewer's
-              own black backdrop rather than against a theme surface. */}
-          <Text variant="bodySmall" style={styles.pageStateText}>
+          <Text
+            variant="bodySmall"
+            style={[styles.pageStateText, { color: theme.colors.textMuted }]}>
             <Trans>This image could not be loaded.</Trans>
           </Text>
         </Animated.View>
@@ -843,12 +880,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.30)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     zIndex: 1,
     elevation: 1,
-  },
-  backdrop: {
-    backgroundColor: '#000000',
   },
   pager: {
     flex: 1,
@@ -880,16 +914,14 @@ const styles = StyleSheet.create({
   close: {
     position: 'absolute',
     right: 14,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    // Legible on a black backdrop, which is what the screen is for as long as
-    // the picture has not arrived. At 16% this button was the only way out of a
-    // stalled read and could barely be seen.
-    backgroundColor: 'rgba(255, 255, 255, 0.30)',
+    // A dark surface keeps the white close glyph readable over light photographs too.
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     // `zIndex` orders the layer, `elevation` is what Android draws and, more to
     // the point, hit-tests by.
     zIndex: 1,

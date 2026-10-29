@@ -213,7 +213,7 @@ export function AgentSubagentDetailSheet({
   const contentState = agentSubagentDetailContentState(hasSnapshot, loading, Boolean(error));
 
   const header = (
-    <View style={{ paddingTop: fullscreen ? insets.top : 0 }}>
+    <View style={[styles.header, { paddingTop: fullscreen ? insets.top : 0 }]}>
       <SheetHandle />
       <SheetSceneHeading
         title={t`Subagent`}
@@ -272,7 +272,7 @@ export function AgentSubagentDetailSheet({
         collapsable={false}
         onLayout={side.onLayout}
         style={[styles.column, { paddingLeft: side.left, paddingRight: side.right }]}>
-        {contentState !== 'transcript' ? header : null}
+        {header}
         {contentState === 'loading' ? (
           <View testID="agent-subagent-detail-loading" style={styles.center}>
             <ActivityIndicator color={colors.primary} />
@@ -292,7 +292,6 @@ export function AgentSubagentDetailSheet({
           </View>
         ) : (
           <AgentTranscriptList
-            ListHeaderComponent={<View style={{ marginHorizontal: -20 }}>{header}</View>}
             keyboardAware={false}
             nestedScrollEnabled
             testID="agent-subagent-detail-transcript"
@@ -330,7 +329,8 @@ export function AgentSubagentDetailSheet({
 
 const styles = StyleSheet.create({
   column: { flex: 1, minHeight: 0 },
-  metadata: { gap: 4, paddingHorizontal: 20, paddingBottom: 16 },
+  header: { paddingHorizontal: 20 },
+  metadata: { gap: 4, paddingBottom: 16 },
   center: {
     flex: 1,
     justifyContent: 'center',

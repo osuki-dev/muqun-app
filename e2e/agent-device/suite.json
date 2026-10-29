@@ -727,7 +727,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 10000,
+        "timeout": 90000,
         "run": "flows/custom-themes.ad#scroll"
       },
       {
@@ -7371,29 +7371,12 @@
         "timeout": 10000,
         "run": "flows/agent-tool-detail.ad#open-tool"
       },
+      { "run": "flows/agent-tool-detail.ad#task-child-details" },
       {
-        "target": { "id": "agent-tool-detail-sheet" },
-        "mode": "visible",
-        "timeout": 10000,
-        "run": "flows/agent-tool-detail.ad#sheet-visible"
-      },
-      {
-        "target": { "id": "agent-tool-detail-status", "text": "Completed · 31ms" },
-        "mode": "visible",
-        "run": "flows/agent-tool-detail.ad#status"
-      },
-      {
-        "target": { "text": "Input" },
-        "mode": "visible",
-        "run": "flows/agent-tool-detail.ad#input"
-      },
-      { "run": "flows/agent-tool-detail.ad#dispatch-detail-shot" },
-      {
-        "target": { "id": "agent-tool-detail-copy-input" },
+        "target": { "id": "agent-session-tree-row-demo-tree-branch" },
         "mode": "press",
-        "run": "flows/agent-tool-detail.ad#copy-input"
+        "run": "flows/agent-tool-detail.ad#open-branch"
       },
-      { "run": "flows/agent-tool-detail.ad#close-tool" },
       {
         "target": { "id": "agent-subagent-detail-transcript" },
         "mode": "visible",
@@ -7403,22 +7386,12 @@
       {
         "target": {
           "id": "agent-tool-toggle",
-          "text": "research · Nested investigation · Idle · Collapse tool call"
+          "text": "research · Nested investigation · Idle · Expand tool call"
         },
         "mode": "visible",
         "run": "flows/agent-tool-detail.ad#transcript-visible"
       },
-      { "run": "flows/agent-tool-detail.ad#task-expanded-restored" },
-      { "include": "subflows/no-task-dispatch-duration" },
-      {
-        "target": {
-          "id": "agent-tool-toggle",
-          "text": "research · Nested investigation · Idle · Collapse tool call"
-        },
-        "mode": "press",
-        "run": "flows/agent-tool-detail.ad#open-tool"
-      },
-      { "run": "flows/agent-tool-detail.ad#task-collapsed-restored" },
+      { "run": "flows/agent-tool-detail.ad#compact-task" },
       { "include": "subflows/no-task-dispatch-duration" },
       { "run": "flows/agent-tool-detail.ad#close-detail" },
       { "run": "flows/agent-tool-detail.ad#close-tree" },

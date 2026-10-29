@@ -2661,7 +2661,6 @@ msgstr "detached at {head}"
 msgid "Detached at {head}"
 msgstr "Detached at {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2945,11 +2944,6 @@ msgstr "Expand tasks"
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Expand tool call"
 msgstr "Expand tool call"
-
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Expires at {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -3467,10 +3461,6 @@ msgid "In progress"
 msgstr "In progress"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Included usage"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Included usage is restricted. Paid or alternative usage may still be available"
 
@@ -3651,10 +3641,6 @@ msgstr "Language, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Large"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Last checked"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -5673,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Requires iOS 16.1 or later"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Reset credit"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Reset time not reported"
 
@@ -6142,6 +6124,7 @@ msgid "Send message"
 msgstr "Send message"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Send now"
 
@@ -6270,10 +6253,6 @@ msgstr "Several coding agents on one computer: OpenCode, DeepSeek and T3 Code ea
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Share this session's transcript"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Shared across sessions. Refresh to update"
 
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."

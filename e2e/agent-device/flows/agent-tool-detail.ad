@@ -41,23 +41,17 @@ is visible "text=\"Demo researcher\""
 snapshot
 screenshot "shots/tool-task-retoggled.png"
 
-# section task-expanded-restored
-is visible "id=agent-tool-open-detail"
-is visible "id=agent-tool-open-child"
-is visible "text=\"Demo researcher\""
+# section task-child-details
+# Task Details opens the actual child session, whose Idle state wins over dispatch metadata.
+wait "id=agent-subagent-detail-transcript" 10000
+is visible "text=\"Nested investigation\""
+is visible "id=agent-subagent-detail-status label=Idle"
+wait "text=\"Snapshot output for demo-tree-nested.\"" 5000
+is hidden "id=agent-tool-detail-sheet"
 snapshot
-screenshot "shots/tool-task-expanded-restored.png"
-
-# section task-collapsed-restored
-is hidden "id=agent-tool-open-detail"
-is hidden "id=agent-tool-open-child"
-is hidden "text=\"Demo researcher\""
-snapshot
-screenshot "shots/tool-task-collapsed-restored.png"
-
-# section dispatch-detail-shot
-snapshot
-screenshot "shots/tool-dispatch-details.png"
+screenshot "shots/tool-task-child-details.png"
+back --system
+wait "id=agent-session-tree-row-demo-tree-branch" 10000
 
 # section open-child
 # Expand inline to reveal identity and the session action, without opening dispatch details.
