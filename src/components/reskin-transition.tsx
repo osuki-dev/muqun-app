@@ -44,6 +44,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { ParticleTransition } from './particle-transition';
+import { PARTICLE_EFFECT } from './particle-field';
 import { DURATION, RESKIN_MOTION, timing } from '@/lib/motion';
 import { disposeViewPhotograph, photographView } from '@/lib/view-photograph';
 import {
@@ -131,8 +133,8 @@ import { colorVector } from '@/lib/ink-bloom-shader';
  * every surface it can find. Origins cross between them as fractions rather
  * than as points, for the reason set out on `resolveOrigin`.
  *
- * Theme changes start the ripple on the live old surface, then prepare the
- * new artwork before activating it under a real photograph. An unavailable
+ * Theme, font and layout changes retain the old surface while preparing
+ * the new content, then dissolve and reassemble their snapshots. An unavailable
  * photograph leaves the live screen visible; a blank paper veil is never a
  * substitute for a theme snapshot. Native theme routes register their own
  * surfaces so feedback starts where the reader tapped, before dismissal.
@@ -145,7 +147,7 @@ import { colorVector } from '@/lib/ink-bloom-shader';
 
 /** What a caller asks for. */
 export type ReskinRunOptions = {
-  kind: 'theme' | 'font';
+  kind: 'theme' | 'font' | 'layout';
   /**
    * Where the reader touched, as a fraction of the surface they touched it on
    * -- `{ x: 0.5, y: 0.7 }` for a row seven tenths of the way down. Use
@@ -162,7 +164,7 @@ export type ReskinRunOptions = {
    * a font change, where the palette is not moving.
    */
   accent?: string;
-  /** Prepare assets while the old interface and its ripple remain visible. */
+  /** Prepare assets while the old interface remains visible. */
   prepare?: () => Promise<void | (() => void)>;
   /** A dismissed caller must not activate a theme after its preparation completes. */
   isCurrent?: () => boolean;
@@ -204,6 +206,8 @@ type ActiveRun = {
   play: Exclude<ReskinPlay, 'none'>;
   /** A fraction of each surface -- see `resolveOrigin`. */
   origin: ReskinPoint;
+  previousAccent: string;
+  nextAccent: string;
   rim: number[];
   wet: number[];
   cell: number;
@@ -221,7 +225,7 @@ type ActiveRun = {
    * old screen and so is simply there; a veil is not, and fades up first.
    */
   veiled: boolean;
-  /** Block only the covered swap, not the reveal of the interactive new theme. */
+  /** Marks the covered commit; photographed particle reveals also block touches. */
   swapping: boolean;
 };
 
@@ -484,6 +488,8 @@ function eraseTiming(play: Exclude<ReskinPlay, 'none'>) {
         easing: Easing.linear,
         reduceMotion: ReduceMotion.System,
       };
+    case 'particles':
+      return timing(DURATION.long + DURATION.medium);
     case 'scan':
       return timing(RESKIN_MOTION.scanMs);
     case 'wash':
@@ -625,7 +631,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         selectReskinPlay({
           kind,
           reduceMotion,
-          effectReady: Boolean(kind === 'theme' ? THEME_RIPPLE_EFFECT : FONT_SCAN_EFFECT),
+          effectReady: Boolean(PARTICLE_EFFECT),
           fallbackReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
           snapshot: 'ok',
           size,
@@ -718,6 +724,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
       const accent = colorVector(options.accent ?? paint.current.primary);
       const base = {
+        previousAccent: paint.current.primary,
+        nextAccent: options.accent ?? paint.current.primary,
         id,
         initiator: entries.at(-1)?.[0],
         play: chosen,
@@ -728,7 +736,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         next: new Map<string, SkImage>(),
       };
 
-      if (kind === 'theme') {
+      if (kind === 'theme' || kind === 'layout' || chosen === 'particles') {
         // Start on the live old screen, including the native theme sheet. A
         // missing/slow snapshot must never be replaced by an opaque blank veil.
         progress.set(0);
@@ -858,15 +866,50 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                     await painted();
                   },
                   reveal: () => {
-                    updateActive((current) =>
-                      current?.id === id ? { ...current, swapping: false } : current
-                    );
-                    progress.set(
-                      withTiming(1, eraseTiming(chosen), (done) => {
-                        'worklet';
-                        if (done) runOnJS(finish)(id);
-                      })
-                    );
+                    const reveal = () => {
+                      updateActive((current) =>
+                        current?.id === id ? { ...current, swapping: false } : current
+                      );
+                      progress.set(
+                        withTiming(1, eraseTiming(chosen), (done) => {
+                          'worklet';
+                          if (done) runOnJS(finish)(id);
+                        })
+                      );
+                    };
+                    if (chosen !== 'particles') {
+                      reveal();
+                      return;
+                    }
+                    const current = activeRef.current;
+                    const destinations = entries.filter(([key]) => current?.shots.has(key));
+                    void photographSurfaces(
+                      destinations,
+                      strikes,
+                      stillWanted,
+                      budget ?? 260,
+                      true
+                    ).then(async (taken) => {
+                      if (!stillWanted()) {
+                        if (taken.shots) release(taken.shots.values());
+                        return;
+                      }
+                      if (taken.shots) {
+                        const ready = createCoverReadiness(taken.shots.keys());
+                        updateActive((run) =>
+                          run?.id === id
+                            ? { ...run, next: taken.shots!, coverReady: ready.complete }
+                            : run
+                        );
+                        if (!(await ready.promise)) {
+                          // The new setting already applied. Never leave a failed
+                          // incoming canvas covering its usable live interface.
+                          if (stillWanted()) finish(id);
+                          return;
+                        }
+                      }
+                      if (stillWanted()) reveal();
+                    });
                   },
                 });
               },
@@ -1152,22 +1195,9 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
 /* -------------------------------------------------------------------------- */
 
 /**
- * Whether the overlay eats the reader's touches while it is up, and why the
- * answer is not the same for the two transitions.
- *
- * A **theme** change moves no geometry. Every row is exactly where it was and
- * where the photograph shows it, so a tap during the wash lands on the thing
- * the reader is pointing at. There is no reason to take the app away from
- * them for two thirds of a second, so the wash lets everything through and
- * the reader can keep scrolling the list while the new world arrives.
- *
- * A **font** change moves all of it. New metrics re-measure every line, so
- * while the scan (or halftone) is up the live rows underneath have already
- * shifted and the photograph is the only thing still showing them where they
- * were. A tap would hit whatever slid under the finger, which is worse than
- * no tap at all, so the scan swallows them for its two thirds of a second.
- *
- * Neither choice delays the apply; both are over in well under a second.
+ * Photographed transitions block taps until the live interface is visible:
+ * font and layout changes can move controls beneath the old snapshot.
+ * The overlay stays out of the accessibility tree.
  */
 function ReskinOverlay({
   image,
@@ -1186,6 +1216,7 @@ function ReskinOverlay({
   size: ReskinSize;
   veil: SharedValue<number>;
 }) {
+  const theme = useThemeTokens();
   const origin = useMemo(() => denormalizeOrigin(run.origin, size), [run.origin, size]);
   // A photograph is the old screen and is simply there. A veil has to arrive:
   // composited opacity on the view, so its fade costs the shader nothing.
@@ -1203,7 +1234,19 @@ function ReskinOverlay({
       importantForAccessibility="no"
       pointerEvents={reskinBlocksTouches(run.play, run.swapping) ? 'auto' : 'none'}
       style={[styles.cover, arriving]}>
-      {run.play === 'ripple' ? (
+      {run.play === 'particles' && image ? (
+        <ParticleTransition
+          from={image}
+          to={next}
+          progress={progress}
+          width={size.width}
+          height={size.height}
+          backgroundColor={theme.colors.background}
+          fromTint={run.previousAccent}
+          toTint={run.nextAccent}
+          onReady={onReady}
+        />
+      ) : run.play === 'ripple' ? (
         <RippleOverlay
           image={image}
           onReady={onReady}

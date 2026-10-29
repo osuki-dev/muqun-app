@@ -10,6 +10,7 @@ import type { HomeLayout } from '@/lib/home-layout';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { useReskinTransition } from '@/components/reskin-transition';
 
 type HomeLayoutChoice = {
   id: HomeLayout;
@@ -17,12 +18,13 @@ type HomeLayoutChoice = {
   detail: string;
 };
 
-export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
+export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void | Promise<void> }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const layout = useAppSettings((state) => state.homeLayout);
   const setHomeLayout = useAppSettings((state) => state.setHomeLayout);
+  const reskin = useReskinTransition();
   const savePending = useRef(false);
   useRenderTally('SettingsHomeLayoutSheet');
 
@@ -50,7 +52,14 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
     return settleAfter(
       async () => {
         try {
-          await setHomeLayout(next);
+          if (next === layout) {
+            await onClose();
+            return;
+          }
+          // Animate the layouts themselves, not a short picker stretched to
+          // the size of Home. Wait for navigation before capturing either one.
+          await onClose();
+          await reskin.run({ kind: 'layout', apply: () => setHomeLayout(next) });
         } catch {
           showToast({
             variant: 'danger',
@@ -61,7 +70,6 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
       },
       () => {
         savePending.current = false;
-        onClose();
       }
     );
   }
