@@ -128,6 +128,8 @@ export type StageViewProps = {
   artworkUri?: string;
   /** The safe area's top inset, in points: the HUD starts below it. */
   inset: number;
+  leftInset?: number;
+  rightInset?: number;
   /**
    * How far above the view's bottom the HUD's foot rows (the agents, the
    * sessions, the composer) start, in points; 0 while unmeasured. The art
@@ -168,6 +170,8 @@ export function StageView({
   wallpaperUri,
   artworkUri,
   inset,
+  leftInset = 0,
+  rightInset = 0,
   foot,
   paused,
   burst,
@@ -519,8 +523,8 @@ export function StageView({
 
   const floor = foot > 0 ? Math.max(0, size.height - foot) : stageDefaultFloor(size.height);
   const viewport = useMemo(
-    () => ({ width: size.width, height: size.height, inset, floor }),
-    [size.width, size.height, inset, floor]
+    () => ({ width: size.width, height: size.height, inset, floor, leftInset, rightInset }),
+    [size.width, size.height, inset, floor, leftInset, rightInset]
   );
   const art = useStageArt(composition, viewport);
   const band = viewport.height > 0 ? stageOverlayBand(art, viewport) : null;
@@ -559,6 +563,8 @@ export function StageView({
                 colors={colors}
                 mode={resolvedMode}
                 role={role}
+                leftInset={leftInset}
+                rightInset={rightInset}
                 inset={inset}
                 floor={floor}
                 backdrop={backdrop}

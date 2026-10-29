@@ -244,7 +244,14 @@ export function stageLayerCentre(depth: number): StageVec3 {
  * sessions and the composer). The art reaches down to it and fades out
  * behind them.
  */
-export type StageViewport = { width: number; height: number; inset: number; floor: number };
+export type StageViewport = {
+  width: number;
+  height: number;
+  inset: number;
+  floor: number;
+  leftInset?: number;
+  rightInset?: number;
+};
 /** A box in points from the view's top-left corner. */
 export type StageBox = { x: number; y: number; width: number; height: number };
 /** A plane's window into its texture, 0..1 from the top left; may reach past either end. */
@@ -496,6 +503,23 @@ export function stageHeroPlacement(
   },
   viewport: StageViewport
 ): StageArtPlacement {
+  // Only the foreground uses the safe column; scenic backgrounds stay full bleed.
+  const left = Math.max(0, viewport.leftInset ?? 0);
+  const right = Math.max(0, viewport.rightInset ?? 0);
+  if (left > 0 || right > 0) {
+    const placement = stageHeroPlacement(hero, {
+      ...viewport,
+      width: Math.max(0, viewport.width - left - right),
+      leftInset: 0,
+      rightInset: 0,
+    });
+    return {
+      ...placement,
+      box: { ...placement.box, x: placement.box.x + left },
+      drawn: { ...placement.drawn, x: placement.drawn.x + left },
+      plane: { ...placement.plane, x: placement.plane.x + left },
+    };
+  }
   const ratio = ratioOf(hero.aspect).width;
   if (hero.box === 'cover') {
     if (hero.fit === 'contain') {

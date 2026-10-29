@@ -561,6 +561,8 @@ export function createStageScene(): StageSceneHandle {
         next.width === viewport.width &&
         next.height === viewport.height &&
         next.inset === viewport.inset &&
+        next.leftInset === viewport.leftInset &&
+        next.rightInset === viewport.rightInset &&
         next.floor === viewport.floor
       )
         return;

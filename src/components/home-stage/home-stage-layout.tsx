@@ -458,6 +458,8 @@ export function HomeStageLayout({
         composition={composition}
         wallpaperUri={wallpaper?.uri}
         artworkUri={artwork?.uri}
+        leftInset={sideInsets.left}
+        rightInset={sideInsets.right}
         inset={topInset}
         foot={foot}
         paused={paused || listOpen}
