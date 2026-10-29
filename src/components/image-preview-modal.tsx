@@ -30,6 +30,7 @@ import {
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   StatusBar,
   StyleSheet,
   useWindowDimensions,
@@ -213,6 +214,8 @@ function PreviewSurface({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  // Keep 44pt controls outside iPad's status-bar tap region when dismissing.
+  const controlsTop = Platform.OS === 'ios' ? Math.max(insets.top + 10, 58) : insets.top + 10;
   const viewport = useMemo(() => ({ width, height }), [width, height]);
   const count = images.length;
   const [originalPages, setOriginalPages] = useState<ReadonlyMap<number, number>>(new Map());
@@ -654,7 +657,11 @@ function PreviewSurface({
         onPress={onClose}
         style={[
           styles.close,
-          { top: insets.top + 10, right: 14 + insets.right, backgroundColor: theme.colors.surface },
+          {
+            top: controlsTop,
+            right: 14 + insets.right,
+            backgroundColor: theme.colors.surface,
+          },
         ]}>
         <CloseIcon size={20} color={theme.colors.text} />
       </PressableScale>
@@ -664,7 +671,11 @@ function PreviewSurface({
           onPress={viewOriginal}
           style={[
             styles.original,
-            { top: insets.top + 10, left: 14 + insets.left, backgroundColor: theme.colors.surface },
+            {
+              top: controlsTop,
+              left: 14 + insets.left,
+              backgroundColor: theme.colors.surface,
+            },
           ]}>
           <Text variant="caption" style={{ color: theme.colors.text }}>{t`View original`}</Text>
         </PressableScale>
