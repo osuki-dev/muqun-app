@@ -69,6 +69,8 @@ export type StageSceneProps = {
   role: StageRole;
   /** The safe area's top inset, in points: the HUD, and the art tucked under it, start below it. */
   inset: number;
+  leftInset?: number;
+  rightInset?: number;
   /** Where the HUD's foot rows start, in points from the top: the art stands on it. */
   floor: number;
   /** The deepest layer: a full-scene wallpaper. */

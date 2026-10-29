@@ -105,6 +105,8 @@ export function StageRuntime(
     mode,
     role,
     inset,
+    leftInset = 0,
+    rightInset = 0,
     floor,
     backdrop,
     painting,
@@ -175,9 +177,16 @@ export function StageRuntime(
   });
   useEffect(() => applyTheme(), [world, themeKey, scene, gl]);
   useEffect(() => {
-    world.setViewport({ width: size.width, height: size.height, inset, floor });
+    world.setViewport({
+      width: size.width,
+      height: size.height,
+      inset,
+      floor,
+      leftInset,
+      rightInset,
+    });
     wake();
-  }, [world, size.width, size.height, inset, floor]);
+  }, [world, size.width, size.height, inset, floor, leftInset, rightInset]);
   useEffect(() => {
     world.setRole(role);
     wake();
