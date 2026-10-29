@@ -44,7 +44,7 @@ screenshot "shots/tool-task-retoggled.png"
 # section task-child-details
 # Task Details opens the actual child session, whose Idle state wins over dispatch metadata.
 wait "id=agent-subagent-detail-transcript" 10000
-is visible "text=\"Nested investigation\""
+wait "text=\"Nested investigation\"" 10000
 is visible "id=agent-subagent-detail-status label=Idle"
 wait "text=\"Snapshot output for demo-tree-nested.\"" 5000
 is hidden "id=agent-tool-detail-sheet"
@@ -60,7 +60,7 @@ wait "id=agent-tool-open-child" 10000
 is visible "text=\"Demo researcher\""
 press "id=agent-tool-open-child"
 wait "id=agent-subagent-detail-transcript" 10000
-is visible "text=\"Nested investigation\""
+wait "text=\"Nested investigation\"" 10000
 is visible "id=agent-subagent-detail-status label=Idle"
 wait "text=\"Snapshot output for demo-tree-nested.\"" 5000
 snapshot

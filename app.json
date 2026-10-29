@@ -27,6 +27,7 @@
       "requireFullScreen": false,
       "icon": "./assets/icons/mint/icon.png",
       "infoPlist": {
+        "UIViewControllerBasedStatusBarAppearance": true,
         "NSCameraUsageDescription": "Muqun scans the Gateway's QR code to pair securely, and takes photos you attach to a terminal session.",
         "NSPhotoLibraryUsageDescription": "Muqun sends photos you pick to the paired Gateway so an agent can read them.",
         "NSFaceIDUsageDescription": "Muqun uses Face ID to protect paired servers and terminal sessions.",

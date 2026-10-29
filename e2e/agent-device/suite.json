@@ -4988,7 +4988,14 @@
         "timeout": 10000,
         "run": "flows/ssh.ad#s28"
       },
-      { "run": "flows/ssh.ad#s29" },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/ssh.ad#observed-back" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/ssh.ad#s29" }]
+      },
       {
         "target": {
           "id": "ssh-host-open-demo-ssh"
@@ -4997,7 +5004,14 @@
         "timeout": 8000,
         "run": "flows/ssh.ad#s30"
       },
-      { "run": "flows/ssh.ad#s31" },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/ssh.ad#observed-back" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/ssh.ad#s31" }]
+      },
       {
         "target": {
           "id": "settings-ssh-row"

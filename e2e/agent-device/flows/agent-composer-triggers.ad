@@ -2,6 +2,10 @@
 open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
 wait "id=agent-composer-input" 15000
 is visible "id=agent-composer-action-row"
+# Context loads asynchronously and inserts its control before Command.
+# Wait for that known fixture control before resolving a tap coordinate.
+wait "id=agent-composer-tokens-pill" 10000
+wait stable 400 5000
 press "id=agent-composer-commands"
 wait "id=agent-composer-command-menu" 5000
 is visible "id=agent-composer-command-web"
