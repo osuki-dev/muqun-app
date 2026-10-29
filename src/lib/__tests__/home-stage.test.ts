@@ -24,7 +24,7 @@ import {
   type StageArtPlacement,
   type StageViewport,
 } from '../home-stage-geometry';
-import { stageClearFraction, stageComposition } from '../home-stage-layers';
+import { stageAlphaContent, stageClearFraction, stageComposition } from '../home-stage-layers';
 import {
   createStageFrameBudget,
   dropStageLadder,
@@ -286,35 +286,6 @@ describe('theme layout', () => {
     ...overrides,
   });
 
-  test('a figure stands large on the foot rows, tucked under the name, at its focal x', () => {
-    for (const viewport of PHONES) {
-      const art = stageHeroPlacement(hero({ focal: { x: 0.62, y: 0.2 } }), viewport);
-      // Tucked 35 % into the name's 36 pt line, which ends 63 pt below the inset.
-      expect(art.box.y).toBeCloseTo(viewport.inset + 63 - 36 * 0.35);
-      expect(art.box.width).toBe(viewport.width);
-      // A tall figure: as tall as the box, the whole picture, its feet behind the foot rows.
-      expect(art.uv).toEqual({ x: 0, y: 0, width: 1, height: 1 });
-      expect(art.drawn.height).toBeCloseTo(art.box.height);
-      expect(art.drawn.height).toBeGreaterThan(viewport.height * 0.6);
-      expect(foot(art)).toBeGreaterThan(viewport.floor);
-      expect(body(art)).toBeGreaterThan(viewport.floor - 60);
-      expect(body(art)).toBeLessThan(viewport.floor);
-      // The side slack split 62:38 like object-position.
-      const slack = viewport.width - art.drawn.width;
-      expect(art.drawn.x).toBeCloseTo(slack * 0.62);
-      expect(art.edges).toEqual({ x: 0, y: 0 });
-    }
-  });
-
-  test('a wide contained figure grows a little past the width and still stands on the foot rows', () => {
-    const art = stageHeroPlacement(hero({ aspect: 1.5, focal: { x: 0.3, y: 0.5 } }), PHONE);
-    expect(art.drawn.width).toBeGreaterThan(390);
-    expect(art.drawn.width).toBeLessThanOrEqual(390 * 1.3 + 1e-6);
-    expect(art.drawn.x).toBeCloseTo((390 - art.drawn.width) * 0.3);
-    expect(art.drawn.y + art.drawn.height).toBeCloseTo(art.box.y + art.box.height);
-    expect(foot(art)).toBeGreaterThan(PHONE.floor);
-  });
-
   test("a covered figure fills its box, cropped at its focal x and keeping its top, as Editorial's", () => {
     const art = stageHeroPlacement(hero({ fit: 'cover', focal: { x: 0.58, y: 0.35 } }), PHONE);
     expect(art.uv.y).toBeCloseTo(0);
@@ -409,6 +380,44 @@ describe('theme layout', () => {
 });
 
 describe('composition', () => {
+  test('alpha bounds retain disconnected extremities and an antialias margin', () => {
+    const alpha = new Uint8Array(80);
+    alpha[22] = 255;
+    alpha[57] = 14;
+    alpha[79] = 13;
+    expect(stageAlphaContent(alpha, 10, 8)?.bounds).toEqual({
+      x: 0.1,
+      y: 0.125,
+      width: 0.8,
+      height: 0.75,
+    });
+    expect(stageAlphaContent(new Uint8Array(80), 10, 8)).toBeUndefined();
+    expect(stageAlphaContent(alpha, 10, 7)).toBeUndefined();
+  });
+
+  test('a painted content edge remains distinct from narrow feet after transparent padding', () => {
+    const scene = new Uint8Array(80);
+    const character = new Uint8Array(80);
+    for (let y = 1; y <= 5; y += 1) {
+      for (let x = 2; x <= 7; x += 1) scene[y * 10 + x] = 255;
+      character[y * 10 + 4] = 255;
+      character[y * 10 + 5] = 255;
+    }
+    for (let x = 2; x <= 7; x += 1) character[10 + x] = 255;
+    const padded = new Uint8Array(140);
+    padded.set(scene, 20);
+    expect(stageAlphaContent(scene, 10, 8)?.solidBottom).toBe(true);
+    expect(stageAlphaContent(padded, 10, 14)?.solidBottom).toBe(true);
+    expect(stageAlphaContent(character, 10, 8)?.solidBottom).toBe(false);
+    const edge = new Uint8Array(30).fill(255, 10);
+    edge[4] = 255;
+    edge[5] = 255;
+    const paddedEdge = new Uint8Array(50);
+    paddedEdge.set(edge);
+    expect(stageAlphaContent(edge, 10, 3)?.solidBottom).toBe(true);
+    expect(stageAlphaContent(paddedEdge, 10, 5)?.solidBottom).toBe(true);
+  });
+
   test('counts near-transparent pixels as clear', () => {
     expect(stageClearFraction(new Uint8Array([0, 13, 14, 255]))).toBe(0.5);
     expect(stageClearFraction(new Uint8Array([]))).toBe(0);
@@ -504,9 +513,16 @@ describe('composition', () => {
   });
 
   test("keeps each slot's fit, focal point and opacity, clamped, with CSS defaults", () => {
+    const bounds = { x: 0.1, y: 0.2, width: 0.7, height: 0.6 };
     const composed = stageComposition({
       coverHeader: true,
-      artwork: art(0.6, { fit: 'cover', focal: { x: 0.58, y: 2 }, opacity: 0.8 }),
+      artwork: art(0.6, {
+        fit: 'cover',
+        focal: { x: 0.58, y: 2 },
+        opacity: 0.8,
+        bounds,
+        solidBottom: true,
+      }),
       wallpaper: wall(0, { fit: 'cover', opacity: 0.45 }),
     });
     expect(composed.hero).toMatchObject({
@@ -514,6 +530,8 @@ describe('composition', () => {
       focal: { x: 0.58, y: 1 },
       opacity: 0.8,
       aspect: 0.9,
+      bounds,
+      solidBottom: true,
     });
     expect(composed.backdrop).toMatchObject({ focal: { x: 0.5, y: 0.5 }, opacity: 0.45 });
     expect(

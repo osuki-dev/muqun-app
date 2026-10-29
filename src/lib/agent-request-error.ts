@@ -164,6 +164,23 @@ export function agentRequestErrorDetail(err: unknown): {
   };
 }
 
+/** A failed acknowledgement cannot establish that a prompt was rejected. */
+export function isAgentDeliveryUnconfirmed(err: unknown): boolean {
+  if (err && typeof err === 'object' && 'code' in err && err.code === 'EACKUNCONFIRMED')
+    return true;
+  const { raw, status, code, message } = readAgentRequestError(err);
+  if (!status) return transportFailure(err, raw);
+  if (status === 408 || status === 504) return true;
+  // Some providers explicitly report an unknown queue acknowledgement through
+  // agent_error. Other 502 agent_error replies can be definite refusals.
+  return (
+    code === 'agent_error' &&
+    /(?:acceptance|delivery|submission|acknowledg(?:e)?ment).*\b(?:unknown|unconfirmed|timed out)\b/i.test(
+      message ?? raw
+    )
+  );
+}
+
 export function classifyAgentRequestError(err: unknown): AgentRequestError {
   const { raw, match, status, code, message } = readAgentRequestError(err);
 

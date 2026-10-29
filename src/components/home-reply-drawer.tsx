@@ -1133,6 +1133,32 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   // they want to be: the one time the drawer moves them.
   const sentAtMs = target.sentAtMs;
   const seenSend = useRef(sentAtMs);
+  const refreshedSend = useRef(sentAtMs);
+  // A successful direct/steered send need not create an inbox item. Read its
+  // canonical transcript once as well: a delayed stream event must not be the
+  // only way Home learns about the accepted message. Never resend the prompt.
+  useEffect(() => {
+    if (!sentAtMs || refreshedSend.current === sentAtMs) return;
+    refreshedSend.current = sentAtMs;
+    let active = true;
+    const owner = useGatewayConnectionStore.getState().record;
+    if (owner?.serverId !== serverId) return;
+    void getAgentSessionSnapshot(sessionId, asid, { refresh: true })
+      .then((snapshot) => {
+        const current = useGatewayConnectionStore.getState().record;
+        if (!active || !sameComputer(current, owner) || current?.deviceId !== owner.deviceId)
+          return;
+        store
+          .getState()
+          .setTimeline((previous) => upsertTimelineItems(previous, snapshot.timeline));
+      })
+      .catch((error: unknown) => {
+        console.warn('Failed to refresh Home after sending:', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [sentAtMs, serverId, sessionId, asid, store]);
   useEffect(() => {
     if (!sentAtMs || !features.inbox) return;
     let active = true;

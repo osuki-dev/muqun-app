@@ -37,6 +37,48 @@ export function stageClearFraction(alpha: Uint8Array): number {
   return clear / alpha.length;
 }
 
+/** Visible content in a measured picture, normalized to its source canvas. */
+export type StageImageBounds = { x: number; y: number; width: number; height: number };
+
+/** Keep one sample around the silhouette so its antialiased fringe remains whole. */
+export function stageAlphaContent(
+  alpha: Uint8Array,
+  width: number,
+  height: number
+): { bounds: StageImageBounds; solidBottom: boolean } | undefined {
+  if (width <= 0 || height <= 0 || alpha.length !== width * height) return undefined;
+  let left = width;
+  let top = height;
+  let right = -1;
+  let bottom = -1;
+  for (let index = 0; index < alpha.length; index += 1) {
+    if (alpha[index] <= CLEAR_ALPHA) continue;
+    const x = index % width;
+    const y = Math.floor(index / width);
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x);
+    bottom = Math.max(bottom, y);
+  }
+  if (right < left) return undefined;
+  // Inspect the unpadded content: clamping the safety margin to a canvas edge
+  // must not change which source row or columns determine a painted seam.
+  const row = Math.max(top, bottom - 1);
+  const foot = alpha.subarray(row * width + left, row * width + right + 1);
+  const solidBottom = stageClearFraction(foot) < 0.5;
+  left = Math.max(0, left - 1);
+  top = Math.max(0, top - 1);
+  right = Math.min(width, right + 2);
+  bottom = Math.min(height, bottom + 2);
+  const bounds = {
+    x: left / width,
+    y: top / height,
+    width: (right - left) / width,
+    height: (bottom - top) / height,
+  };
+  return { bounds, solidBottom };
+}
+
 export type StageFocal = { x: number; y: number };
 export type StageFit = 'cover' | 'contain' | 'tile';
 
@@ -53,6 +95,9 @@ export type StageMeasuredImage = {
   clear: number | null;
   /** Width over height; 1 until measured. */
   aspect?: number;
+  bounds?: StageImageBounds;
+  /** Most of the picture's bottom edge is painted, so it needs a scene seam. */
+  solidBottom?: boolean;
   fit?: StageFit;
   focal?: StageFocal;
   opacity?: number;
@@ -64,6 +109,8 @@ export type StageRole = 'sky' | 'figure' | 'inset' | 'world';
 export type StageLayer = {
   uri: string;
   aspect: number;
+  bounds?: StageImageBounds;
+  solidBottom?: boolean;
   /** As authored; the artwork's absent fit means what Editorial makes of it. */
   fit: StageFit | undefined;
   /** CSS `object-position`, 0..1 from the top left. */
@@ -115,6 +162,8 @@ function layerOf(picture: StageMeasuredImage): StageLayer {
   return {
     uri: picture.uri,
     aspect: picture.aspect && picture.aspect > 0 ? picture.aspect : 1,
+    bounds: picture.bounds,
+    solidBottom: picture.solidBottom,
     fit: picture.fit,
     focal: picture.focal
       ? { x: finite(picture.focal.x, 0.5, 0, 1), y: finite(picture.focal.y, 0.5, 0, 1) }

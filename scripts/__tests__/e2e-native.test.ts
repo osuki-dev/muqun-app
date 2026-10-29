@@ -1477,6 +1477,13 @@ describe('native end-to-end gate', () => {
   );
   test.each([
     {
+      device: 'iPhone expanded Mine (observed after editor return)',
+      viewport: { x: 0, y: 0, width: 402, height: 874 },
+      grabber: { x: 151, y: 68, width: 100, height: 24 },
+      sheet: { x: 0, y: 72, width: 402, height: 802 },
+      start: ['201', '80'],
+    },
+    {
       device: 'iPad',
       viewport: { x: 0, y: 0, width: 834, height: 1210 },
       grabber: { x: 367, y: 253, width: 100, height: 24 },

@@ -10,7 +10,8 @@ import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import {
-  SheetScene,
+  SheetSceneHeading,
+  SheetSceneClose,
   SheetSceneAction,
   SheetSceneFooter,
   SheetSceneQuietControl,
@@ -38,6 +39,10 @@ import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+
+import { SheetFrame } from '@/components/sheet-ground';
+import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
+import { useMeasuredSideInsets } from '@/hooks/use-side-insets';
 
 const doNothing = () => {};
 
@@ -68,6 +73,8 @@ export function AgentSubagentDetailSheet({
   const { colors } = useThemeTokens();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const fullscreen = useSheetIsFullscreen();
+  const side = useMeasuredSideInsets();
   const markdownStyle = usePaneChatMarkdownStyle();
   const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
   const models = useAgentSheetBridge((state) => state.models);
@@ -205,95 +212,109 @@ export function AgentSubagentDetailSheet({
   const hasSnapshot = activeLoaded !== null;
   const contentState = agentSubagentDetailContentState(hasSnapshot, loading, Boolean(error));
 
-  return (
-    <SheetScene
-      testID="agent-subagent-detail-sheet"
-      title={t`Subagent`}
-      caption={title}
-      header={
-        <View style={styles.metadata}>
-          {info ? (
-            <Text testID="agent-subagent-detail-status" variant="caption" color={colors.textMuted}>
-              {i18n._(subagentStateWord[subagentSessionState(info)])}
-            </Text>
-          ) : null}
-          {info?.agent_name || info?.agent_role ? (
-            <Text variant="caption" color={colors.textMuted}>
-              {[info.agent_name, info.agent_role].filter(Boolean).join(' · ')}
-            </Text>
-          ) : null}
-          {childModelName ? (
-            <Text testID="agent-subagent-detail-model" variant="caption" color={colors.textMuted}>
-              {t`Model`}: {childModelName}
-            </Text>
-          ) : null}
-          {info?.tokens ? (
-            <Text testID="agent-subagent-detail-tokens" variant="caption" color={colors.textMuted}>
-              {t`Tokens this session`}: {contextTokenTotal(info.tokens).toLocaleString()}
-            </Text>
-          ) : null}
-          {error && hasSnapshot ? (
-            <Text
-              testID="agent-subagent-detail-refresh-error"
-              variant="caption"
-              color={colors.danger}>
-              {t`Could not load the session`}
-            </Text>
-          ) : null}
-        </View>
-      }
-      headingTrailing={
-        <SheetSceneQuietControl
-          testID="agent-subagent-detail-refresh"
-          accessibilityLabel={t`Refresh`}
-          busy={loading}
-          onPress={() =>
-            setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
-          }>
-          <RefreshIcon size={17} color={colors.textMuted} />
-        </SheetSceneQuietControl>
-      }>
-      {contentState === 'loading' ? (
-        <View testID="agent-subagent-detail-loading" style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : contentState === 'error' ? (
-        <View testID="agent-subagent-detail-error" style={styles.center}>
-          <Text variant="bodySmall" color={colors.textMuted} style={styles.message}>
+  const header = (
+    <View style={[styles.header, { paddingTop: fullscreen ? insets.top : 0 }]}>
+      <SheetHandle />
+      <SheetSceneHeading
+        title={t`Subagent`}
+        caption={title}
+        trailing={
+          <>
+            <SheetSceneQuietControl
+              testID="agent-subagent-detail-refresh"
+              accessibilityLabel={t`Refresh`}
+              busy={loading}
+              onPress={() =>
+                setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+              }>
+              <RefreshIcon size={17} color={colors.textMuted} />
+            </SheetSceneQuietControl>
+            {fullscreen ? <SheetSceneClose /> : null}
+          </>
+        }
+      />
+      <View style={styles.metadata}>
+        {info ? (
+          <Text testID="agent-subagent-detail-status" variant="caption" color={colors.textMuted}>
+            {i18n._(subagentStateWord[subagentSessionState(info)])}
+          </Text>
+        ) : null}
+        {info?.agent_name || info?.agent_role ? (
+          <Text variant="caption" color={colors.textMuted}>
+            {[info.agent_name, info.agent_role].filter(Boolean).join(' · ')}
+          </Text>
+        ) : null}
+        {childModelName ? (
+          <Text testID="agent-subagent-detail-model" variant="caption" color={colors.textMuted}>
+            {t`Model`}: {childModelName}
+          </Text>
+        ) : null}
+        {info?.tokens ? (
+          <Text testID="agent-subagent-detail-tokens" variant="caption" color={colors.textMuted}>
+            {t`Tokens this session`}: {contextTokenTotal(info.tokens).toLocaleString()}
+          </Text>
+        ) : null}
+        {error && hasSnapshot ? (
+          <Text
+            testID="agent-subagent-detail-refresh-error"
+            variant="caption"
+            color={colors.danger}>
             {t`Could not load the session`}
           </Text>
-          <SheetSceneAction
-            testID="agent-subagent-detail-retry"
-            label={t`Try again`}
-            onPress={() =>
-              setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+        ) : null}
+      </View>
+    </View>
+  );
+
+  return (
+    <SheetFrame testID="agent-subagent-detail-sheet" tint="surface" frosted>
+      <View
+        collapsable={false}
+        onLayout={side.onLayout}
+        style={[styles.column, { paddingLeft: side.left, paddingRight: side.right }]}>
+        {header}
+        {contentState === 'loading' ? (
+          <View testID="agent-subagent-detail-loading" style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : contentState === 'error' ? (
+          <View testID="agent-subagent-detail-error" style={styles.center}>
+            <Text variant="bodySmall" color={colors.textMuted} style={styles.message}>
+              {t`Could not load the session`}
+            </Text>
+            <SheetSceneAction
+              testID="agent-subagent-detail-retry"
+              label={t`Try again`}
+              onPress={() =>
+                setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+              }
+            />
+          </View>
+        ) : (
+          <AgentTranscriptList
+            keyboardAware={false}
+            nestedScrollEnabled
+            testID="agent-subagent-detail-transcript"
+            store={store}
+            rowProps={rowProps}
+            dataKey={asid}
+            alignItemsAtEnd={false}
+            initialScrollAtEnd
+            maintainScrollAtEnd={false}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Text variant="bodySmall" color={colors.textMuted}>
+                  {t`No output yet.`}
+                </Text>
+              </View>
             }
+            ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
+            style={sheetSceneStyles.scroller}
+            contentContainerStyle={styles.transcriptContent}
           />
-        </View>
-      ) : (
-        <AgentTranscriptList
-          keyboardAware={false}
-          nestedScrollEnabled
-          testID="agent-subagent-detail-transcript"
-          store={store}
-          rowProps={rowProps}
-          dataKey={asid}
-          alignItemsAtEnd={false}
-          initialScrollAtEnd
-          maintainScrollAtEnd={false}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text variant="bodySmall" color={colors.textMuted}>
-                {t`No output yet.`}
-              </Text>
-            </View>
-          }
-          ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={styles.transcriptContent}
-        />
-      )}
+        )}
+      </View>
       {previewImages ? (
         <ImagePreviewModal
           key={scopeKey}
@@ -302,12 +323,14 @@ export function AgentSubagentDetailSheet({
           onClose={closePreview}
         />
       ) : null}
-    </SheetScene>
+    </SheetFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  metadata: { gap: 4 },
+  column: { flex: 1, minHeight: 0 },
+  header: { paddingHorizontal: 20 },
+  metadata: { gap: 4, paddingBottom: 16 },
   center: {
     flex: 1,
     justifyContent: 'center',

@@ -145,7 +145,24 @@ describe('inboxTimelineRows', () => {
       inbox('msg_3', { text: 'same', files: [{ uri: UPLOAD }] }, 'steer'),
     ];
     const rows = inboxTimelineRows(items, [temp('same')]);
-    expect(rows.map((row) => row.inbox?.id)).toEqual(['msg_2', 'msg_3']);
+    expect(rows.map((row) => row.inbox?.id)).toEqual(['msg_1', 'msg_2', 'msg_3']);
+    expect(rows[0]).toMatchObject({ id: temp('same').id, queued: true });
+  });
+
+  test('a steer queued by the Gateway during compaction displays its receipt once', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline([temp('waiting')]);
+    store.getState().setInbox([inbox('compact_queue', { text: 'waiting' }, 'queue')]);
+    const rows = Object.values(store.getState().rows).flatMap((group) => group.items);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      queued: true,
+      inbox: { id: 'compact_queue', delivery: 'queue' },
+    });
+    store.getState().setInbox([]);
+    expect(store.getState().keys).toEqual([]);
+    store.getState().setTimeline([temp('waiting')]);
+    expect(store.getState().keys).toEqual([]);
   });
 
   test('the transcript draws queued rows after the history and keeps streaming on history', () => {

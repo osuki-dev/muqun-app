@@ -1,3 +1,4 @@
+import { mcpFileAssets } from './mcp-file-reference';
 import { protectTemporaryCacheEntry } from './cache-cleanup';
 import { paneComposerExtrasFromAnswer, type PaneSkill } from './pane-composer';
 import { decodeBase64Url, encodeBase64Url } from './base64url';
@@ -97,6 +98,8 @@ import {
   findAssetByPath,
   assetKindQuery,
   sessionAssetsFromResponse,
+  sessionAssetPageFromResponse,
+  type SessionAssetPage,
   // Re-exported further down as well, but `export … from` binds nothing in this
   // module, and the kind allow-list on a listing request is typed with it.
   type AssetKind,
@@ -206,6 +209,7 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import { copyCachedOriginalImageFile, downloadOriginalImageFile } from './image-original-file';
 import {
   IMAGE_RANGE_BYTES,
+  IMAGE_DOWNLOAD_TIMEOUT_MS,
   readLimitedImageBody,
   assertImageEnvelopeLimit,
   fetchBoundedImageResponse,
@@ -234,9 +238,9 @@ const REQUEST_TIMEOUT_MS = 60_000;
  */
 const AGENT_WRITE_TIMEOUT_MS = 60_000;
 // An attachment is orders of magnitude larger than a control call, and the
-// gateway is usually reached over Wi-Fi or a tunnel, so it gets its own budget
-// rather than being cut off by the request timeout.
-const UPLOAD_TIMEOUT_MS = 60_000;
+// gateway allows a 180-second body transfer. Leave setup and response room on
+// Wi-Fi or a tunnel without extending ordinary reads or agent writes.
+const UPLOAD_TIMEOUT_MS = 240_000;
 
 export const INITIAL_PANE_OUTPUT_LINES = 240;
 export const PANE_OUTPUT_PAGE_LINES = 240;
@@ -273,7 +277,7 @@ async function fetchWithin(
   let response: Response;
   try {
     response = await Promise.race([
-      nitroFetch(input, { ...init, signal: budget.signal }),
+      nitroFetch(input, { ...init, signal: budget.signal, timeoutMs }),
       budget.deadline,
     ]);
   } catch (failure) {
@@ -1401,13 +1405,15 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
     headers?: Record<string, string>
   ) => {
     assertCurrent();
+    const timeoutMs =
+      limit === IMAGE_VERSION_BYTES ? ASSET_CONTENT_TIMEOUT_MS : IMAGE_DOWNLOAD_TIMEOUT_MS;
     const init = { headers: { ...source.headers, ...headers }, signal, redirect: 'error' as const };
     const response =
       transport === GATEWAY_TRANSPORT
         ? await encryptedGatewayFetch(
             source.uri,
             init,
-            ASSET_CONTENT_TIMEOUT_MS,
+            timeoutMs,
             {
               url: baseUrl,
               token: token ?? '',
@@ -1417,7 +1423,7 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
             () => gatewayImageConnectionKey() === pairingKey,
             limit
           )
-        : await fetchImageWithin(ASSET_CONTENT_TIMEOUT_MS, source.uri, init);
+        : await fetchImageWithin(timeoutMs, source.uri, init);
     try {
       assertCurrent();
       return response;
@@ -1599,16 +1605,7 @@ export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor |
  * what "All" is worth on its own.
  */
 export const SESSION_ASSET_PAGE_LIMIT = 100;
-/**
- * As wide as the window can be asked to get: the gateway's own cap
- * (`ASSET_LIST_MAX_LIMIT`), said on this side so the Files sheet knows when it
- * has reached the end of what can be asked for, rather than discovering it by
- * asking for more and being handed the same page again.
- *
- * The endpoint has no cursor -- `since` narrows to files *newer* than a time,
- * which is the opposite direction -- so paging towards older files means
- * widening this window and reading the listing again.
- */
+/** Maximum page size, also the largest recent-file window on legacy Gateways. */
 export const MAX_SESSION_ASSET_LIMIT = 200;
 
 /**
@@ -1690,30 +1687,48 @@ export async function listSessionAssets(
     signal?: AbortSignal;
   } = {}
 ): Promise<SessionAsset[]> {
-  if (isDemoActive()) {
-    const assets = demoSessionAssets();
-    if (!options.kind?.length) return assets;
-    const kindSet = new Set(options.kind);
-    return assets.filter((asset) => kindSet.has(asset.kind));
-  }
+  return (await listSessionAssetPage(sessionId, tabId, options)).assets;
+}
 
+export async function listSessionAssetPage(
+  sessionId: string,
+  tabId: string,
+  options: {
+    since?: number;
+    limit?: number;
+    kind?: readonly AssetKind[];
+    signal?: AbortSignal;
+    paginated?: boolean;
+    cursor?: string;
+    query?: string;
+  } = {}
+): Promise<SessionAssetPage> {
+  if (isDemoActive()) {
+    const kinds = new Set(options.kind);
+    const needle = options.query?.trim().toLowerCase() ?? '';
+    const assets = demoSessionAssets().filter(
+      (asset) =>
+        (!kinds.size || kinds.has(asset.kind)) &&
+        (!needle ||
+          asset.name.toLowerCase().includes(needle) ||
+          asset.path.toLowerCase().includes(needle))
+    );
+    return { assets, nextCursor: null, limited: false };
+  }
   const limit = Math.max(
     1,
     Math.min(MAX_SESSION_ASSET_LIMIT, Math.round(options.limit ?? SESSION_ASSET_PAGE_LIMIT))
   );
-  // Both values are numbers, so the query is assembled directly rather than
-  // through URLSearchParams, whose React Native shim is only a partial one.
   const query = [`limit=${limit}`];
-  if (typeof options.since === 'number' && Number.isFinite(options.since)) {
+  if (typeof options.since === 'number' && Number.isFinite(options.since))
     query.push(`since=${Math.round(options.since)}`);
-  }
-  // The kinds are a closed set of bare words, so they need no escaping either.
-  // See `assetKindQuery` for why the filter is asked for rather than applied to
-  // the answer.
   const kind = assetKindQuery(options.kind);
   if (kind) query.push(`kind=${kind}`);
-
-  return requestSessionAssets(sessionId, tabId, query, options.signal);
+  if (options.paginated) {
+    if (options.cursor) query.push(`cursor=${encodeURIComponent(options.cursor)}`);
+    if (options.query?.trim()) query.push(`query=${encodeURIComponent(options.query.trim())}`);
+  }
+  return requestSessionAssetPage(sessionId, tabId, query, options.signal, options.paginated, limit);
 }
 
 function assertFileGateway(serverId: string | null) {
@@ -1727,6 +1742,17 @@ async function requestSessionAssets(
   query: string[],
   signal?: AbortSignal
 ): Promise<SessionAsset[]> {
+  return (await requestSessionAssetPage(sessionId, tabId, query, signal)).assets;
+}
+
+async function requestSessionAssetPage(
+  sessionId: string,
+  tabId: string,
+  query: string[],
+  signal?: AbortSignal,
+  paginated = false,
+  limit = MAX_SESSION_ASSET_LIMIT
+): Promise<SessionAssetPage> {
   const serverId = configuredGatewayServerId();
   const response = await gatewayFetch(
     gatewayUrl(
@@ -1738,9 +1764,12 @@ async function requestSessionAssets(
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
 
-  const assets = sessionAssetsFromResponse(await response.json());
+  const page = sessionAssetPageFromResponse(await response.json(), paginated, limit);
   assertFileGateway(serverId);
-  return assets.map((asset) => ({ ...asset, gatewayServerId: serverId ?? undefined }));
+  return {
+    ...page,
+    assets: page.assets.map((asset) => ({ ...asset, gatewayServerId: serverId ?? undefined })),
+  };
 }
 
 /**
@@ -1915,7 +1944,10 @@ export async function readUploadImageSource(
   const response = await encryptedGatewayFetch(
     uploadContentUrl(name),
     { headers: gatewayAuthHeaders(), signal: options.signal },
-    ASSET_CONTENT_TIMEOUT_MS
+    IMAGE_DOWNLOAD_TIMEOUT_MS,
+    undefined,
+    undefined,
+    25 * 1024 * 1024
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
@@ -1944,7 +1976,10 @@ export async function readAssetImageSource(
   const response = await encryptedGatewayFetch(
     assetContentUrl(asset.id),
     { headers: gatewayAuthHeaders(), signal: options.signal },
-    ASSET_CONTENT_TIMEOUT_MS
+    IMAGE_DOWNLOAD_TIMEOUT_MS,
+    undefined,
+    undefined,
+    25 * 1024 * 1024
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
@@ -2041,8 +2076,10 @@ export async function readAssetText(
 export async function resolveAgentAudioAsset(
   asid: string,
   uri: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  serverId = configuredGatewayServerId()
 ): Promise<SessionAsset> {
+  assertFileGateway(serverId);
   if (isDemoActive()) {
     const asset = demoSessionAssets().find((entry) => entry.id === 'as-demo-audio');
     if (!asset || !uri.endsWith('sample-tone.wav')) throw new Error('Audio output unavailable.');
@@ -2057,6 +2094,7 @@ export async function resolveAgentAudioAsset(
   if (!Array.isArray(capabilities) || !capabilities.includes('agent_audio_assets')) {
     throw new AudioPlaybackError('unsupported');
   }
+  assertFileGateway(serverId);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/agent-sessions/${encodeURIComponent(asid)}/audio-asset?uri=${encodeURIComponent(uri)}`
@@ -2068,7 +2106,35 @@ export async function resolveAgentAudioAsset(
   const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
   if (!asset || asset.kind !== 'audio' || !asset.previewable)
     throw new Error('Audio output unavailable.');
-  return asset;
+  assertFileGateway(serverId);
+  return { ...asset, gatewayServerId: serverId ?? undefined };
+}
+
+/** The Gateway requests a source choice; this is not an authorization grant. */
+export class FileComputerSelection extends Error {
+  constructor(readonly path: string) {
+    super('Choose the computer that contains this file.');
+  }
+}
+
+export async function resolveComputerFile(path: string, serverId: string, signal: AbortSignal) {
+  const asset = mcpFileAssets({
+    server_id: serverId,
+    files: [
+      {
+        id: path,
+        path,
+        name: path.split('/').pop() ?? path,
+        mime: 'application/octet-stream',
+        kind: 'binary',
+        size: 0,
+        modified_unix_ms: 0,
+        previewable: false,
+      },
+    ],
+  })[0];
+  if (!asset) throw new Error('Invalid file reference');
+  return resolveMcpFileAsset(asset, signal);
 }
 
 export async function resolveAgentFileAsset(
@@ -2099,14 +2165,25 @@ export async function resolveAgentFileAsset(
       throw new AudioPlaybackError('unsupported');
     }
     assertFileGateway(serverId);
+    const sourceSelection = capabilities.includes('agent_file_source_selection_v1');
     const response = await gatewayFetch(
       gatewayUrl(
-        `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+        `/api/agent-sessions/${encodeURIComponent(asid)}/${sourceSelection ? 'file-source' : 'file-asset'}?uri=${encodeURIComponent(uri)}`
       ),
       { headers: gatewayAuthHeaders(), signal }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const envelope = await response.json();
+    assertFileGateway(serverId);
+    const source = envelope?.data?.file_source;
+    if (
+      sourceSelection &&
+      source?.state === 'choose_computer' &&
+      typeof source.path === 'string' &&
+      source.path.length <= 8192
+    ) {
+      throw new FileComputerSelection(source.path);
+    }
     const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
     if (!asset) throw new Error('File output unavailable.');
     assertFileGateway(serverId);

@@ -125,6 +125,7 @@ export interface AgentSessionsSheetProps {
   /** Open the project sheet, where the reader switches project or opens a path. */
   onOpenProjects?: () => void;
   onClose: () => void;
+  limited?: boolean;
   remoteSearch?: boolean;
   preserveOrder?: boolean;
   loading?: boolean;
@@ -151,6 +152,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   canMoveSession,
   onOpenProjects,
   onClose,
+  limited = false,
   remoteSearch = false,
   preserveOrder = false,
   loading = false,
@@ -709,6 +711,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             );
           })
         )}
+        {limited ? (
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Only recent sessions are available with this connection. Search covers the loaded list.`}
+          </Text>
+        ) : null}
         {loadFailed ? (
           <Text variant="caption" color={theme.colors.danger}>
             {t`Could not load sessions`}

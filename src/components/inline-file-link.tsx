@@ -1,3 +1,4 @@
+import { useFileResolver } from './file-computer-picker';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { PhotoFileIcon, DocumentIcon } from '@/icons';
@@ -6,11 +7,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useLingui } from '@lingui/react/macro';
 import { AssetViewer } from '@/components/asset-viewer';
 import { GatewayImageThumbnail } from '@/components/gateway-image-thumbnail';
-import {
-  configuredGatewayServerId,
-  resolveAgentFileAsset,
-  resolveMcpFileAsset,
-} from '@/lib/gateway-client';
+import { configuredGatewayServerId, resolveMcpFileAsset } from '@/lib/gateway-client';
 import { savePreviewImage, saveSessionAsset } from '@/lib/save-file';
 import { useFileActions } from '@/hooks/use-file-actions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -110,6 +107,7 @@ function RawFileLink({
   asid: string;
   remoteFile?: SessionAsset;
 }) {
+  const resolveFile = useFileResolver();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -132,7 +130,7 @@ function RawFileLink({
     return (
       remoteFile
         ? resolveMcpFileAsset(remoteFile, controller.signal)
-        : resolveAgentFileAsset(asid, file.uri, controller.signal, serverId)
+        : resolveFile(asid, file.uri, controller.signal, serverId)
     )
       .then((result) => {
         if (controller.signal.aborted) throw new Error('Operation cancelled');

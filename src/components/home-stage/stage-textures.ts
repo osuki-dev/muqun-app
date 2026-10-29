@@ -9,7 +9,11 @@ import {
 import { useEffect, useEffectEvent, useState } from 'react';
 
 import { hasTransparentArtworkUpperEdges } from '@/lib/artwork-edge-alpha';
-import { stageClearFraction } from '@/lib/home-stage-layers';
+import {
+  stageAlphaContent,
+  stageClearFraction,
+  type StageImageBounds,
+} from '@/lib/home-stage-layers';
 import { createRefCountedCache } from '@/lib/ref-counted-cache';
 import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import {
@@ -29,8 +33,14 @@ import { stageTextureFromPixels, type StageTextureSource } from './stage-scene';
 
 /** The longest edge a picture is shrunk to before its clear pixels are counted. */
 const MEASURE_EDGE = 128;
-/** What measuring a picture finds: its clear share (0..1) and its width over its height. */
-export type StagePictureFacts = { clear: number; aspect: number; decodeFailed?: boolean };
+/** The picture's shape, clear share, visible bounds and whether its foot is a painted edge. */
+export type StagePictureFacts = {
+  clear: number;
+  aspect: number;
+  bounds?: StageImageBounds;
+  solidBottom?: boolean;
+  decodeFailed?: boolean;
+};
 const FAILED_PICTURE: StagePictureFacts = { clear: 0, aspect: 1, decodeFailed: true };
 /**
  * Pictures already measured: a theme's pictures are measured once. Only real
@@ -70,16 +80,16 @@ function useStageArtRetry(uri: string | undefined) {
 }
 
 /**
- * The share of `image` that is (near-)transparent, counted on a small copy:
+ * The clear share and silhouette of `image`, measured on the same small copy:
  * the decoded picture is the shared one, drawn down once and read back as
  * alpha only. An opaque picture is not read at all. Null when it could not be
  * read back.
  */
-function measureClear(image: SkImage): number | null {
-  if (image.getImageInfo().alphaType === AlphaType.Opaque) return 0;
+function measureAlpha(image: SkImage): Omit<StagePictureFacts, 'aspect'> | null {
+  if (image.getImageInfo().alphaType === AlphaType.Opaque) return { clear: 0 };
   const width = image.width();
   const height = image.height();
-  if (width <= 0 || height <= 0) return 0;
+  if (width <= 0 || height <= 0) return { clear: 0 };
   const scale = Math.min(1, MEASURE_EDGE / Math.max(width, height));
   const targetWidth = Math.max(1, Math.round(width * scale));
   const targetHeight = Math.max(1, Math.round(height * scale));
@@ -104,7 +114,12 @@ function measureClear(image: SkImage): number | null {
         colorType: ColorType.Alpha_8,
         alphaType: AlphaType.Unpremul,
       });
-      return alpha instanceof Uint8Array ? stageClearFraction(alpha) : null;
+      return alpha instanceof Uint8Array
+        ? {
+            clear: stageClearFraction(alpha),
+            ...stageAlphaContent(alpha, targetWidth, targetHeight),
+          }
+        : null;
     } finally {
       snapshot.dispose();
     }
@@ -126,8 +141,8 @@ function measurePicture(
   const aspect = height > 0 ? image.width() / height : 1;
   let reason = 'The alpha readback returned nothing';
   try {
-    const clear = measureClear(image);
-    if (clear !== null) return { facts: { clear, aspect } };
+    const alpha = measureAlpha(image);
+    if (alpha !== null) return { facts: { ...alpha, aspect } };
   } catch (error) {
     reason = stageArtErrorText(error) ?? reason;
   }

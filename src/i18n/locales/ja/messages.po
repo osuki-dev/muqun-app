@@ -1182,6 +1182,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "ダウンロードサイズを確認できませんでした。もう一
 msgid "Could not compact"
 msgstr "圧縮できませんでした"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "セッションの作成を確認できませんでした。再送信する前に、このコンピューターの会話を確認してください。下書きは保持されています"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "送信を確認できませんでした"
@@ -2374,6 +2379,10 @@ msgstr "ショートカットを保存できませんでした"
 msgid "Could not save theme"
 msgstr "テーマを保存できませんでした"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "送信予定の下書きを保存できませんでした。何も送信されていません。下書きは保持されています"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "設定を保存できませんでした。もう一度お試しください"
@@ -2386,7 +2395,10 @@ msgstr "音声設定を保存できません。もう一度お試しください
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "保存できませんでした。パソコンの接続と Gateway の更新を確認してください"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "フォルダを検索できませんでした。もう一度お試しください"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "削除"
 msgid "Deleting session…"
 msgstr "セッションを削除しています…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "送信はまだ確認できていません。再送信する前に、このコンピューターの会話を確認してください"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "送信モード: キュー。タップしてリアルタイム割り込み (Steer) に切替"
@@ -2602,6 +2618,10 @@ msgstr "送信モード: リアルタイム割り込み (Steer)。タップし�
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "配信は未確認です"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "送信を確認できません。会話を表示"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "{head} で切り離し"
 msgid "Detached at {head}"
 msgstr "{head} で切り離し"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "タスクを展開"
 msgid "Expand tool call"
 msgstr "ツール呼び出しを展開"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "有効期限：{0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "コードベースの探索に特化した高速エージェント"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "ウェブページを取得する"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "ファイルが大きすぎます（最大 {0} MB）"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "コンピュータ一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "この通知を非表示にします"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "送信ボタンを長押しして話します。録音を停止するとテキストが下書きに追加され、編集してから送信できます"
@@ -3444,10 +3459,6 @@ msgstr "インポート済み"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "進行中"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "プランに含まれる利用枠"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "言語、{languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "大"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "最終確認"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "これより古いキャプチャ出力はありません"
 msgid "No other assistants in this session yet."
 msgstr "このセッションには他のアシスタントがまだいません"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "利用できる他のペアリング済みコンピュータがありません"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4631,6 +4642,10 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "この接続では最近のセッションのみ利用できます。検索対象は読み込み済みの一覧です"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{dropped}件は追加されていません"
@@ -4699,6 +4714,10 @@ msgstr "バックグラウンドタスクを開く"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "ファイル一覧を開く"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "コンピュータから開く"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "リセットクレジット"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "リセット時刻は未報告"
 
@@ -5937,6 +5952,10 @@ msgstr "保存済み"
 msgid "Saved commands"
 msgstr "保存したコマンド"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "保存済みの下書きが容量上限に達しました。以前の送信を確認または一覧から削除してから再送信してください。下書きは保持されています"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "保存済み履歴 · 現在の状態は取得できません"
@@ -6011,6 +6030,14 @@ msgstr "名前やタグで検索"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "ファイルを検索"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "フォルダを検索、またはパスを入力"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "フォルダを検索、またはパスを入力"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "メッセージを送信"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "今すぐ送信"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "このセッションの記録を共有"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "セッション間で共有されます。更新すると最新情報を取得します"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "このコンピュータと予備のコンピュータにホームの概要（タスク、セッション、ターミナル）を共有します。会話は引き続き直接接続します"
@@ -6284,6 +6308,7 @@ msgstr "カメラの詳細を表示"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "会話を表示"
 
@@ -6447,6 +6472,10 @@ msgstr "一部のファイルを削除できませんでした · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "一部のフォルダーは完全にインデックス化できませんでした。ここにないファイルはパスから直接開けます"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "サブエージェント"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "送信"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "送信済み"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "デフォルトのエージェント。ツールを実行します"
 msgid "The destination could not be opened."
 msgstr "その目的地を開けませんでした"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "ファイル一覧が変更されました。更新して閲覧を続けてください"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "フォントファイルが見つかりません。もう一度追加してください"
@@ -7426,6 +7455,10 @@ msgstr "この Gateway はそのアドレスに応答しません"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "この Gateway は保存済みの区間を提供しなくなりました。読み込み済みのページはここに残ります"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "この Gateway は最近のファイルのみ表示します。検索対象はこの一覧です。古いファイルを閲覧するには Gateway を更新してください"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "音声出力を再生するには Gateway を更新してください"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "動画出力をプレビューするには Gateway を更新してください"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "フォルダを検索するには Gateway を更新してください。プロジェクトの絞り込みやフルパスの入力は引き続き利用できます"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

@@ -15,6 +15,7 @@ import type {
   AgentDomainEvent,
   AgentRunStatus,
   AgentSessionSnapshot,
+  AgentSessionInfo,
   FormRequest,
   PermissionRequest,
 } from '@/lib/agent-protocol';
@@ -422,6 +423,8 @@ function normalizePills(value: unknown): HomeSessionParams | undefined {
 // ---------------------------------------------------------------------------
 
 export type HomeThreadLive = {
+  /** Actual session configuration, independent of new-conversation preferences. */
+  configuration?: Pick<AgentSessionInfo, 'asid' | 'agent_id' | 'directory' | 'mode' | 'model'>;
   status?: AgentRunStatus;
   interaction?: AgentSessionRuntime['interaction'];
   title?: string;
@@ -475,12 +478,31 @@ export function homeThreadTitle(
 export function homeThreadLiveFromSnapshot(snapshot: AgentSessionSnapshot): HomeThreadLive {
   const info = snapshot.info;
   return {
-    ...(info ? { status: info.status, title: info.title, titleUpdatedMs: info.updated_ms } : {}),
+    ...(info
+      ? {
+          status: info.status,
+          title: info.title,
+          titleUpdatedMs: info.updated_ms,
+          configuration: sessionConfiguration(info),
+        }
+      : {}),
     ...(info?.runtime ? { interaction: info.runtime.interaction } : {}),
     ...(info?.deleted ? { deleted: true } : {}),
     permissions: snapshot.permissions,
     forms: snapshot.forms,
     ...withActivity(sessionActivity(snapshot.timeline)),
+  };
+}
+
+function sessionConfiguration(
+  info: AgentSessionInfo
+): NonNullable<HomeThreadLive['configuration']> {
+  return {
+    asid: info.asid,
+    agent_id: info.agent_id,
+    directory: info.directory,
+    mode: info.mode,
+    model: info.model,
   };
 }
 
@@ -499,6 +521,7 @@ export function applyHomeThreadEvent(
       return {
         ...live,
         status: info.status,
+        configuration: sessionConfiguration(info),
         title: info.title,
         titleUpdatedMs: info.updated_ms,
         ...(info.runtime ? { interaction: info.runtime.interaction } : {}),

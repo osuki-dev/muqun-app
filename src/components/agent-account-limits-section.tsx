@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { PressableScale } from '@/components/pressable-scale';
-import { DisclosureDownIcon, DisclosureUpIcon, RefreshIcon } from '@/icons';
+import { RefreshIcon } from '@/icons';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useAgentFeatures } from '@/hooks/use-agent-features';
@@ -50,7 +49,6 @@ function AccountLimits({ serverId, agentId }: { serverId: string; agentId: strin
   const { t } = useLingui();
   const theme = useThemeTokens();
   const [revision, setRevision] = useState(0);
-  const [details, setDetails] = useState(false);
   const [result, setResult] = useState<AgentAccountLimits | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -140,71 +138,6 @@ function AccountLimits({ serverId, agentId }: { serverId: string; agentId: strin
               resetCount={index === 0 ? result.reset_credits?.available_count : undefined}
             />
           ))}
-        </>
-      ) : null}
-      {result ? (
-        <>
-          <PressableScale
-            testID="agent-account-limits-details"
-            accessibilityRole="button"
-            accessibilityState={{ expanded: details }}
-            onPress={() => setDetails((value) => !value)}
-            style={styles.detailsButton}>
-            <Text variant="caption" color={theme.colors.textMuted}>{t`Details`}</Text>
-            {details ? (
-              <DisclosureUpIcon size={14} color={theme.colors.textMuted} />
-            ) : (
-              <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
-            )}
-          </PressableScale>
-          {details ? (
-            <View style={styles.details}>
-              <CompactNotice text={t`Shared across sessions. Refresh to update.`} />
-              <CompactRow
-                label={t`Last checked`}
-                value={new Date(result.observed_at_ms).toLocaleString()}
-              />
-              {result.status === 'available' ? (
-                <>
-                  <CompactRow
-                    label={t`Included usage`}
-                    value={
-                      result.ordinary_usage_allowed === true
-                        ? t`Available`
-                        : result.ordinary_usage_allowed === false
-                          ? t`Limit reached`
-                          : t`Not reported`
-                    }
-                  />
-                  {result.reset_credits ? (
-                    <>
-                      <CompactRow
-                        label={t`Available resets`}
-                        value={
-                          result.reset_credits.available_count === null
-                            ? t`Not reported`
-                            : String(result.reset_credits.available_count)
-                        }
-                      />
-                      {result.reset_credits.credits?.map((credit, index) => (
-                        <View key={index} style={styles.detailItem}>
-                          <CompactRow
-                            label={credit.title || t`Reset credit`}
-                            value={credit.status === 'available' ? t`Available` : t`Not reported`}
-                          />
-                          {credit.expires_at_ms === null ? null : (
-                            <CompactNotice
-                              text={t`Expires at ${new Date(credit.expires_at_ms).toLocaleString()}`}
-                            />
-                          )}
-                        </View>
-                      ))}
-                    </>
-                  ) : null}
-                </>
-              ) : null}
-            </View>
-          ) : null}
         </>
       ) : null}
       <SheetSceneGroupRule />
@@ -395,13 +328,4 @@ const styles = StyleSheet.create({
   track: { height: 8, borderRadius: 4, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 4 },
   notice: { paddingVertical: 2 },
-  detailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SHEET_LADDER.gap,
-    minHeight: 36,
-    alignSelf: 'flex-start',
-  },
-  details: { paddingBottom: SHEET_LADDER.gap, gap: SHEET_LADDER.tight },
-  detailItem: { paddingTop: SHEET_LADDER.gap },
 });

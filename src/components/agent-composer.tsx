@@ -7,7 +7,16 @@ import { useRouter } from 'expo-router';
 import { useServerSimfarmAccess } from '@/hooks/use-server-simfarm-access';
 import { CompactionPill } from '@/components/agent-compaction-pill';
 import type { CompactionActivity } from '@/lib/agent-compaction';
-import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+} from 'react';
 import {
   Pressable,
   ScrollView,
@@ -24,7 +33,6 @@ import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   BackIcon,
-  DoneIcon,
   TaskIcon,
   DisclosureDownIcon,
   ProcessorIcon,
@@ -98,7 +106,6 @@ import {
   describePickerFailure,
   isImageAttachment,
   type AttachmentSource,
-  type PendingAttachment,
   describeBlockedSend,
   takePickTruncationNotice,
 } from '@/lib/attachments';
@@ -152,9 +159,6 @@ import {
   deliverAgentAttachmentPrompt,
   type AgentAttachmentSendRequest,
 } from '@/lib/agent-attachment-send';
-
-/** How long a direct send's receipt stays before it fades. */
-const SUBMITTED_NOTICE_MS = 5000;
 
 /** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
 export interface SubtaskActivity {
@@ -819,7 +823,6 @@ export const AgentComposer = memo(function AgentComposer({
     request: AgentAttachmentSendRequest;
     token: symbol;
     delivery: 'steer' | 'queue' | undefined;
-    submittedAttachments?: PendingAttachment[];
   } | null>(null);
   const promptAllowed =
     !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
@@ -890,10 +893,7 @@ export const AgentComposer = memo(function AgentComposer({
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
   const { clearAttachments } = attachmentUploads;
-  const readStagedAttachments = useLatestReader(attachmentUploads.attachments);
-  const submittingAttachments = Boolean(
-    sending && pendingAttachmentSend && !pendingAttachmentSend.submittedAttachments
-  );
+  const submittingAttachments = Boolean(sending && pendingAttachmentSend);
   // Only staged files belong in the composer. An ACK clears them through the
   // owned submission callback; it does not establish a canonical timeline row.
   const visibleAttachments = attachmentUploads.attachments;
@@ -920,7 +920,7 @@ export const AgentComposer = memo(function AgentComposer({
     // owned first-session create advances the captured owner and keeps it.
     if (!pendingAttachmentSend || pendingAttachmentSend.request.isCurrent()) return;
     const wasSending = attachmentSendGuard.release(pendingAttachmentSend.token);
-    if (wasSending || pendingAttachmentSend.submittedAttachments) {
+    if (wasSending) {
       setPendingAttachmentSend(null);
       setPreviewAttachmentId(null);
       if (wasSending) {
@@ -937,20 +937,6 @@ export const AgentComposer = memo(function AgentComposer({
     clearAttachments,
   ]);
   useEffect(() => () => attachmentSendGuard.reset(), [attachmentSendGuard]);
-  // The receipt of a direct send is a moment, not a fixture.
-  const acknowledgedFiles = pendingAttachmentSend?.submittedAttachments;
-  useEffect(() => {
-    if (!acknowledgedFiles) return;
-    const timer = setTimeout(
-      () =>
-        setPendingAttachmentSend((previous) =>
-          previous?.submittedAttachments === acknowledgedFiles ? null : previous
-        ),
-      SUBMITTED_NOTICE_MS
-    );
-    return () => clearTimeout(timer);
-  }, [acknowledgedFiles]);
-
   const removeStagedAttachment = (id: string) => {
     if (!attachmentSendGuard.isPending()) attachmentUploads.removeAttachment(id);
   };
@@ -1269,7 +1255,6 @@ export const AgentComposer = memo(function AgentComposer({
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
     if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
-    setPendingAttachmentSend((previous) => (previous?.submittedAttachments ? null : previous));
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1294,7 +1279,7 @@ export const AgentComposer = memo(function AgentComposer({
           async () => {
             const accepted = await onInvokeSkill(skillCall.name, skillCall.args);
             if (accepted === false) return;
-            setText('');
+            setText((current) => (current.trim() === trimmed ? '' : current));
           },
           () => {
             setSending(false);
@@ -1328,15 +1313,6 @@ export const AgentComposer = memo(function AgentComposer({
             trimmed,
             attachmentUploads.awaitUploads,
             () => {
-              // A queued send becomes an inbox row, which is its receipt.
-              if (delivery !== 'queue') {
-                const submittedAttachments = readStagedAttachments().map((item) =>
-                  item.status === 'done' ? item : { ...item, status: 'done' as const }
-                );
-                setPendingAttachmentSend((previous) =>
-                  previous?.token === token ? { ...previous, submittedAttachments } : previous
-                );
-              }
               setText((current) => (current.trim() === trimmed ? '' : current));
               attachmentUploads.clearAttachments();
             },
@@ -1357,9 +1333,7 @@ export const AgentComposer = memo(function AgentComposer({
         },
         () => {
           if (attachmentSendGuard.release(token)) {
-            setPendingAttachmentSend((previous) =>
-              previous?.token === token && !previous.submittedAttachments ? null : previous
-            );
+            setPendingAttachmentSend((previous) => (previous?.token === token ? null : previous));
             setSending(false);
           }
         }
@@ -1398,7 +1372,7 @@ export const AgentComposer = memo(function AgentComposer({
         // `void` from a caller that does not report is taken as accepted, which
         // is the behaviour every other composer in this app has.
         if (accepted === false) return;
-        setText('');
+        setText((current) => (current.trim() === trimmed ? '' : current));
         attachmentUploads.clearAttachments();
       },
       () => {
@@ -1418,7 +1392,6 @@ export const AgentComposer = memo(function AgentComposer({
     onSend,
     captureAttachmentSend,
     attachmentSendGuard,
-    readStagedAttachments,
     setPreviewAttachmentId,
     showToast,
     t,
@@ -1607,6 +1580,9 @@ export const AgentComposer = memo(function AgentComposer({
   const [inputRowLeft, setInputRowLeft] = useState(0);
   const [inputRowWidth, setInputRowWidth] = useState(0);
   const [actionRowHeight, setActionRowHeight] = useState(0);
+  const commandButtonRef = useRef<ComponentRef<typeof View>>(null);
+  const commandDockRef = useRef<ComponentRef<typeof View>>(null);
+  const [commandMenuRight, setCommandMenuRight] = useState(0);
   /** The field's left edge in the dock, where the toolbar menus start. */
   const fieldLeft = surfaceLeft + inputRowLeft;
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
@@ -1691,28 +1667,46 @@ export const AgentComposer = memo(function AgentComposer({
   const rowBleed = materialBleed ? { left: sideLeft, right: sideRight } : NO_SIDE_INSETS;
 
   const sessionCommandButton = commandServerId ? (
-    <PressableScale
-      testID="agent-composer-commands"
-      accessibilityRole="button"
-      accessibilityLabel={t`Command`}
-      accessibilityState={{ expanded: commandMenuOpen }}
-      onPress={() => {
-        closeToolbarMenu();
-        setAttachmentMenuOpen(false);
-        setModeMenuOpen(false);
-        setInboxOpen(false);
-        setCommandMenuServer(commandMenuOpen ? null : commandServerId);
-      }}
-      style={[
-        styles.actionBtnWithLabel,
-        { borderRadius: profile.chrome.roundControl },
-        { backgroundColor: surfaceBackground(chromeGlass) },
-      ]}>
-      <QuickActionIcon size={14} color={commandMenuOpen ? theme.colors.primary : chromeText} />
-      <Text variant="caption" color={chromeText} style={styles.actionBtnLabel}>
-        {t`Command`}
-      </Text>
-    </PressableScale>
+    <View ref={commandButtonRef} collapsable={false}>
+      <PressableScale
+        testID="agent-composer-commands"
+        accessibilityRole="button"
+        accessibilityLabel={t`Command`}
+        accessibilityState={{ expanded: commandMenuOpen }}
+        onPress={() => {
+          closeToolbarMenu();
+          setAttachmentMenuOpen(false);
+          setModeMenuOpen(false);
+          setInboxOpen(false);
+          if (commandMenuOpen) {
+            setCommandMenuServer(null);
+            return;
+          }
+          // Measure at the tap, after horizontal scrolling has moved the button.
+          commandButtonRef.current?.measureInWindow((x, _y, width) => {
+            commandDockRef.current?.measureInWindow((dockX, _dockY, dockWidth) => {
+              const menuWidth = Math.min(190, inputRowWidth || dockWidth);
+              setCommandMenuRight(
+                Math.max(
+                  8,
+                  Math.min(dockWidth - (x + width - dockX), dockWidth - menuWidth - fieldLeft)
+                )
+              );
+              setCommandMenuServer(commandServerId);
+            });
+          });
+        }}
+        style={[
+          styles.actionBtnWithLabel,
+          { borderRadius: profile.chrome.roundControl },
+          { backgroundColor: surfaceBackground(chromeGlass) },
+        ]}>
+        <QuickActionIcon size={14} color={commandMenuOpen ? theme.colors.primary : chromeText} />
+        <Text variant="caption" color={chromeText} style={styles.actionBtnLabel}>
+          {t`Command`}
+        </Text>
+      </PressableScale>
+    </View>
   ) : null;
 
   return (
@@ -1732,6 +1726,7 @@ export const AgentComposer = memo(function AgentComposer({
         </Animated.View>
       ) : null}
       <Animated.View
+        ref={commandDockRef}
         pointerEvents={revealed ? 'auto' : 'none'}
         accessibilityElementsHidden={!revealed}
         importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
@@ -2115,7 +2110,6 @@ export const AgentComposer = memo(function AgentComposer({
                   testID="agent-composer-action-row"
                   onLayout={(event) => setActionRowHeight(event.nativeEvent.layout.height)}
                   style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
-                  {sessionCommandButton}
                   {segmentMode ? (
                     <TextSegment
                       testID="agent-composer-mode-btn"
@@ -2145,6 +2139,7 @@ export const AgentComposer = memo(function AgentComposer({
                       <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                     </TextSegment>
                   ) : null}
+                  {sessionCommandButton}
                 </View>
               ) : (
                 <View
@@ -2165,7 +2160,6 @@ export const AgentComposer = memo(function AgentComposer({
                       },
                     ]}
                     style={styles.actionRowScroll}>
-                    {sessionCommandButton}
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (
                       <PressableScale
@@ -2456,6 +2450,7 @@ export const AgentComposer = memo(function AgentComposer({
                       </PressableScale>
                     ) : null}
 
+                    {sessionCommandButton}
                     {chipIds.has('stop') ? (
                       <PressableScale
                         onPress={onAbort}
@@ -2534,47 +2529,6 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {/* A direct send's receipt: what went, with its files. It leaves on
-                its own; a tap only hides it sooner, and nothing here looks like
-                a way to take the message back. A queued send has none: its
-                inbox row is the receipt. */}
-              {pendingAttachmentSend?.submittedAttachments ? (
-                <Animated.View
-                  key={pendingAttachmentSend.submittedAttachments.map((item) => item.id).join(',')}
-                  entering={fadeIn('short')}
-                  exiting={fadeOut('short')}>
-                  <PressableScale
-                    testID="agent-composer-attachment-acknowledged"
-                    accessibilityRole="button"
-                    accessibilityLiveRegion="polite"
-                    accessibilityLabel={t`Submitted`}
-                    accessibilityHint={t`Hides this notice`}
-                    onPress={() => setPendingAttachmentSend(null)}
-                    style={[
-                      styles.uploadWait,
-                      flushField && {
-                        backgroundColor: surfaceBackground(theme.colors.surface),
-                        borderRadius: profile.chrome.noticeBanner,
-                      },
-                    ]}>
-                    <DoneIcon size={16} color={theme.colors.textMuted} />
-                    <View style={styles.noticeText}>
-                      <Text variant="caption" color={theme.colors.textMuted}>
-                        <Trans>Submitted</Trans>
-                      </Text>
-                    </View>
-                    <AttachmentThumbnailRow
-                      entries={pendingAttachmentSend.submittedAttachments.map((item) => ({
-                        key: item.id,
-                        name: item.name,
-                        uri: item.localUri,
-                        image: isImageAttachment(item.mime),
-                      }))}
-                    />
-                  </PressableScale>
-                </Animated.View>
-              ) : null}
-
               {!promptAllowed && !fieldBlockedReason ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {interactionBlockedReason ?? (
@@ -2650,7 +2604,7 @@ export const AgentComposer = memo(function AgentComposer({
                     shortPlaceholder:
                       fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
                     accessibilityLabel: inputAccessibilityLabel,
-                    editable: !sending && !disabled,
+                    editable: !disabled,
                     testID: inputTestID,
                     selection,
                     onSelectionChange: handleSelectionChange,
@@ -2726,7 +2680,9 @@ export const AgentComposer = memo(function AgentComposer({
               style={[
                 styles.attachmentAnchor,
                 {
+                  right: commandMenuRight,
                   left: fieldLeft,
+                  maxWidth: inputRowWidth || undefined,
                   bottom:
                     inputRowHeight +
                     dockBottomPadding +
@@ -2737,6 +2693,7 @@ export const AgentComposer = memo(function AgentComposer({
               ]}>
               <AgentActionMenu
                 testID="agent-composer-command-menu"
+                style={{ marginHorizontal: 0, alignSelf: 'flex-end', maxWidth: '100%' }}
                 error={
                   commandAccess.status === 'offline'
                     ? t`Computer offline`

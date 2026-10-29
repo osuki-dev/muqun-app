@@ -82,3 +82,7 @@ press "${TARGET}"
 
 # section stage-home
 is visible "${TARGET}"
+
+# section home-landmark
+# A quiet blank launch surface is not a ready Home screen.
+wait "label=\"Settings\"" 20000

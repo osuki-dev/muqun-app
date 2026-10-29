@@ -10,6 +10,9 @@ import { withoutTaskPlumbing } from '@/lib/task-plumbing';
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const markdownRows = new WeakMap<TimelineItem, TimelineItem[]>();
+    // A Gateway receipt owns a send after acknowledgement, including when
+    // another client cancels it. Its old optimistic row must not reappear.
+    const acknowledgedTemps = new Set<string>();
     /** The rows one drawn item becomes: each diagram virtualized on its own. */
     const splitRows = (item: TimelineItem): TimelineItem[] => {
       if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
@@ -59,7 +62,16 @@ export function createAgentTranscriptStore() {
     const rebuild = (timeline: TimelineItem[], config = get().config, inbox = get().inbox) => {
       const previous = get();
       const inboxRows = inbox.length ? inboxTimelineRows(inbox, timeline) : [];
-      const reconciled = reconcileShellParts(timeline);
+      const timelineIds = new Set(timeline.map((item) => item.id));
+      for (const id of acknowledgedTemps) {
+        if (!timelineIds.has(id)) acknowledgedTemps.delete(id);
+      }
+      for (const item of inboxRows) {
+        if (item.id.startsWith('temp_')) acknowledgedTemps.add(item.id);
+      }
+      const reconciled = reconcileShellParts(
+        timeline.filter((item) => !acknowledgedTemps.has(item.id))
+      );
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
       // instead of slicing beyond the end after those copies are removed.

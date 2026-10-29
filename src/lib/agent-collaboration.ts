@@ -241,8 +241,14 @@ export function partitionCollaborationTasks(tasks: CollaborationTask[], agents: 
   return { current, history };
 }
 
+/** Unreviewed work remains manageable; only acknowledged history is bounded. */
+export function retainCollaborationTasks(tasks: CollaborationTask[]): CollaborationTask[] {
+  let reviewed = 0;
+  return tasks.filter((task) => !task.reviewed || ++reviewed <= 40);
+}
+
 export function recordCollaborationTask(tasks: CollaborationTask[], task: CollaborationTask) {
-  return [
+  return retainCollaborationTasks([
     task,
     ...tasks.map((previous) =>
       task.agentInstanceId &&
@@ -252,7 +258,7 @@ export function recordCollaborationTask(tasks: CollaborationTask[], task: Collab
         ? { ...previous, superseded: true }
         : previous
     ),
-  ].slice(0, 40);
+  ]);
 }
 
 /**
@@ -314,8 +320,8 @@ export function parseCollaborationTasks(value: string | null): CollaborationTask
   try {
     const parsed: unknown = JSON.parse(value ?? '[]');
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((task): task is CollaborationTask =>
+    return retainCollaborationTasks(
+      parsed.filter((task): task is CollaborationTask =>
         Boolean(
           task &&
           typeof task === 'object' &&
@@ -330,7 +336,7 @@ export function parseCollaborationTasks(value: string | null): CollaborationTask
           (task.superseded === undefined || typeof task.superseded === 'boolean')
         )
       )
-      .slice(0, 40);
+    );
   } catch {
     return [];
   }

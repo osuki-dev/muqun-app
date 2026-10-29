@@ -190,6 +190,7 @@ import {
   classifyAgentRequestError,
   classifyAgentSessionGone,
   isAgentOfflineError,
+  isAgentDeliveryUnconfirmed,
 } from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
@@ -197,7 +198,6 @@ import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { describeGatewayFailure } from '@/lib/network-error';
 import { hasObservedCapability, SESSION_DESCENDANTS_CAPABILITY } from '@/lib/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
@@ -813,6 +813,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     })) ?? [];
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
+  const transcriptChildren = useStore(transcriptStore, (state) =>
+    JSON.stringify([
+      ...new Set(
+        state.timeline.flatMap(({ part }) =>
+          part.type === 'tool' && part.child_session_id ? [part.child_session_id] : []
+        )
+      ),
+    ])
+  );
   const toolIds = useStore(transcriptStore, (state) => state.toolIds);
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
@@ -3208,12 +3217,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             },
             (err) => {
               console.warn('Failed to create session on prompt send:', err);
-              if (ownsSource())
+              if (ownsSource()) {
+                const unconfirmed = isAgentDeliveryUnconfirmed(err);
+                if (unconfirmed) void refreshSessions().catch(() => {});
                 showToast({
                   variant: 'danger',
-                  title: t`Could not start a session`,
-                  message: agentErrorRef.current(err),
+                  title: unconfirmed
+                    ? t`Could not confirm submission`
+                    : t`Could not start a session`,
+                  message: unconfirmed
+                    ? t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`
+                    : agentErrorRef.current(err),
                 });
+              }
               return false;
             }
           ),
@@ -3305,20 +3321,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // prompt and answered too late, and a message the reader resends on
         // that reading arrives twice. The row stays until the snapshot says
         // whether it landed, and the toast says to check before sending again.
-        const unconfirmed = describeGatewayFailure(err).kind === 'timeout';
-        const delivered = optimistic && !unconfirmed;
+        const unconfirmed = isAgentDeliveryUnconfirmed(err);
+        const refused = optimistic && !unconfirmed;
         // Otherwise the row goes with the failure. A message that was never
         // delivered has no business sitting in the transcript, and the draft
         // comes back so the reader can try again rather than retype it.
-        if (delivered) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-        // Only text changed status optimistically. An attachment error is
-        // ambiguous: do not replace an already-arrived native row with a
-        // possibly older snapshot. Its native status/events remain authoritative.
-        if (optimistic) void loadSnapshot('silent');
+        if (refused) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        // Read authoritative state after an unknown receipt. This neither
+        // invents a canonical attachment row nor repeats the prompt.
+        if (optimistic || unconfirmed) void loadSnapshot('silent');
+        if (unconfirmed && promptDelivery) void refreshInbox().catch(() => {});
         showToast({
           variant: 'danger',
-          title: delivered ? t`Message not sent` : t`Could not confirm submission`,
-          message: delivered
+          title: refused ? t`Message not sent` : t`Could not confirm submission`,
+          message: refused
             ? agentErrorRef.current(err)
             : t`Your draft is kept. Check the conversation before sending again. ${agentErrorRef.current(err)}`,
           durationMs: 6000,
@@ -4542,6 +4558,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ),
     [permissions, toolIds]
   );
+  const handleSendQueuedItem = useCallback(
+    (itemId: string) => {
+      const inboxId = queuedInboxId(itemId);
+      if (inboxId) handleSetInboxDelivery(inboxId, 'steer');
+    },
+    [queuedInboxId, handleSetInboxDelivery]
+  );
   const rowProps = useMemo(
     () => ({
       showReasoning,
@@ -4549,6 +4572,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onPreviewImage: previewImage,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
+      onSendQueued: agentFeatures.extra.promptSteering === true ? handleSendQueuedItem : undefined,
       // Roll-back is offered on any agent that can revert; one that cannot
       // stage gets the one-step path behind a confirmation.
       onUndoToHere: agentFeatures.revert ? handleStageRevert : undefined,
@@ -4559,6 +4583,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       markdownStyle,
       handleEditQueuedItem,
       handleCancelQueuedItem,
+      handleSendQueuedItem,
+      agentFeatures.extra.promptSteering,
       handleStageRevert,
       agentFeatures.revert,
       toolActions,
@@ -5308,15 +5334,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * one carries.
    */
   const childrenRootRef = useRef<string | undefined>(undefined);
+  const childrenTranscriptRef = useRef('[]');
   useEffect(() => {
     const rootChanged = childrenRootRef.current !== activeRootAsid;
-    if (!rootChanged && isRunning) return;
+    const childrenChanged = childrenTranscriptRef.current !== transcriptChildren;
+    if (!rootChanged && !childrenChanged && isRunning) return;
     childrenRootRef.current = activeRootAsid;
+    childrenTranscriptRef.current = transcriptChildren;
     // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent -- refreshChildren loads the workbench-owned child index; it is not a parent state callback.
     void refreshChildren(activeRootAsid).catch(() => {});
     // Not on `activeDirectory`: a workspace change re-keys the roots and
     // arrives here as a new root; on its own it re-walked the same tree.
-  }, [refreshChildren, activeRootAsid, isRunning]);
+  }, [refreshChildren, activeRootAsid, isRunning, transcriptChildren]);
 
   const currentSession = useMemo(() => {
     return sessions.find((s) => s.asid === activeAsid) ?? sessionInfo;

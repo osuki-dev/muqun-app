@@ -1,5 +1,5 @@
 import { memo, type ComponentType } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import Animated from 'react-native-reanimated';
@@ -54,6 +54,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
   surface = 'popover',
   error,
   testID,
+  style,
 }: {
   items: readonly AgentActionMenuItem[];
   /** What the last action could not do, said here, under the items. */
@@ -64,6 +65,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
    */
   surface?: 'popover' | 'ground';
   testID?: string;
+  style?: StyleProp<ViewStyle>;
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -84,6 +86,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
               { backgroundColor: floatingBackground(theme.colors.surface) },
             ]
           : styles.ground,
+        style,
       ]}>
       {items.map((item) => {
         if (item.confirm) {

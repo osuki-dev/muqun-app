@@ -1182,6 +1182,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "ตรวจสอบขนาดดาวน์โหลดไม่ไ
 msgid "Could not compact"
 msgstr "บีบอัดไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "ยืนยันการสร้างเซสชันไม่สำเร็จ โปรดตรวจสอบการสนทนาบนคอมพิวเตอร์นี้ก่อนส่งอีกครั้ง ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "ไม่สามารถยืนยันการส่งได้"
@@ -2374,6 +2379,10 @@ msgstr "บันทึกปุ่มลัดไม่ได้"
 msgid "Could not save theme"
 msgstr "บันทึกธีมไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "บันทึกฉบับร่างที่จะส่งนี้ไม่สำเร็จ ยังไม่ได้ส่งอะไร ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "บันทึกการตั้งค่านี้ไม่ได้ โปรดลองอีกครั้ง"
@@ -2386,7 +2395,10 @@ msgstr "ไม่สามารถบันทึกการตั้งค่
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "บันทึกไม่ได้ โปรดตรวจสอบว่าคอมพิวเตอร์ออนไลน์และอัปเดต Gateway แล้ว"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "ค้นหาโฟลเดอร์ไม่สำเร็จ โปรดลองอีกครั้ง"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "ลบแล้ว"
 msgid "Deleting session…"
 msgstr "กำลังลบเซสชัน…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "ยังยืนยันการส่งไม่ได้ โปรดตรวจสอบการสนทนาบนคอมพิวเตอร์นี้ก่อนส่งอีกครั้ง"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "โหมดการส่ง: เข้าคิว แตะเพื่อเปลี่ยนเป็นการแทรกแซง (Steer)"
@@ -2602,6 +2618,10 @@ msgstr "โหมดการส่ง: แทรกแซงแบบเรี�
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "ยังไม่ยืนยันการส่ง"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "ยังไม่ได้รับการยืนยันการส่ง ดูการสนทนา"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "แยกออกที่ {head}"
 msgid "Detached at {head}"
 msgstr "แยกออกที่ {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "ขยายงาน"
 msgid "Expand tool call"
 msgstr "ขยายการเรียกใช้เครื่องมือ"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "หมดอายุเมื่อ {0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "เอเจนต์ความเร็วสูงสำหรับ
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "ดึงหน้าเว็บ"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "ไฟล์มีขนาดใหญ่เกินไป (สูงสุด {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "ซ่อนรายการคอมพิวเตอร์"
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "ซ่อนประกาศนี้"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "กดปุ่มส่งค้างไว้เพื่อพูด หยุดบันทึกเพื่อเพิ่มข้อความลงในฉบับร่าง จากนั้นแก้ไขและส่ง"
@@ -3444,10 +3459,6 @@ msgstr "นำเข้าแล้ว"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "กำลังดำเนินการ"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "การใช้งานที่รวมอยู่ในแผน"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "ภาษา {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "ใหญ่"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "ตรวจสอบล่าสุด"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "ไม่มีเอาต์พุตที่บันทึกไว
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "ไม่มีคอมพิวเตอร์ที่จับคู่อื่นพร้อมใช้งาน"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4631,6 +4642,10 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "การเชื่อมต่อนี้แสดงได้เฉพาะเซสชันล่าสุด การค้นหาครอบคลุมเฉพาะรายการที่โหลดแล้ว"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "เพิ่มเฉพาะ {MAX_ATTACHMENTS_PER_PICK} ไฟล์แรก อีก {dropped} ไฟล์ไม่ได้เพิ่ม"
@@ -4699,6 +4714,10 @@ msgstr "เปิดงานเบื้องหลัง"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "เปิดไฟล์"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "เปิดจากคอมพิวเตอร์"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "เครดิตรีเซ็ต"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "ไม่ได้รายงานเวลารีเซ็ต"
 
@@ -5937,6 +5952,10 @@ msgstr "บันทึกแล้ว"
 msgid "Saved commands"
 msgstr "คำสั่งที่บันทึกไว้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "พื้นที่จัดเก็บฉบับร่างเต็มแล้ว โปรดจัดการหรือนำรายการส่งก่อนหน้าออกก่อนส่งอีกครั้ง ฉบับร่างของคุณยังคงอยู่"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "ประวัติที่บันทึกไว้ · ไม่สามารถดูสถานะสดได้"
@@ -6011,6 +6030,14 @@ msgstr "ค้นหาตามชื่อหรือแท็ก"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "ค้นหาไฟล์"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "ค้นหาโฟลเดอร์หรือป้อนพาธ"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "ค้นหาโฟลเดอร์หรือป้อนพาธ"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "ส่งข้อความ"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "ส่งเดี๋ยวนี้"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "แชร์บันทึกของเซสชันนี้"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "ใช้ร่วมกันระหว่างเซสชัน รีเฟรชเพื่ออัปเดต"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "แชร์ข้อมูลสรุปหน้าหลัก (งาน เซสชัน และเทอร์มินัล) กับคอมพิวเตอร์นี้และเครื่องสำรอง การสนทนายังคงเชื่อมต่อโดยตรง"
@@ -6284,6 +6308,7 @@ msgstr "แสดงรายละเอียดกล้อง"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "แสดงบทสนทนา"
 
@@ -6447,6 +6472,10 @@ msgstr "ลบไฟล์บางรายการไม่ได้ · {clea
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "ไฟล์บางรายการอัปโหลดไม่สำเร็จ"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "สร้างดัชนีบางโฟลเดอร์ได้ไม่ครบ หากไม่พบไฟล์ที่นี่ ให้เปิดไฟล์โดยตรงจากพาธ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "ส่ง"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "ส่งแล้ว"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "เอเจนต์เริ่มต้น ทำงานตาม�
 msgid "The destination could not be opened."
 msgstr "เปิดปลายทางนี้ไม่ได้"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "รายการไฟล์มีการเปลี่ยนแปลง โปรดรีเฟรชเพื่อเรียกดูต่อ"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
@@ -7426,6 +7455,10 @@ msgstr "Gateway นี้ไม่ตอบกลับที่ที่อย�
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Gateway นี้ไม่มีส่วนที่บันทึกไว้ให้ใช้อีกแล้ว หน้าที่อ่านไปแล้วยังคงเก็บไว้ที่นี่"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Gateway นี้แสดงเฉพาะไฟล์ล่าสุด การค้นหาครอบคลุมเฉพาะรายการนี้ โปรดอัปเดต Gateway เพื่อเรียกดูไฟล์ที่เก่ากว่า"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "อัปเดต Gateway เพื่อฟังตัวอย่า
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "อัปเดต Gateway เพื่อดูตัวอย่างวิดีโอ"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "อัปเดต Gateway เพื่อค้นหาโฟลเดอร์ คุณยังสามารถกรองโปรเจกต์หรือป้อนพาธแบบเต็มได้"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

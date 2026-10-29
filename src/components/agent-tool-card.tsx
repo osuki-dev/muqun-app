@@ -604,7 +604,13 @@ export const AgentToolCard = memo(function AgentToolCard({
   const childWorking =
     child?.state === 'working' || child?.state === 'starting' || child?.state === 'retrying';
   const childStatusLabel =
-    kind === 'subagent' ? i18n._(subagentStateWord[child?.state ?? 'unknown']) : '';
+    kind === 'subagent'
+      ? child?.state && child.state !== 'unknown'
+        ? i18n._(subagentStateWord[child.state])
+        : child?.action
+          ? i18n._(subagentActionWord[child.action])
+          : i18n._(subagentStateWord.unknown)
+      : '';
   const questions = useMemo(
     () => (kind === 'question' ? parseToolQuestions(part.input) : []),
     [kind, part.input]
@@ -1001,7 +1007,11 @@ export const AgentToolCard = memo(function AgentToolCard({
       truncated={truncated}
       {...(!muqun && errorLine ? { error: errorLine } : {})}
       background={detached}
-      {...(onOpenDetail ? { onOpenDetail } : {})}
+      {...(kind === 'subagent' && part.child_session_id && onOpenChildSession
+        ? { onOpenDetail: handleOpenChild }
+        : onOpenDetail
+          ? { onOpenDetail }
+          : {})}
       onExpand={onExpand}
       chips={muqun ? undefined : chips}
       actions={actions}

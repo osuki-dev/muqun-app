@@ -685,6 +685,65 @@ describe('bounded reads and verified file-only photo export policy', () => {
     expect((signal as AbortSignal | null)?.aborted).toBe(true);
   });
 
+  test('progress extends the idle window but never the total deadline', async () => {
+    let cancelled = false;
+    const response = await fetchBoundedImageResponse(
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>(
+            {
+              async pull(controller) {
+                await new Promise((resolve) => setTimeout(resolve, 5));
+                if (!cancelled) controller.enqueue(new Uint8Array([1]));
+              },
+              cancel() {
+                cancelled = true;
+              },
+            },
+            { highWaterMark: 0 }
+          )
+        ),
+      'https://synthetic.example/original',
+      {},
+      120,
+      60
+    );
+    await expect(readLimitedImageBody(response, 1024)).rejects.toThrow('Timed out reading');
+    expect(cancelled).toBe(true);
+  });
+
+  test('an idle body stops before the total deadline and cancels its reader', async () => {
+    let cancelled = false;
+    const response = await fetchBoundedImageResponse(
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            cancel() {
+              cancelled = true;
+            },
+          })
+        ),
+      'https://synthetic.example/original',
+      {},
+      1000,
+      20
+    );
+    await expect(readLimitedImageBody(response, 32)).rejects.toThrow('waiting for image data');
+    expect(cancelled).toBe(true);
+  });
+
+  test('a cancelled caller settles even when the transport ignores abort', async () => {
+    const controller = new AbortController();
+    const pending = fetchBoundedImageResponse(
+      async () => new Promise<Response>(() => {}),
+      'https://synthetic.example/original',
+      { signal: controller.signal },
+      1000
+    );
+    controller.abort();
+    await expect(pending).rejects.toThrow('cancelled');
+  });
+
   test('completing a bounded image read disarms the deadline without a late request abort', async () => {
     let signal: AbortSignal | null = null;
     const response = await fetchBoundedImageResponse(

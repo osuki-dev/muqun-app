@@ -1182,6 +1182,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "다운로드 크기를 확인하지 못했습니다. 다시 시도하세
 msgid "Could not compact"
 msgstr "압축하지 못했습니다"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "세션 생성 여부를 확인하지 못했습니다. 다시 보내기 전에 이 컴퓨터의 대화를 확인하세요. 초안은 유지됩니다"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "제출을 확인할 수 없습니다"
@@ -2374,6 +2379,10 @@ msgstr "단축 명령을 저장하지 못했습니다"
 msgid "Could not save theme"
 msgstr "테마를 저장하지 못했어요"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "보낼 초안을 저장하지 못했습니다. 아무것도 전송되지 않았습니다. 초안은 유지됩니다"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "설정을 저장하지 못했습니다. 다시 시도하세요"
@@ -2386,7 +2395,10 @@ msgstr "음성 설정을 저장할 수 없습니다. 다시 시도하세요"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "저장하지 못했습니다. 컴퓨터가 온라인이고 Gateway가 최신인지 확인하세요"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "폴더를 검색할 수 없습니다. 다시 시도하세요"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "삭제됨"
 msgid "Deleting session…"
 msgstr "세션을 삭제하는 중…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "전달 여부가 아직 확인되지 않았습니다. 다시 보내기 전에 이 컴퓨터의 대화를 확인하세요"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "전송 모드: 대기열. 탭하여 실시간 개입(Steer)으로 전환"
@@ -2602,6 +2618,10 @@ msgstr "전송 모드: 실시간 개입(Steer). 탭하여 대기열로 전환"
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "전달이 확인되지 않음"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "전달 여부가 확인되지 않았습니다. 대화 보기"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "{head}에서 분리됨"
 msgid "Detached at {head}"
 msgstr "{head}에서 분리됨"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "작업 펼치기"
 msgid "Expand tool call"
 msgstr "도구 호출 펼치기"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "만료: {0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "코드베이스 탐색에 특화된 빠른 에이전트"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "웹 페이지 가져오기"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "파일이 너무 큽니다(최대 {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "컴퓨터 목록 숨기기"
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "이 알림을 숨깁니다"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "전송 버튼을 길게 눌러 말하세요. 녹음을 중지하면 텍스트가 초안에 추가되며, 수정한 뒤 전송할 수 있습니다"
@@ -3444,10 +3459,6 @@ msgstr "가져옴"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "진행 중"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "포함된 사용량"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "언어, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "크게"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "마지막 확인"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "더 이전에 캡처된 출력이 없습니다"
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "사용 가능한 다른 페어링된 컴퓨터가 없습니다"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4631,6 +4642,10 @@ msgstr "온라인 상태"
 msgid "ONLINE"
 msgstr "온라인"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "이 연결에서는 최근 세션만 볼 수 있습니다. 검색은 불러온 목록에서 수행됩니다"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}개는 제외되었습니다"
@@ -4699,6 +4714,10 @@ msgstr "백그라운드 작업 열기"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "컴퓨터에서 열기"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "초기화 크레딧"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "초기화 시간 미보고"
 
@@ -5937,6 +5952,10 @@ msgstr "저장됨"
 msgid "Saved commands"
 msgstr "저장한 명령"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "저장된 초안 공간이 가득 찼습니다. 이전 제출 항목을 처리하거나 목록에서 제거한 뒤 다시 보내세요. 초안은 유지됩니다"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "저장된 기록 · 실시간 상태를 확인할 수 없음"
@@ -6011,6 +6030,14 @@ msgstr "이름 또는 태그로 검색"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "파일 검색"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "폴더 검색 또는 경로 입력"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "폴더 검색 또는 경로 입력"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "메시지 보내기"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "지금 보내기"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "이 세션의 기록 공유"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "세션 간 공유됩니다. 새로 고쳐 업데이트하세요"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "이 컴퓨터와 예비 컴퓨터에 홈 요약(작업, 세션, 터미널)을 공유합니다. 대화는 계속 직접 연결됩니다"
@@ -6284,6 +6308,7 @@ msgstr "카메라 세부 정보 표시"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "대화 보기"
 
@@ -6447,6 +6472,10 @@ msgstr "일부 파일을 지우지 못했습니다 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "일부 파일을 업로드하지 못했습니다"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "일부 폴더의 색인을 완성하지 못했습니다. 여기에 없는 파일은 경로로 직접 열 수 있습니다"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "서브에이전트"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "제출"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "제출됨"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "기본 에이전트. 도구를 실행합니다"
 msgid "The destination could not be opened."
 msgstr "해당 대상을 열 수 없습니다"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "파일 목록이 변경되었습니다. 새로고침하여 계속 탐색하세요"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "글꼴 파일이 없습니다. 다시 추가하세요"
@@ -7426,6 +7455,10 @@ msgstr "이 Gateway는 그 주소에 응답하지 않습니다"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "이 Gateway는 더 이상 저장된 구간을 제공하지 않습니다. 이미 읽은 페이지는 여기에 유지됩니다"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "이 Gateway는 최근 파일만 표시합니다. 검색은 이 목록에서 수행됩니다. 이전 파일을 보려면 Gateway를 업데이트하세요"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "오디오 출력을 미리 들으려면 Gateway를 업데이트하세요
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "동영상 출력을 미리 보려면 Gateway를 업데이트하세요"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "폴더를 검색하려면 Gateway를 업데이트하세요. 프로젝트 필터링이나 전체 경로 입력은 계속 사용할 수 있습니다"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

@@ -889,7 +889,12 @@ export function SentTaskRow({
     canComplete: false,
     acknowledged: true,
   });
-  const noReply = !failed && !replied && item.asid !== undefined && !pendingWorking(item, nowMs);
+  const noReply =
+    !failed &&
+    !replied &&
+    item.asid !== undefined &&
+    !pendingWorking(item, nowMs) &&
+    !pendingUnconfirmed(item, nowMs);
   // A plain send the gateway never answered within the TTL stays, says so,
   // and a tap asks the computer whether it has the task after all.
   const unconfirmed = pendingUnconfirmed(item, nowMs);
@@ -905,7 +910,7 @@ export function SentTaskRow({
         ? lineView(
             t`Delivery not confirmed`,
             theme.colors.textMuted,
-            actions?.check ? t`Check status` : ''
+            item.asid ? t`Show conversation` : actions?.check ? t`Check status` : ''
           )
         : rowLine(replied, visual, computer, nowMs);
   const press = !actions
@@ -936,7 +941,9 @@ export function SentTaskRow({
           failed
             ? t`Could not send. Tap to retry`
             : unconfirmed
-              ? t`Delivery not confirmed. Tap to check status`
+              ? item.asid
+                ? t`Delivery not confirmed. Show conversation`
+                : t`Delivery not confirmed. Tap to check status`
               : undefined
         }
         style={[styles.sentBody, styles.grow]}>
