@@ -32,11 +32,13 @@ import {
 } from '@/icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { useHasThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
+import { canUseToolHeaderTint } from '@/theme/tool-header-tint';
+import { withAlpha } from '@/lib/color';
 import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, timing } from '@/lib/motion';
@@ -44,7 +46,6 @@ import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
 import { formatToolDuration } from '@/lib/tool-call-detail';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { withAlpha } from '@/lib/color';
 
 /**
  * The shell every tool call is drawn in.
@@ -155,10 +156,17 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   testID,
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const { t } = useLingui();
   const raised = useTranscriptPlate();
+  const headerPlate = useTranscriptPlate('raised');
+  const hasWallpaper = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
+  const lightHeader = canUseToolHeaderTint(
+    theme.colors.background,
+    theme.colors.primary,
+    [theme.colors.text, theme.colors.textMuted, theme.colors.textSubtle],
+    hasWallpaper
+  );
   const mono = useMonoFontFamily();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const headerRef = useRef<ViewInstance>(null);
@@ -264,12 +272,12 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         <View
           ref={headerRef}
           collapsable={false}
+          // Tool labels need the same contrast-backed surface as transcript text.
+          // A decorative primary tint alone leaves them unreadable over wallpaper.
           style={[
             styles.headerPill,
-            {
-              borderRadius: profile.chrome.control,
-              backgroundColor: withAlpha(theme.colors.primary, 0.08),
-            },
+            headerPlate,
+            lightHeader && { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
           ]}>
           {taskSummary ? (
             <View style={styles.headerRow}>

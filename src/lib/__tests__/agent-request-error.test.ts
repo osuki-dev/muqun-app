@@ -7,12 +7,32 @@ import {
   classifyAgentSessionGone,
   isAgentOfflineError,
   paneGoneError,
+  isAgentDeliveryUnconfirmed,
 } from '../agent-request-error';
 
 const refusal = (status: number, code: string, message: string) =>
   new Error(
     `Failed to create agent session: ${status} ${JSON.stringify({ error: { code, message } })}`
   );
+
+test('lost transport receipts and explicit unknown acceptance never establish prompt refusal', () => {
+  const cases: [unknown, boolean][] = [
+    [new TypeError('Network request failed'), true],
+    [new Error('Timed out waiting for the server.'), true],
+    [Object.assign(new Error('connection reset'), { code: 'ECONNRESET' }), true],
+    [new Error('java.lang.RuntimeException: Cronet failed: net::ERR_CONNECTION_CLOSED'), true],
+    [new Error('HTTP 504: upstream timeout'), true],
+    [refusal(502, 'agent_error', 'queue acceptance is unknown'), true],
+    [refusal(502, 'agent_error', 'Agent session not found: session-1'), false],
+    [refusal(400, 'invalid_request', 'too many attachments'), false],
+    [refusal(503, 'busy', 'upload slot busy'), false],
+    [refusal(403, 'invalid_token', 'pairing revoked'), false],
+    [Object.assign(new Error('file missing'), { code: 'ENOENT' }), false],
+  ];
+  expect(cases.map(([error]) => isAgentDeliveryUnconfirmed(error))).toEqual(
+    cases.map(([, unknown]) => unknown)
+  );
+});
 
 test('a pane read the gateway answers "no such pane" is gone; nothing else is', () => {
   const answered = (status: number, code: string) =>

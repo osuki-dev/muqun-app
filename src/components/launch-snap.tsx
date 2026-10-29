@@ -39,6 +39,7 @@ export function SnapDust({
   image,
   width,
   progress,
+  tint,
   onReady,
 }: {
   /** `makeImageSnapshot()` of the canvas this is drawn into. */
@@ -46,6 +47,8 @@ export function SnapDust({
   /** The canvas's width in points; the snapshot is at device resolution. */
   width: number;
   progress: SharedValue<number>;
+  /** Optional theme accent for image reassembly; launch keeps its existing ash. */
+  tint?: string;
   /** Called once the dust is in the canvas: the moment to start `progress`. */
   onReady: () => void;
 }) {
@@ -55,10 +58,14 @@ export function SnapDust({
     const height = image.height() / ratio;
     return { width, height, cell: snapCellSize(width, height, ratio) };
   });
+  const dustTint = Array.from(Skia.Color(tint ?? 'transparent'));
+  const tintStrength = tint ? 1 : 0;
   const uniforms = useDerivedValue(() => ({
     size: [field.width, field.height],
     cell: field.cell,
     progress: progress.get(),
+    dustTint,
+    tintStrength,
   }));
 
   // Committed into the canvas: the snap can start from its first grain. Once,

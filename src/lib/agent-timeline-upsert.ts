@@ -83,6 +83,9 @@ export function inboxTimelineRows(
         );
     if (twin) {
       claimed.add(twin);
+      // The Gateway may queue an optimistic steer during compaction. Its
+      // acknowledged receipt must supply the status and cancel/edit identity.
+      out.push({ ...row, id: twin.id, row_key: twin.row_key, message_id: twin.message_id });
       continue;
     }
     out.push(row);

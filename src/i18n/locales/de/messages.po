@@ -1182,6 +1182,7 @@ msgstr "Kamerazugriff erforderlich"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "Downloadgröße konnte nicht geprüft werden. Erneut versuchen"
 msgid "Could not compact"
 msgstr "Verdichtung nicht möglich"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "Die Sitzungserstellung konnte nicht bestätigt werden. Prüfe vor dem erneuten Senden die Unterhaltungen auf diesem Computer. Dein Entwurf bleibt erhalten"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "Übermittlung konnte nicht bestätigt werden"
@@ -2374,6 +2379,10 @@ msgstr "Verknüpfung konnte nicht gespeichert werden"
 msgid "Could not save theme"
 msgstr "Design konnte nicht gespeichert werden"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "Der ausgehende Entwurf konnte nicht gespeichert werden. Es wurde nichts gesendet. Dein Entwurf bleibt erhalten"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "Diese Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen"
@@ -2386,7 +2395,10 @@ msgstr "Spracheinstellungen konnten nicht gespeichert werden. Versuche es erneut
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "Speichern fehlgeschlagen. Prüfe, ob deine Computer online und ihre Gateways aktuell sind"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "Ordner konnten nicht durchsucht werden. Versuche es erneut"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "Gelöscht"
 msgid "Deleting session…"
 msgstr "Sitzung wird gelöscht…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "Die Zustellung ist weiterhin unbestätigt. Prüfe vor dem erneuten Senden die Unterhaltungen auf diesem Computer"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "Sendemodus: Warteschlange. Tippen zum Umschalten auf Steer"
@@ -2602,6 +2618,10 @@ msgstr "Sendemodus: Steer (Echtzeit). Tippen zum Umschalten auf Warteschlange"
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Zustellung nicht bestätigt"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "Zustellung nicht bestätigt. Unterhaltung anzeigen"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "losgelöst bei {head}"
 msgid "Detached at {head}"
 msgstr "Losgelöst bei {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "Aufgaben ausklappen"
 msgid "Expand tool call"
 msgstr "Toolaufruf erweitern"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Läuft ab am {0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "Schneller Agent für Codebase-Erkundung"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "Eine Webseite abrufen"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "Datei zu groß (max. {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "Computerliste ausblenden"
 msgid "Hide the simulator"
 msgstr "Simulator ausblenden"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "Blendet diesen Hinweis aus"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Halte die Sendetaste gedrückt, um zu sprechen. Beende die Aufnahme, um den Text zum Entwurf hinzuzufügen. Danach kannst du ihn bearbeiten und senden"
@@ -3444,10 +3459,6 @@ msgstr "Importiert"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "In Arbeit"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Enthaltene Nutzung"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "Sprache, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Groß"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Zuletzt geprüft"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "Keine ältere aufgezeichnete Ausgabe"
 msgid "No other assistants in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine weiteren Assistenten"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "Kein anderer gekoppelter Computer ist verfügbar"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4631,6 +4642,10 @@ msgstr "Online"
 msgid "ONLINE"
 msgstr "ONLINE"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "Über diese Verbindung sind nur neuere Sitzungen verfügbar. Die Suche umfasst die geladene Liste"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Nur die ersten {MAX_ATTACHMENTS_PER_PICK} Dateien wurden hinzugefügt; {dropped} ausgelassen"
@@ -4699,6 +4714,10 @@ msgstr "Hintergrundaufgaben öffnen"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Dateiliste öffnen"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "Von Computer öffnen"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Erfordert iOS 16.1 oder neuer"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Zurücksetzungsguthaben"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Zurücksetzungszeit nicht gemeldet"
 
@@ -5937,6 +5952,10 @@ msgstr "Gespeichert"
 msgid "Saved commands"
 msgstr "Gespeicherte Befehle"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "Der Speicher für Entwürfe ist voll. Kläre frühere Übermittlungen oder entferne sie aus der Liste, bevor du erneut sendest. Dein Entwurf bleibt erhalten"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Gespeicherter Verlauf · Live-Status nicht verfügbar"
@@ -6011,6 +6030,14 @@ msgstr "Nach Name oder Tag suchen"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "Dateien durchsuchen"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "Ordner suchen oder Pfad eingeben"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "Ordner suchen oder Pfad eingeben"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "Nachricht senden"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Jetzt senden"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Das Protokoll dieser Sitzung teilen"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Sitzungsübergreifend geteilt. Zum Aktualisieren neu abrufen"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "Teilt die Home-Übersicht (Aufgaben, Sitzungen und Terminals) mit diesem Computer und Ersatzcomputern. Gespräche bleiben direkt verbunden"
@@ -6284,6 +6308,7 @@ msgstr "Kameradetails anzeigen"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "Unterhaltung anzeigen"
 
@@ -6447,6 +6472,10 @@ msgstr "Einige Dateien ließen sich nicht entfernen · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Einige Dateien wurden nicht hochgeladen"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "Einige Ordner konnten nicht vollständig indiziert werden. Fehlende Dateien können direkt über ihren Pfad geöffnet werden"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "Subagent"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Absenden"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "Übermittelt"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "Der Standard-Agent. Führt Werkzeuge aus"
 msgid "The destination could not be opened."
 msgstr "Dieses Ziel konnte nicht geöffnet werden"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "Die Dateiliste hat sich geändert. Aktualisiere sie, um weiterzublättern"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Die Schriftdatei fehlt. Erneut hinzufügen"
@@ -7426,6 +7455,10 @@ msgstr "Dieses Gateway antwortet nicht auf diese Adresse"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Dieses Gateway bietet keine gespeicherten Abschnitte mehr an. Bereits gelesene Seiten bleiben hier erhalten"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Dieses Gateway listet nur neuere Dateien auf. Die Suche umfasst diese Liste. Aktualisiere das Gateway, um ältere Dateien zu durchsuchen"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "Aktualisiere das Gateway, um Audioausgaben anzuhören"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "Aktualisiere das Gateway, um Videoausgaben anzusehen"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "Aktualisiere das Gateway, um Ordner zu suchen. Du kannst weiterhin Projekte filtern oder einen vollständigen Pfad eingeben"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

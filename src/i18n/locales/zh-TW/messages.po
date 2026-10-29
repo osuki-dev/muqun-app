@@ -1182,6 +1182,7 @@ msgstr "需要相機存取權"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "無法檢查下載大小，請重試"
 msgid "Could not compact"
 msgstr "無法壓縮"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "無法確認對話是否已建立。重新傳送前，請檢查這台電腦上的對話。目前草稿已保留"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "無法確認提交"
@@ -2374,6 +2379,10 @@ msgstr "無法儲存快捷命令"
 msgid "Could not save theme"
 msgstr "無法儲存主題"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "無法儲存待傳送的草稿，未傳送任何內容。目前草稿已保留"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "無法儲存此設定，請重試"
@@ -2386,7 +2395,10 @@ msgstr "無法儲存語音設定，請重試"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "儲存失敗，請確認電腦在線且 Gateway 已更新"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "無法搜尋資料夾，請重試"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "刪除"
 msgid "Deleting session…"
 msgstr "正在刪除工作階段…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "仍無法確認是否送達。重新傳送前，請檢查這台電腦上的對話"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "傳送模式：排隊。點擊切換為即時插話"
@@ -2602,6 +2618,10 @@ msgstr "傳送模式：即時插話。點擊切換為排隊"
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "傳送未確認"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "尚未確認送達。查看對話"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "分離於 {head}"
 msgid "Detached at {head}"
 msgstr "分離於 {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "展開工作"
 msgid "Expand tool call"
 msgstr "展開工具呼叫"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "到期時間：{0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "專用於探索程式碼庫的高速智慧體"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "擷取網頁"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "檔案過大（最大 {0} MB）"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "隱藏電腦清單"
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "隱藏此提示"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "長按傳送按鈕開始說話。停止錄音後，文字會加入草稿，編輯後再傳送"
@@ -3444,10 +3459,6 @@ msgstr "已匯入"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "進行中"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "方案內用量"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "語言，{languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "大"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "上次檢查"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "沒有更早的已擷取輸出"
 msgid "No other assistants in this session yet."
 msgstr "這個工作階段裡還沒有其他助理"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "沒有其他可用的已配對電腦"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4474,7 +4485,7 @@ msgstr "未連線"
 
 #: src/components/simfarm-preview.tsx
 msgid "Not connected to the simulator preview service. Start Simfarm on this computer, or check the port below."
-msgstr "尚未連線至模擬器預覽服務。請在這台電腦上啟動 Simfarm，或檢查下方連接埠。"
+msgstr "尚未連線至模擬器預覽服務。請在這台電腦上啟動 Simfarm，或檢查下方連接埠"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4631,6 +4642,10 @@ msgstr "線上"
 msgid "ONLINE"
 msgstr "線上"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "目前連線僅能取得近期對話，搜尋範圍為已載入的清單"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "僅加入了前 {MAX_ATTACHMENTS_PER_PICK} 個檔案，{dropped} 個未加入"
@@ -4699,6 +4714,10 @@ msgstr "開啟背景工作"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "開啟檔案"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "從電腦開啟"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或以上版本"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "重設點數"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "未提供重設時間"
 
@@ -5937,6 +5952,10 @@ msgstr "已儲存"
 msgid "Saved commands"
 msgstr "已儲存的指令"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "已儲存的草稿空間已滿。請先處理或移除先前的提交，再重新傳送。目前草稿已保留"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "已儲存的歷史記錄 · 無法取得即時狀態"
@@ -6011,6 +6030,14 @@ msgstr "按名稱或標籤搜尋"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "搜尋檔案"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "搜尋資料夾或輸入路徑"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "搜尋資料夾或輸入路徑"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "傳送訊息"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "立即傳送"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "分享這個工作階段的記錄"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "各工作階段共用，重新整理以更新"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "與這台電腦及備用電腦分享首頁概況（任務、對話和終端機）。對話仍直接連線"
@@ -6284,6 +6308,7 @@ msgstr "顯示相機詳細資訊"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "顯示對話"
 
@@ -6447,6 +6472,10 @@ msgstr "部分檔案無法清除 · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些檔案沒有上傳成功"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "部分資料夾未能完整建立索引。若找不到檔案，可透過檔案路徑直接開啟"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "已提交"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "預設智慧體，執行工具"
 msgid "The destination could not be opened."
 msgstr "無法開啟該目的地"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "檔案清單已變更，請重新整理後繼續瀏覽"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "找不到字型檔案。請重新加入"
@@ -7426,6 +7455,10 @@ msgstr "這個 Gateway 不接受這個位址"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "這個 Gateway 已不再提供已儲存的片段。已讀取的頁面仍會保留在這裡"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "此 Gateway 僅列出近期檔案，搜尋範圍限於此清單。更新 Gateway 後可瀏覽更早的檔案"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "更新 Gateway 後即可預覽音訊輸出"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "更新 Gateway 後即可預覽影片輸出"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "更新 Gateway 後即可搜尋資料夾。你仍可篩選專案或輸入完整路徑"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

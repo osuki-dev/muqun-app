@@ -59,6 +59,7 @@ screenshot dist/theme-applied-status.png
 # By testID, because the card and the current-theme bar above the grid both
 # carry the theme's name, so neither the name nor the name plus a role
 # identifies the card.
+scroll down --until "id=theme-row-my-theme" --max-passes 80
 press "id=theme-row-my-theme"
 wait stable 400 5000
 is visible "id=\"custom-theme-preview\""
@@ -83,13 +84,14 @@ wait absent "id=theme-import-file" 5000
 # The catalogue is the themes sheet's Gallery tab. Present, and deliberately
 # not pressed *here*: the manifest drives the press that follows, so this file
 # never spells it -- see `browse-offline` below for what the press is for.
+scroll up --until "id=theme-tab" --max-passes 80
 is visible "id=theme-tab"
 
 # section browse-offline
 # The demo catalogue can supply this card offline; on an unpaired home the
 # published catalogue supplies the same first entry over the normal transport.
-wait "text=\"Acacia Afterglow\"" 15000
-is visible "text=\"Acacia Afterglow\""
+wait "id=theme-browse-item:acacia-afterglow" 15000
+is visible "id=theme-browse-item:acacia-afterglow"
 screenshot dist/theme-browse.png
 
 # section browse-network-offline

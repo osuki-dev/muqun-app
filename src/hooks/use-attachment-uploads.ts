@@ -16,15 +16,32 @@ import {
   stageFiles,
   startableIds,
   uploadedPaths,
+  attachmentLimitBytes,
+  AttachmentTooLargeError,
   type AttachmentDestination,
 } from '@/lib/attachment-queue';
 import {
-  compressPickedImage,
+  preparePickedAttachment,
   describeUploadFailure,
   type PendingAttachment,
   type PickedFile,
 } from '@/lib/attachments';
 import { uploadAttachment } from '@/lib/gateway-client';
+
+/** A retained draft can outlive selection, but never revocation or repointing. */
+function sameUploadRecord(current: GatewayRecord, captured: GatewayRecord): boolean {
+  return (
+    current.serverId === captured.serverId &&
+    current.url === captured.url &&
+    current.token === captured.token &&
+    current.deviceId === captured.deviceId &&
+    current.transport === captured.transport &&
+    current.transportKey === captured.transportKey &&
+    current.sshTunnel?.hostId === captured.sshTunnel?.hostId &&
+    current.sshTunnel?.remoteHost === captured.sshTunnel?.remoteHost &&
+    current.sshTunnel?.remotePort === captured.sshTunnel?.remotePort
+  );
+}
 
 export interface AttachmentUploads {
   attachments: PendingAttachment[];
@@ -123,17 +140,20 @@ export function useAttachmentUploads(
       try {
         // Compression sits here rather than at picking so it costs one file at
         // a time, inside the slot the upload pool already handed out: a
-        // nine-photo pick re-encodes three at a time instead of decoding nine
+        // nine-photo pick re-encodes one at a time instead of decoding nine
         // camera frames at once, and the strip is showing "uploading" while it
         // happens rather than freezing on the picker's return.
-        const source = await compressPickedImage({
-          uri: entry.localUri,
-          name: entry.name,
-          mime: entry.mime,
-          size: entry.size,
-          width: entry.width,
-          height: entry.height,
-        });
+        const source = await preparePickedAttachment(
+          {
+            uri: entry.localUri,
+            name: entry.name,
+            mime: entry.mime,
+            size: entry.size,
+            width: entry.width,
+            height: entry.height,
+          },
+          attachmentLimitBytes(entry)
+        );
         if (!isCurrent()) return;
         const uploaded = await uploadAttachment(
           destination.record,
@@ -145,7 +165,14 @@ export function useAttachmentUploads(
         if (isCurrent()) commit(markUploaded(attachmentsRef.current, id, uploaded));
       } catch (failure) {
         if (isCurrent())
-          commit(markFailed(attachmentsRef.current, id, describeUploadFailure(failure)));
+          commit(
+            markFailed(
+              attachmentsRef.current,
+              id,
+              describeUploadFailure(failure),
+              failure instanceof AttachmentTooLargeError ? 'too-large' : 'upload'
+            )
+          );
       }
       // A finished upload frees a slot, so whatever is still queued moves up.
       pumpRef.current();
@@ -181,12 +208,11 @@ export function useAttachmentUploads(
   );
   const capturePicker = useCallback(() => {
     const currentRecord = record;
-    const isCurrent = ownership.capture(
-      () =>
-        mountedRef.current &&
-        currentRecord !== null &&
-        useGatewayConnectionStore.getState().record === currentRecord
-    );
+    const ownsUploads = ownership.capture(() => mountedRef.current);
+    const isCurrent = () =>
+      ownsUploads() &&
+      currentRecord !== null &&
+      useGatewayConnectionStore.getState().record === currentRecord;
     const captured = currentRecord
       ? {
           ...currentRecord,
@@ -200,7 +226,10 @@ export function useAttachmentUploads(
         const previous = attachmentsRef.current;
         const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
-          destinations.current.set(entry.id, { record: captured, isCurrent });
+          // A retry may temporarily select another computer while explicitly
+          // retaining this draft. Its uploads still own this captured endpoint;
+          // ordinary switches invalidate ownership through clearAttachments.
+          destinations.current.set(entry.id, { record: captured, isCurrent: ownsUploads });
         commit(next);
         pump();
       },
@@ -249,7 +278,12 @@ export function useAttachmentUploads(
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {
-        if (next.record !== previous.record && !holdStaged?.('switch')) clearAttachments();
+        const revoked = [...destinations.current.values()].some(
+          (destination) =>
+            !next.records.some((record) => sameUploadRecord(record, destination.record))
+        );
+        if (revoked || (next.record !== previous.record && !holdStaged?.('switch')))
+          clearAttachments();
       }),
     [clearAttachments, holdStaged]
   );

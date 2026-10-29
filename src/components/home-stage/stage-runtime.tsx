@@ -30,14 +30,13 @@ import { createStageScene, type StagePicture } from './stage-scene';
 import type { StageSceneProps } from './types';
 
 /**
- * The frame log (`stage-perf.ts`), in a Debug or Release profiling bundle
+ * The frame log (`stage-perf.ts`), in a Debug bundle
  * built with `EXPO_PUBLIC_STAGE_PERF=1` only. A `require` behind a condition
  * Metro folds: a store bundle never contains it.
  */
 type StagePerfModule = typeof import('./stage-perf');
 const stagePerf =
-  process.env.EXPO_PUBLIC_STAGE_PERF === '1' &&
-  (__DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1')
+  process.env.EXPO_PUBLIC_STAGE_PERF === '1' && __DEV__
     ? // oxlint-disable-next-line typescript/no-require-imports
       (require('./stage-perf') as StagePerfModule).createStagePerfLog()
     : null;

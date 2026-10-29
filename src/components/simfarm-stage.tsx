@@ -11,7 +11,6 @@ import {
   PowerIcon,
   RefreshIcon,
   MessageSendIcon,
-  PhoneIcon,
   SessionStackIcon,
   CloseIcon,
 } from '@/icons';
@@ -80,10 +79,9 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
  *
  * ## Picture and controls
  *
- * The device selector occupies a compact row inside the safe area. The
- * remaining viewport contains the whole device at its original aspect ratio,
- * centered without cropping. Pinch and pan inspect details; Fit restores the
- * complete view. Embedded previews use the workspace's existing safe area.
+ * The picture uses the entire viewport; only floating controls respect safe
+ * areas. Device selection lives in the action menu. The complete device keeps
+ * its aspect ratio; pinch and pan inspect details, and Fit restores the view.
  * Drawing and touch mapping share the same placement rectangle.
  *
  * The movable floating handle opens device actions. While its menu is open,
@@ -139,21 +137,12 @@ export function SimfarmStage({
   const [draft, setDraft] = useState('');
 
   /**
-   * Keep the fitted picture and controls clear of the host's cutouts.
+   * Keep controls clear of the host's cutouts without shrinking the picture.
    * The embedded workspace has already applied its safe area.
    */
   const topInset = embedded ? 0 : insets.top;
   const bottomInset = embedded ? 0 : insets.bottom;
   const leftInset = embedded ? 0 : insets.left;
-  const rightInset = embedded ? 0 : insets.right;
-  const pictureTop = topInset + DEVICE_SELECTOR_SPACE;
-  const pictureViewport = useMemo(
-    () => ({
-      width: Math.max(0, viewport.width - leftInset - rightInset),
-      height: Math.max(0, viewport.height - pictureTop - bottomInset),
-    }),
-    [bottomInset, leftInset, pictureTop, rightInset, viewport]
-  );
   const closable = onClose !== undefined && !embedded;
 
   // ---------------------------------------------------------------------------
@@ -256,8 +245,8 @@ export function SimfarmStage({
 
   /**
    * In the stage's own coordinates, which are the ones a touch arrives in --
-   * the fitted viewport excludes the selector and safe area. Its origin is
-   * added once so drawing and input resolve against the same rectangle.
+   * the complete viewport is shared by drawing and input. Safe-area padding
+   * belongs to the floating controls, never to the streamed picture.
    *
    * Worked out on the UI runtime, where the zoom and the pan live, so a pinch
    * or a drag moves the picture without a render; a touch reads the same
@@ -266,13 +255,12 @@ export function SimfarmStage({
    */
   const placement = useDerivedValue<SimfarmPlacement | null>(() => {
     if (frame === null || viewport.height <= 0) return null;
-    const placed = placeSimfarmFrame(
+    return placeSimfarmFrame(
       frame,
-      pictureViewport,
+      viewport,
       zoom.get(),
-      offset.get() ?? simfarmRestingOffset(frame, pictureViewport, zoom.get())
+      offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get())
     );
-    return { ...placed, x: placed.x + leftInset, y: placed.y + pictureTop };
   });
 
   /**
@@ -448,15 +436,15 @@ export function SimfarmStage({
           'worklet';
           const placed = placement.get();
           if (placed === null || frame === null) return;
-          const from = offset.get() ?? simfarmRestingOffset(frame, pictureViewport, zoom.get());
+          const from = offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get());
           offset.set(
-            clampSimfarmOffset(placed, pictureViewport, {
+            clampSimfarmOffset(placed, viewport, {
               x: from.x + event.changeX,
               y: from.y + event.changeY,
             })
           );
         }),
-    [frame, offset, pictureViewport, placement, zoom]
+    [frame, offset, viewport, placement, zoom]
   );
 
   const magnify = useMemo(
@@ -568,9 +556,11 @@ export function SimfarmStage({
     );
   }
 
+  const background = stream.hasImage ? '#000000' : theme.colors.background;
+
   return (
     <View
-      style={[styles.fill, { backgroundColor: theme.colors.background }]}
+      style={[styles.fill, { backgroundColor: background }]}
       onLayout={onLayout}
       testID="simfarm-stage">
       <GestureDetector gesture={gesture}>
@@ -580,11 +570,10 @@ export function SimfarmStage({
             into are whatever the layer held, which on the simulator is black
             and on a phone was the terminal underneath the sheet -- the
             see-through stage in the report. So the surface is painted here, in
-            the theme's colour, before anything else is: the empty and booting
-            states then sit on the same ground as every other screen, and the
-            ground under a short picture is that ground rather than a hole. */}
+            background colour, before anything else is. Empty states use the
+            theme; any space around an aspect-fitted live frame stays black. */}
         <Canvas style={styles.fill} android={{ backingView: 'TextureView', opaque: true }}>
-          <Fill color={theme.colors.background} />
+          <Fill color={background} />
           {/* The image, its rectangle and the turn's centre are all shared
               values: a frame, a pinch or a drag reaches this node on the UI
               runtime and this tree is not visited again for any of them. */}
@@ -677,18 +666,29 @@ export function SimfarmStage({
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               },
             ]}>
-            {/* Device selection has its own direct pill; this card has no nested menu. */}
-            <View style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
-              <PhoneIcon size={16} color={theme.colors.textMuted} />
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={chrome.picking ? t`Simulator controls` : name}
+              accessibilityHint={t`Choose which simulator to show`}
+              accessibilityState={{ expanded: chrome.picking }}
+              testID="simfarm-device"
+              onPress={() => dispatch('header')}
+              style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
+              <DevicesIcon size={17} color={theme.colors.textMuted} />
               <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
-                {chrome.picking ? t`Choose a simulator` : t`Simulator controls`}
+                {chrome.picking ? t`Choose a simulator` : name}
               </Text>
               {hint !== null ? (
                 <Text variant="label" color={theme.colors.textMuted} testID="simfarm-device-state">
                   {hint}
                 </Text>
               ) : null}
-            </View>
+              {chrome.picking ? (
+                <BackIcon size={14} color={theme.colors.textMuted} />
+              ) : (
+                <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
+              )}
+            </PressableScale>
 
             {chrome.picking ? (
               <>
@@ -855,39 +855,12 @@ export function SimfarmStage({
         </>
       ) : null}
 
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={name}
-        accessibilityHint={t`Choose which simulator to show`}
-        accessibilityState={{ expanded: chrome.menu && chrome.picking }}
-        disabled={stream.devices.length === 1 && stream.device !== null}
-        testID="simfarm-device"
-        onPress={() => openMenu('offer')}
-        style={[
-          styles.devicePill,
-          {
-            top: topInset + 2,
-            left: leftInset + 12,
-            maxWidth: Math.max(0, Math.min(320, viewport.width - leftInset - rightInset - 24)),
-            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: theme.colors.border,
-          },
-        ]}>
-        <DevicesIcon size={17} color={theme.colors.textMuted} />
-        <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
-          {name}
-        </Text>
-        {stream.devices.length > 1 || stream.device === null ? (
-          <DisclosureDownIcon size={14} color={theme.colors.textMuted} />
-        ) : null}
-      </PressableScale>
-
       {stream.hasImage && stream.error !== null ? (
         <View
           pointerEvents="none"
           style={[
             styles.liveError,
-            { top: pictureTop + 12, backgroundColor: theme.colors.background },
+            { top: topInset + 12, backgroundColor: theme.colors.background },
           ]}>
           <Text variant="bodySmall" color={theme.colors.danger} style={styles.centred}>
             {explain(stream.error)}
@@ -985,25 +958,10 @@ function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
 const MENU_MARGIN = 12;
 /** Between the composer and the bottom inset. */
 const COMPOSER_GAP = 10;
-// A 44pt target with 2pt clearance on either side; the picture gets the rest.
-const DEVICE_SELECTOR_SPACE = 48;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   centred: { textAlign: 'center' },
-  devicePill: {
-    position: 'absolute',
-    zIndex: 12,
-    elevation: 12,
-    minHeight: 44,
-    borderRadius: 22,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   waiting: {
     position: 'absolute',
     top: 0,

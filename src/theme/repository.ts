@@ -119,7 +119,6 @@ export interface ThemeLibraryStorage {
   write(value: string): void;
 }
 
-const MAX_THEMES = 50;
 const MAX_LIBRARY_BYTES = 16 * 1024 * 1024;
 const empty = (): ThemeLibrary => ({ version: 1, themes: [], selection: null, previous: null });
 
@@ -187,8 +186,7 @@ export class ThemeRepository {
       }
       if (!value || value.length > MAX_LIBRARY_BYTES) return this.resetMemory();
       const raw = JSON.parse(value) as Partial<ThemeLibrary>;
-      if (raw.version !== 1 || !Array.isArray(raw.themes) || raw.themes.length > MAX_THEMES)
-        return this.resetMemory();
+      if (raw.version !== 1 || !Array.isArray(raw.themes)) return this.resetMemory();
       const themes: InstalledTheme[] = [];
       for (const candidate of raw.themes) {
         try {
@@ -292,8 +290,6 @@ export class ThemeRepository {
       this.compiled.delete(existing.id);
       return cloneThemeData(replaced);
     }
-    if (this.state.themes.length >= MAX_THEMES)
-      throw new Error('Remove a saved theme before adding another');
     const id = this.allocateId();
     if (!/^[a-zA-Z0-9-]{1,100}$/.test(id) || this.state.themes.some((theme) => theme.id === id))
       throw new Error('Could not allocate a unique theme installation');

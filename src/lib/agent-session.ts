@@ -571,7 +571,10 @@ export async function createAgentSession(
   if (params.agentId) body.agent_id = params.agentId;
   const data = await writeJson(path, 'Failed to create agent session', body);
   const info = parseAgentSessionInfo(data);
-  if (!info) throw new Error('Failed to create agent session: unreadable response');
+  if (!info)
+    throw Object.assign(new Error('Failed to create agent session: unreadable response'), {
+      code: 'EACKUNCONFIRMED',
+    });
   return info;
 }
 
@@ -986,16 +989,13 @@ export async function clearAgentRevert(asid: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Asks for a compaction. It is admitted to the inbox and runs at the next step
- * boundary; progress arrives as `agent.compaction.changed`, and the finished
- * boundary lands in the timeline as a `compaction` row.
+ * Requests compaction using the provider default unless delivery is explicit.
+ * Providers may require an idle owned session rather than support inbox admission.
+ * Progress arrives through the normalized compaction events.
  *
  * This is the real route, not `/compact` typed into the composer.
  */
-export async function compactAgentSession(
-  asid: string,
-  delivery: AgentDelivery = 'steer'
-): Promise<void> {
+export async function compactAgentSession(asid: string, delivery?: AgentDelivery): Promise<void> {
   if (usesOfflineDemo()) {
     if (isDemoCompactionLogAsid(asid)) {
       advanceDemoCompactionLogs(asid);
@@ -1005,7 +1005,11 @@ export async function compactAgentSession(
     advanceDemoCompaction();
     return;
   }
-  await writeJson(sessionRoute(asid, '/compact'), 'Failed to compact session', { delivery });
+  await writeJson(
+    sessionRoute(asid, '/compact'),
+    'Failed to compact session',
+    delivery ? { delivery } : {}
+  );
 }
 
 /** Everything still in the model's context, i.e. after the last compaction. */

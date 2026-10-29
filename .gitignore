@@ -150,3 +150,6 @@ example
 # OTA update notes are passed to update:<channel> at publish time and live in
 # the release database; they are not repository documents.
 /release-notes/*.json
+
+# Local architecture investigation notes.
+/HOME_DATA_FLOW_ANALYSIS.md

@@ -77,9 +77,7 @@ This repository holds the app and nothing else. The store listing copy, the App 
 ## Sharp Edges
 
 Home's three layouts share state and transport ownership, but discovery refresh
-still has a presentation-owned entry point. See
-[Gateway and App Home data flow analysis](HOME_DATA_FLOW_ANALYSIS.md) for the data
-model, request inventory, lifecycle gaps and proposed measurement plan.
+still has a presentation-owned entry point.
 
 - Read the exact Expo SDK 58 versioned documentation before code changes.
 - A feature is not complete until the full offline end-to-end suite passes with one booted simulator or emulator and the app installed.

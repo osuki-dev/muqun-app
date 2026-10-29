@@ -1,20 +1,11 @@
-/**
- * More than this in one go is a mis-tap rather than an intent, and every pick
- * starts its own upload against a gateway that is usually on a home network.
- */
+import { planImageCompression } from './image-compression';
+
+/** The native picker's current selection window; not a message-total limit. */
 export const MAX_ATTACHMENTS_PER_PICK = 9;
 
 /**
- * The app's own ceiling, deliberately below the gateway's 25MB body limit.
- *
- * The encrypted transport seals an upload as one envelope -- multipart, then
- * base64, then ciphertext, then base64 again -- so the wire body is ~1.78x
- * the file, and the gateway's transport buffer (25MB + 128KB) turns that into
- * a hard cliff at about 14MB: measured, a 13MB file uploads and a 15MB file
- * dies as a bare `invalid_envelope`. 10MB keeps a wide margin under that
- * cliff, and keeps the phone's several in-memory copies of the file (raw,
- * base64, ciphertext, envelope JSON) inside what a mid-range device absorbs
- * without a hiccup.
+ * The fallback file cap when the Gateway does not advertise its own. Current
+ * Gateways budget the encrypted envelope separately from these plaintext bytes.
  */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
@@ -52,12 +43,28 @@ export function uploadLimitMb(bytes: number): number {
 }
 
 /**
- * Enough to keep a home network busy without a nine-photo pick opening nine
- * sockets against a gateway that is usually somebody's laptop.
+ * The Gateway admits one large request per device. Keep a multi-file pick
+ * queued locally instead of making its own uploads compete for that slot.
  */
-export const MAX_CONCURRENT_UPLOADS = 3;
+export const MAX_CONCURRENT_UPLOADS = 1;
 
 const TOO_LARGE_MESSAGE = 'File too large';
+
+/** The actual prepared bytes exceed the captured destination's file cap. */
+export class AttachmentTooLargeError extends Error {
+  constructor(readonly limitBytes: number) {
+    super(TOO_LARGE_MESSAGE);
+    this.name = 'AttachmentTooLargeError';
+  }
+}
+
+/** A local file could not be prepared or measured; expose no native path details. */
+export class AttachmentPreparationError extends Error {
+  constructor() {
+    super('Attachment preparation failed');
+    this.name = 'AttachmentPreparationError';
+  }
+}
 
 /** A file chosen on the device, before it has been sent anywhere. */
 export interface PickedFile {
@@ -230,7 +237,10 @@ export function stageFiles(
     ...queue,
     ...files.map((file) => {
       const limitBytes = maxUploadBytesFor(file.mime, limits);
-      const tooLarge = file.size !== undefined && file.size > limitBytes;
+      // Compressible originals are admitted to the serial preparation slot.
+      // The prepared file, including a codec fallback, is checked before upload.
+      const tooLarge =
+        file.size !== undefined && file.size > limitBytes && !planImageCompression(file);
       return {
         id: nextAttachmentId(),
         destination,
@@ -306,9 +316,10 @@ export function markUploaded(
 export function markFailed(
   queue: PendingAttachment[],
   id: string,
-  message: string
+  message: string,
+  failure: 'upload' | 'too-large' = 'upload'
 ): PendingAttachment[] {
-  return patch(queue, id, { status: 'error', failure: 'upload', error: message });
+  return patch(queue, id, { status: 'error', failure, error: message });
 }
 
 /**
@@ -320,7 +331,12 @@ export function markFailed(
 export function requeue(queue: PendingAttachment[], id: string): PendingAttachment[] {
   const entry = queue.find((item) => item.id === id);
   if (!entry || entry.status === 'uploading' || entry.status === 'done') return queue;
-  if (entry.size !== undefined && entry.size > attachmentLimitBytes(entry)) {
+  if (
+    entry.failure === 'too-large' ||
+    (entry.size !== undefined &&
+      entry.size > attachmentLimitBytes(entry) &&
+      !planImageCompression({ ...entry, uri: entry.localUri }))
+  ) {
     return patch(queue, id, { status: 'error', error: TOO_LARGE_MESSAGE, failure: 'too-large' });
   }
   return patch(queue, id, { status: 'pending', error: undefined, failure: undefined });

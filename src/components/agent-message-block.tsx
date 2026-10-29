@@ -25,6 +25,7 @@ import {
   SuggestedIcon,
   DeleteIcon,
   RestoreIcon,
+  QuickActionIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -80,6 +81,7 @@ import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
   messageImageResolver,
+  isHostPathSource,
   rewriteMessageImages,
   splitBlockImages,
   type MessageImageAsset,
@@ -679,7 +681,10 @@ const MessageTextPart = memo(function MessageTextPart({
       ).values(),
     ];
     const index = album.findIndex((entry) => entry.id === image.id);
-    setPreview({ images: index >= 0 ? album : [image], index: Math.max(0, index) });
+    setPreview({
+      images: index >= 0 ? album.map((entry) => (entry.id === image.id ? image : entry)) : [image],
+      index: Math.max(0, index),
+    });
   };
   const previewMessageImage = (uri: string, album?: readonly string[]) => {
     const asset = imageAssets?.find(
@@ -705,7 +710,9 @@ const MessageTextPart = memo(function MessageTextPart({
       rewriteMessageImages(
         role === 'assistant' ? normalizeAssistantMarkdown(written) : written,
         (src) =>
-          blockSources.has(src) && messageImageForSource(imageAssets, src) && !images.uris.has(src)
+          blockSources.has(src) &&
+          (messageImageForSource(imageAssets, src) || (audioSessionId && isHostPathSource(src))) &&
+          !images.uris.has(src)
             ? { kind: 'keep' }
             : messageImageResolver(images.uris, images.pending)(src),
         (alt) => {
@@ -713,7 +720,7 @@ const MessageTextPart = memo(function MessageTextPart({
           return `*${escapeMarkdownText(label)}*`;
         }
       ),
-    [written, role, images, t, blockSources, imageAssets]
+    [written, role, images, t, blockSources, imageAssets, audioSessionId]
   );
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
@@ -761,6 +768,14 @@ const MessageTextPart = memo(function MessageTextPart({
                   onPreview={(opened) => openGatewayPreview(opened, [metadata])}
                 />
               );
+            if (audioSessionId && isHostPathSource(image.uri))
+              return (
+                <InlineFileLink
+                  key={`${partKey}:${image.start}`}
+                  asid={audioSessionId}
+                  file={{ uri: image.uri, name: image.alt || t`Image` }}
+                />
+              );
             return (
               <TranscriptBlockImage
                 key={`${partKey}:${image.start}:${image.uri}`}
@@ -784,6 +799,7 @@ const MessageTextPart = memo(function MessageTextPart({
           }
           return (
             <ImageAlbum
+              asid={audioSessionId}
               key={`${partKey}:${shown[0]!.start}`}
               images={shown.map((image) => ({
                 uri: image.uri,
@@ -931,10 +947,12 @@ function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedB
 }
 
 function ImageAlbum({
+  asid,
   images,
   onPress,
   onGatewayPreview,
 }: {
+  asid?: string;
   images: {
     uri: string;
     alt: string;
@@ -963,6 +981,11 @@ function ImageAlbum({
                   images.flatMap((entry) => (entry.asset ? [entry.asset] : []))
                 )
               }
+            />
+          ) : asid && isHostPathSource(image.uri) ? (
+            <InlineFileLink
+              asid={asid}
+              file={{ uri: image.uri, name: image.alt || image.uri.split('/').pop() || image.uri }}
             />
           ) : (
             <TranscriptBlockImage
@@ -1288,6 +1311,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage,
   onEditQueued,
   onCancelQueued,
+  onSendQueued,
   onUndoToHere,
   actions = NO_TOOL_ACTIONS,
   readOnly = false,
@@ -1298,6 +1322,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage: (uri: string) => void;
   onEditQueued: (itemId: string, text: string) => void;
   onCancelQueued: (itemId: string) => void;
+  onSendQueued?: (itemId: string) => void;
   /**
    * Stage a rollback to this message: everything from here on would go.
    *
@@ -1451,6 +1476,16 @@ export const AgentUserMessage = memo(function AgentUserMessage({
               </View>
               {!readOnly ? (
                 <>
+                  {onSendQueued && queued.inbox?.delivery !== 'steer' ? (
+                    <PressableScale
+                      testID={`queued-send-${queued.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Send now`}
+                      onPress={() => onSendQueued(queued.id)}
+                      style={styles.queuedActionBtn}>
+                      <QuickActionIcon size={13} color={theme.colors.primary} />
+                    </PressableScale>
+                  ) : null}
                   {/* Editing returns the text to the draft; files cannot follow
                     it there, so a prompt that carries them is only cancelled. */}
                   {attachments.length === 0 ? (

@@ -5,6 +5,7 @@ import { videoFileMime } from './media-file';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -16,6 +17,8 @@ import {
   uploadLimitMb,
   type PendingAttachment,
   MAX_UPLOAD_BYTES,
+  AttachmentTooLargeError,
+  AttachmentPreparationError,
 } from './attachment-queue';
 import { planImageCompression } from './image-compression';
 import { describeGatewayFailure } from './network-error';
@@ -124,9 +127,10 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
   const plan = planImageCompression(file);
   if (!plan) return file;
 
-  await protectCacheDirectory('ImageManipulator');
-  const context = ImageManipulator.manipulate(file.uri);
+  let context: ReturnType<typeof ImageManipulator.manipulate> | undefined;
   try {
+    await protectCacheDirectory('ImageManipulator');
+    context = ImageManipulator.manipulate(file.uri);
     if (plan.resize) context.resize(plan.resize);
     const rendered = await context.renderAsync();
     try {
@@ -135,9 +139,7 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
         uri: saved.uri,
         name: plan.name,
         mime: plan.mime,
-        // The manipulator reports no byte count, and the only reader of `size`
-        // is the pre-upload limit check, which has already run against the
-        // original -- a smaller file cannot newly fail it.
+        // The prepared bytes are measured from disk before opening an upload.
         size: undefined,
         width: saved.width,
         height: saved.height,
@@ -152,8 +154,27 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
     console.warn('[attachments] compression failed, uploading the original', error);
     return file;
   } finally {
-    context.release();
+    context?.release();
   }
+}
+
+/** Check what will actually cross the wire, including a codec's original-file fallback. */
+export async function preparePickedAttachment(
+  file: PickedFile,
+  limitBytes: number
+): Promise<PickedFile> {
+  const prepared = await compressPickedImage(file);
+  let size: number;
+  try {
+    const actual = new File(prepared.uri);
+    if (!actual.exists) throw new AttachmentPreparationError();
+    size = actual.size;
+    if (!Number.isSafeInteger(size) || size < 0) throw new AttachmentPreparationError();
+  } catch {
+    throw new AttachmentPreparationError();
+  }
+  if (size > limitBytes) throw new AttachmentTooLargeError(limitBytes);
+  return { ...prepared, size };
 }
 
 /**
@@ -280,6 +301,9 @@ export function describePickerFailure(source: AttachmentSource, error: unknown):
  * about; everything else falls through to the shared network wording.
  */
 export function describeUploadFailure(error: unknown): string {
+  if (error instanceof AttachmentPreparationError) return i18n._(msg`Could not upload the file.`);
+  if (error instanceof AttachmentTooLargeError)
+    return i18n._(msg`File too large (${uploadLimitMb(error.limitBytes)} MB max)`);
   const raw = error instanceof Error ? error.message : String(error ?? '');
   const status = Number(raw.match(/^HTTP (\d+):/)?.[1] ?? 0);
   if (status === 413) {

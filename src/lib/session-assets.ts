@@ -93,6 +93,45 @@ export function sessionAssetsFromResponse(value: unknown): SessionAsset[] {
   return assets.sort((left, right) => right.modified_unix_ms - left.modified_unix_ms);
 }
 
+export interface SessionAssetPage {
+  assets: SessionAsset[];
+  nextCursor: string | null;
+  limited: boolean;
+}
+
+/** Never manufacture an older-page cursor from a capped legacy listing. */
+export function sessionAssetPageFromResponse(
+  value: unknown,
+  paginated: boolean,
+  limit: number
+): SessionAssetPage {
+  const assets = sessionAssetsFromResponse(value);
+  if (!paginated) return { assets, nextCursor: null, limited: assets.length >= limit };
+  const envelope = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const data =
+    envelope.data && typeof envelope.data === 'object'
+      ? (envelope.data as Record<string, unknown>)
+      : envelope;
+  const cursor = data.next_cursor;
+  if (
+    (cursor !== null && (typeof cursor !== 'string' || !cursor.length)) ||
+    typeof data.truncated !== 'boolean' ||
+    data.truncated !== (cursor !== null)
+  ) {
+    throw new Error('Invalid file pagination response');
+  }
+  return { assets, nextCursor: cursor as string | null, limited: data.inventory_limited === true };
+}
+
+export function mergeSessionAssetPage(
+  previous: SessionAsset[],
+  next: SessionAsset[]
+): SessionAsset[] {
+  const byId = new Map(previous.map((asset) => [asset.id, asset]));
+  for (const asset of next) byId.set(asset.id, asset);
+  return [...byId.values()];
+}
+
 function assetListFromResponse(value: unknown, depth = 0): unknown[] {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== 'object' || depth > 3) return [];

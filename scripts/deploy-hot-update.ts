@@ -51,6 +51,12 @@ if (process.env.EXPO_PUBLIC_HOT_UPDATER_ENABLED !== '1')
 if (process.env.HOT_UPDATER_CHANNEL !== channel)
   throw new Error('Build and deployment channels must match');
 readHotUpdaterAppConfig(process.env, process.cwd());
+// Reject missing or stale source catalogs, then bundle their compiled translations.
+for (const script of ['i18n:check', 'i18n:compile']) {
+  const result = spawnSync('bun', ['run', script], { stdio: 'inherit' });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`OTA localization preflight failed: ${script}`);
+}
 const deployment = nativeUpdateDeployment(process.cwd(), channel ?? '', selectedPlatform);
 for (const target of deployment.targets) {
   console.log(

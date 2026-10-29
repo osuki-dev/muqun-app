@@ -1182,6 +1182,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/file-computer-picker.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-font-sheet.tsx
@@ -2060,6 +2061,10 @@ msgstr "Không thể kiểm tra dung lượng tải xuống. Hãy thử lại"
 msgid "Could not compact"
 msgstr "Không thể nén"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not confirm session creation. Check this computer's conversations before sending again. Your draft is kept."
+msgstr "Không thể xác nhận việc tạo phiên. Hãy kiểm tra các cuộc trò chuyện trên máy tính này trước khi gửi lại. Bản nháp của bạn vẫn được giữ"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not confirm submission"
 msgstr "Không thể xác nhận việc gửi"
@@ -2374,6 +2379,10 @@ msgstr "Không thể lưu lệnh nhanh"
 msgid "Could not save theme"
 msgstr "Không thể lưu giao diện"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
+msgstr "Không thể lưu bản nháp sắp gửi này. Chưa gửi nội dung nào. Bản nháp của bạn vẫn được giữ"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Could not save this setting. Try again."
 msgstr "Không thể lưu cài đặt này. Hãy thử lại"
@@ -2386,7 +2395,10 @@ msgstr "Không thể lưu cài đặt giọng nói. Vui lòng thử lại"
 msgid "Could not save. Check that your computers are online and their Gateways are up to date."
 msgstr "Không thể lưu. Hãy kiểm tra các máy tính đang trực tuyến và Gateway đã được cập nhật"
 
-#: src/components/home-composer-dock.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Could not search folders. Try again."
+msgstr "Không thể tìm kiếm thư mục. Hãy thử lại"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -2589,6 +2601,10 @@ msgstr "Đã xoá"
 msgid "Deleting session…"
 msgstr "Đang xóa phiên…"
 
+#: src/components/home-composer-dock.tsx
+msgid "Delivery is still unconfirmed. Check this computer's conversations before sending again."
+msgstr "Vẫn chưa xác nhận đã gửi. Hãy kiểm tra các cuộc trò chuyện trên máy tính này trước khi gửi lại"
+
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
 msgstr "Chế độ gửi: Xếp hàng. Chạm để chuyển sang Can thiệp (Steer)"
@@ -2602,6 +2618,10 @@ msgstr "Chế độ gửi: Can thiệp trực tiếp (Steer). Chạm để chuy�
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed"
 msgstr "Chưa xác nhận được việc gửi"
+
+#: src/components/task-row.tsx
+msgid "Delivery not confirmed. Show conversation"
+msgstr "Chưa xác nhận đã gửi. Xem cuộc trò chuyện"
 
 #: src/components/task-row.tsx
 msgid "Delivery not confirmed. Tap to check status"
@@ -2641,7 +2661,6 @@ msgstr "tách rời tại {head}"
 msgid "Detached at {head}"
 msgstr "Tách rời tại {head}"
 
-#: src/components/agent-account-limits-section.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Details"
@@ -2926,11 +2945,6 @@ msgstr "Mở rộng nhiệm vụ"
 msgid "Expand tool call"
 msgstr "Mở rộng lệnh gọi công cụ"
 
-#. placeholder {0}: new Date(credit.expires_at_ms).toLocaleString()
-#: src/components/agent-account-limits-section.tsx
-msgid "Expires at {0}"
-msgstr "Hết hạn lúc {0}"
-
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
@@ -2986,6 +3000,11 @@ msgstr "Agent nhanh chuyên khám phá mã nguồn"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "Tải một trang web"
+
+#. placeholder {0}: uploadLimitMb(error.limitBytes)
+#: src/lib/attachments.ts
+msgid "File too large ({0} MB max)"
+msgstr "Tệp quá lớn (tối đa {0} MB)"
 
 #: src/lib/attachments.ts
 msgid "File too large ({mb} MB max)"
@@ -3309,10 +3328,6 @@ msgstr "Ẩn danh sách máy tính"
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
 
-#: src/components/agent-composer.tsx
-msgid "Hides this notice"
-msgstr "Ẩn thông báo này"
-
 #: src/app/settings-voice.tsx
 msgid "Hold Send to speak. Stop to add the text to your draft, then edit and send."
 msgstr "Nhấn giữ nút Gửi để nói. Dừng ghi âm để thêm văn bản vào bản nháp, sau đó chỉnh sửa và gửi"
@@ -3444,10 +3459,6 @@ msgstr "Đã nhập"
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "Đang chạy"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Included usage"
-msgstr "Mức sử dụng bao gồm trong gói"
 
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
@@ -3630,10 +3641,6 @@ msgstr "Ngôn ngữ, {languageName}"
 #: src/components/settings-terminal.tsx
 msgid "Large"
 msgstr "Lớn"
-
-#: src/components/agent-account-limits-section.tsx
-msgid "Last checked"
-msgstr "Kiểm tra gần nhất"
 
 #: src/components/home-attention.tsx
 msgid "Last checked {when}"
@@ -4308,6 +4315,10 @@ msgstr "Không có đầu ra cũ hơn được ghi lại"
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
 
+#: src/components/file-computer-picker.tsx
+msgid "No other paired computer is available."
+msgstr "Không có máy tính đã ghép đôi nào khác khả dụng"
+
 #: src/components/task-result-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
 msgid "No output"
@@ -4631,6 +4642,10 @@ msgstr "Trực tuyến"
 msgid "ONLINE"
 msgstr "TRỰC TUYẾN"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Only recent sessions are available with this connection. Search covers the loaded list."
+msgstr "Kết nối này chỉ cung cấp các phiên gần đây. Tìm kiếm chỉ áp dụng cho danh sách đã tải"
+
 #: src/lib/attachments.ts
 msgid "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} left out."
 msgstr "Chỉ {MAX_ATTACHMENTS_PER_PICK} tệp đầu được thêm; {dropped} tệp bị bỏ lại"
@@ -4699,6 +4714,10 @@ msgstr "Mở tác vụ nền"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Mở danh sách tệp"
+
+#: src/components/file-computer-picker.tsx
+msgid "Open from computer"
+msgstr "Mở từ máy tính"
 
 #: src/components/git-diff-button.tsx
 msgid "Open Git"
@@ -5640,10 +5659,6 @@ msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
 #: src/components/agent-account-limits-section.tsx
-msgid "Reset credit"
-msgstr "Tín dụng đặt lại"
-
-#: src/components/agent-account-limits-section.tsx
 msgid "Reset time not reported"
 msgstr "Chưa báo cáo thời gian đặt lại"
 
@@ -5937,6 +5952,10 @@ msgstr "Đã lưu"
 msgid "Saved commands"
 msgstr "Lệnh đã lưu"
 
+#: src/components/home-composer-dock.tsx
+msgid "Saved drafts are full. Resolve or dismiss earlier submissions before sending again. Your draft is kept."
+msgstr "Bộ nhớ bản nháp đã đầy. Hãy xử lý hoặc loại bỏ các lần gửi trước rồi gửi lại. Bản nháp của bạn vẫn được giữ"
+
 #: src/components/agent-runtime-notice.tsx
 msgid "Saved history · Live status unavailable"
 msgstr "Lịch sử đã lưu · Không có trạng thái trực tiếp"
@@ -6011,6 +6030,14 @@ msgstr "Tìm kiếm theo tên hoặc thẻ"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "Tìm tệp"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders or type a path"
+msgstr "Tìm thư mục hoặc nhập đường dẫn"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Search folders, or type a path"
+msgstr "Tìm thư mục hoặc nhập đường dẫn"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models"
@@ -6097,6 +6124,7 @@ msgid "Send message"
 msgstr "Gửi tin nhắn"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
 msgid "Send now"
 msgstr "Gửi ngay"
 
@@ -6226,10 +6254,6 @@ msgctxt "agent slash command"
 msgid "Share this session's transcript"
 msgstr "Chia sẻ bản ghi của phiên này"
 
-#: src/components/agent-account-limits-section.tsx
-msgid "Shared across sessions. Refresh to update."
-msgstr "Dùng chung giữa các phiên. Làm mới để cập nhật"
-
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Shares Home summaries (tasks, sessions and terminals) with this computer and backups. Conversations stay directly connected."
 msgstr "Chia sẻ tổng quan Trang chủ (tác vụ, phiên và terminal) với máy tính này và các máy dự phòng. Hội thoại vẫn kết nối trực tiếp"
@@ -6284,6 +6308,7 @@ msgstr "Hiện chi tiết camera"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/home-reply-drawer.tsx
+#: src/components/task-row.tsx
 msgid "Show conversation"
 msgstr "Hiện cuộc trò chuyện"
 
@@ -6447,6 +6472,10 @@ msgstr "Không thể xóa một số tệp · {clearable}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
+
+#: src/components/session-artifacts.tsx
+msgid "Some folders could not be fully indexed. Open a file directly from its path if it is missing here."
+msgstr "Một số thư mục chưa được lập chỉ mục đầy đủ. Nếu không thấy tệp ở đây, hãy mở trực tiếp bằng đường dẫn của tệp"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
@@ -6726,10 +6755,6 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Gửi"
-
-#: src/components/agent-composer.tsx
-msgid "Submitted"
-msgstr "Đã gửi"
 
 #: src/components/agent-composer.tsx
 msgid "Submitting follow-up…"
@@ -7112,6 +7137,10 @@ msgstr "Agent mặc định. Thực thi các công cụ"
 msgid "The destination could not be opened."
 msgstr "Không thể mở đích đến này"
 
+#: src/components/session-artifacts.tsx
+msgid "The file list changed. Refresh to continue browsing."
+msgstr "Danh sách tệp đã thay đổi. Hãy làm mới để tiếp tục duyệt"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Không tìm thấy tệp phông chữ. Hãy thêm lại"
@@ -7426,6 +7455,10 @@ msgstr "Gateway này không trả lời ở địa chỉ đó"
 #: src/components/pane-history-sheet.tsx
 msgid "This Gateway no longer offers saved segments. The pages already read are kept here."
 msgstr "Gateway này không còn cung cấp các đoạn đã lưu. Những trang đã đọc vẫn được giữ lại ở đây"
+
+#: src/components/session-artifacts.tsx
+msgid "This Gateway only lists recent files. Search covers this list; update the Gateway to browse older files."
+msgstr "Gateway này chỉ liệt kê các tệp gần đây. Tìm kiếm chỉ áp dụng cho danh sách này; hãy cập nhật Gateway để duyệt các tệp cũ hơn"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -7914,6 +7947,10 @@ msgstr "Cập nhật Gateway để nghe đầu ra âm thanh"
 #: src/components/video-asset-preview.tsx
 msgid "Update the Gateway to preview video output."
 msgstr "Cập nhật Gateway để xem trước video"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Update the Gateway to search folders. You can still filter projects or enter a full path."
+msgstr "Cập nhật Gateway để tìm kiếm thư mục. Bạn vẫn có thể lọc dự án hoặc nhập đường dẫn đầy đủ"
 
 #: src/components/server-tasks-sheet.tsx
 msgid "Updates when you reopen"

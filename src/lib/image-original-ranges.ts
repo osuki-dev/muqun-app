@@ -28,21 +28,41 @@ export async function fetchBoundedImageResponse(
   fetcher: (url: string, init: RequestInit) => Promise<Response>,
   url: string,
   init: RequestInit,
-  timeoutMs: number
+  timeoutMs: number,
+  idleTimeoutMs = 60_000
 ): Promise<Response> {
   const budget = startRequestBudget(timeoutMs, 'Timed out reading the image.', init.signal);
   const transport = new AbortController();
-  const abort = () => transport.abort();
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  let rejectIdle: (error: Error) => void = () => {};
+  const idleDeadline = new Promise<never>((_, reject) => {
+    rejectIdle = reject;
+  });
+  idleDeadline.catch(() => {});
+  const resetIdle = () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      transport.abort();
+      rejectIdle(new Error('Timed out waiting for image data.'));
+    }, idleTimeoutMs);
+  };
+  const abort = () => {
+    transport.abort();
+    if (init.signal?.aborted) rejectIdle(new Error('Image download cancelled'));
+  };
   budget.signal.addEventListener('abort', abort, { once: true });
   if (budget.signal.aborted) abort();
   const release = () => {
+    clearTimeout(idleTimer);
     budget.disarm();
     budget.signal.removeEventListener('abort', abort);
   };
+  resetIdle();
   try {
     const response = await Promise.race([
       fetcher(url, { ...init, signal: transport.signal, redirect: 'error' }),
       budget.deadline,
+      idleDeadline,
     ]);
     if (answerHasNoBody(init.method, response.status) || !response.body) {
       release();
@@ -53,11 +73,14 @@ export async function fetchBoundedImageResponse(
       {
         async pull(controller) {
           try {
-            const next = await Promise.race([reader.read(), budget.deadline]);
+            const next = await Promise.race([reader.read(), budget.deadline, idleDeadline]);
             if (next.done) {
               release();
               controller.close();
-            } else controller.enqueue(next.value);
+            } else {
+              if (next.value.byteLength > 0) resetIdle();
+              controller.enqueue(next.value);
+            }
           } catch (error) {
             transport.abort();
             release();

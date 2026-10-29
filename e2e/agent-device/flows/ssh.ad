@@ -108,3 +108,7 @@ gesture drag "${TARGET}" "label=\"Demo shell\"" 0 300 0
 
 # section notification-dismissed
 is hidden "${TARGET}"
+
+# section observed-back
+# The iOS native header exposes this real control as AX Other, not Button.
+press "label=\"Go back\""

@@ -120,7 +120,10 @@ export function pendingShown(_item: PendingDispatch, _nowMs: number): boolean {
 /** A plain Sent row the gateway has not answered within the TTL: delivery unconfirmed. */
 export function pendingUnconfirmed(item: PendingDispatch, nowMs: number): boolean {
   return (
-    item.failed !== true && item.asid === undefined && nowMs - item.atMs >= PENDING_DISPATCH_TTL_MS
+    item.unconfirmed === true ||
+    (item.failed !== true &&
+      item.asid === undefined &&
+      nowMs - item.atMs >= PENDING_DISPATCH_TTL_MS)
   );
 }
 
@@ -129,7 +132,7 @@ export function pendingUnconfirmed(item: PendingDispatch, nowMs: number): boolea
  * on it, or it was sent recently and nothing said otherwise.
  */
 export function pendingWorking(item: PendingDispatch, nowMs: number): boolean {
-  if (item.failed === true) return false;
+  if (item.failed === true || item.unconfirmed === true) return false;
   if (item.reply) return item.reply.state === 'working';
   return nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
 }
@@ -170,6 +173,8 @@ export type PendingDispatch = {
    * or it expires, and it is not work the computer is doing.
    */
   failed?: true;
+  /** The request may have landed; only an authoritative read can resolve it. */
+  unconfirmed?: true;
   reason?: string;
   /** What a tap on the failed row sends again. */
   resend?: PendingResend;

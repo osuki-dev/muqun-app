@@ -4,6 +4,7 @@ import type { HomeContinueEntry } from '@/lib/home-continue';
 import {
   applyHomeThreadEvent,
   homeThreadTitle,
+  homeThreadLiveFromSnapshot,
   homeThreadKey,
   EMPTY_HOME_THREAD_LIVE,
   homeThreadEnded,
@@ -42,6 +43,54 @@ const PANE: HomeThreadPane = {
   setAtMs: 100,
 };
 const NO_FEATURES = { inbox: false, steering: false };
+
+test('reply configuration follows snapshots and session updates, including cleared model values', () => {
+  const info = {
+    asid: SESSION.asid,
+    backend_session_id: 'backend-1',
+    agent_id: 'codex',
+    title: 'Review',
+    status: 'idle' as const,
+    directory: '/workspace/project',
+    mode: 'plan',
+    model: { model_id: 'session-model', provider_id: 'provider' },
+    updated_ms: 1,
+  };
+  const live = homeThreadLiveFromSnapshot({
+    info,
+    timeline: [],
+    permissions: [],
+    forms: [],
+    inbox: [],
+    seq: 1,
+  });
+  expect(live.configuration).toEqual({
+    asid: SESSION.asid,
+    agent_id: 'codex',
+    directory: '/workspace/project',
+    mode: 'plan',
+    model: info.model,
+  });
+  const updated = applyHomeThreadEvent(live, {
+    type: 'agent.session.updated',
+    asid: SESSION.asid,
+    seq: 2,
+    info: { ...info, model: null, mode: undefined, directory: '/workspace/other', updated_ms: 2 },
+  });
+  expect(updated.configuration?.model).toBeNull();
+  expect(updated.configuration?.mode).toBeUndefined();
+  expect(updated.configuration?.directory).toBe('/workspace/other');
+  expect(
+    homeThreadLiveFromSnapshot({
+      info: null,
+      timeline: [],
+      permissions: [],
+      forms: [],
+      inbox: [],
+      seq: 3,
+    }).configuration
+  ).toBeUndefined();
+});
 
 test('reply titles follow newer metadata without changing the recipient or crossing owners', () => {
   const row = {
