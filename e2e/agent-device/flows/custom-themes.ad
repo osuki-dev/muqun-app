@@ -177,8 +177,8 @@ wait absent "id=custom-theme-editor" 10000
 back --system
 
 # section artwork-cancel-ios
-wait "text=\"Cancel\"" 10000
-press "text=\"Cancel\""
+wait "role=\"button\" label=\"Cancel\"" 10000
+press "role=\"button\" label=\"Cancel\""
 
 # section artwork-canceled
 wait "id=custom-theme-editor" 10000
