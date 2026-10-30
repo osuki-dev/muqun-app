@@ -1443,6 +1443,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         delayLongPress={260}
         style={[
           styles.messageBlock,
+          styles.contentPlate,
           plate,
           styles.userBlock,
           { borderLeftColor: colors.accent },
@@ -1668,7 +1669,9 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={runHasOnlyAudio ? styles.standaloneRow : [styles.messageBlock, plate]}>
+        style={
+          runHasOnlyAudio ? styles.standaloneRow : [styles.messageBlock, styles.contentPlate, plate]
+        }>
         {run}
       </View>
     );
@@ -1788,7 +1791,7 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
 export const TRANSCRIPT_ROW_GAP = TRANSCRIPT_GRID.rowGap;
 
 const styles = StyleSheet.create({
-  /** The one geometry both sides share: full width, padded, on a plate. */
+  /** Base plate spacing; ordinary message prose overrides the full width below. */
   messageBlock: {
     alignSelf: 'stretch',
     width: '100%',
@@ -1796,6 +1799,13 @@ const styles = StyleSheet.create({
     paddingVertical: TRANSCRIPT_GRID.plateInsetY,
     paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: 6,
+  },
+  // Native Markdown measures its intrinsic width under this maximum. Keep the
+  // full-width row styles for tools, thoughts and compaction disclosures.
+  contentPlate: {
+    alignSelf: 'flex-start',
+    width: 'auto',
+    maxWidth: '100%',
   },
   generationFooter: {
     paddingHorizontal: TRANSCRIPT_GRID.inset,
