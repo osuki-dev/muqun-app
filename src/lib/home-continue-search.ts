@@ -75,8 +75,9 @@ export function homeProviderTextColor(
 ): string {
   const brand = agentMarkKind(kind.trim().toLowerCase().split(/\s+/)[0]);
   if (!brand) return colors.textMuted;
-  // Codex uses its monochrome official mark and the theme's normal text ink.
-  if (brand === 'codex') return colors.text;
+  // Monochrome official marks use the theme's normal text ink.
+  if (brand === 'codex' || brand === 'pi' || brand === 'fx' || brand === 'qoder')
+    return colors.text;
   const authored = { opencode: colors.primary, deepseek: colors.info, t3: colors.success };
   const contrastSurface = providerContrastSurface(surface, colors.surface);
   // Authored theme inks are opaque #RRGGBB (themeColorsSchema). A runtime token

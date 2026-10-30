@@ -11,6 +11,11 @@ a Muqun account or hosted relay.
 
 Download the app from [muqun.dev](https://muqun.dev).
 
+<p align="center">
+  <a href="https://apps.apple.com/app/muqun/id6793419283"><img src="assets/readme/badge-app-store.svg" alt="Download Muqun on the App Store" height="48"></a>
+  <a href="https://play.google.com/store/apps/details?id=dev.osuki.muqun"><img src="assets/readme/badge-google-play.png" alt="Get Muqun on Google Play" height="48"></a>
+</p>
+
 ## License
 
 Apache License 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

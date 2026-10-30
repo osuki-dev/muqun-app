@@ -43,6 +43,13 @@ See [AUDIT.md](./AUDIT.md) for the visual review and its limits.
   See [LICENSE-t3](./LICENSE-t3).
 - `brand-deepseek.svg`: Muqun's existing two-wave stand-in artwork, not the
   official DeepSeek whale mark.
+- `brand-pi.svg`: Pi coding agent mark from Simple Icons, CC0-1.0, sourced
+  from `pi.dev/favicon.svg`; not the unrelated Pi.ai service.
+- `brand-fx.svg`: official `fx.sh` inline `logo-fx` glyph, without hover effects.
+- `brand-qoder.svg`: official `qoder.com/favIcon.svg` mark, without its background
+  plate and with a cropped square viewBox. The source paths are retained.
+  Sources and artwork-license limits for these marks are recorded in
+  [the agent artwork notes](../agents/README.md).
 - `working-spinner.svg`: Muqun's existing working-state arc.
 
 ## Runtime and OTA

@@ -3,6 +3,9 @@ import { AgentIcon } from '@/icons';
 import { CodexIcon } from '@/components/codex-icon';
 import { DeepSeekIcon } from '@/components/deepseek-icon';
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { PiIcon } from '@/components/pi-icon';
+import { FxIcon } from '@/components/fx-icon';
+import { QoderIcon } from '@/components/qoder-icon';
 import { T3Icon } from '@/components/t3-icon';
 import { agentMarkKind } from '@/lib/agent-mark-kind';
 
@@ -22,6 +25,12 @@ export function AgentMark({ kind, size, color }: { kind: string; size: number; c
       return <DeepSeekIcon size={size} color={color} />;
     case 't3':
       return <T3Icon size={size} color={color} />;
+    case 'pi':
+      return <PiIcon size={size} color={color} />;
+    case 'fx':
+      return <FxIcon size={size} color={color} />;
+    case 'qoder':
+      return <QoderIcon size={size} color={color} />;
     default:
       return <AgentIcon size={size} color={color} />;
   }
