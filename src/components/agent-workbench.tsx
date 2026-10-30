@@ -1318,9 +1318,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * worktree is remembered where it now lives rather than where it used to.
    */
   useEffect(() => {
-    if (!activeAsid) return;
+    // A workspace switch renders its destination before the lookup settles;
+    // the source session must not overwrite that destination's remembered pick.
+    if (
+      !activeAsid ||
+      sessionInfo?.asid !== activeAsid ||
+      !sameDirectory(sessionInfo.directory, activeDirectory)
+    )
+      return;
     rememberOpenedAgentSession(sessionId, activeDirectory, activeAsid);
-  }, [sessionId, activeDirectory, activeAsid]);
+  }, [sessionId, activeDirectory, activeAsid, sessionInfo?.asid, sessionInfo?.directory]);
 
   /**
    * Whether the badge reads may run: context, diff, shells, worktrees.
@@ -3971,6 +3978,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // answers with names the folder, and a refusal puts the old one back.
       const typedHome = isHomeRelativePath(directory);
       const previousDirectory = activeDirectoryRef.current;
+      const remembered = loadRememberedAgentSession(sessionId, directory);
       activeDirectoryRef.current = directory;
       setActiveDirectory(directory);
       // Home's explicit new-session intent has no backend session yet. Keep
@@ -3986,9 +3994,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // workspace gets a new session made for it.
           const existing = await listAgentSessions(sessionId, { roots: true, directory });
           if (!ownsSelection()) return;
-          const opening = existing
-            ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
-            : null;
+          const opening = existing ? pickSessionToOpen(existing, remembered) : null;
           let target = opening;
           if (!target) {
             if (!ownsSelection()) return;
@@ -4010,7 +4016,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setPermissions([]);
           setForms([]);
           syncRef.current = CATCH_UP_START;
-          refreshSessions();
         },
         (err) => {
           console.warn('Failed to switch workspace session:', err);
@@ -4034,17 +4039,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
       );
     },
-    [
-      setTimeline,
-      newSessionParams,
-      ownsWorkbench,
-      refreshSessions,
-      initialIntent,
-      serverId,
-      sessionId,
-      showToast,
-      t,
-    ]
+    [setTimeline, newSessionParams, ownsWorkbench, initialIntent, serverId, sessionId, showToast, t]
   );
 
   /**
