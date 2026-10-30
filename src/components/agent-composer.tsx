@@ -859,7 +859,10 @@ export const AgentComposer = memo(function AgentComposer({
   // A provider may report session spend without reporting context occupancy.
   const contextPill = useMemo(() => {
     const usage = agentUsageSummary(contextUsage, tokens, contextLimit);
-    if (!usage) return null;
+    if (!usage)
+      return activeAsid && onPressTokens
+        ? { label: t`Context`, ratio: null, source: 'unknown' as const }
+        : null;
     const { total, ratio, source } = usage;
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
@@ -872,7 +875,7 @@ export const AgentComposer = memo(function AgentComposer({
       ratio,
       source,
     };
-  }, [contextUsage, tokens, contextLimit, cost, t]);
+  }, [contextUsage, tokens, contextLimit, cost, activeAsid, onPressTokens, t]);
 
   const modelDisplayName = useMemo(
     () => modelName || formatModelName(selectedModel, t`Model`),
@@ -2354,11 +2357,13 @@ export const AgentComposer = memo(function AgentComposer({
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={
-                          contextPill.source === 'session'
-                            ? `${contextPill.label}. ${t`Context`}: ${t`Not available`}`
-                            : contextPill.ratio === null
-                              ? t`Tokens usage and cost`
-                              : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                          contextPill.source === 'unknown'
+                            ? t`Context`
+                            : contextPill.source === 'session'
+                              ? `${contextPill.label}. ${t`Context`}: ${t`Not available`}`
+                              : contextPill.ratio === null
+                                ? t`Tokens usage and cost`
+                                : t`Context ${Math.round(contextPill.ratio * 100)}% full`
                         }
                         style={[
                           styles.actionBtnWithLabel,
