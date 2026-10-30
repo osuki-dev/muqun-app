@@ -1996,7 +1996,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * already at the bottom.
    */
   const loadSnapshot = useCallback(
-    async (mode: 'enter' | 'silent' | 'refresh' = 'enter') => {
+    async (mode: 'enter' | 'silent' | 'refresh' = 'enter', current?: () => boolean) => {
       const asid = activeAsid;
       if (!asid) {
         if (initialCheckDoneRef.current) {
@@ -2006,6 +2006,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
       const ownerGeneration = ownerGenerationRef.current;
       const ownsSnapshot = () =>
+        current?.() !== false &&
         mountedRef.current &&
         ownerGenerationRef.current === ownerGeneration &&
         activeAsidRef.current === asid &&
@@ -2769,9 +2770,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     asid: activeAsid,
     foreground: appActive && globalOwnerEpoch > 0,
     ownsForeground: isGlobalOwner,
-    onPrepared: () => {
+    onPrepared: (current) => {
       setCatalogRevision((revision) => revision + 1);
-      void loadSnapshot('silent').catch(() => {});
+      return loadSnapshot('silent', current);
     },
   });
   useEffect(() => {

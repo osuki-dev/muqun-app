@@ -1,6 +1,12 @@
 import { expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
-import { declaration, transpile } from '../../test-support/production-source';
+import {
+  declaration,
+  productionSource,
+  transpile,
+  walk,
+} from '../../test-support/production-source';
+import { recoverWith, settleAfter } from '../compiler-safe-control-flow';
 import { SessionPreparationFlights } from '../foreground-session-activation';
 
 function harness(data: unknown = { data: { prepared: true } }, status = 200) {
@@ -61,4 +67,58 @@ test('legacy capability absence sends nothing; refusal and malformed acknowledgm
   await expect(
     malformed.prepare({ ...options, capabilities: ['agent_session_resume_v1'] })
   ).rejects.toThrow('unreadable response');
+});
+
+test('the actual post-activation snapshot callback fences late pairing and restart responses', async () => {
+  const source = productionSource('src/components/agent-workbench.tsx');
+  let callback = '';
+  walk(source.program, (node) => {
+    if (
+      node.type === 'VariableDeclarator' &&
+      node.id.type === 'Identifier' &&
+      node.id.name === 'loadSnapshot' &&
+      node.init?.type === 'CallExpression'
+    ) {
+      const argument = node.init.arguments[0];
+      if (argument?.type === 'ArrowFunctionExpression') callback = source.code(argument);
+    }
+  });
+  if (!callback) throw new Error('Missing snapshot reader');
+  for (const intent of ['stale-before-start', 'stale-after-read', 'ordinary-read']) {
+    let current = intent !== 'stale-before-start';
+    let reads = 0;
+    let snapshotTouches = 0;
+    const mounted = { current: true };
+    const reply = Promise.withResolvers<unknown>();
+    const load = runInNewContext(transpile(callback), {
+      activeAsid: 'session',
+      activeAsidRef: { current: 'session' },
+      mountedRef: mounted,
+      ownerGenerationRef: { current: 1 },
+      serverId: 'computer',
+      sessionId: 'route',
+      historyCursorRef: { current: undefined },
+      useGatewayConnectionStore: { getState: () => ({ record: { serverId: 'computer' } }) },
+      useServerCapabilities: { getState: () => ({ byServer: {} }) },
+      useHomeAttention: { getState: () => ({ reserve: () => 1 }) },
+      recoverWith,
+      settleAfter,
+      getAgentSessionSnapshot: () => {
+        reads++;
+        return reply.promise;
+      },
+    }) as (mode: 'silent', guard?: () => boolean) => Promise<void>;
+    const pending = load('silent', intent === 'ordinary-read' ? undefined : () => current);
+    if (intent === 'ordinary-read') mounted.current = false;
+    else current = false;
+    reply.resolve({
+      get history_cursor() {
+        snapshotTouches++;
+        return undefined;
+      },
+    });
+    await pending;
+    expect(reads).toBe(intent === 'stale-before-start' ? 0 : 1);
+    expect(snapshotTouches).toBe(0);
+  }
 });
