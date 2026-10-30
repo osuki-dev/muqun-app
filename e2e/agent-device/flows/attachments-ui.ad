@@ -103,7 +103,12 @@ wait absent "id=image-preview-close" 10000
 back --system
 
 open "muqun://agent-subagent-detail?asid=demo-image-gallery-1&sessionId=demo"
+# QA gallery 1 also belongs to the previous dataset. Wait for its album to
+# leave before treating that shared label as the single-image route's readiness.
+wait absent "id=message-image-album-2-columns" 10000
+wait absent "id=message-image-album-3-columns" 10000
 wait "label=\"QA gallery 1\"" 10000
+is hidden "label=\"QA gallery 2\""
 is hidden "id=message-image-album-2-columns"
 is hidden "id=message-image-album-3-columns"
 screenshot "shots/message-gallery-single.png"
