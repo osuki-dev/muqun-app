@@ -85,9 +85,11 @@ function harness() {
     activeAsid: 'source',
     activeDirectory: '/a',
     sessionInfo: session('source', '/a'),
+    sessions: [session('source', '/a')],
     activeAsidRef,
     activeDirectoryRef,
     workspaceSelectionRef: { current: 0 },
+    freshSessionRef: { current: undefined as string | undefined },
     ownerGenerationRef: { current: 1 },
     initialIntent: undefined,
     syncRef: { current: {} },
@@ -117,6 +119,11 @@ function harness() {
     },
     setSessionInfo: (info: AgentSessionInfo) => {
       context.sessionInfo = info;
+    },
+    setSessions: (
+      update: AgentSessionInfo[] | ((previous: AgentSessionInfo[]) => AgentSessionInfo[])
+    ) => {
+      context.sessions = typeof update === 'function' ? update(context.sessions) : update;
     },
     newSessionParams: (directory: string) => ({ directory }),
     listAgentSessions: (_route: string, query: { directory: string }) => {
@@ -189,6 +196,8 @@ test('out-of-order workspace lists cannot create or select an abandoned destinat
   await current;
   h.remember();
   expect(h.context.activeAsidRef.current).toBe('remembered-c');
+  expect(h.context.sessions.some((item) => item.asid === 'created-b')).toBe(false);
+  expect(h.context.freshSessionRef.current).toBeUndefined();
   expect(h.memory.get('/c')).toBe('remembered-c');
 });
 
@@ -205,6 +214,8 @@ test('an accepted creation from an older selection cannot replace the newer work
   await older;
   h.remember();
   expect(h.context.activeAsidRef.current).toBe('remembered-c');
+  expect(h.context.sessions.some((item) => item.asid === 'created-b')).toBe(false);
+  expect(h.context.freshSessionRef.current).toBeUndefined();
   expect(h.memory.get('/b')).toBe('remembered-b');
   expect(h.memory.get('/c')).toBe('remembered-c');
 });
@@ -222,3 +233,44 @@ test('a missing remembered session still selects newest activity across agents',
   expect(h.memory.get('/b')).toBe('newest-pi');
   expect(h.creates).toHaveLength(0);
 });
+
+test('a workspace list that settles empty before creation cannot hide the accepted new session', async () => {
+  const h = harness();
+  const switching = h.select('/b');
+  // The directory effect's scoped list finishes before the handler's create.
+  h.context.setSessions([]);
+  h.lists[0].reply.resolve([]);
+  await h.creationStarted;
+  const created = session('created-b', '/b');
+  h.creates[0].reply.resolve(created);
+  await switching;
+  h.remember();
+  expect(h.context.activeAsidRef.current).toBe('created-b');
+  expect(h.context.sessions).toEqual([created]);
+  expect(h.context.freshSessionRef.current).toBe('created-b');
+  expect(h.memory.get('/b')).toBe('created-b');
+  expect(h.refreshes()).toBe(0);
+});
+
+test.each([false, true])(
+  'current empty workspace creation merges once (event already received: %s)',
+  async (received) => {
+    const h = harness();
+    h.context.setSessions([]);
+    const switching = h.select('/a');
+    h.lists[0].reply.resolve([]);
+    await h.creationStarted;
+    const created = session('created-a', '/a');
+    // A native event can already have inserted the same row before its receipt.
+    if (received) h.context.setSessions([created]);
+    h.creates[0].reply.resolve(created);
+    await switching;
+    h.remember();
+    expect(h.context.activeDirectoryRef.current).toBe('/a');
+    expect(h.context.activeAsidRef.current).toBe('created-a');
+    expect(h.context.sessions).toEqual([created]);
+    expect(h.context.freshSessionRef.current).toBe('created-a');
+    expect(h.memory.get('/a')).toBe('created-a');
+    expect(h.refreshes()).toBe(0);
+  }
+);

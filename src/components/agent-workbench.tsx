@@ -4011,6 +4011,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           activeAsidRef.current = target.asid;
           setActiveAsid(target.asid);
           setSessionInfo(target);
+          if (!opening) {
+            // The directory's list may already have settled empty before create.
+            const created = target;
+            freshSessionRef.current = created.asid;
+            setSessions((previous) => [
+              created,
+              ...previous.filter((item) => item.asid !== created.asid),
+            ]);
+          }
           setTimeline([]);
           setWindowStart(0);
           setPermissions([]);
