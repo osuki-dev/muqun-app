@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import {
   AndroidConfig,
   type AndroidManifest,
@@ -102,6 +103,27 @@ function receivers(manifest: AndroidManifest, activeIcon: string, action: string
 }
 
 describe('Android icon alias intent boundary', () => {
+  test('native upgrade receiver stays private and only handles this package being replaced', async () => {
+    const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(
+      join(
+        dirname(loadPlugin.resolve('expo-alternate-app-icons/package.json')),
+        'android/src/main/AndroidManifest.xml'
+      )
+    );
+    const receivers = manifest.manifest.application?.flatMap((application) =>
+      (application.receiver ?? []).filter((receiver) =>
+        receiver.$['android:name'].endsWith('.IconStateMigrationReceiver')
+      )
+    );
+    expect(receivers).toHaveLength(1);
+    expect(receivers?.[0]?.$['android:exported']).toBe('false');
+    expect(
+      receivers?.[0]?.['intent-filter']?.flatMap(
+        (filter) => filter.action?.map((action) => action.$['android:name']) ?? []
+      )
+    ).toEqual(['android.intent.action.MY_PACKAGE_REPLACED']);
+  });
+
   test('real icon plugin output has one link, file and share receiver with Default or Classic active', async () => {
     const before = await generatedManifest(false);
     const after = await generatedManifest(true);
