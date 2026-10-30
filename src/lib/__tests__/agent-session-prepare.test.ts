@@ -109,6 +109,7 @@ test('the actual post-activation snapshot callback fences late pairing and resta
       ownerGenerationRef: { current: 1 },
       serverId: 'computer',
       sessionId: 'route',
+      readPreparationSource: () => null,
       historyCursorRef: { current: undefined },
       useGatewayConnectionStore: { getState: () => ({ record: { serverId: 'computer' } }) },
       useServerCapabilities: { getState: () => ({ byServer: {} }) },

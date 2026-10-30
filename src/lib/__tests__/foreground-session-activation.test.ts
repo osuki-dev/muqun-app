@@ -2,6 +2,8 @@ import { expect, test } from 'bun:test';
 import {
   ForegroundSessionActivation,
   SessionPreparationFlights,
+  bindForegroundSessionAgents,
+  foregroundSessionAgent,
 } from '../foreground-session-activation';
 
 function deferred() {
@@ -14,6 +16,78 @@ function deferred() {
   return { promise, resolve, reject };
 }
 const capabilities = ['agent_session_resume_v1'];
+
+test('an explicitly bound foreground session prepares before its first snapshot succeeds', async () => {
+  // The route identity remains usable when the first history GET fails.
+  const bindings = bindForegroundSessionAgents(null, 'pairing-A/workspace-1', [
+    { asid: 'parked', agent_id: 'qoder-instance' },
+  ]);
+  const sent: string[] = [];
+  const agent = foregroundSessionAgent(bindings, 'pairing-A/workspace-1', 'parked');
+  new ForegroundSessionActivation().start({
+    foreground: true,
+    capabilities,
+    current: () => true,
+    prepare: async () => {
+      if (agent) sent.push(agent + '/parked');
+    },
+    prepared: () => {},
+    failed: () => {},
+  });
+  await Promise.resolve();
+  expect(sent).toEqual(['qoder-instance/parked']);
+  expect(foregroundSessionAgent(bindings, 'pairing-A/workspace-1', 'other')).toBeUndefined();
+});
+
+test('same-asid bindings cannot cross pairing, workspace or server scopes', () => {
+  const bindings = bindForegroundSessionAgents(null, 'server-A/pairing-A/workspace-1', [
+    { asid: 'same', agent_id: 'pi-instance' },
+  ]);
+  for (const source of [
+    null,
+    'server-B/pairing-A/workspace-1',
+    'server-A/pairing-B/workspace-1',
+    'server-A/pairing-A/workspace-2',
+  ])
+    expect(foregroundSessionAgent(bindings, source, 'same')).toBeUndefined();
+  const next = bindForegroundSessionAgents(bindings, 'server-B/pairing-A/workspace-1', [
+    { asid: 'same', agent_id: 'fx-instance' },
+  ]);
+  expect(foregroundSessionAgent(next, bindings!.source, 'same')).toBeUndefined();
+  expect(foregroundSessionAgent(next, next!.source, 'same')).toBe('fx-instance');
+});
+
+test('session-list observations bind exact opaque identities without activating the list', () => {
+  let bindings = bindForegroundSessionAgents(null, 'current-source', [
+    { asid: 'first', agent_id: 'qoder-instance' },
+    { asid: '__proto__', agent_id: 'pi-instance' },
+    { asid: 'unreported' },
+  ]);
+  bindings = bindForegroundSessionAgents(bindings, 'current-source', [
+    { asid: 'second', agent_id: 'fx-instance' },
+  ]);
+  expect(foregroundSessionAgent(bindings, 'current-source', 'first')).toBe('qoder-instance');
+  expect(foregroundSessionAgent(bindings, 'current-source', '__proto__')).toBe('pi-instance');
+  expect(foregroundSessionAgent(bindings, 'current-source', 'second')).toBe('fx-instance');
+  expect(foregroundSessionAgent(bindings, 'current-source', 'unreported')).toBeUndefined();
+  expect(foregroundSessionAgent(bindings, 'current-source', 'constructor')).toBeUndefined();
+});
+
+test('conflicting provider claims and deleted bindings never choose a preparation target', () => {
+  let bindings = bindForegroundSessionAgents(null, 'source', [
+    { asid: 'same', agent_id: 'pi-instance' },
+  ]);
+  bindings = bindForegroundSessionAgents(bindings, 'source', [
+    { asid: 'same', agent_id: 'fx-instance' },
+  ]);
+  expect(foregroundSessionAgent(bindings, 'source', 'same')).toBeUndefined();
+  bindings = bindForegroundSessionAgents(bindings, 'source', [
+    { asid: 'same', agent_id: 'pi-instance' },
+    { asid: 'deleted', agent_id: 'pi-instance', deleted: true },
+  ]);
+  expect(foregroundSessionAgent(bindings, 'source', 'same')).toBeUndefined();
+  expect(foregroundSessionAgent(bindings, 'source', 'deleted')).toBeUndefined();
+});
 
 test('background reads and absent capabilities never activate a process', () => {
   let sends = 0;

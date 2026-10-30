@@ -1,4 +1,9 @@
 import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { sessionPreparationSource } from '@/lib/agent-session-prepare';
+import {
+  bindForegroundSessionAgents,
+  foregroundSessionAgent,
+} from '@/lib/foreground-session-activation';
 import { AgentSessionActivationNotice } from '@/components/agent-session-activation-notice';
 import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
 import { createQuestionDrafts } from '@/lib/agent-question-drafts';
@@ -461,6 +466,38 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
   const navigation = useNavigation();
+  const permissionRecord = useGatewayConnectionStore((state) => state.record);
+  // A durable session's provider survives a native process restart. Request and
+  // acknowledgment ownership still fence restarts in useForegroundAgentSession.
+  const preparationSource =
+    permissionRecord?.serverId === serverId
+      ? JSON.stringify([sessionId, sessionPreparationSource(serverId, permissionRecord)])
+      : null;
+  const readPreparationSource = useCallback(
+    (includeRestart = false) => {
+      const record = useGatewayConnectionStore.getState().record;
+      return record?.serverId === serverId
+        ? JSON.stringify([
+            sessionId,
+            sessionPreparationSource(
+              serverId,
+              record,
+              includeRestart ? (useGatewayGeneration.getState().restarts[serverId] ?? 0) : 0
+            ),
+          ])
+        : null;
+    },
+    [serverId, sessionId]
+  );
+  const [preparationBindings, setPreparationBindings] = useState(() =>
+    bindForegroundSessionAgents(
+      null,
+      preparationSource,
+      initialIntent !== 'new' && initialAsid && initialAgentId
+        ? [{ asid: initialAsid, agent_id: initialAgentId }]
+        : []
+    )
+  );
   const rootNavigation = useNavigation('/');
   const visible =
     agentWorkbenchNavigationScope({
@@ -1152,7 +1189,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (previousAsid && previousAsid !== activeAsid) setManualModelOverride(false);
     manualModelSessionRef.current = activeAsid;
   }, [activeAsid]);
-  const permissionRecord = useGatewayConnectionStore((state) => state.record);
   const permissionOwner = useMemo(
     () => ({
       scope: JSON.stringify([serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration]),
@@ -1591,6 +1627,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         directory,
         matchAsid: false,
       };
+      const source = readPreparationSource();
+      const sourceOwner = readPreparationSource(true);
       const ownsList = () =>
         request === sessionListRequestRef.current && ownsWorkbench(capturedOwner);
       if (!ownsList()) return;
@@ -1627,6 +1665,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               if (!ownsList()) return;
               setIsOffline(false);
               if (list) {
+                if (source && readPreparationSource(true) === sourceOwner)
+                  setPreparationBindings((previous) =>
+                    bindForegroundSessionAgents(previous, source, list)
+                  );
                 if (!directory)
                   hostListCompleteRef.current =
                     observation.authoritative &&
@@ -1693,6 +1735,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       initialIntent,
       listAgentIdRef,
       ownsWorkbench,
+      readPreparationSource,
       serverId,
       sessionId,
       syncHomeRecentObservation,
@@ -2005,6 +2048,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return;
       }
       const ownerGeneration = ownerGenerationRef.current;
+      const source = readPreparationSource();
+      const sourceOwner = readPreparationSource(true);
       const ownsSnapshot = () =>
         current?.() !== false &&
         mountedRef.current &&
@@ -2055,6 +2100,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               }
               const info = snap.info;
               if (info) {
+                if (info.asid === asid && source && readPreparationSource(true) === sourceOwner)
+                  setPreparationBindings((previous) =>
+                    bindForegroundSessionAgents(previous, source, [info])
+                  );
                 observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
                 setSessionInfo((previous) =>
                   pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
@@ -2272,6 +2321,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       syncHomeRecentTitle,
       syncHomeRecentObservation,
       serverId,
+      readPreparationSource,
       showToast,
       t,
     ]
@@ -2766,7 +2816,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const appActive = applicationActive && visible;
   const sessionActivation = useForegroundAgentSession({
     serverId,
-    agentId: sessionInfo?.asid === activeAsid ? sessionInfo?.agent_id : undefined,
+    agentId: foregroundSessionAgent(preparationBindings, preparationSource, activeAsid),
     asid: activeAsid,
     foreground: appActive && globalOwnerEpoch > 0,
     ownsForeground: isGlobalOwner,
