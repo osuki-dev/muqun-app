@@ -69,7 +69,11 @@ is visible "label=\"Open settings-dark.png\""
 # Synthetic offline bitmaps exercise the production message/album/lightbox paths.
 open "muqun://agent-subagent-detail?asid=demo-image-gallery-5&sessionId=demo"
 wait "id=message-image-album-3-columns" 10000
+# Both rows must be visible on entry, without a corrective scroll. The initial
+# end-anchor regression left only a thin strip of the final two images visible.
+wait "label=\"QA gallery 1\"" 10000
 wait "label=\"QA gallery 3\"" 10000
+wait "label=\"QA gallery 5\"" 10000
 wait stable 400 5000
 snapshot
 screenshot "shots/message-gallery-five.png"
@@ -82,10 +86,13 @@ screenshot "shots/message-gallery-third-preview.png"
 press "id=image-preview-close"
 wait absent "id=image-preview-close" 10000
 is visible "id=message-image-album-3-columns"
+is visible "label=\"QA gallery 1\""
+is visible "label=\"QA gallery 5\""
 back --system
 
 open "muqun://agent-subagent-detail?asid=demo-image-gallery-2&sessionId=demo"
 wait "id=message-image-album-2-columns" 10000
+wait "label=\"QA gallery 1\"" 10000
 wait "label=\"QA gallery 2\"" 10000
 screenshot "shots/message-gallery-two.png"
 press "label=\"QA gallery 2\""

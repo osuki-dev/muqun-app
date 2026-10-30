@@ -1,0 +1,52 @@
+JavaScript-only runtime patch. This directory must contain no native code,
+codegen, native dependencies or config-plugin changes. Native patches stay in
+the existing native fingerprint inputs; verify the official hash is unchanged
+before publishing a JavaScript-only update. Do not edit native build records.
+
+Legend List 3.7.0 (native): initial end placement can move short content above
+its viewport when a row grows during bootstrap. The end target adds the row's
+height delta to MVCP after the position adjustment, without clamping that final
+delta to the available scroll range. React Native then applies that delta as a
+native contentOffset change even after the list reports ready.
+
+Clamp only active initial end-target adjustments to the physical scroll range.
+Ordinary programmatic targets and the reader's existing anchors remain unchanged.
+Both published native runtime entries are patched because this npm distribution
+ships no source files. No generated native project/build output is included.
+
+Remove when upstream bounds the final initial end-target MVCP adjustment after
+both position and target-size changes. The core regression suite exercises the
+actual installed CJS and ESM MVCP functions.
+
+diff --git a/react-native.js b/react-native.js
+--- a/react-native.js
++++ b/react-native.js
+@@ -1875,8 +1875,12 @@
+             positionDiff += (newSize - prevSize) * scrollingToViewPosition;
+           }
+           scrollingTo.itemSize = newSize;
+         }
++      }
++      if (isEndAnchoredScrollTarget && scrollingTo.isInitialScroll) {
++        const maxScroll = Math.max(0, getContentSize(ctx) - state.scrollLength);
++        positionDiff = Math.min(maxScroll, Math.max(0, state.scroll + positionDiff)) - state.scroll;
+       }
+       updateAnchorLock(state, {
+         anchorId: anchorIdForLock,
+         anchorPosition: anchorPositionForLock,
+diff --git a/react-native.mjs b/react-native.mjs
+--- a/react-native.mjs
++++ b/react-native.mjs
+@@ -1854,8 +1854,12 @@
+             positionDiff += (newSize - prevSize) * scrollingToViewPosition;
+           }
+           scrollingTo.itemSize = newSize;
+         }
++      }
++      if (isEndAnchoredScrollTarget && scrollingTo.isInitialScroll) {
++        const maxScroll = Math.max(0, getContentSize(ctx) - state.scrollLength);
++        positionDiff = Math.min(maxScroll, Math.max(0, state.scroll + positionDiff)) - state.scroll;
+       }
+       updateAnchorLock(state, {
+         anchorId: anchorIdForLock,
+         anchorPosition: anchorPositionForLock,
