@@ -710,6 +710,13 @@
         "run": "flows/custom-themes.ad#install"
       },
       {
+        "when": {
+          "target": { "text": "!, Open debugger to view warnings." }
+        },
+        "steps": [{ "run": "flows/custom-themes.ad#open-debugger-notice" }]
+      },
+      { "run": "flows/custom-themes.ad#apply" },
+      {
         "target": {
           "text": "Back to computers"
         },
