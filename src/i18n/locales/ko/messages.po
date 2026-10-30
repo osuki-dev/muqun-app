@@ -2078,6 +2078,10 @@ msgstr "제출을 확인할 수 없습니다"
 msgid "Could not connect"
 msgstr "연결할 수 없습니다"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "이 컴퓨터에 연결할 수 없습니다. 주소와 네트워크를 확인한 후 다시 시도하세요"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "이 머신에 연결할 수 없음 — 눌러서 다시 시도"
@@ -2122,6 +2126,10 @@ msgstr "다운로드하지 못했습니다. 링크와 연결을 확인하세요"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "보안 연결을 설정할 수 없습니다. 인증서와 이 기기의 날짜 및 시간을 확인하세요"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "이름을 바꿀 수 없습니다"
 msgid "Could not reply"
 msgstr "응답할 수 없습니다"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "이 컴퓨터의 주소를 확인할 수 없습니다. 주소, 네트워크 또는 VPN을 확인하세요"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "세션을 재개할 수 없습니다"
 
@@ -4332,6 +4345,10 @@ msgstr "“{0}”과 일치하는 모델이 없습니다"
 msgid "No models on this host."
 msgstr "이 호스트에는 모델이 없습니다"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "사용 가능한 네트워크 연결이 없습니다. Wi-Fi 또는 모바일 데이터를 확인한 후 다시 시도하세요"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "더 이전에 캡처된 출력이 없습니다"
@@ -5746,7 +5763,6 @@ msgstr "재개"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "연결이 끊어졌습니다"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "시뮬레이터 연결이 끊겼습니다"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "연결이 끊어졌습니다. 네트워크를 확인한 후 다시 시도하세요"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

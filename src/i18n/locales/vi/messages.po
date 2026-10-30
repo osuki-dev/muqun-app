@@ -2078,6 +2078,10 @@ msgstr "Không thể xác nhận việc gửi"
 msgid "Could not connect"
 msgstr "Không thể kết nối"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "Không thể kết nối với máy tính này. Kiểm tra địa chỉ và mạng rồi thử lại"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Không thể kết nối với máy này — nhấn để thử lại"
@@ -2122,6 +2126,10 @@ msgstr "Không tải được. Kiểm tra liên kết và kết nối của bạ
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Không thể bật Khóa ứng dụng"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "Không thể thiết lập kết nối bảo mật. Kiểm tra chứng chỉ và ngày giờ trên thiết bị này"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "Không thể đổi tên"
 msgid "Could not reply"
 msgstr "Không thể trả lời"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "Không thể phân giải địa chỉ của máy tính này. Kiểm tra địa chỉ, mạng hoặc VPN"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "Không thể tiếp tục phiên"
 
@@ -4332,6 +4345,10 @@ msgstr "Không có mô hình nào khớp với “{0}”"
 msgid "No models on this host."
 msgstr "Không có mô hình trên máy chủ này"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "Không có kết nối mạng. Kiểm tra Wi-Fi hoặc dữ liệu di động rồi thử lại"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "Không có đầu ra cũ hơn được ghi lại"
@@ -5746,7 +5763,6 @@ msgstr "Tiếp tục"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "Kết nối đã rớt"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "Kết nối đến trình giả lập đã dừng"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "Kết nối đã bị ngắt. Kiểm tra mạng rồi thử lại"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

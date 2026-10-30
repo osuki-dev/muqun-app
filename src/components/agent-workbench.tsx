@@ -1,4 +1,5 @@
 import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { describeConnectionError } from '@/lib/network-error';
 import { isAgentSessionPreparingAt, sessionPreparationSource } from '@/lib/agent-session-prepare';
 import { isPreparingSessionHistory, sessionReadFeedback } from '@/lib/session-read-feedback';
 import {
@@ -401,6 +402,8 @@ function formatAgentErrorMessage(
   sentences: AgentErrorSentences
 ): string {
   if (!err) return fallback;
+  const connection = describeConnectionError(err);
+  if (connection) return connection;
   const reading = classifyAgentRequestError(err);
   switch (reading.kind) {
     case 'offline':

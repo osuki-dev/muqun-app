@@ -2078,6 +2078,10 @@ msgstr "送信を確認できませんでした"
 msgid "Could not connect"
 msgstr "接続できませんでした"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "このコンピュータに接続できません。アドレスとネットワークを確認して、再試行してください"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "このマシンに接続できません — タップして再試行"
@@ -2122,6 +2126,10 @@ msgstr "ダウンロードできませんでした。リンクと接続を確認
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "アプリロックを有効にできませんでした"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "安全な接続を確立できません。証明書とこのデバイスの日時を確認してください"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "名前を変更できませんでした"
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "このコンピュータのアドレスを名前解決できません。アドレス、ネットワーク、VPNを確認してください"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "セッションを再開できませんでした"
 
@@ -4332,6 +4345,10 @@ msgstr "「{0}」に一致するモデルはありません"
 msgid "No models on this host."
 msgstr "このホストにモデルはありません"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "ネットワークに接続できません。Wi-Fiまたはモバイルデータを確認して、再試行してください"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "これより古いキャプチャ出力はありません"
@@ -5746,7 +5763,6 @@ msgstr "再開"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "接続が切れました"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "シミュレータとの接続が切れました"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "接続が切れました。ネットワークを確認して、再試行してください"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

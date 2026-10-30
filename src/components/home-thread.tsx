@@ -85,7 +85,7 @@ export function followHomeSession({
   /** Events about this session; `agent.resync` is answered with a read instead. */
   onEvent: (event: AgentDomainEvent) => void;
   onNotFound?: () => void;
-  onError?: () => void;
+  onError?: (error: unknown) => void;
 }): (() => void) & { refresh: () => void } {
   const owner = useGatewayConnectionStore.getState().record;
   if (owner?.serverId !== serverId) return Object.assign(() => {}, { refresh: () => {} });
@@ -121,7 +121,7 @@ export function followHomeSession({
         (failure: unknown) => {
           if (!active || !owns()) return;
           if (agentRequestErrorDetail(failure).status === 404) onNotFound?.();
-          else onError?.();
+          else onError?.(failure);
         }
       )
       .finally(() => {

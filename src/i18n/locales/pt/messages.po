@@ -2078,6 +2078,10 @@ msgstr "Não foi possível confirmar o envio"
 msgid "Could not connect"
 msgstr "Não foi possível conectar"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "Não foi possível conectar a este computador. Verifique o endereço e a rede e tente novamente"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Não foi possível conectar — toque para tentar novamente"
@@ -2122,6 +2126,10 @@ msgstr "Não foi possível transferir. Verifique o endereço e a ligação"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Não foi possível ativar o bloqueio da app"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "Não foi possível estabelecer uma conexão segura. Verifique o certificado e a data e hora deste dispositivo"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "Não foi possível renomear"
 msgid "Could not reply"
 msgstr "Não foi possível responder"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "Não foi possível resolver o endereço deste computador. Verifique o endereço, a rede ou a VPN"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "Não foi possível retomar a sessão"
 
@@ -4332,6 +4345,10 @@ msgstr "Nenhum modelo corresponde a “{0}”"
 msgid "No models on this host."
 msgstr "Não há modelos neste anfitrião"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "Não há conexão de rede disponível. Verifique o Wi-Fi ou os dados móveis e tente novamente"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "Não há saída capturada mais antiga"
@@ -5746,7 +5763,6 @@ msgstr "Retomar"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "A ligação caiu"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "A ligação ao simulador foi abaixo"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "A conexão foi perdida. Verifique a rede e tente novamente"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

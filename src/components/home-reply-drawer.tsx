@@ -982,7 +982,7 @@ function DrawerSession({
   const [runtime, setRuntime] = useState<AgentSessionRuntime | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
   const [missing, setMissing] = useState(false);
-  const [readFailed, setReadFailed] = useState(false);
+  const [readError, setReadError] = useState<unknown>(null);
   const [readAttempt, setReadAttempt] = useState(0);
   const listRef = useRef<LegendListRef>(null);
   const { serverId, sessionId, asid } = target;
@@ -1093,7 +1093,7 @@ function DrawerSession({
       sessionId,
       asid,
       onSnapshot: (snapshot) => {
-        setReadFailed(false);
+        setReadError(null);
         const transcript = store.getState();
         if (!initialized || snapshot.history_reset) {
           windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
@@ -1149,7 +1149,7 @@ function DrawerSession({
         setMissing(true);
         setLoaded(true);
       },
-      onError: () => setReadFailed(true),
+      onError: (error) => setReadError(error),
     });
     refreshSession.current = stop.refresh;
     return () => {
@@ -1289,31 +1289,26 @@ function DrawerSession({
     });
   };
 
+  // Preparation and history are one recovery path; retain the original errors,
+  // but offer only the action that can recover the currently failed stage.
+  const recoveryError = sessionActivation.error ?? readError;
+  const recoveryNotice = recoveryError ? (
+    <AgentSessionActivationNotice
+      error={recoveryError}
+      title={
+        sessionActivation.error ? t`Could not resume the session` : t`Could not load the session`
+      }
+      onRetry={() => {
+        setReadError(null);
+        if (sessionActivation.error) sessionActivation.retry();
+        else setReadAttempt((attempt) => attempt + 1);
+      }}
+    />
+  ) : null;
   if (!loaded)
     return (
       <View testID="home-reply-loading" style={styles.center}>
-        <AgentSessionActivationNotice
-          error={sessionActivation.error}
-          onRetry={sessionActivation.retry}
-        />
-        {readFailed ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t`Retry`}
-            onPress={() => {
-              setReadFailed(false);
-              setReadAttempt((attempt) => attempt + 1);
-            }}>
-            <Text variant="bodySmall" color={theme.colors.textMuted}>
-              {t`Could not load the session`}
-            </Text>
-            <Text variant="bodySmall" color={theme.colors.primary}>
-              {t`Retry`}
-            </Text>
-          </Pressable>
-        ) : sessionActivation.error ? null : (
-          <ActivityIndicator color={theme.colors.primary} />
-        )}
+        {recoveryNotice ?? <ActivityIndicator color={theme.colors.primary} />}
       </View>
     );
   if (missing)
@@ -1371,10 +1366,7 @@ function DrawerSession({
         }
         ListFooterComponent={
           <>
-            <AgentSessionActivationNotice
-              error={sessionActivation.error}
-              onRetry={sessionActivation.retry}
-            />
+            {recoveryNotice}
             {requests}
           </>
         }

@@ -2078,6 +2078,10 @@ msgstr "無法確認提交"
 msgid "Could not connect"
 msgstr "無法連線"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "無法連線至這部電腦。請檢查位址與網路後重試"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "無法連線至這台機器，點按重試"
@@ -2122,6 +2126,10 @@ msgstr "無法下載。請檢查連結和網路連線"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "無法啟用 App 鎖定"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "無法建立安全連線。請檢查憑證及此裝置的日期與時間"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "無法重新命名"
 msgid "Could not reply"
 msgstr "無法回覆"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "無法解析這部電腦的位址。請檢查位址、網路或 VPN"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "無法恢復工作階段"
 
@@ -4332,6 +4345,10 @@ msgstr "沒有與「{0}」相符的模型"
 msgid "No models on this host."
 msgstr "此主機上沒有模型"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "目前沒有可用的網路連線。請檢查 Wi-Fi 或行動數據後重試"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "沒有更早的已擷取輸出"
@@ -5746,7 +5763,6 @@ msgstr "恢復"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "連線已中斷"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "與模擬器的連線中斷了"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "連線已中斷。請檢查網路後重試"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

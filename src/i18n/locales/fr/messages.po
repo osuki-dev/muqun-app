@@ -2078,6 +2078,10 @@ msgstr "Impossible de confirmer l’envoi"
 msgid "Could not connect"
 msgstr "Connexion impossible"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "Impossible de se connecter à cet ordinateur. Vérifiez l’adresse et le réseau, puis réessayez"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Connexion impossible — touchez pour réessayer"
@@ -2122,6 +2126,10 @@ msgstr "Téléchargement impossible. Vérifiez le lien et votre connexion"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Impossible d’activer le verrouillage de l’app"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "Impossible d’établir une connexion sécurisée. Vérifiez le certificat ainsi que la date et l’heure de cet appareil"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2344,7 +2352,12 @@ msgstr "Renommage impossible"
 msgid "Could not reply"
 msgstr "Réponse impossible"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "Impossible de résoudre l’adresse de cet ordinateur. Vérifiez l’adresse, le réseau ou le VPN"
+
 #: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
 msgid "Could not resume the session"
 msgstr "Impossible de reprendre la session"
 
@@ -4332,6 +4345,10 @@ msgstr "Aucun modèle ne correspond à « {0} »"
 msgid "No models on this host."
 msgstr "Aucun modèle sur cet hôte"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "Aucune connexion réseau disponible. Vérifiez le Wi-Fi ou les données mobiles et réessayez"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "Aucune sortie capturée plus ancienne"
@@ -5746,7 +5763,6 @@ msgstr "Reprendre"
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -7161,6 +7177,10 @@ msgstr "La connexion a été coupée"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "La connexion au simulateur s'est interrompue"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "La connexion a été perdue. Vérifiez le réseau et réessayez"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."
