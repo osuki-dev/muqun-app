@@ -274,14 +274,14 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             value it shows is also its accessibility value. */}
         <SheetSceneRow
           title={t`Project`}
-          accessibilityValue={{ text: session?.directory || '~' }}
+          accessibilityValue={{ text: session?.directory || t`Not available` }}
           meta={
             <Text
               variant="caption"
               color={theme.colors.textMuted}
               numberOfLines={1}
               style={styles.metaWide}>
-              {session?.directory || '~'}
+              {session?.directory || t`Not available`}
             </Text>
           }
         />
