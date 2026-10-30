@@ -783,6 +783,7 @@ function PreviewPage({
 
   return (
     <View
+      testID={`image-preview-page-${index}`}
       style={{ width, height, overflow: 'hidden' }}
       accessible={active}
       importantForAccessibility={active ? 'yes' : 'no-hide-descendants'}

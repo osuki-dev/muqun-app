@@ -1565,7 +1565,8 @@
         },
         "mode": "visible",
         "run": "flows/attachments-ui.ad#s15"
-      }
+      },
+      { "run": "flows/attachments-ui.ad#message-galleries" }
     ],
     "flows/demo-tour": [
       {

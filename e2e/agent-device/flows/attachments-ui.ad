@@ -64,3 +64,47 @@ press "label=\"Close preview\""
 wait absent "label=\"Close preview\"" 10000
 wait "label=\"Refresh files\"" 10000
 is visible "label=\"Open settings-dark.png\""
+
+# section message-galleries
+# Synthetic offline bitmaps exercise the production message/album/lightbox paths.
+open "muqun://agent-subagent-detail?asid=demo-image-gallery-5&sessionId=demo"
+wait "id=message-image-album-3-columns" 10000
+wait "label=\"QA gallery 3\"" 10000
+wait stable 400 5000
+snapshot
+screenshot "shots/message-gallery-five.png"
+press "label=\"QA gallery 3\""
+wait "id=image-preview-page-2" 10000
+is visible "id=image-preview-page-2"
+is hidden "id=image-preview-page-0"
+is hidden "text=\"This image could not be loaded.\""
+screenshot "shots/message-gallery-third-preview.png"
+press "id=image-preview-close"
+wait absent "id=image-preview-close" 10000
+is visible "id=message-image-album-3-columns"
+back --system
+
+open "muqun://agent-subagent-detail?asid=demo-image-gallery-2&sessionId=demo"
+wait "id=message-image-album-2-columns" 10000
+wait "label=\"QA gallery 2\"" 10000
+screenshot "shots/message-gallery-two.png"
+press "label=\"QA gallery 2\""
+wait "id=image-preview-page-1" 10000
+is visible "id=image-preview-page-1"
+press "id=image-preview-close"
+wait absent "id=image-preview-close" 10000
+back --system
+
+open "muqun://agent-subagent-detail?asid=demo-image-gallery-1&sessionId=demo"
+wait "label=\"QA gallery 1\"" 10000
+is hidden "id=message-image-album-2-columns"
+is hidden "id=message-image-album-3-columns"
+screenshot "shots/message-gallery-single.png"
+back --system
+
+open "muqun://agent-subagent-detail?asid=demo-image-attachments-5&sessionId=demo"
+wait "id=message-image-album-3-columns" 10000
+wait stable 400 5000
+snapshot
+screenshot "shots/message-attachments-five.png"
+back --system
