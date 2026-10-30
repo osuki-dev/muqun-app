@@ -686,6 +686,9 @@ export function HomeEditorialLayout({
           <View testID="home-pad-work-column" style={styles.padWorkColumn}>
             <KeyboardAwareScrollView
               testID="home-pad-work-pane"
+              // The library follows the caret, so reserve space for the search
+              // control's lower padding and clear action above the keyboard.
+              bottomOffset={theme.spacing.xl}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
