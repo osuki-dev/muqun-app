@@ -572,8 +572,8 @@ export function HomeEditorialLayout({
                 ? { marginTop: -(styles.padToolbar.minHeight + styles.padToolbar.marginBottom) }
                 : null,
             ]}>
-            {/* Keyboard-aware on its own: the page's view only lifts fields
-                whose nearest scroll view it is, and Recent's search is here. */}
+            {/* Each column owns its focused fields; the page cannot scroll a
+                field whose nearest scroll view is inside a column. */}
             <KeyboardAwareScrollView
               testID="home-pad-launch-pane"
               enabled={coverPaneKeyboardAware}
@@ -684,7 +684,7 @@ export function HomeEditorialLayout({
             ) : null}
           </View>
           <View testID="home-pad-work-column" style={styles.padWorkColumn}>
-            <Animated.ScrollView
+            <KeyboardAwareScrollView
               testID="home-pad-work-pane"
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
@@ -757,7 +757,7 @@ export function HomeEditorialLayout({
                   {recent}
                 </Animated.View>
               ) : null}
-            </Animated.ScrollView>
+            </KeyboardAwareScrollView>
           </View>
         </View>
       </View>
