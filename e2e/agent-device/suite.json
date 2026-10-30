@@ -207,7 +207,9 @@
     "flows/simulator": [{ "run": "flows/simulator.ad" }],
     "flows/agent-composer-triggers": [
       { "include": "subflows/open-demo" },
-      { "run": "flows/agent-composer-triggers.ad" }
+      { "run": "flows/agent-composer-triggers.ad#menu" },
+      { "include": "subflows/dismiss-logbox" },
+      { "run": "flows/agent-composer-triggers.ad#triggers" }
     ],
     "flows/home-stage-progress": [
       {
