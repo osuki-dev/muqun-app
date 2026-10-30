@@ -285,7 +285,7 @@ function scrollRootSheetCapture() {
   );
   return { ...capture, name: 'scroll-root New task', y: 106 };
 }
-const coverSheetCaptures = [
+const coverSheetCaptures: ReturnType<typeof coverSheetCapture>[] = [
   coverSheetCapture(false),
   coverSheetCapture(true),
   coverSheetCapture(true, true),
@@ -300,12 +300,14 @@ const coverSheetCaptures = [
     nodes: [
       {
         index: 0,
+        ref: 'e1',
         type: 'Application',
         role: 'UIApplication',
         rect: { x: 0, y: 0, width: 402, height: 874 },
       },
       {
         index: 1,
+        ref: 'e2',
         parentIndex: 0,
         type: 'Button',
         role: '_UIGrabber',
@@ -314,6 +316,7 @@ const coverSheetCaptures = [
       },
       {
         index: 2,
+        ref: 'e3',
         parentIndex: 0,
         type: 'Other',
         role: 'RCTViewComponentView',
@@ -322,6 +325,7 @@ const coverSheetCaptures = [
       },
       {
         index: 3,
+        ref: 'e4',
         parentIndex: 0,
         type: 'StaticText',
         role: 'RCTViewComponentView',
@@ -330,6 +334,7 @@ const coverSheetCaptures = [
       },
       {
         index: 4,
+        ref: 'e5',
         parentIndex: 0,
         type: 'StaticText',
         role: 'UILabel',
@@ -338,6 +343,7 @@ const coverSheetCaptures = [
       },
       {
         index: 5,
+        ref: 'e6',
         parentIndex: 0,
         type: 'ScrollView',
         role: 'RCTEnhancedScrollView',
