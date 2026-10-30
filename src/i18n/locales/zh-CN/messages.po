@@ -1382,6 +1382,10 @@ msgstr "选择主页和应用界面样式。配色仍由主题决定"
 msgid "Choose how Home gets updates from your computers."
 msgstr "选择首页获取电脑动态的方式"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "选择图片"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "选择项目"
@@ -2380,6 +2384,10 @@ msgstr "无法保存快捷命令"
 msgid "Could not save theme"
 msgstr "无法保存主题"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "无法保存此图片。请检查图片和可用存储空间后重试"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "无法保存待发送的草稿，未发送任何内容。当前草稿已保留"
@@ -3352,6 +3360,10 @@ msgstr "首页连接"
 msgid "Home folder"
 msgstr "主文件夹"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "首页插图"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "稍后"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "启动图"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "播放进度"
 msgid "Please retry or remove failed attachments."
 msgstr "请重试或移除上传失败的附件"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "支持 PNG、JPEG 或 WebP，每张不超过 8 MB 和 1600 万像素"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "恢复隐藏的默认命令"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "恢复隐藏的默认项"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "恢复主题原图"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

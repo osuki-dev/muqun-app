@@ -1382,6 +1382,10 @@ msgstr "Выберите вид главной и интерфейса. Цвет
 msgid "Choose how Home gets updates from your computers."
 msgstr "Выберите, как главный экран получает обновления с компьютеров"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Выбрать изображение"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Выбрать проект"
@@ -2380,6 +2384,10 @@ msgstr "Не удалось сохранить команду"
 msgid "Could not save theme"
 msgstr "Не удалось сохранить тему"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Не удалось сохранить изображение. Проверьте изображение и свободное место, затем повторите попытку"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Не удалось сохранить исходящий черновик. Ничего не отправлено. Черновик сохранён"
@@ -3352,6 +3360,10 @@ msgstr "Подключения главного экрана"
 msgid "Home folder"
 msgstr "Домашняя папка"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Изображение главного экрана"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Позже"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Последнее"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Изображение при запуске"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Позиция воспроизведения"
 msgid "Please retry or remove failed attachments."
 msgstr "Повторите попытку или удалите сбойные вложения"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG или WebP. До 8 МБ и 16 мегапикселей"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Восстановить скрытые команды по умолча
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Восстановить изображение темы"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

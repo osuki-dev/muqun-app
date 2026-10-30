@@ -5,8 +5,10 @@ import { Image } from 'expo-image';
 import QuickCrypto from 'react-native-quick-crypto';
 
 import { inspectThemeImage } from '@/theme/image-inspection';
-import { packTheme, type ThemePackage } from '@/theme/package';
-import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
+import type { ThemePackage } from '@/theme/package';
+import { exportThemePackage } from '@/theme/export-package';
+import type { InstalledTheme } from '@/theme/repository';
+import { themeAssetReferences } from './artwork-overrides';
 import { THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 import { ThemeAssetLifecycle } from '@/theme/asset-lifecycle';
 import { planThemeAssetInstall } from '@/theme/asset-storage-policy';
@@ -43,9 +45,7 @@ function collectThemeAssetGarbage(): void {
 
 /** Publish durable ownership before any open preview releases its reservation. */
 export function setThemeAssetReferences(themes: readonly InstalledTheme[] | null): void {
-  if (
-    lifecycle.replaceReferences(themes?.flatMap((theme) => Object.values(theme.assets)) ?? null)
-  ) {
+  if (lifecycle.replaceReferences(themes?.flatMap(themeAssetReferences) ?? null)) {
     collectThemeAssetGarbage();
   }
 }
@@ -277,11 +277,7 @@ async function prepareAssetStream(
 
 /** Export installed bytes only; no source URLs are contacted during sharing. */
 export function exportInstalledTheme(theme: InstalledTheme): Uint8Array {
-  const manifest = effectiveThemeManifest(theme);
-  delete manifest.source;
-  manifest.assets = {};
-  const assets: Record<string, Uint8Array> = {};
-  for (const [id, uri] of Object.entries(theme.assets)) {
+  return exportThemePackage(theme, (uri) => {
     if (!isOwnedThemeAsset(uri)) throw new Error('An installed theme image is unavailable');
     const file = new File(uri);
     if (file.size > THEME_LIMITS.assetBytes)
@@ -290,8 +286,6 @@ export function exportInstalledTheme(theme: InstalledTheme): Uint8Array {
     const info = inspectThemeImage(bytes);
     const digest = hash(bytes);
     if (!file.name.startsWith(digest + '.')) throw new Error('An installed theme image is corrupt');
-    manifest.assets[id] = { path: `assets/${id}.${info.format}`, sha256: digest };
-    assets[id] = bytes;
-  }
-  return packTheme({ manifest, assets });
+    return { bytes, format: info.format, sha256: digest };
+  });
 }

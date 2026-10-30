@@ -1382,6 +1382,10 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 msgid "Choose how Home gets updates from your computers."
 msgstr "ホームでパソコンの更新を受け取る方法を選びます"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "画像を選択"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "プロジェクトを選択"
@@ -2380,6 +2384,10 @@ msgstr "ショートカットを保存できませんでした"
 msgid "Could not save theme"
 msgstr "テーマを保存できませんでした"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "画像を保存できませんでした。画像とストレージの空き容量を確認して、もう一度お試しください"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "送信予定の下書きを保存できませんでした。何も送信されていません。下書きは保持されています"
@@ -3352,6 +3360,10 @@ msgstr "ホームの接続"
 msgid "Home folder"
 msgstr "ホームフォルダー"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "ホーム画像"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "後で"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "起動画像"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "再生位置"
 msgid "Please retry or remove failed attachments."
 msgstr "失敗した添付ファイルを再試行または削除してください"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG、JPEG、WebP に対応。最大 8 MB、1600 万画素"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "非表示にした標準コマンドを元に戻す"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "非表示の標準を元に戻す"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "テーマの画像に戻す"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

@@ -1382,6 +1382,10 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 msgid "Choose how Home gets updates from your computers."
 msgstr "เลือกวิธีที่หน้าหลักรับข้อมูลอัปเดตจากคอมพิวเตอร์"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "เลือกรูปภาพ"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
@@ -2380,6 +2384,10 @@ msgstr "บันทึกปุ่มลัดไม่ได้"
 msgid "Could not save theme"
 msgstr "บันทึกธีมไม่ได้"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "บันทึกรูปภาพนี้ไม่ได้ ตรวจสอบรูปภาพและพื้นที่จัดเก็บที่ว่าง แล้วลองอีกครั้ง"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "บันทึกฉบับร่างที่จะส่งนี้ไม่สำเร็จ ยังไม่ได้ส่งอะไร ฉบับร่างของคุณยังคงอยู่"
@@ -3352,6 +3360,10 @@ msgstr "การเชื่อมต่อหน้าหลัก"
 msgid "Home folder"
 msgstr "โฟลเดอร์หลัก"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "รูปภาพหน้าหลัก"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "ภายหลัง"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "ล่าสุด"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "รูปภาพขณะเปิดแอป"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "ตำแหน่งการเล่น"
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG หรือ WebP สูงสุด 8 MB และ 16 ล้านพิกเซล"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "คืนค่ารูปภาพของธีม"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

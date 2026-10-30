@@ -882,6 +882,23 @@
         "run": "flows/custom-themes.ad#opacity-reset"
       },
       {
+        "run": "flows/custom-themes.ad#artwork-entries"
+      },
+      {
+        "run": "flows/custom-themes.ad#artwork-open-picker"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/custom-themes.ad#artwork-cancel-android" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/custom-themes.ad#artwork-cancel-ios" }]
+      },
+      {
+        "run": "flows/custom-themes.ad#artwork-canceled"
+      },
+      {
         "run": "flows/custom-themes.ad#back-to-library"
       },
       {

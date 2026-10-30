@@ -4,15 +4,24 @@ import { useThemeMode, useThemeTokens, Button, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { MoreIcon, CloseIcon } from '@/icons';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
+import { ThemeArtworkSettings } from '@/components/theme-artwork-settings';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
+import {
+  effectiveThemeManifest,
+  effectiveThemeAssets,
+  type InstalledTheme,
+} from '@/theme/repository';
+import { pickThemeArtwork } from '@/theme/artwork-picker';
+import { commitThemeArtworkSelection, type PickedThemeArtwork } from '@/theme/artwork-selection';
+import type { ThemeArtworkSlot } from '@/theme/artwork-overrides';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { afterNavigationSettles, type SettleNavigation } from '@/lib/navigation-settle';
@@ -47,6 +56,7 @@ type DraftAppearance = Pick<
   | 'hideHomeLogo'
   | 'hideHomeText'
   | 'homeArtwork'
+  | 'artworkImages'
 >;
 
 export function CustomThemeLibrary({
@@ -119,15 +129,28 @@ export function CustomThemeLibrary({
   const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const artworkLeases = useRef(new Map<ThemeArtworkSlot, PickedThemeArtwork>());
+  const artworkGeneration = useRef(0);
+  const readCandidate = useLatestReader(candidate);
   // Copying a dozen images into permanent storage reports nothing on its own.
   const [step, setStep] = useState<'installing' | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
   const leavingUnderCover = useRef(false);
+  const releaseUnmountedArtwork = useEffectEvent(() => {
+    artworkGeneration.current++;
+    queueMicrotask(() => {
+      if (mounted.current) return;
+      for (const artwork of artworkLeases.current.values()) artwork.dispose();
+      artworkLeases.current.clear();
+    });
+  });
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      // Development effect replay can reacquire this component before the microtask.
+      releaseUnmountedArtwork();
     };
   }, []);
   useEffect(
@@ -138,8 +161,8 @@ export function CustomThemeLibrary({
   );
   const contrast = candidate ? auditThemeContrast(candidate.manifest) : [];
   const imageCount = Object.keys(candidate?.manifest.assets ?? {}).length;
-  const assets = candidate?.assets ?? candidate?.prepared?.assets ?? {};
-  const missingImages = Object.keys(assets).length !== imageCount;
+  const authoredAssets = candidate?.assets ?? candidate?.prepared?.assets ?? {};
+  const missingImages = Object.keys(authoredAssets).length !== imageCount;
   const candidateSelected =
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
   const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
@@ -149,10 +172,11 @@ export function CustomThemeLibrary({
       ? {
           id: 'candidate',
           manifest: candidate.manifest,
-          assets,
+          assets: authoredAssets,
           ...draftAppearance,
         }
       : undefined);
+  const assets = appearance ? effectiveThemeAssets(appearance) : authoredAssets;
   useEffect(() => {
     if (candidate && !installedCandidate) {
       onPreviewAppearanceChange?.({
@@ -189,7 +213,78 @@ export function CustomThemeLibrary({
     );
   }
 
+  function releaseArtworkLeases() {
+    for (const artwork of artworkLeases.current.values()) artwork.dispose();
+    artworkLeases.current.clear();
+  }
+
+  function chooseArtwork(slot: ThemeArtworkSlot) {
+    const target = readCandidate();
+    if (!target) return;
+    const generation = ++artworkGeneration.current;
+    void perform(async () => {
+      try {
+        await commitThemeArtworkSelection({
+          pick: pickThemeArtwork,
+          isCurrent: () =>
+            mounted.current &&
+            generation === artworkGeneration.current &&
+            readCandidate() === target,
+          commit: (artwork) => {
+            if (target.id) {
+              useThemeLibrary.getState().setArtworkImage(target.id, slot, artwork.uri);
+              return false;
+            }
+            const previous = artworkLeases.current.get(slot);
+            artworkLeases.current.set(slot, artwork);
+            setDraftAppearance((current) => ({
+              ...current,
+              artworkImages: { ...current.artworkImages, [slot]: artwork.uri },
+              ...(slot === 'home.artwork' ? { homeArtwork: 'shown' } : {}),
+            }));
+            previous?.dispose();
+            return true;
+          },
+        });
+      } catch {
+        throw new Error(
+          t`Could not save this image. Check the image and available storage, then try again.`
+        );
+      }
+    });
+  }
+
+  function resetArtwork(slot: ThemeArtworkSlot) {
+    void perform(() => {
+      artworkGeneration.current++;
+      if (candidate?.id) useThemeLibrary.getState().setArtworkImage(candidate.id, slot, undefined);
+      else
+        setDraftAppearance((current) => {
+          const images = { ...current.artworkImages };
+          delete images[slot];
+          return {
+            ...current,
+            artworkImages: Object.keys(images).length ? images : undefined,
+            ...(slot === 'home.artwork' ? { homeArtwork: undefined } : {}),
+          };
+        });
+      artworkLeases.current.get(slot)?.dispose();
+      artworkLeases.current.delete(slot);
+    });
+  }
+
+  function resetAppearance() {
+    void perform(() => {
+      artworkGeneration.current++;
+      if (candidate?.id) useThemeLibrary.getState().resetAppearancePreferences(candidate.id);
+      else setDraftAppearance({});
+      releaseArtworkLeases();
+    });
+  }
+
   function closePreview(after: 'applied' | 'closed' = 'closed'): void | Promise<void> {
+    artworkGeneration.current++;
+    releaseArtworkLeases();
     setDraftAppearance({});
     setRemoving(false);
     setActionsOpen(false);
@@ -233,6 +328,13 @@ export function CustomThemeLibrary({
         if (draftAppearance.homeArtwork !== undefined)
           store.setHomeArtwork(id, draftAppearance.homeArtwork);
       }
+      // Retry remaining draft images even after an earlier metadata write saved the id.
+      for (const [slot, uri] of Object.entries(draftAppearance.artworkImages ?? {})) {
+        store.setArtworkImage(id, slot as ThemeArtworkSlot, uri);
+        artworkLeases.current.get(slot as ThemeArtworkSlot)?.dispose();
+        artworkLeases.current.delete(slot as ThemeArtworkSlot);
+      }
+      setDraftAppearance((current) => ({ ...current, artworkImages: undefined }));
       return id;
     };
     if (apply) {
@@ -247,7 +349,12 @@ export function CustomThemeLibrary({
             .getState()
             .library.themes.find((entry) => entry.id === selectedId);
           if (installed)
-            return prepareThemeArtwork(installed.manifest, installed.assets, resolvedMode, width);
+            return prepareThemeArtwork(
+              effectiveThemeManifest(installed),
+              effectiveThemeAssets(installed),
+              resolvedMode,
+              width
+            );
         },
         apply: () => {
           if (!selectedId) return;
@@ -435,68 +542,68 @@ export function CustomThemeLibrary({
                 minWidth: 0,
               }}>
               {appearance ? (
-                <ThemeAppearanceSettings
-                  key={appearance.id}
-                  installed={appearance}
-                  disabled={busy}
-                  onTerminalChange={(value) =>
-                    !installedCandidate
-                      ? setDraftAppearance((current) => ({
-                          ...current,
-                          terminalBackgroundOpacity: value,
-                        }))
-                      : void perform(() =>
-                          useThemeLibrary
-                            .getState()
-                            .setTerminalBackgroundOpacity(installedCandidate.id, value)
-                        )
-                  }
-                  onSurfaceChange={(value) =>
-                    !installedCandidate
-                      ? setDraftAppearance((current) => ({
-                          ...current,
-                          surfaceBackgroundOpacity: value,
-                        }))
-                      : void perform(() =>
-                          useThemeLibrary
-                            .getState()
-                            .setSurfaceBackgroundOpacity(installedCandidate.id, value)
-                        )
-                  }
-                  onLogoChange={(value) =>
-                    !installedCandidate
-                      ? setDraftAppearance((current) => ({ ...current, hideHomeLogo: value }))
-                      : void perform(() =>
-                          useThemeLibrary.getState().setHideHomeLogo(installedCandidate.id, value)
-                        )
-                  }
-                  onTextChange={(value) =>
-                    !installedCandidate
-                      ? setDraftAppearance((current) => ({ ...current, hideHomeText: value }))
-                      : void perform(() =>
-                          useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
-                        )
-                  }
-                  onArtworkChange={(value) =>
-                    !installedCandidate
-                      ? setDraftAppearance((current) => ({
-                          ...current,
-                          homeArtwork: value === 'theme' ? undefined : value,
-                        }))
-                      : void perform(() =>
-                          useThemeLibrary.getState().setHomeArtwork(installedCandidate.id, value)
-                        )
-                  }
-                  onReset={() =>
-                    !installedCandidate
-                      ? setDraftAppearance({})
-                      : void perform(() =>
-                          useThemeLibrary
-                            .getState()
-                            .resetAppearancePreferences(installedCandidate.id)
-                        )
-                  }
-                />
+                <>
+                  <ThemeAppearanceSettings
+                    key={appearance.id}
+                    installed={appearance}
+                    disabled={busy}
+                    onTerminalChange={(value) =>
+                      !installedCandidate
+                        ? setDraftAppearance((current) => ({
+                            ...current,
+                            terminalBackgroundOpacity: value,
+                          }))
+                        : void perform(() =>
+                            useThemeLibrary
+                              .getState()
+                              .setTerminalBackgroundOpacity(installedCandidate.id, value)
+                          )
+                    }
+                    onSurfaceChange={(value) =>
+                      !installedCandidate
+                        ? setDraftAppearance((current) => ({
+                            ...current,
+                            surfaceBackgroundOpacity: value,
+                          }))
+                        : void perform(() =>
+                            useThemeLibrary
+                              .getState()
+                              .setSurfaceBackgroundOpacity(installedCandidate.id, value)
+                          )
+                    }
+                    onLogoChange={(value) =>
+                      !installedCandidate
+                        ? setDraftAppearance((current) => ({ ...current, hideHomeLogo: value }))
+                        : void perform(() =>
+                            useThemeLibrary.getState().setHideHomeLogo(installedCandidate.id, value)
+                          )
+                    }
+                    onTextChange={(value) =>
+                      !installedCandidate
+                        ? setDraftAppearance((current) => ({ ...current, hideHomeText: value }))
+                        : void perform(() =>
+                            useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
+                          )
+                    }
+                    onArtworkChange={(value) =>
+                      !installedCandidate
+                        ? setDraftAppearance((current) => ({
+                            ...current,
+                            homeArtwork: value === 'theme' ? undefined : value,
+                          }))
+                        : void perform(() =>
+                            useThemeLibrary.getState().setHomeArtwork(installedCandidate.id, value)
+                          )
+                    }
+                    onReset={resetAppearance}
+                  />
+                  <ThemeArtworkSettings
+                    installed={appearance}
+                    disabled={busy}
+                    onChoose={chooseArtwork}
+                    onReset={resetArtwork}
+                  />
+                </>
               ) : null}
             </View>
           </View>

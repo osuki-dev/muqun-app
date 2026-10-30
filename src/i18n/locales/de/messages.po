@@ -1382,6 +1382,10 @@ msgstr "Startseite und App-Oberfläche wählen. Die Farben bestimmt weiterhin de
 msgid "Choose how Home gets updates from your computers."
 msgstr "Wähle, wie die Startseite Aktualisierungen deiner Computer erhält"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Bild auswählen"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Projekt wählen"
@@ -2380,6 +2384,10 @@ msgstr "Verknüpfung konnte nicht gespeichert werden"
 msgid "Could not save theme"
 msgstr "Design konnte nicht gespeichert werden"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Dieses Bild konnte nicht gespeichert werden. Prüfe das Bild und den verfügbaren Speicherplatz und versuche es erneut"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Der ausgehende Entwurf konnte nicht gespeichert werden. Es wurde nichts gesendet. Dein Entwurf bleibt erhalten"
@@ -3352,6 +3360,10 @@ msgstr "Verbindungen der Startseite"
 msgid "Home folder"
 msgstr "Benutzerordner"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Startseitenbild"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Später"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Neueste"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Startbild"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Wiedergabeposition"
 msgid "Please retry or remove failed attachments."
 msgstr "Bitte wiederholen Sie den Vorgang oder entfernen Sie fehlgeschlagene Anhänge"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG oder WebP. Bis zu 8 MB und 16 Megapixel"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Themenbild wiederherstellen"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

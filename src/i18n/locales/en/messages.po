@@ -1382,6 +1382,10 @@ msgstr "Choose Home and app chrome. Colours stay with your theme"
 msgid "Choose how Home gets updates from your computers."
 msgstr "Choose how Home gets updates from your computers"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Choose image"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Choose project"
@@ -2380,6 +2384,10 @@ msgstr "Could not save shortcut"
 msgid "Could not save theme"
 msgstr "Could not save theme"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Could not save this image. Check the image and available storage, then try again"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Could not save this outgoing draft. Nothing was sent. Your draft is kept"
@@ -3352,6 +3360,10 @@ msgstr "Home connections"
 msgid "Home folder"
 msgstr "Home folder"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Home image"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Later"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Latest"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Launch image"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Playback position"
 msgid "Please retry or remove failed attachments."
 msgstr "Please retry or remove failed attachments"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Restore hidden default commands"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Restore hidden defaults"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Restore theme image"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

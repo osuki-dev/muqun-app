@@ -4,6 +4,7 @@ import { create } from 'zustand';
 
 import {
   ThemeRepository,
+  effectiveThemeAssets,
   type InstalledTheme,
   type ThemeLibrary,
   type ThemeSelection,
@@ -14,6 +15,7 @@ import { isOwnedThemeAsset, setThemeAssetReferences, themeAssetDirectoryUri } fr
 
 import { createThemeAssetPaths } from '@/theme/asset-paths';
 import { loadBuiltinTheme } from '@/theme/builtin-theme';
+import type { ThemeArtworkSlot } from '@/theme/artwork-overrides';
 
 // Metadata is a single MMKV value, not SecureStore or a collection of partially
 // updated keys. A failed durable write must never repaint the running app.
@@ -60,6 +62,7 @@ type ThemeLibraryState = {
   setHideHomeLogo: (id: string, value: boolean | undefined) => void;
   setHideHomeText: (id: string, value: boolean | undefined) => void;
   setHomeArtwork: (id: string, value: HomeArtworkPreference) => void;
+  setArtworkImage: (id: string, slot: ThemeArtworkSlot, uri: string | undefined) => void;
   resetAppearancePreferences: (id: string) => void;
 };
 
@@ -67,10 +70,11 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
   const publish = (repo: ThemeRepository) => {
     const library = repo.snapshot();
     setThemeAssetReferences(repo.hasAuthoritativeAssetReferences() ? library.themes : null);
+    const installed = repo.activeInstalled();
     set({
       library,
       active: repo.active(),
-      activeAssets: repo.activeInstalled()?.assets,
+      activeAssets: installed ? effectiveThemeAssets(installed) : undefined,
       defaultTheme: repo.builtinTheme(),
       defaultAssets: repo.builtinAssets(),
       hydrated: true,
@@ -143,6 +147,11 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
     setHomeArtwork(id, value) {
       const repo = getRepository();
       repo.setHomeArtwork(id, value);
+      publish(repo);
+    },
+    setArtworkImage(id, slot, uri) {
+      const repo = getRepository();
+      repo.setArtworkImage(id, slot, uri);
       publish(repo);
     },
     resetAppearancePreferences(id) {

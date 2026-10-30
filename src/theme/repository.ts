@@ -6,6 +6,12 @@ import { clampThemeOpacity } from '@/theme/opacity-policy';
 import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
+import {
+  THEME_ARTWORK_SLOTS,
+  themeArtworkEntries,
+  type ThemeArtworkImages,
+  type ThemeArtworkSlot,
+} from './artwork-overrides';
 
 /**
  * The installation id of the built-in default theme.
@@ -41,6 +47,8 @@ export type InstalledTheme = {
    * to disagree. `resolveHomeArtwork` is the single reader.
    */
   homeArtwork?: 'shown' | 'hidden';
+  /** App-owned personal copies; the author's manifest and asset map remain intact. */
+  artworkImages?: ThemeArtworkImages;
 };
 
 type ThemePreferenceKey =
@@ -48,7 +56,8 @@ type ThemePreferenceKey =
   | 'surfaceBackgroundOpacity'
   | 'hideHomeLogo'
   | 'hideHomeText'
-  | 'homeArtwork';
+  | 'homeArtwork'
+  | 'artworkImages';
 
 /** The three-valued answer the settings row shows, over the two-valued stored one. */
 export function homeArtworkPreference(installed: InstalledTheme): HomeArtworkPreference {
@@ -74,6 +83,22 @@ function validBackgroundOpacity(value: unknown): value is number {
  */
 export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest {
   const manifest = clampThemeOpacity(cloneThemeData(installed.manifest));
+  for (const { slot, id, uri } of themeArtworkEntries(
+    installed.manifest,
+    installed.artworkImages
+  )) {
+    manifest.assets ??= {};
+    manifest.assets[id] = { path: `assets/${id}.${uri.split('.').at(-1)}` };
+    manifest.decoration ??= {};
+    manifest.decoration[slot] = { asset: id, fit: 'contain' };
+    for (const mode of ['light', 'dark'] as const) {
+      if (manifest.variantDecorations?.[mode]) delete manifest.variantDecorations[mode]![slot];
+    }
+    if (slot === 'home.artwork') {
+      manifest.homeIdentity ??= {};
+      manifest.homeIdentity.artwork = { mode: 'default' };
+    }
+  }
   if (validBackgroundOpacity(installed.terminalBackgroundOpacity)) {
     for (const mode of ['light', 'dark'] as const)
       manifest.variants[mode].terminal.backgroundOpacity = installed.terminalBackgroundOpacity;
@@ -104,6 +129,18 @@ export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest
         : { mode: 'default' };
   }
   return manifest;
+}
+
+export function effectiveThemeAssets(installed: InstalledTheme): Record<string, string> {
+  return {
+    ...installed.assets,
+    ...Object.fromEntries(
+      themeArtworkEntries(installed.manifest, installed.artworkImages).map(({ id, uri }) => [
+        id,
+        uri,
+      ])
+    ),
+  };
 }
 
 export type ThemeLibrary = {
@@ -188,6 +225,7 @@ export class ThemeRepository {
       const raw = JSON.parse(value) as Partial<ThemeLibrary>;
       if (raw.version !== 1 || !Array.isArray(raw.themes)) return this.resetMemory();
       const themes: InstalledTheme[] = [];
+      let referencesValid = true;
       for (const candidate of raw.themes) {
         try {
           if (
@@ -208,10 +246,33 @@ export class ThemeRepository {
               : candidate.assets;
           validateInstalledAssets(manifest, assets);
           if (Object.values(assets).some((uri) => !this.assetAvailable(uri))) continue;
+          const artworkImages: ThemeArtworkImages = {};
+          if (candidate.artworkImages !== undefined) {
+            if (
+              !candidate.artworkImages ||
+              typeof candidate.artworkImages !== 'object' ||
+              Array.isArray(candidate.artworkImages) ||
+              Object.keys(candidate.artworkImages).some(
+                (slot) => !THEME_ARTWORK_SLOTS.includes(slot as ThemeArtworkSlot)
+              )
+            )
+              referencesValid = false;
+          }
+          if (candidate.artworkImages && typeof candidate.artworkImages === 'object') {
+            for (const slot of THEME_ARTWORK_SLOTS) {
+              const rawUri = candidate.artworkImages[slot];
+              if (rawUri === undefined) continue;
+              const uri =
+                typeof rawUri === 'string' ? (this.assetPaths?.decode(rawUri) ?? rawUri) : '';
+              if (this.assetAvailable(uri)) artworkImages[slot] = uri;
+              else referencesValid = false;
+            }
+          }
           themes.push({
             id: candidate.id,
             manifest,
             assets: { ...assets },
+            ...(Object.keys(artworkImages).length ? { artworkImages } : {}),
             ...(validBackgroundOpacity(candidate.terminalBackgroundOpacity)
               ? { terminalBackgroundOpacity: candidate.terminalBackgroundOpacity }
               : {}),
@@ -247,7 +308,7 @@ export class ThemeRepository {
         previous,
       };
       this.compiled.clear();
-      this.authoritativeReferences = themes.length === raw.themes.length;
+      this.authoritativeReferences = referencesValid && themes.length === raw.themes.length;
       return this.snapshot();
     } catch {
       return this.resetMemory();
@@ -343,6 +404,30 @@ export class ThemeRepository {
     return this.updatePreference(id, 'homeArtwork', value === 'theme' ? undefined : value);
   }
 
+  setArtworkImage(id: string, slot: ThemeArtworkSlot, uri: string | undefined): ThemeLibrary {
+    if (!THEME_ARTWORK_SLOTS.includes(slot)) throw new Error('Invalid theme artwork slot');
+    if (uri !== undefined && !this.assetAvailable(uri))
+      throw new Error('Theme image must be stored in the app theme library');
+    const installed = this.state.themes.find((theme) => theme.id === id);
+    if (!installed) throw new Error('Theme is no longer installed');
+    const images = { ...installed.artworkImages };
+    if (uri === undefined) delete images[slot];
+    else images[slot] = uri;
+    const updated = { ...installed };
+    if (Object.keys(images).length) updated.artworkImages = images;
+    else delete updated.artworkImages;
+    if (slot === 'home.artwork') {
+      if (uri) updated.homeArtwork = 'shown';
+      else delete updated.homeArtwork;
+    }
+    this.commit({
+      ...this.state,
+      themes: this.state.themes.map((theme) => (theme.id === id ? updated : theme)),
+    });
+    this.compiled.delete(id);
+    return this.snapshot();
+  }
+
   resetAppearancePreferences(id: string): ThemeLibrary {
     const installed = this.state.themes.find((theme) => theme.id === id);
     if (!installed) throw new Error('Theme is no longer installed');
@@ -352,6 +437,7 @@ export class ThemeRepository {
       'hideHomeLogo',
       'hideHomeText',
       'homeArtwork',
+      'artworkImages',
     ];
     if (keys.every((key) => installed[key] === undefined)) return this.snapshot();
     const updated = { ...installed };
@@ -497,6 +583,16 @@ export class ThemeRepository {
               assets: Object.fromEntries(
                 Object.entries(theme.assets).map(([id, uri]) => [id, this.assetPaths!.encode(uri)])
               ),
+              ...(theme.artworkImages
+                ? {
+                    artworkImages: Object.fromEntries(
+                      Object.entries(theme.artworkImages).map(([slot, uri]) => [
+                        slot,
+                        this.assetPaths!.encode(uri),
+                      ])
+                    ),
+                  }
+                : {}),
             })),
           }
         : next

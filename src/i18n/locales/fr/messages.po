@@ -1382,6 +1382,10 @@ msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs resten
 msgid "Choose how Home gets updates from your computers."
 msgstr "Choisissez comment l’accueil reçoit les mises à jour de vos ordinateurs"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Choisir une image"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Choisir un projet"
@@ -2380,6 +2384,10 @@ msgstr "Impossible d’enregistrer le raccourci"
 msgid "Could not save theme"
 msgstr "Impossible d’enregistrer le thème"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Impossible d’enregistrer cette image. Vérifiez l’image et l’espace de stockage disponible, puis réessayez"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Impossible d’enregistrer ce brouillon avant l’envoi. Rien n’a été envoyé. Votre brouillon est conservé"
@@ -3352,6 +3360,10 @@ msgstr "Connexions de l’accueil"
 msgid "Home folder"
 msgstr "Dossier personnel"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Image d’accueil"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Plus tard"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Dernière"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Image de démarrage"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Position de lecture"
 msgid "Please retry or remove failed attachments."
 msgstr "Veuillez réessayer ou supprimer les pièces jointes ayant échoué"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG ou WebP. Jusqu’à 8 Mo et 16 mégapixels"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Restaurer les commandes par défaut masquées"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Restaurer les valeurs par défaut masquées"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Rétablir l’image du thème"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

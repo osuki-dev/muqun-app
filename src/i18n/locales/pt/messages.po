@@ -1382,6 +1382,10 @@ msgstr "Escolha o início e o estilo da interface. As cores continuam a seguir o
 msgid "Choose how Home gets updates from your computers."
 msgstr "Escolha como o início recebe atualizações dos seus computadores"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Escolher imagem"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Escolher projeto"
@@ -2380,6 +2384,10 @@ msgstr "Não foi possível salvar o atalho"
 msgid "Could not save theme"
 msgstr "Não foi possível salvar o tema"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Não foi possível salvar esta imagem. Verifique a imagem e o armazenamento disponível e tente novamente"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Não foi possível guardar este rascunho antes do envio. Nada foi enviado. O rascunho é mantido"
@@ -3352,6 +3360,10 @@ msgstr "Ligações do início"
 msgid "Home folder"
 msgstr "Pasta pessoal"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Imagem da página inicial"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Mais tarde"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mais recente"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Imagem de abertura"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Posição de reprodução"
 msgid "Please retry or remove failed attachments."
 msgstr "Tente novamente ou remova os anexos com falha"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG ou WebP. Até 8 MB e 16 megapixels"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Restaurar os comandos predefinidos ocultos"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Restaurar predefinições ocultas"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Restaurar imagem do tema"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

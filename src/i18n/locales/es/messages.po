@@ -1382,6 +1382,10 @@ msgstr "Elige el inicio y el estilo de la interfaz. Los colores siguen los de tu
 msgid "Choose how Home gets updates from your computers."
 msgstr "Elige cómo recibe Inicio las novedades de tus ordenadores"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Elegir imagen"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Elegir proyecto"
@@ -2380,6 +2384,10 @@ msgstr "No se pudo guardar el atajo"
 msgid "Could not save theme"
 msgstr "No se pudo guardar el tema"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "No se pudo guardar esta imagen. Revisa la imagen y el almacenamiento disponible e inténtalo de nuevo"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "No se pudo guardar este borrador antes de enviarlo. No se envió nada. Tu borrador se conserva"
@@ -3352,6 +3360,10 @@ msgstr "Conexiones de Inicio"
 msgid "Home folder"
 msgstr "Carpeta personal"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Imagen de inicio"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Más tarde"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Última"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Imagen de arranque"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Posición de reproducción"
 msgid "Please retry or remove failed attachments."
 msgstr "Reintente o elimine los archivos adjuntos fallidos"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG o WebP. Hasta 8 MB y 16 megapíxeles"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Restaurar los comandos predeterminados ocultos"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Restaurar predeterminados ocultos"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Restaurar imagen del tema"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

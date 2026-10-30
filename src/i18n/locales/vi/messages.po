@@ -1382,6 +1382,10 @@ msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn
 msgid "Choose how Home gets updates from your computers."
 msgstr "Chọn cách trang chủ nhận cập nhật từ các máy tính"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Chọn ảnh"
+
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Chọn dự án"
@@ -2380,6 +2384,10 @@ msgstr "Không thể lưu lệnh nhanh"
 msgid "Could not save theme"
 msgstr "Không thể lưu giao diện"
 
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Không thể lưu ảnh này. Kiểm tra ảnh và dung lượng lưu trữ còn trống rồi thử lại"
+
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
 msgstr "Không thể lưu bản nháp sắp gửi này. Chưa gửi nội dung nào. Bản nháp của bạn vẫn được giữ"
@@ -3352,6 +3360,10 @@ msgstr "Kết nối trang chủ"
 msgid "Home folder"
 msgstr "Thư mục nhà"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Ảnh trang chủ"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3712,6 +3724,10 @@ msgstr "Để sau"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mới nhất"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Ảnh khởi động"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -5139,6 +5155,10 @@ msgstr "Vị trí phát"
 msgid "Please retry or remove failed attachments."
 msgstr "Vui lòng thử lại hoặc xóa các tệp đính kèm bị lỗi"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG hoặc WebP. Tối đa 8 MB và 16 megapixel"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -5701,6 +5721,10 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Khôi phục ảnh của giao diện"
 
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"

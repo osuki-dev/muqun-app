@@ -103,7 +103,12 @@ import type { ThemeIndexEntry } from '@/theme/gallery';
 import { pickThemeManifest, shareThemeFile, type ThemeFileStage } from '@/theme/local-files';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-import { BUILTIN_THEME_INSTALLATION_ID, type InstalledTheme } from '@/theme/repository';
+import {
+  BUILTIN_THEME_INSTALLATION_ID,
+  effectiveThemeManifest,
+  effectiveThemeAssets,
+  type InstalledTheme,
+} from '@/theme/repository';
 import type { ThemeManifest } from '@/theme/schema';
 import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 
@@ -394,7 +399,13 @@ export function SettingsThemeSheet({
   function chooseCustom(theme: InstalledTheme) {
     wear({
       pack: theme.manifest.variants,
-      prepare: () => prepareThemeArtwork(theme.manifest, theme.assets, resolvedMode, window.width),
+      prepare: () =>
+        prepareThemeArtwork(
+          effectiveThemeManifest(theme),
+          effectiveThemeAssets(theme),
+          resolvedMode,
+          window.width
+        ),
       apply: () => useThemeLibrary.getState().apply({ kind: 'custom', id: theme.id }),
     });
   }

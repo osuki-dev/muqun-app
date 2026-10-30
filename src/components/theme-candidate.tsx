@@ -9,7 +9,7 @@ import {
   type EffectiveCustomTheme,
 } from '@/theme/candidate-theme';
 import type { ThemeManifest } from '@/theme/schema';
-import type { InstalledTheme } from '@/theme/repository';
+import { effectiveThemeAssets, type InstalledTheme } from '@/theme/repository';
 
 /**
  * The theme being looked at, for the part of the tree that is looking at it.
@@ -62,7 +62,11 @@ export function CandidateThemeProvider({
     () => resolveCandidateTheme(manifest, assets, installed ?? appearance),
     [manifest, assets, installed, appearance]
   );
-  const value = useMemo<EffectiveCustomTheme>(() => ({ theme, assets }), [theme, assets]);
+  const source = installed ?? appearance;
+  const value = useMemo<EffectiveCustomTheme>(
+    () => ({ theme, assets: source ? effectiveThemeAssets(source) : assets }),
+    [theme, assets, source]
+  );
   const { mode } = useThemeMode();
   const palette = useThemePalette(theme);
   return (
