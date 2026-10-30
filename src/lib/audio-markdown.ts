@@ -29,6 +29,17 @@ function basename(path: string): string {
   return path.slice(path.replace(/\/+$/, '').lastIndexOf('/') + 1) || path;
 }
 
+/** Source-link locations are navigation hints, not part of the host filename.
+ * Keep percent-encoded delimiters literal; only explicit local Markdown links
+ * use this convention, never arbitrary file APIs or URLs to other hosts.
+ */
+function linkedFilePath(uri: string): string {
+  return uri.replace(
+    /(?::[1-9]\d*(?::[1-9]\d*)?|#L[1-9]\d*(?:C[1-9]\d*)?(?:-L?[1-9]\d*(?:C[1-9]\d*)?)?)$/,
+    ''
+  );
+}
+
 /** A line that is nothing but a theme path, optionally bulleted or in a code span. */
 function wholeLineThemePath(line: string): string | undefined {
   const bare = line
@@ -115,8 +126,10 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
             continue;
           }
           if (/[!\\]/.test(line[match.index - 1] ?? '')) continue;
-          const uri = match[5] ?? match[6];
-          if (!uri || !isHostPathSource(uri) || uri.startsWith('#')) continue;
+          const destination = match[5] ?? match[6];
+          if (!destination || !isHostPathSource(destination) || destination.startsWith('#'))
+            continue;
+          const uri = linkedFilePath(destination);
           const start = offset + match.index;
           flushTo(start);
           if (isThemeFilePath(uri)) themePaths.add(uri);
