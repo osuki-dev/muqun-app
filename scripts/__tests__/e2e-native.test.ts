@@ -308,7 +308,7 @@ const coverSheetCaptures = [
         index: 1,
         parentIndex: 0,
         type: 'Button',
-        role: 'UIButton',
+        role: '_UIGrabber',
         label: 'Sheet Grabber',
         rect: { x: 151, y: 58, width: 100, height: 24 },
       },
@@ -1672,6 +1672,7 @@ describe('native end-to-end gate', () => {
           {
             index: 1,
             type: 'Button',
+            role: '_UIGrabber',
             label: 'Sheet Grabber',
             rect: grabber,
           },
