@@ -132,8 +132,7 @@ import {
 } from '@/lib/agent-commands';
 import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
 import {
-  contextFillRatio,
-  contextTokenTotal,
+  agentUsageSummary,
   formatModelName,
   hasRealSessionTitle,
   isSessionUnread,
@@ -860,23 +859,23 @@ export const AgentComposer = memo(function AgentComposer({
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
-  // Session spend cannot substitute for the latest context measurement.
+  // A provider may report session spend without reporting context occupancy.
   const contextPill = useMemo(() => {
-    const live = contextUsage?.tokens ?? null;
-    const total = contextUsage?.total_tokens ?? contextTokenTotal(live);
-    if (total <= 0) return null;
-    const ratio = contextFillRatio(
-      live,
-      contextUsage?.limit?.context ?? contextLimit,
-      contextUsage?.total_tokens
-    );
+    const usage = agentUsageSummary(contextUsage, tokens, contextLimit);
+    if (!usage) return null;
+    const { total, ratio, source } = usage;
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
     const costStr =
       cost === undefined || cost === null ? null : cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return { label: costStr === null ? tokStr : `${tokStr} • ${costStr}`, ratio };
-  }, [contextUsage, contextLimit, cost, t]);
+    const amount = costStr === null ? tokStr : `${tokStr} • ${costStr}`;
+    return {
+      label: source === 'session' ? `${t`Session Tokens`} · ${amount}` : amount,
+      ratio,
+      source,
+    };
+  }, [contextUsage, tokens, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
     () => modelName || formatModelName(selectedModel, t`Model`),
@@ -2385,9 +2384,11 @@ export const AgentComposer = memo(function AgentComposer({
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={
-                          contextPill.ratio === null
-                            ? t`Tokens usage and cost`
-                            : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                          contextPill.source === 'session'
+                            ? `${contextPill.label}. ${t`Context`}: ${t`Not available`}`
+                            : contextPill.ratio === null
+                              ? t`Tokens usage and cost`
+                              : t`Context ${Math.round(contextPill.ratio * 100)}% full`
                         }
                         style={[
                           styles.actionBtnWithLabel,

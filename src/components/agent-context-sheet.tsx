@@ -22,7 +22,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { formatModelName } from '@/lib/agent-protocol';
 import {
-  contextFillRatio,
+  agentUsageSummary,
   contextTokenTotal,
   listSavedPermissions,
   revokeSavedPermission,
@@ -167,16 +167,17 @@ export const AgentContextSheet = memo(function AgentContextSheet({
    * `GET …/context` is what the model can still see -- everything after the
    * last compaction -- so that is the capacity. The spend keeps its own row.
    */
-  const live = contextUsage?.tokens ?? null;
-  const inContext = contextUsage?.total_tokens ?? contextTokenTotal(live);
   const spent = contextTokenTotal(tokens);
   // No invented window, but no window thrown away either: the gateway states
   // one when OpenCode does, and the model catalogue states one for every model
   // it publishes. Only with neither is there nothing to draw a percentage in.
   const limit = contextUsage?.limit?.context ?? contextLimit ?? session?.limit?.context;
-  const ratio = contextFillRatio(live, limit, contextUsage?.total_tokens);
+  const usage = agentUsageSummary(contextUsage, tokens, limit);
+  const hasContext = usage?.source === 'context';
+  const inContext = hasContext ? usage.total : null;
+  const ratio = usage?.ratio ?? null;
   const limitLabel =
-    limit === undefined
+    limit === undefined || !Number.isFinite(limit) || limit <= 0
       ? null
       : limit >= 1_000_000
         ? `${(limit / 1_000_000).toFixed(1)}M`
@@ -200,7 +201,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   return (
     <SheetScene
       testID="agent-context-sheet"
-      title={t`Context`}
+      title={usage?.source === 'session' ? t`Session Tokens` : t`Context`}
       caption={session?.title || modelName || session?.model?.model_id}>
       <ScrollView
         nestedScrollEnabled
@@ -216,7 +217,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             </Text>
             {ratio === null ? (
               <Text variant="caption" color={theme.colors.textMuted}>
-                {!live ? t`Not available` : t`no window reported for this model`}
+                {!hasContext ? t`Not available` : t`no window reported for this model`}
               </Text>
             ) : (
               <Text variant="caption" weight="semibold" color={barTone}>
@@ -224,31 +225,33 @@ export const AgentContextSheet = memo(function AgentContextSheet({
               </Text>
             )}
           </View>
-          <View
-            style={[
-              styles.capacityTrack,
-              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-            ]}>
+          {ratio !== null ? (
             <View
               style={[
-                styles.capacityFill,
-                {
-                  width: `${ratio === null ? 0 : Math.max(2, ratio * 100)}%`,
-                  backgroundColor: barTone,
-                },
-              ]}
-            />
-          </View>
+                styles.capacityTrack,
+                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+              ]}>
+              <View
+                style={[
+                  styles.capacityFill,
+                  {
+                    width: `${Math.max(2, ratio * 100)}%`,
+                    backgroundColor: barTone,
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
           {/* What the number is, said plainly: the last turn's input, cached
               input, reasoning and output -- which is what the model read. */}
           <Text testID="agent-context-used" variant="caption" color={theme.colors.textMuted}>
-            {!live
+            {inContext === null
               ? t`Not available`
               : limitLabel === null
                 ? t`${compact(inContext)} tokens the model last read`
                 : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
           </Text>
-          {contextUsage?.messages !== undefined ? (
+          {hasContext && contextUsage?.messages !== undefined ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
               {t`${contextUsage.messages} messages in context`}
             </Text>

@@ -1674,6 +1674,43 @@ export function contextFillRatio(
   return Math.min(1, used / limit);
 }
 
+/** Current context and cumulative spend are distinct measurements, for every provider. */
+export function agentUsageSummary(
+  context: AgentContextUsage | null | undefined,
+  tokens: TokensUsage | undefined,
+  contextLimit?: number
+): { source: 'context' | 'session'; total: number; ratio: number | null } | null {
+  const validCount = (value: number) => Number.isFinite(value) && value >= 0;
+  const measuredTotal = (usage: TokensUsage | null | undefined): number | null => {
+    if (!usage) return null;
+    const counts = [
+      usage.input,
+      usage.output,
+      usage.reasoning ?? 0,
+      usage.cache_read ?? 0,
+      usage.cache_write ?? 0,
+    ];
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    return counts.every(validCount) && validCount(total) ? total : null;
+  };
+  const reported = context?.total_tokens;
+  const current =
+    reported !== undefined && validCount(reported) ? reported : measuredTotal(context?.tokens);
+  if (current !== null) {
+    const limit = context?.limit?.context ?? contextLimit;
+    return {
+      source: 'context',
+      total: current,
+      ratio:
+        limit !== undefined && Number.isFinite(limit) && limit > 0
+          ? Math.min(1, current / limit)
+          : null,
+    };
+  }
+  const spent = measuredTotal(tokens);
+  return spent !== null && spent > 0 ? { source: 'session', total: spent, ratio: null } : null;
+}
+
 export interface ShellInfo {
   id: string;
   status: ShellStatus;

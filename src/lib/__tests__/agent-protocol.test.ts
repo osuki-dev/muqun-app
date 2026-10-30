@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  agentUsageSummary,
   contextFillRatio,
   DEFAULT_PERMISSION_DECISIONS,
   contextTokenTotal,
@@ -1124,6 +1125,57 @@ describe('catalog', () => {
 });
 
 describe('context, shells, engine, diff', () => {
+  test('session usage remains visible without pretending to measure context', () => {
+    const tokens = { input: 100, output: 20, reasoning: 3, cache_read: 4, cache_write: 5 };
+    expect(agentUsageSummary({ tokens: null, messages: 0 }, tokens, 200000)).toEqual({
+      source: 'session',
+      total: 132,
+      ratio: null,
+    });
+    expect(agentUsageSummary(undefined, { ...tokens, output: 40 })).toEqual({
+      source: 'session',
+      total: 152,
+      ratio: null,
+    });
+    expect(agentUsageSummary(undefined, undefined)).toBeNull();
+    expect(agentUsageSummary({ tokens: null }, { input: 0, output: 0 })).toBeNull();
+  });
+
+  test('only an actual context measurement can fill a reported window', () => {
+    const spent = { input: 1000, output: 1000 };
+    expect(agentUsageSummary({ tokens: null, total_tokens: 100 }, spent, 400)).toEqual({
+      source: 'context',
+      total: 100,
+      ratio: 0.25,
+    });
+    expect(agentUsageSummary({ tokens: { input: 10, output: 5 } }, spent)).toEqual({
+      source: 'context',
+      total: 15,
+      ratio: null,
+    });
+    expect(agentUsageSummary({ tokens: null, total_tokens: 0 }, spent, 400)).toEqual({
+      source: 'context',
+      total: 0,
+      ratio: 0,
+    });
+    expect(agentUsageSummary({ tokens: null, total_tokens: 500 }, spent, 400)?.ratio).toBe(1);
+  });
+
+  test('invalid counts and unknown limits cannot produce usage or a percentage', () => {
+    for (const invalid of [-1, NaN, Infinity]) {
+      expect(agentUsageSummary(undefined, { input: invalid, output: 10 })).toBeNull();
+      expect(agentUsageSummary(undefined, { input: 1, output: 1, cache_read: invalid })).toBeNull();
+      expect(agentUsageSummary({ tokens: null, total_tokens: invalid }, undefined)).toBeNull();
+      expect(
+        agentUsageSummary({ tokens: null, total_tokens: 10 }, undefined, invalid)?.ratio
+      ).toBeNull();
+    }
+    expect(
+      agentUsageSummary(undefined, { input: Number.MAX_VALUE, output: Number.MAX_VALUE })
+    ).toBeNull();
+    expect(agentUsageSummary({ tokens: null }, { input: 12, output: 3 }, 0)?.ratio).toBeNull();
+  });
+
   test('context usage flattens the nested cache counters', () => {
     const usage = parseAgentContextUsage({
       messages: 12,
