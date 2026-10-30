@@ -327,7 +327,10 @@ export function HomeLaunchActions({
       Math.floor((availableWidth + LAUNCH_GRID_GAP) / (140 * fontScale + LAUNCH_GRID_GAP))
     )
   );
-  const panelCellWidth = (availableWidth - LAUNCH_GRID_GAP * (panelColumns - 1)) / panelColumns;
+  // Leave fractional points unused so native pixel rounding cannot wrap the last column.
+  const panelCellWidth = Math.floor(
+    (availableWidth - LAUNCH_GRID_GAP * (panelColumns - 1)) / panelColumns
+  );
   const layout = launchRowLayout({
     width: availableWidth,
     agentCount: agentEntries.length,
