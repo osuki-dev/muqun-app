@@ -157,8 +157,8 @@ export interface AgentSheetActions {
    */
   moveSession: (directory: string) => void;
   toggleReasoning: () => void;
-  toggleYolo: () => void;
-  compactContext: () => void;
+  toggleYolo?: () => void;
+  compactContext?: () => void;
   clearContext: () => void;
 }
 
@@ -172,8 +172,6 @@ const NO_ACTIONS: AgentSheetActions = Object.freeze({
   selectWorkspace: () => {},
   moveSession: () => {},
   toggleReasoning: () => {},
-  toggleYolo: () => {},
-  compactContext: () => {},
   clearContext: () => {},
 });
 

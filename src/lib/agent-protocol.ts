@@ -406,11 +406,12 @@ export function isSessionUnread(info: AgentSessionInfo): boolean {
 
 export type PermissionDecision = 'allow' | 'allow_always' | 'deny';
 
-export function parsePermissionDecision(value: unknown): PermissionDecision {
+export function parsePermissionDecision(value: unknown): PermissionDecision | undefined {
   const raw = asString(value)?.toLowerCase();
+  if (raw === 'allow' || raw === 'once') return 'allow';
   if (raw === 'allow_always' || raw === 'always') return 'allow_always';
   if (raw === 'deny' || raw === 'reject') return 'deny';
-  return 'allow';
+  return undefined;
 }
 
 export interface PermissionOption {
@@ -462,11 +463,12 @@ export function parsePermissionRequest(value: unknown): PermissionRequest | null
       const optionRec = asRecord(entry);
       if (!optionRec) continue;
       const label = pickString(optionRec, ['label', 'title', 'name']);
-      if (!label) continue;
+      const decision = parsePermissionDecision(optionRec.decision);
+      if (!label || !decision) continue;
       options.push({
         index: asFiniteNumber(optionRec.index) ?? options.length,
         label,
-        decision: parsePermissionDecision(optionRec.decision),
+        decision,
       });
     }
   }

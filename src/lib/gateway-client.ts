@@ -195,6 +195,7 @@ import {
   type EncryptedEnvelope,
 } from './gateway-transport';
 import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
+import { PermissionReplyFlights } from './agent-permission-replies';
 import {
   endpointIsAbsent,
   sessionSnapshotFromAnswer,
@@ -1643,6 +1644,26 @@ export function assetTextTimeoutMs(bytes: number): number {
  */
 export function configuredGatewayServerId(): string | null {
   return currentRecord?.serverId ?? null;
+}
+
+const permissionReplyFlights = new PermissionReplyFlights();
+
+/** Capture the same identity gatewayFetchWithin binds before its first await. */
+export function withGatewayPermissionReply(
+  asid: string,
+  requestId: string,
+  decision: string,
+  message: string | undefined,
+  send: () => Promise<void>
+): Promise<void> {
+  const record = currentRecord;
+  const source = JSON.stringify(
+    record
+      ? [record.serverId, record.url, record.deviceId, record.token, record.transportKey]
+      : [null, currentBaseUrl, currentDeviceId, currentToken, currentTransportKey]
+  );
+  const payload = JSON.stringify(message ? { decision, message } : { decision });
+  return permissionReplyFlights.run(source, asid, requestId, payload, send);
 }
 
 export function isGatewayConfigured(): boolean {

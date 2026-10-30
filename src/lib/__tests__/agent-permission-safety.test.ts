@@ -15,7 +15,10 @@ function shellRequest(resources: string[]): PermissionRequest {
     resources,
     save: [],
     prompt: 'run',
-    options: [],
+    options: [
+      { index: 0, label: 'Allow once', decision: 'allow' },
+      { index: 1, label: 'Deny', decision: 'deny' },
+    ],
   };
 }
 
@@ -89,7 +92,7 @@ describe('dangerousPermissionRequest', () => {
       resources: ['/src/file.ts'],
       save: [],
       prompt: 'edit',
-      options: [],
+      options: [{ index: 0, label: 'Allow once', decision: 'allow' }],
     };
     expect(isDangerousPermission(req)).toBe(false);
     expect(yoloDecision(req)).toBe('allow');
@@ -103,5 +106,32 @@ describe('dangerousPermissionRequest', () => {
   test('a benign shell resource is auto-allowed', () => {
     const req = shellRequest(['bun test src']);
     expect(yoloDecision(req)).toBe('allow');
+  });
+
+  test('unknown operations and incomplete command input remain manual', () => {
+    expect(yoloDecision({ ...shellRequest([]), prompt: 'rm -rf /' })).toBeUndefined();
+    expect(yoloDecision(shellRequest([' ']))).toBeUndefined();
+    expect(yoloDecision({ ...shellRequest(['rm -rf /']), action: 'execute' })).toBeUndefined();
+    expect(yoloDecision({ ...shellRequest(['read /tmp/x']), action: '' })).toBeUndefined();
+  });
+
+  test('missing or ambiguous choices never silently widen the approval scope', () => {
+    const req = shellRequest(['bun test src']);
+    expect(yoloDecision({ ...req, options: [] })).toBeUndefined();
+    expect(
+      yoloDecision({ ...req, options: [{ index: 0, label: 'Always', decision: 'allow_always' }] })
+    ).toBeUndefined();
+    expect(
+      yoloDecision({
+        ...req,
+        options: [req.options[0], { index: 2, label: 'Allow turn', decision: 'allow' }],
+      })
+    ).toBeUndefined();
+    expect(
+      yoloDecision({ ...shellRequest(['rm -rf /']), options: [req.options[0]] })
+    ).toBeUndefined();
+    expect(
+      yoloDecision({ ...shellRequest(['rm -rf /']), options: [req.options[1]] })
+    ).toBeUndefined();
   });
 });

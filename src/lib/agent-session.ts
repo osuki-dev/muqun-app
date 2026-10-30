@@ -19,6 +19,7 @@ import {
   gatewayEndpointFetch,
   gatewayFetch,
   gatewayWriteFetch,
+  withGatewayPermissionReply,
   gatewayUrl,
   isGatewayConfigured,
   type GatewayEndpoint,
@@ -1067,11 +1068,13 @@ export async function replyAgentPermission(
   decision: PermissionDecision,
   message?: string
 ): Promise<void> {
-  await writeJson(
-    sessionRoute(asid, `/permissions/${encodeURIComponent(permissionId)}/reply`, sessionId, true),
-    'Failed to reply permission',
-    message ? { decision, message } : { decision }
-  );
+  await withGatewayPermissionReply(asid, permissionId, decision, message, async () => {
+    await writeJson(
+      sessionRoute(asid, `/permissions/${encodeURIComponent(permissionId)}/reply`, sessionId, true),
+      'Failed to reply permission',
+      message ? { decision, message } : { decision }
+    );
+  });
 }
 
 /**

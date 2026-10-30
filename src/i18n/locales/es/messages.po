@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "La autenticación no está disponible. Inténtalo de nuevo o revisa los ajustes del sistema"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "Aprobar automáticamente todas las acciones"
+msgid "Auto-approve supported requests"
+msgstr "Aprobar automáticamente las solicitudes compatibles"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -3630,6 +3630,10 @@ msgstr "Teclas"
 msgid "Know what is coming next."
 msgstr "Conoce lo que viene antes de actualizar"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "Los comandos peligrosos conocidos siguen bloqueados. Las solicitudes con entradas u opciones poco claras siguen necesitando tu aprobación"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4655,6 +4659,10 @@ msgstr "Solo se añadieron los primeros {MAX_ATTACHMENTS_PER_PICK} archivos; {dr
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Solo se oculta esta fila de Inicio. La tarea y su historial siguen disponibles. El trabajo en curso no se detiene"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "Solo esta sesión. Las solicitudes poco claras siguen necesitando tu aprobación"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -7087,14 +7095,6 @@ msgstr "El agente sigue trabajando"
 #: src/lib/network-error.ts
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "El agente espera una respuesta. Responde con los controles de la pregunta o el teclado del terminal. Tu mensaje no se ha enviado"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "El agente deja de preguntar; los comandos destructivos irreversibles siguen bloqueados"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "El agente actuará sin preguntar cada vez. Los comandos destructivos irreversibles siguen bloqueados"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"

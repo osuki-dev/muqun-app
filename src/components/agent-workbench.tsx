@@ -165,6 +165,11 @@ import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import {
+  PermissionReplyGate,
+  samePermissionReplyOwner,
+  type PermissionReplyOwner,
+} from '@/lib/agent-permission-replies';
+import {
   agentRevertPath,
   oneStepRevertTarget,
   removeTimelineItems,
@@ -1145,16 +1150,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (previousAsid && previousAsid !== activeAsid) setManualModelOverride(false);
     manualModelSessionRef.current = activeAsid;
   }, [activeAsid]);
-  // YOLO mode: every permission request is answered automatically, `allow`
-  // except for the irreversibly dangerous commands the safety list denies.
-  // Mirrored in a ref so the stream handler sees the current value without
-  // re-subscribing the SSE connection on every toggle.
-  const yoloModeRef = useRef(false);
-  const [yoloMode, setYoloModeState] = useState(false);
-  const setYoloMode = useCallback((next: boolean) => {
-    yoloModeRef.current = next;
-    setYoloModeState(next);
-  }, []);
+  const permissionRecord = useGatewayConnectionStore((state) => state.record);
+  const permissionOwner = useMemo(
+    () => ({
+      scope: JSON.stringify([serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration]),
+      connection: permissionRecord,
+    }),
+    [serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration, permissionRecord]
+  );
+  const canAutoApprove = Boolean(
+    activeAsid &&
+    permissionRecord?.serverId === serverId &&
+    canInteractNatively &&
+    agentFeatures.toolApprovals
+  );
+  const [permissionReplies] = useState(() => new PermissionReplyGate());
+  const [yoloOwner, setYoloOwner] = useState<PermissionReplyOwner | null>(null);
+  const yoloMode = canAutoApprove && samePermissionReplyOwner(yoloOwner, permissionOwner);
+  const readAutoPermission = useLatestReader({
+    owner: permissionOwner,
+    allowed: canAutoApprove,
+    enabled: yoloMode,
+    asid: activeAsid,
+    generation: gatewayGeneration,
+  });
+  useEffect(() => {
+    permissionReplies.enter(permissionOwner);
+    if (!canAutoApprove || !samePermissionReplyOwner(yoloOwner, permissionOwner))
+      setYoloOwner(null);
+  }, [permissionReplies, permissionOwner, canAutoApprove, yoloOwner]);
+  const setYoloMode = useCallback(
+    (next: boolean) => {
+      const environment = readAutoPermission();
+      setYoloOwner(next && environment.allowed ? environment.owner : null);
+    },
+    [readAutoPermission]
+  );
   // The model the workbench has actually settled on, tracked in a ref so the
   // catalog's async default cannot clobber the session model the server
   // restored: whichever source writes first wins, but a session's own model
@@ -1732,45 +1763,66 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     void listRef.current?.scrollToEnd({ animated: false });
   }, []);
 
-  // YOLO answers every permission request itself: `allow` for anything the
-  // safety list lets through, `deny` (with a report) for irreversibly
-  // destructive commands — this is the only honesty YOLO mode has.
+  // Only this authorized session's current pending requests may be auto-answered.
   const handleAutoPermission = useCallback(
     (req: PermissionRequest) => {
-      if (!nativeAgentInteraction(readRuntime())) return;
-      const asid = req.asid;
-      if (!asid) return;
+      const environment = readAutoPermission();
+      if (
+        !environment.enabled ||
+        req.asid !== environment.asid ||
+        useGatewayConnectionStore.getState().record !== environment.owner.connection ||
+        useGatewayGeneration.getState().byServer[serverId] !== environment.generation ||
+        !nativeAgentInteraction(readRuntime())
+      )
+        return;
+      const decision = yoloDecision(req);
+      if (!decision) return;
       const sourceAsid = activeAsidRef.current;
       const directory = activeDirectoryRef.current;
       const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
       if (!sourceAsid || !ownsWorkbench(capturedOwner)) return;
-      // A child request still belongs to its child and must be answered on that
-      // asid, but its attention summary belongs nowhere on the active root card.
-      const target = asid === sourceAsid ? homeTargetFor(asid, directory) : null;
-      const decision = yoloDecision(req);
-      void replyAgentPermission(sessionId, asid, req.id, decision)
+      const ticket = permissionReplies.begin(environment.owner, req, true);
+      if (!ticket) return;
+      const target = homeTargetFor(req.asid, directory);
+      void replyAgentPermission(sessionId, req.asid, req.id, decision)
         .then(() => {
-          // A confirmed answer resolves the exact captured source even after
-          // the reader leaves it. Child requests intentionally have no Home
-          // summary rather than being attributed to the root.
+          permissionReplies.finish(ticket, true);
           if (target) {
             useHomeAttention.getState().resolve(target, req.id);
             permissionTargetsRef.current.delete(req.id);
           }
+          if (!ownsWorkbench(capturedOwner)) return;
+          setPermissions((previous) => previous.filter((permission) => permission.id !== req.id));
+          if (dangerousPermissionReason(req))
+            showToast({
+              variant: 'danger',
+              title: t`Blocked by agent safety`,
+              message: req.resources[0] ?? t`Unknown command`,
+            });
         })
         .catch((err) => {
+          permissionReplies.finish(ticket, false);
           console.warn('YOLO permission reply failed:', err);
+          if (ownsWorkbench(capturedOwner))
+            showToast({
+              variant: 'danger',
+              title: t`Could not reply`,
+              message: agentErrorRef.current(err),
+            });
         });
-      const danger = dangerousPermissionReason(req);
-      if (danger) {
-        showToast({
-          variant: 'danger',
-          title: t`Blocked by agent safety`,
-          message: req.resources[0] ?? t`Unknown command`,
-        });
-      }
     },
-    [readRuntime, captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
+    [
+      readAutoPermission,
+      permissionReplies,
+      readRuntime,
+      captureWorkbenchOwner,
+      homeTargetFor,
+      ownsWorkbench,
+      sessionId,
+      serverId,
+      showToast,
+      t,
+    ]
   );
 
   /**
@@ -2070,16 +2122,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setWindowStart(nextWindow);
               }
 
-              if (yoloModeRef.current && nativeAgentInteraction(info?.runtime)) {
-                // Auto-answer everything the engine raised while we were away — the
-                // safety list still denies its share.
-                for (const perm of snap.permissions) void handleAutoPermission(perm);
-                for (const item of snap.timeline) {
-                  if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
-                }
-                setPermissions([]);
-              } else {
-                setPermissions(snap.permissions);
+              const pendingPermissions = permissionReplies.replace(
+                readAutoPermission().owner,
+                snap.permissions.map((permission) =>
+                  permission.asid ? permission : { ...permission, asid }
+                )
+              );
+              setPermissions(pendingPermissions);
+              if (readAutoPermission().enabled && nativeAgentInteraction(info?.runtime)) {
+                for (const permission of pendingPermissions) handleAutoPermission(permission);
               }
               setForms(snap.forms);
               /**
@@ -2204,6 +2255,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       applyViewed,
       follow,
       handleAutoPermission,
+      permissionReplies,
+      readAutoPermission,
       homeTargetFor,
       noteWorkspaceMissing,
       syncHomeRecentTitle,
@@ -2493,6 +2546,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         case 'agent.permission.pending': {
           if (!mountedRef.current) break;
           const eventAsid = event.asid || activeAsid;
+          const request = event.request.asid
+            ? event.request
+            : { ...event.request, asid: eventAsid || '' };
+          if (!permissionReplies.add(readAutoPermission().owner, request)) break;
           const target =
             forActiveSession && eventAsid === activeAsidRef.current
               ? homeTargetFor(eventAsid, activeDirectoryRef.current)
@@ -2501,13 +2558,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             permissionTargetsRef.current.set(event.request.id, target);
             useHomeAttention.getState().pending(target, event.request.id, Date.now());
           }
-          if (yoloModeRef.current) {
-            handleAutoPermission(event.request);
-          } else {
-            setPermissions((prev) =>
-              prev.some((p) => p.id === event.request.id) ? prev : [...prev, event.request]
-            );
-          }
+          setPermissions((prev) =>
+            prev.some((p) => p.id === request.id) ? prev : [...prev, request]
+          );
+          if (readAutoPermission().enabled) handleAutoPermission(request);
           break;
         }
 
@@ -2518,6 +2572,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (target) {
             useHomeAttention.getState().resolve(target, event.request_id, Date.now());
           }
+          permissionReplies.resolve(readAutoPermission().owner, {
+            asid: event.asid || activeAsid || '',
+            id: event.request_id,
+          });
           setPermissions((prev) => prev.filter((p) => p.id !== event.request_id));
           break;
         }
@@ -2616,6 +2674,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshDiffs,
       applyViewed,
       handleAutoPermission,
+      permissionReplies,
+      readAutoPermission,
       homeTargetFor,
       syncHomeRecentTitle,
       syncHomeRecentObservation,
@@ -3483,7 +3543,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     async (permId: string, decision: PermissionDecision) => {
       if (!nativeAgentInteraction(readRuntime())) return;
       const request = permissions.find((permission) => permission.id === permId);
-      const asid = request?.asid || activeAsidRef.current;
+      if (!request) return;
+      const asid = request.asid || activeAsidRef.current;
       if (!asid) return;
       const capturedTarget = permissionTargetsRef.current.get(permId);
       const directory = activeDirectoryRef.current;
@@ -3492,9 +3553,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         capturedTarget ?? (sourceAsid === asid ? homeTargetFor(asid, directory) : null);
       const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
       if (!ownsWorkbench(capturedOwner)) return;
+      const environment = readAutoPermission();
+      if (useGatewayConnectionStore.getState().record !== environment.owner.connection) return;
+      const ticket = permissionReplies.begin(environment.owner, request, false);
+      if (!ticket) return;
       try {
         await replyAgentPermission(sessionId, asid, permId, decision);
       } catch (err) {
+        permissionReplies.finish(ticket, false);
         console.warn('Failed to reply permission:', err);
         if (ownsWorkbench(capturedOwner))
           showToast({
@@ -3504,6 +3570,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           });
         return;
       }
+      permissionReplies.finish(ticket, true);
       // The gateway confirmed this exact request. Its Home summary is allowed
       // to settle after navigation, while the visible workbench is not.
       if (target) {
@@ -3516,6 +3583,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       readRuntime,
+      permissionReplies,
+      readAutoPermission,
       captureWorkbenchOwner,
       homeTargetFor,
       ownsWorkbench,
@@ -3527,8 +3596,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleToggleYoloMode = useCallback(() => {
-    setYoloMode(!yoloModeRef.current);
-  }, [setYoloMode]);
+    const environment = readAutoPermission();
+    if (
+      !samePermissionReplyOwner(permissionOwner, environment.owner) ||
+      useGatewayConnectionStore.getState().record !== permissionOwner.connection
+    )
+      return;
+    setYoloMode(!environment.enabled);
+  }, [permissionOwner, setYoloMode, readAutoPermission]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -5519,8 +5594,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void handleMoveSession(directory);
       },
       toggleReasoning: handleToggleReasoning,
-      toggleYolo: handleToggleYoloMode,
-      compactContext: handleCompactContext,
+      toggleYolo: canAutoApprove ? handleToggleYoloMode : undefined,
+      compactContext:
+        canInteractNatively && agentFeatures.compaction ? handleCompactContext : undefined,
       clearContext: handleClearContext,
     }),
     [
@@ -5534,6 +5610,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleMoveSession,
       handleToggleReasoning,
       handleToggleYoloMode,
+      canAutoApprove,
+      canInteractNatively,
+      agentFeatures.compaction,
       handleCompactContext,
       handleClearContext,
       selectAsid,

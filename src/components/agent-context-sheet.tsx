@@ -100,7 +100,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
-  const [confirmingYolo, setConfirmingYolo] = useState(false);
+  const [yoloConfirmation, setYoloConfirmation] = useState<{ toggle: () => void } | null>(null);
+  const confirmingYolo = yoloConfirmation?.toggle === onToggleYolo;
 
   /**
    * What "Always allow" has agreed to, for this session's project.
@@ -395,35 +396,35 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             {onToggleYolo ? (
               <>
                 <SheetSceneRow
-                  title={t`Auto-approve every action`}
-                  caption={t`The agent stops asking; irreversibly destructive commands stay blocked`}
+                  title={t`Auto-approve supported requests`}
+                  caption={t`Only this session. Unclear requests still need your approval.`}
                   meta={
                     <Toggle
                       value={yoloMode}
                       onValueChange={(next) => {
                         if (next) {
-                          setConfirmingYolo(true);
+                          setYoloConfirmation({ toggle: onToggleYolo });
                         } else {
-                          setConfirmingYolo(false);
+                          setYoloConfirmation(null);
                           onToggleYolo();
                         }
                       }}
-                      accessibilityLabel={t`Auto-approve every action`}
+                      accessibilityLabel={t`Auto-approve supported requests`}
                     />
                   }
                 />
                 {confirmingYolo ? (
                   <View style={styles.confirm}>
                     <Text variant="caption" color={theme.colors.text} style={styles.confirmText}>
-                      {t`The agent will act without asking each time. Irreversibly destructive commands are still blocked.`}
+                      {t`Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval.`}
                     </Text>
                     <View style={styles.confirmActions}>
                       <PressableScale
                         testID="agent-yolo-confirm-btn"
                         accessibilityRole="button"
                         onPress={() => {
-                          setConfirmingYolo(false);
-                          onToggleYolo();
+                          setYoloConfirmation(null);
+                          yoloConfirmation?.toggle();
                         }}
                         style={[styles.action, { backgroundColor: theme.colors.danger }]}>
                         <Text variant="caption" weight="bold" color={theme.colors.onPrimary}>
@@ -433,7 +434,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                       <PressableScale
                         testID="agent-yolo-cancel-btn"
                         accessibilityRole="button"
-                        onPress={() => setConfirmingYolo(false)}
+                        onPress={() => setYoloConfirmation(null)}
                         style={styles.action}>
                         <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
                           {t`Cancel`}
