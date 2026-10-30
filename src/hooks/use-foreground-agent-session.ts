@@ -78,7 +78,8 @@ export function useForegroundAgentSession(options: {
       prepare: () =>
         prepareAgentSessionAt({
           serverId: owner.serverId,
-          endpoint,
+          record: endpoint,
+          current,
           agentId,
           asid,
           capabilities: owner.capabilities,

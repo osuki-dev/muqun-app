@@ -1130,7 +1130,7 @@ export function setGatewayTunnelSessionOpener(
  * own loopback because a forward would not open is exactly the leak this
  * feature's threat model is written against.
  */
-async function withRecordBaseUrl<T>(
+export async function withRecordBaseUrl<T>(
   record: GatewayRecord,
   body: (baseUrl: string) => Promise<T>
 ): Promise<T> {

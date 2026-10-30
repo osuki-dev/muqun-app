@@ -39,25 +39,40 @@ export class ForegroundSessionActivation {
 
 /** In-flight only: a later open or explicit retry always reaches the Gateway. */
 export class SessionPreparationFlights {
-  private flights = new Map<string, Promise<void>>();
+  private flights = new Map<
+    string,
+    {
+      promise: Promise<void>;
+      owners: Set<() => boolean>;
+    }
+  >();
 
-  run(key: string, send: () => Promise<void>): Promise<void> {
+  run(
+    key: string,
+    send: (current: () => boolean) => Promise<void>,
+    owner: () => boolean = () => true
+  ): Promise<void> {
     const pending = this.flights.get(key);
-    if (pending) return pending;
+    if (pending) {
+      pending.owners.add(owner);
+      return pending.promise;
+    }
     let accept!: () => void;
     let refuse!: (error: unknown) => void;
     const promise = new Promise<void>((resolve, reject) => {
       accept = resolve;
       refuse = reject;
     });
-    this.flights.set(key, promise);
+    const owners = new Set([owner]);
+    this.flights.set(key, { promise, owners });
     void promise.then(
       () => this.flights.delete(key),
       () => this.flights.delete(key)
     );
-    // Dispatch with the caller's captured endpoint before another selection can run.
+    // A newer foreground reader can join while the captured SSH lease opens.
+    const current = () => [...owners].some((isCurrent) => isCurrent());
     try {
-      void send().then(accept, refuse);
+      void send(current).then(accept, refuse);
     } catch (error) {
       refuse(error);
     }

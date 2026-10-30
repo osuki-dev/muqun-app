@@ -8,6 +8,7 @@ import {
 } from '../../test-support/production-source';
 import { recoverWith, settleAfter } from '../compiler-safe-control-flow';
 import { SessionPreparationFlights } from '../foreground-session-activation';
+import { assertDeliveryCurrent } from '../bound-delivery';
 
 function harness(data: unknown = { data: { prepared: true } }, status = 200) {
   const calls: { endpoint: unknown; url: string; init: RequestInit }[] = [];
@@ -20,6 +21,10 @@ function harness(data: unknown = { data: { prepared: true } }, status = 200) {
     ),
     {
       flights: new SessionPreparationFlights(),
+      assertDeliveryCurrent,
+      isGatewayEncryptionDisabled: () => false,
+      withRecordBaseUrl: (record: { url: string }, body: (base: string) => Promise<void>) =>
+        body(record.url.replace(/\/$/, '')),
       gatewayEndpointFetch: async (endpoint: unknown, url: string, init: RequestInit) => {
         calls.push({ endpoint, url, init });
         return { ok: status === 200, status, json: async () => data, text: async () => 'refused' };
@@ -29,7 +34,8 @@ function harness(data: unknown = { data: { prepared: true } }, status = 200) {
     serverId: string;
     agentId: string;
     asid: string;
-    endpoint: { url: string; token: string; deviceId: string };
+    record: { url: string; token: string; deviceId: string };
+    current: () => boolean;
     capabilities?: string[];
   }) => Promise<void>;
   return { calls, prepare };
@@ -38,7 +44,8 @@ const options = {
   serverId: 'server',
   agentId: 'opaque/agent',
   asid: 'opaque/session',
-  endpoint: { url: 'https://captured.invalid/', token: 'fixture', deviceId: 'device' },
+  record: { url: 'https://captured.invalid/', token: 'fixture', deviceId: 'device' },
+  current: () => true,
 };
 
 test('activation posts to the provider-scoped route with captured credentials and no prompt', async () => {
@@ -50,7 +57,12 @@ test('activation posts to the provider-scoped route with captured credentials an
   );
   expect(run.calls[0].init.method).toBe('POST');
   expect(run.calls[0].init.body).toBeUndefined();
-  expect(run.calls[0].endpoint).toEqual(options.endpoint);
+  expect(run.calls[0].endpoint).toEqual({
+    ...options.record,
+    url: 'https://captured.invalid',
+    sshTunnel: undefined,
+    transport: undefined,
+  });
   expect(run.calls[0].init.headers).toEqual({ Authorization: 'Bearer fixture' });
 });
 
