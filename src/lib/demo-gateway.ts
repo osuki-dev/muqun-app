@@ -3,6 +3,7 @@ import { stopDemoStageProgress } from './demo-stage-progress-native';
 import { demoPdfBytes } from './demo-pdf';
 import { demoImageGallerySnapshot } from './demo-image-gallery';
 import {
+  DEMO_COMPACTION_ERROR,
   demoCompactionLogSnapshot,
   isDemoCompactionLogAsid,
   startDemoCompactionLog,
@@ -296,6 +297,7 @@ function demoCompactionEvent(): AgentDomainEvent {
     seq: 32 + demoCompactionStep,
     status: phase === 1 ? 'completed' : phase === 3 ? 'failed' : 'running',
     reason: phase >= 2 ? 'auto' : 'manual',
+    ...(phase === 3 ? { error: DEMO_COMPACTION_ERROR } : {}),
   };
 }
 

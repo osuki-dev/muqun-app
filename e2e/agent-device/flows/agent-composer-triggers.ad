@@ -46,3 +46,21 @@ snapshot
 screenshot "shots/agent-composer-commands.png"
 fill "id=agent-composer-input" ""
 wait absent "id=slash-command" 5000
+
+# The exact offline fixture streams for real elapsed time, then reports a
+# structured synthetic error. No live agent request or prompt is sent.
+open "muqun:///"
+open "muqun://agent?asid=demo-compaction-log-failed&agentId=opencode"
+wait "id=agent-composer-tokens-pill" 15000
+press "id=agent-composer-tokens-pill"
+wait "id=agent-context-sheet" 10000
+scroll down --until "id=agent-context-compact-btn"
+press "id=agent-context-compact-btn"
+wait absent "id=agent-context-sheet" 10000
+wait "id=agent-compaction-error" 50000
+is visible "id=agent-compaction-error label=\"Offline QA compaction failed: synthetic provider rejected the request.\""
+press "id=agent-composer-compaction-pill"
+wait "id=agent-compaction-details" 10000
+is visible "id=agent-compaction-error"
+screenshot "shots/compaction-failure-details.png"
+open "muqun:///"

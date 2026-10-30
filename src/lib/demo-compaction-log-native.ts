@@ -1,4 +1,9 @@
-import type { AgentDomainEvent, AgentSessionSnapshot, TimelineItem } from './agent-protocol';
+import type {
+  AgentDomainEvent,
+  AgentErrorInfo,
+  AgentSessionSnapshot,
+  TimelineItem,
+} from './agent-protocol';
 
 export const DEMO_COMPACTION_LOG_ASIDS = [
   'demo-compaction-log-complete',
@@ -15,6 +20,10 @@ export const DEMO_COMPACTION_RAW_A =
   ).join('');
 export const DEMO_COMPACTION_RAW_B = 'QA_STREAM_APPEND_B\r\n\r\n';
 export const DEMO_COMPACTION_RAW_C = 'QA_STREAM_APPEND_C\r\n\r\n';
+export const DEMO_COMPACTION_ERROR = {
+  name: 'OfflineQaCompactionError',
+  message: 'Offline QA compaction failed: synthetic provider rejected the request.',
+} as const satisfies AgentErrorInfo;
 export const DEMO_COMPACTION_RAW =
   ' \r\n\t\r\n' + DEMO_COMPACTION_RAW_A + DEMO_COMPACTION_RAW_B + DEMO_COMPACTION_RAW_C;
 type Planned = { afterMs: number; event: AgentDomainEvent };
@@ -35,6 +44,9 @@ export function demoCompactionLogPlan(asid: string): Planned[] {
     status,
     reason: 'manual',
     ...(delta === undefined ? {} : { delta }),
+    ...(status === 'failed' && asid === 'demo-compaction-log-failed'
+      ? { error: DEMO_COMPACTION_ERROR }
+      : {}),
   });
   const boundary = (
     seq: number,
