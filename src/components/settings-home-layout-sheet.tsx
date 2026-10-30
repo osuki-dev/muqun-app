@@ -52,13 +52,14 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void | Pro
     return settleAfter(
       async () => {
         try {
-          if (next === layout) {
+          if (next === useAppSettings.getState().homeLayout) {
             await onClose();
             return;
           }
           // Animate the layouts themselves, not a short picker stretched to
           // the size of Home. Wait for navigation before capturing either one.
           await onClose();
+          if (next === useAppSettings.getState().homeLayout) return;
           await reskin.run({ kind: 'layout', apply: () => setHomeLayout(next) });
         } catch {
           showToast({
