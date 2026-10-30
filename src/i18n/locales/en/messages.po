@@ -1795,6 +1795,7 @@ msgstr "Connections"
 msgid "Contains subagent sessions"
 msgstr "Contains subagent sessions"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Context"
@@ -4456,6 +4457,7 @@ msgid "Not accepting work"
 msgstr "Not accepting work"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -6173,6 +6175,7 @@ msgid "Session name"
 msgstr "Session name"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "Session Tokens"
 

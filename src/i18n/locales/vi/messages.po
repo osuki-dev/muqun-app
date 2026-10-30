@@ -1795,6 +1795,7 @@ msgstr "Kết nối"
 msgid "Contains subagent sessions"
 msgstr "Chứa các phiên tác nhân phụ"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Ngữ cảnh"
@@ -4456,6 +4457,7 @@ msgid "Not accepting work"
 msgstr "Không nhận công việc"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -6173,6 +6175,7 @@ msgid "Session name"
 msgstr "Tên phiên"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "Token phiên"
 
