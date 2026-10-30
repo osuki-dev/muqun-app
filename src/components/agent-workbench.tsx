@@ -1,5 +1,6 @@
 import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
-import { sessionPreparationSource } from '@/lib/agent-session-prepare';
+import { isAgentSessionPreparingAt, sessionPreparationSource } from '@/lib/agent-session-prepare';
+import { isPreparingSessionHistory, sessionReadFeedback } from '@/lib/session-read-feedback';
 import {
   bindForegroundSessionAgents,
   foregroundSessionAgent,
@@ -320,7 +321,7 @@ import {
   type AgentPromptOwnership,
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
-import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { recoverWith, settleAfter, rethrow } from '@/lib/compiler-safe-control-flow';
 import { promptedSessionWaitMs } from '@/lib/prompted-agent-sessions';
 
 /**
@@ -467,6 +468,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const rootRouteName = useRootRouteName();
   const navigation = useNavigation();
   const permissionRecord = useGatewayConnectionStore((state) => state.record);
+  const entryRestart = useGatewayGeneration((state) => state.restarts[serverId] ?? 0);
+  const entrySource =
+    permissionRecord?.serverId === serverId
+      ? JSON.stringify([
+          sessionId,
+          sessionPreparationSource(serverId, permissionRecord, entryRestart),
+        ])
+      : null;
   // A durable session's provider survives a native process restart. Request and
   // acknowledgment ownership still fence restarts in useForegroundAgentSession.
   const preparationSource =
@@ -587,7 +596,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
-  const { showToast } = useToast();
+  const { showToast, dismissToast } = useToast();
+  const readFeedback = sessionReadFeedback(showToast, dismissToast);
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
@@ -932,6 +942,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // ref or a setter used above its own declaration as an access out of order
   // and declines to compile the workbench. Each is described where it is used.
   const openedAsidRef = useRef<string | undefined>(undefined);
+  const entryIntentRef = useRef<string | null>(null);
+  const snapshotReadRef = useRef(0);
   const catchUpRef = useRef<() => void>(() => {});
   const handleCreateNewSessionRef = useRef<((agentId?: string) => Promise<void>) | null>(null);
   const [worktreeRevision, setWorktreeRevision] = useState(0);
@@ -2050,13 +2062,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const ownerGeneration = ownerGenerationRef.current;
       const source = readPreparationSource();
       const sourceOwner = readPreparationSource(true);
+      const foregroundOwner = globalOwnerRef.current;
+      const feedbackScope = JSON.stringify([sourceOwner, asid, 'history']);
       const ownsSnapshot = () =>
         current?.() !== false &&
         mountedRef.current &&
         ownerGenerationRef.current === ownerGeneration &&
         activeAsidRef.current === asid &&
+        readPreparationSource(true) === sourceOwner &&
         useGatewayConnectionStore.getState().record?.serverId === serverId;
       if (!ownsSnapshot()) return;
+      // A prepared refresh supersedes the earlier cold read's failure, even
+      // when that old refusal arrives after preparation has already settled.
+      const request = ++snapshotReadRef.current;
+      if (mode === 'refresh') readFeedback.clear(feedbackScope);
       if (mode === 'enter' && freshSessionRef.current !== asid) setLoading(true);
       const snapshotTicket = useHomeAttention.getState().reserve();
       return settleAfter(
@@ -2083,6 +2102,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 });
               }
               if (!ownsSnapshot()) return;
+              if (request === snapshotReadRef.current) readFeedback.clear(feedbackScope);
               historyCursorRef.current = snap.history_cursor;
               setEarlierExhausted(snap.history_cursor === null);
               const fresh = freshSessionRef.current === asid;
@@ -2246,7 +2266,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               );
             },
             (err) => {
-              if (!ownsSnapshot()) return;
+              if (!ownsSnapshot() || request !== snapshotReadRef.current) return;
               console.warn('Failed to load snapshot:', err);
               const gone = freshSessionRef.current !== asid ? classifyAgentSessionGone(err) : null;
               if (gone) {
@@ -2286,21 +2306,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setActiveAsid(undefined);
                 return;
               }
-              // Anything else is a session that exists and could not be read. The
-              // entry guard is released so this session can be opened again: a
-              // snapshot that failed once -- the gateway's address not hydrated yet,
-              // a dropped request -- must not leave the screen permanently empty.
+              // A failed read does not create another foreground open intent.
+              // Reconnect/resync and explicit Refresh may still recover this reader.
+              const record = useGatewayConnectionStore.getState().record;
+              const preparing =
+                record?.serverId === serverId &&
+                isAgentSessionPreparingAt({
+                  serverId,
+                  record,
+                  agentId: foregroundSessionAgent(preparationBindings, source, asid),
+                  asid,
+                  restart: useGatewayGeneration.getState().restarts[serverId] ?? 0,
+                });
+              if (isPreparingSessionHistory(err, preparing)) return;
               openedAsidRef.current = undefined;
-              showToast({
-                variant: 'danger',
-                title: t`Could not load the session`,
-                message: agentErrorRef.current(err),
-              });
+              // The prepare owner's refresh failure belongs in its persistent
+              // recovery notice with Retry, rather than another transient toast.
+              if (current) return rethrow(err);
+              if (isGlobalOwner() && globalOwnerRef.current === foregroundOwner) {
+                readFeedback.failed(feedbackScope, {
+                  variant: 'danger',
+                  title: t`Could not load the session`,
+                  message: agentErrorRef.current(err),
+                });
+              }
             }
           );
         },
         () => {
-          if (mode === 'enter' && ownsSnapshot()) setLoading(false);
+          if (ownsSnapshot() && request === snapshotReadRef.current) setLoading(false);
         }
       );
     },
@@ -2322,30 +2356,32 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       syncHomeRecentObservation,
       serverId,
       readPreparationSource,
+      preparationBindings,
+      readFeedback,
+      isGlobalOwner,
       showToast,
       t,
     ]
   );
 
-  /**
-   * Entering a session is one snapshot, once.
-   *
-   * The effect used to depend on `loadSnapshot`, and `loadSnapshot` changed
-   * identity whenever anything it called did -- so opening the screen ran the
-   * whole entry twice. What the reader is entering is an `asid`, so that is
-   * what this is keyed on: the loader still re-declares when the session
-   * changes, and the ref says whether that session has already been opened.
-   */
-  useEffect(() => {
+  // Read the latest loader without treating catalog/callback updates as user opens.
+  const enterSnapshot = useEffectEvent(() => {
     if (!activeAsid) {
+      entryIntentRef.current = null;
       openedAsidRef.current = undefined;
       if (initialCheckDoneRef.current) setLoading(false);
       return;
     }
-    if (openedAsidRef.current === activeAsid) return;
+    if (!visible || !isGlobalOwner() || !entrySource) return;
+    const intent = JSON.stringify([entrySource, activeAsid, globalOwnerRef.current?.id]);
+    if (entryIntentRef.current === intent) return;
+    entryIntentRef.current = intent;
     openedAsidRef.current = activeAsid;
     void loadSnapshot('enter').catch(() => {});
-  }, [activeAsid, loadSnapshot]);
+  });
+  useEffect(() => {
+    enterSnapshot();
+  }, [activeAsid, entrySource, globalOwnerEpoch, visible]);
 
   // Load known projects for workspace switcher
   useEffect(() => {

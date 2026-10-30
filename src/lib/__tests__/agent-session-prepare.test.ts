@@ -12,12 +12,13 @@ import { assertDeliveryCurrent } from '../bound-delivery';
 
 function harness(data: unknown = { data: { prepared: true } }, status = 200) {
   const calls: { endpoint: unknown; url: string; init: RequestInit }[] = [];
-  const prepare = runInNewContext(
+  const api = runInNewContext(
     transpile(
       [
         declaration('src/lib/agent-session-prepare.ts', 'sessionPreparationSource'),
         declaration('src/lib/agent-session-prepare.ts', 'prepareAgentSessionAt'),
-      ].join('\n') + '\nprepareAgentSessionAt'
+        declaration('src/lib/agent-session-prepare.ts', 'isAgentSessionPreparingAt'),
+      ].join('\n') + '\n({prepare: prepareAgentSessionAt, preparing: isAgentSessionPreparingAt})'
     ),
     {
       flights: new SessionPreparationFlights(),
@@ -30,15 +31,18 @@ function harness(data: unknown = { data: { prepared: true } }, status = 200) {
         return { ok: status === 200, status, json: async () => data, text: async () => 'refused' };
       },
     }
-  ) as (options: {
-    serverId: string;
-    agentId: string;
-    asid: string;
-    record: { url: string; token: string; deviceId: string };
-    current: () => boolean;
-    capabilities?: string[];
-  }) => Promise<void>;
-  return { calls, prepare };
+  ) as {
+    prepare: (options: {
+      serverId: string;
+      agentId: string;
+      asid: string;
+      record: { url: string; token: string; deviceId: string };
+      current: () => boolean;
+      capabilities?: string[];
+    }) => Promise<void>;
+    preparing: (input: typeof options) => boolean;
+  };
+  return { calls, ...api };
 }
 const options = {
   serverId: 'server',
@@ -107,6 +111,8 @@ test('the actual post-activation snapshot callback fences late pairing and resta
       activeAsidRef: { current: 'session' },
       mountedRef: mounted,
       ownerGenerationRef: { current: 1 },
+      globalOwnerRef: { current: null },
+      snapshotReadRef: { current: 0 },
       serverId: 'computer',
       sessionId: 'route',
       readPreparationSource: () => null,
@@ -134,4 +140,28 @@ test('the actual post-activation snapshot callback fences late pairing and resta
     expect(reads).toBe(intent === 'stale-before-start' ? 0 : 1);
     expect(snapshotTouches).toBe(0);
   }
+});
+
+test('pending prepare is source/provider/session scoped and ends after acknowledgment, cancellation or refusal', async () => {
+  const ack = Promise.withResolvers<unknown>();
+  const run = harness(ack.promise);
+  let current = true;
+  const request = { ...options, current: () => current, capabilities: ['agent_session_resume_v1'] };
+  expect(run.preparing(request)).toBe(false);
+  const pending = run.prepare(request);
+  expect(run.preparing(request)).toBe(true);
+  expect(run.preparing({ ...request, asid: 'different' })).toBe(false);
+  expect(run.preparing({ ...request, agentId: 'different' })).toBe(false);
+  expect(run.preparing({ ...request, record: { ...request.record, token: 'new-pairing' } })).toBe(
+    false
+  );
+  current = false;
+  expect(run.preparing(request)).toBe(false);
+  current = true;
+  ack.resolve({ data: { prepared: true } });
+  await pending;
+  expect(run.preparing(request)).toBe(false);
+  const refused = harness({}, 502);
+  await expect(refused.prepare(request)).rejects.toThrow('502');
+  expect(refused.preparing(request)).toBe(false);
 });

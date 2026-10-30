@@ -78,3 +78,25 @@ export function prepareAgentSessionAt(options: {
     options.current
   );
 }
+
+/** A parked-history read is transient only while this exact source/provider is preparing. */
+export function isAgentSessionPreparingAt(options: {
+  serverId: string;
+  record: GatewayRecord;
+  agentId: string | undefined;
+  asid: string;
+  restart?: number;
+}): boolean {
+  if (!options.agentId) return false;
+  const record = {
+    ...options.record,
+    transport: isGatewayEncryptionDisabled() ? undefined : options.record.transport,
+  };
+  return flights.isPending(
+    JSON.stringify([
+      sessionPreparationSource(options.serverId, record, options.restart),
+      options.agentId,
+      options.asid,
+    ])
+  );
+}

@@ -85,6 +85,10 @@ export class SessionPreparationFlights {
     }
   >();
 
+  isPending(key: string): boolean {
+    return [...(this.flights.get(key)?.owners ?? [])].some((current) => current());
+  }
+
   run(
     key: string,
     send: (current: () => boolean) => Promise<void>,
