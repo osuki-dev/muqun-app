@@ -4856,6 +4856,7 @@
     "flows/slash-commands": [
       { "include": "subflows/open-demo" },
       { "run": "subflows/open-agent-pane.ad" },
+      { "include": "subflows/dismiss-logbox" },
       { "run": "flows/slash-commands.ad" }
     ],
     "flows/ssh": [
