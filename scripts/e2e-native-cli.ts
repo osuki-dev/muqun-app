@@ -33,6 +33,7 @@ let check = false;
 let list = false;
 let script: string | undefined;
 const env: Record<string, string> = {};
+const deviceKinds = ['iphone', 'ipad', 'android-phone', 'android-tablet'];
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i++) {
   const argument = args[i];
@@ -87,6 +88,9 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
+if (env.DEVICE_KIND !== undefined && !deviceKinds.includes(env.DEVICE_KIND))
+  throw new Error(`DEVICE_KIND must be one of: ${deviceKinds.join(', ')}`);
+
 async function validate(): Promise<void> {
   if (suite.version !== 1) throw new Error('Unsupported suite manifest version');
   const names = new Set<string>();
@@ -100,7 +104,7 @@ async function validate(): Promise<void> {
     )
       throw new Error(`Missing flow cleanup program: ${flow.cleanup}`);
     for (const kind of flow.devices ?? [])
-      if (!['iphone', 'ipad', 'android-phone', 'android-tablet'].includes(kind))
+      if (!deviceKinds.includes(kind))
         throw new Error(`Unknown device kind for ${flow.name}: ${kind}`);
   }
   for (const program of Object.values(suite.programs)) {
@@ -192,6 +196,13 @@ if (!device) {
 }
 platform ??= /^[0-9a-f-]{36}$/i.test(device) ? 'ios' : 'android';
 if (!['ios', 'android'].includes(platform)) throw new Error('Platform must be ios or android');
+if (
+  env.DEVICE_KIND !== undefined &&
+  (platform === 'ios') === env.DEVICE_KIND.startsWith('android-')
+)
+  throw new Error(`DEVICE_KIND ${env.DEVICE_KIND} does not match platform ${platform}`);
+const deviceKindOverridden = env.DEVICE_KIND !== undefined;
+let deviceName: string | undefined;
 if (platform === 'android' && process.env.E2E_AD_METRO_PORT) {
   const port = Number(process.env.E2E_AD_METRO_PORT);
   if (!Number.isInteger(port) || port < 1 || port > 65535)
@@ -214,13 +225,16 @@ if (platform === 'ios') {
     .flat()
     .find((entry) => entry.udid === device);
   if (!selected) throw new Error(`Unknown iOS test device: ${device}`);
-  env.DEVICE_KIND = /ipad/i.test(selected.name) ? 'ipad' : 'iphone';
+  deviceName = selected.name;
+  // A foldable's current window can use the wide layout even when its model is a phone.
+  // Keep an explicit layout profile while retaining the real device identity in reports.
+  env.DEVICE_KIND ??= /ipad/i.test(selected.name) ? 'ipad' : 'iphone';
 } else {
   const size = spawnSync('adb', ['-s', device, 'shell', 'wm', 'size']);
   const density = spawnSync('adb', ['-s', device, 'shell', 'wm', 'density']);
   if (size.status !== 0 || density.status !== 0)
     throw new Error(`Cannot identify Android test device: ${device}`);
-  env.DEVICE_KIND = androidDeviceKind(size.stdout.toString(), density.stdout.toString());
+  env.DEVICE_KIND ??= androidDeviceKind(size.stdout.toString(), density.stdout.toString());
 }
 const androidSerials: string[] = [];
 if (platform === 'android' && which('adb')) {
@@ -253,7 +267,18 @@ const runDirectory = path.join(reportRoot, `${name ?? tag}-${Date.now()}`);
 await mkdir(runDirectory, { recursive: true });
 await writeFile(
   path.join(runDirectory, 'tooling.json'),
-  JSON.stringify({ agentDeviceVersion }, null, 2)
+  JSON.stringify(
+    {
+      agentDeviceVersion,
+      platform,
+      device,
+      deviceName,
+      deviceKind: env.DEVICE_KIND,
+      deviceKindOverridden,
+    },
+    null,
+    2
+  )
 );
 const results: { name: string; seconds: number; error?: string }[] = [];
 for (const flow of flows) {
