@@ -124,13 +124,12 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
-  AGENT_CLIENT_COMMANDS,
   readSkillInvocation,
   readSlashCommand,
   skillPopupTrigger,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
-import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
+import { agentHostCommandDescription } from '@/i18n/labels';
 import {
   agentUsageSummary,
   formatModelName,
@@ -723,8 +722,6 @@ export const AgentComposer = memo(function AgentComposer({
   commands = EMPTY_COMMANDS,
   onRunCommand,
   onInvokeSkill,
-  onClientCommand,
-  hiddenClientCommands = NO_HIDDEN_COMMANDS,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -943,28 +940,7 @@ export const AgentComposer = memo(function AgentComposer({
     if (!attachmentSendGuard.isPending()) attachmentUploads.retryUpload(id);
   };
 
-  /**
-   * The app's own commands, and the host's.
-   *
-   * Every entry used to be a literal that was typed into the prompt and sent to
-   * the model as text -- `/init`, `/review`, `/mode`, `/model`, `/help` -- and
-   * the model read them as prose. Half of them are the app's own navigation and
-   * belong to the screen; the rest are the host's, listed by
-   * `GET /api/agent-catalog` and run by `POST …/command`. Neither is a prompt.
-   */
-  const builtinCommands: PaneSlashCommand[] = useMemo(
-    () =>
-      AGENT_CLIENT_COMMANDS.filter((command) => !hiddenClientCommands.includes(command.id)).map(
-        (command) => ({
-          name: command.name,
-          description: _(agentClientCommandDescription[command.id]),
-          argsHint: '',
-          source: 'builtin' as const,
-        })
-      ),
-    [_, hiddenClientCommands]
-  );
-
+  /** Only commands reported by the current recipient belong in its slash menu. */
   const serverCommands: PaneSlashCommand[] = useMemo(
     () =>
       commands.map((command) => {
@@ -981,21 +957,21 @@ export const AgentComposer = memo(function AgentComposer({
   );
 
   /**
-   * `/` is the commands: the screen's own and the host's. Skills are `$`, for
+   * `/` is the host's commands. Skills are `$`, for
    * every agent, so a skill the host also lets be typed as `/name` is not
    * listed here a second time; typing it by hand still runs it.
    */
   const slashCatalog = useMemo(() => {
     const seen = new Set<string>();
     const rows = [];
-    for (const command of [...builtinCommands, ...serverCommands]) {
+    for (const command of serverCommands) {
       const key = command.name.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       rows.push(command);
     }
     return rows;
-  }, [builtinCommands, serverCommands]);
+  }, [serverCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -1286,11 +1262,6 @@ export const AgentComposer = memo(function AgentComposer({
         );
         return;
       }
-      if (parsed?.kind === 'client' && onClientCommand) {
-        onClientCommand(parsed.name);
-        setText('');
-        return;
-      }
     }
 
     if (!promptAllowed || disabled) return;
@@ -1400,7 +1371,6 @@ export const AgentComposer = memo(function AgentComposer({
     skills,
     onRunCommand,
     onInvokeSkill,
-    onClientCommand,
   ]);
 
   useEffect(() => {
@@ -2601,7 +2571,9 @@ export const AgentComposer = memo(function AgentComposer({
                         : t`The agent is offline`
                       : (fieldBlockedReason ??
                         placeholder ??
-                        t`Send a message, type / for commands, $ for skills, @ for files`),
+                        (slashCatalog.length
+                          ? t`Send a message, type / for commands, $ for skills, @ for files`
+                          : t`Send a message`)),
                     shortPlaceholder:
                       fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
                     accessibilityLabel: inputAccessibilityLabel,
@@ -2813,7 +2785,6 @@ const COMPOSER_INNER_GUTTER = 12;
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
-const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
   flushSurface: {

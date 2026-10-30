@@ -38,7 +38,8 @@ press "id=skill-offline-review"
 wait absent "id=skill" 5000
 is visible "id=agent-composer-input value=\"$offline-review \""
 fill "id=agent-composer-input" "/"
-wait "id=slash-command-/new" 10000
+# This recipient returns no native commands. The app must not invent shortcuts.
+wait absent "id=slash-command" 5000
 wait 400
 is visible "id=agent-composer-input value=/"
 snapshot
