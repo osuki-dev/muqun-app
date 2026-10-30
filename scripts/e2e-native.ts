@@ -306,7 +306,9 @@ function nodeRole(node: Node): string {
   // accessibility type separately. Keep semantic roles from older captures.
   const source =
     node.kind ??
-    (/^_?(RCT|UI|NS)/.test(node.role ?? '') ? (node.type ?? node.role) : (node.role ?? node.type)) ??
+    (/^_?(RCT|UI|NS)/.test(node.role ?? '')
+      ? (node.type ?? node.role)
+      : (node.role ?? node.type)) ??
     '';
   const role = source
     .replace(/^XCUIElementType/, '')
