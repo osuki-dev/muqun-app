@@ -29,6 +29,7 @@ import {
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
+import { Paths } from 'expo-file-system';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
   cancelAnimation,
@@ -48,9 +49,11 @@ import {
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import {
   gatewayImageBinding,
+  configuredGatewayServerId,
+  gatewayImageConnectionKey,
   readUploadImageSource,
-  uploadNameFromPath,
 } from '@/lib/gateway-client';
+import { rawAlbumImage } from '@/lib/image-album-source';
 import {
   messageImageForSource,
   unavailableMessageImage,
@@ -1006,6 +1009,10 @@ function ImageAlbum({
   attachmentSources?: boolean;
 }) {
   const [width, setWidth] = useState(0);
+  const [sourceOwner] = useState(() => ({
+    serverId: configuredGatewayServerId(),
+    connectionKey: gatewayImageConnectionKey(),
+  }));
   const [preview, setPreview] = useState<{
     images: PreviewImageDescriptor[];
     index: number;
@@ -1013,10 +1020,19 @@ function ImageAlbum({
   const columns = images.length === 2 ? 2 : 3;
   const cellWidth = Math.floor((width - 6 * (columns - 1)) / columns);
   const open = (selected: number, opened?: PreviewImageDescriptor) => {
+    if (
+      sourceOwner.serverId !== configuredGatewayServerId() ||
+      sourceOwner.connectionKey !== gatewayImageConnectionKey()
+    )
+      return;
     const album = images.flatMap((image, index) => {
       const descriptor = image.asset ? gatewayImageBinding(image.asset)?.image : undefined;
       if (image.asset && !descriptor) return [];
-      const uploadName = attachmentSources ? uploadNameFromPath(image.uri) : null;
+      const raw = descriptor
+        ? null
+        : rawAlbumImage(image.uri, attachmentSources, [Paths.cache.uri, Paths.document.uri]);
+      if (!descriptor && !raw) return [];
+      const uploadName = raw?.uploadName;
       return [
         {
           index,
@@ -1030,7 +1046,7 @@ function ImageAlbum({
                   ...(uploadName
                     ? {
                         resolveSource: (signal: AbortSignal) =>
-                          readUploadImageSource(uploadName, { signal }),
+                          readUploadImageSource(uploadName, { signal, owner: sourceOwner }),
                       }
                     : {}),
                 }),

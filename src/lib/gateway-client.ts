@@ -1958,8 +1958,22 @@ export function uploadImageSource(name: string): AssetImageSource | null {
 /** The encrypted-transport path: bytes are authenticated here and decoded from a data URI. */
 export async function readUploadImageSource(
   name: string,
-  options: { signal?: AbortSignal } = {}
+  options: {
+    signal?: AbortSignal;
+    owner?: { serverId: string | null; connectionKey: string };
+  } = {}
 ): Promise<AssetImageSource> {
+  const owner = options.owner ?? {
+    serverId: configuredGatewayServerId(),
+    connectionKey: gatewayImageConnectionKey(),
+  };
+  const isCurrent = () =>
+    owner.serverId === configuredGatewayServerId() &&
+    owner.connectionKey === gatewayImageConnectionKey();
+  const assertCurrent = () => {
+    if (!isCurrent()) throw new Error('The image belongs to a different Gateway connection');
+  };
+  assertCurrent();
   const direct = uploadImageSource(name);
   if (direct) return direct;
   const response = await encryptedGatewayFetch(
@@ -1967,13 +1981,15 @@ export async function readUploadImageSource(
     { headers: gatewayAuthHeaders(), signal: options.signal },
     IMAGE_DOWNLOAD_TIMEOUT_MS,
     undefined,
-    undefined,
+    isCurrent,
     25 * 1024 * 1024
   );
+  assertCurrent();
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
   if (!mime.startsWith('image/')) throw new Error('Gateway did not return an image.');
   const bytes = QuickCrypto.Buffer.from(await response.arrayBuffer());
+  assertCurrent();
   return {
     uri: `data:${mime};base64,${bytes.toString('base64')}`,
     cacheKey: `upload:${name}:encrypted`,
