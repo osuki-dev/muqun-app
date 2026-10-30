@@ -61,7 +61,8 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeIcon } from '@/theme/icon-direction';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
+import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
+import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { SheetGround } from '@/components/sheet-ground';
 import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -888,7 +889,8 @@ export function HomeReplyDrawer({
                     <HomeSheetHeader
                       title={title}
                       titleLines={1}
-                      titleVariant="subheading"
+                      titleVariant="body"
+                      compact
                       closeTestID="home-reply-close"
                       onClose={close}
                       caption={
@@ -902,7 +904,7 @@ export function HomeReplyDrawer({
                             testID="home-reply-open"
                             accessibilityRole="button"
                             accessibilityLabel={t`Open the full conversation`}
-                            hitSlop={12}
+                            style={homeSheetStyles.compactAction}
                             onPress={onOpenFull}>
                             <OpenExternalIcon size={18} color={theme.colors.textMuted} />
                           </PressableScale>
@@ -958,6 +960,11 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
  */
 function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
   const { t } = useLingui();
+  const { width } = useWindowDimensions();
+  const transcriptContentStyle = useMemo(
+    () => [styles.transcriptContent, { paddingHorizontal: width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14 }],
+    [width]
+  );
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
   const markdownStyle = usePaneChatMarkdownStyle();
@@ -1338,7 +1345,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         }
         ListFooterComponent={requests}
         style={styles.fill}
-        contentContainerStyle={styles.transcriptContent}
+        contentContainerStyle={transcriptContentStyle}
       />
       {imagePreview?.owner === key ? (
         <ImagePreviewModal
@@ -1627,7 +1634,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   empty: { paddingVertical: 24, alignItems: 'center' },
-  transcriptContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
+  transcriptContent: { paddingTop: 4, paddingBottom: 12 },
   requests: { gap: 10, paddingTop: 8 },
   pane: { flex: 1, overflow: 'hidden' },
 });
