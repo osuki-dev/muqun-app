@@ -22,12 +22,12 @@ No Muqun account, hosted relay, analytics or advertising.
 - **Move between tasks.** Keep multiple conversations at hand and inspect
   their status without taking over the terminal you are using on your computer.
 
-Native conversation integrations include **Codex, OpenCode, DeepSeek and
-T3 Code**. **FX and Qoder CLI** integrations are in development through Gateway's
-shared ACP support. Availability and controls depend on the installed Gateway
-and agent; Muqun shows the capabilities they actually provide.
+Native conversation integrations include **Codex, OpenCode, DeepSeek, T3 Code,
+FX, Qoder CLI and Pi**. Availability and controls depend on the integrations
+included in your installed Gateway and the capabilities of each agent. Models,
+reasoning levels, commands, attachments and usage appear when they are provided.
 
-Other command-line agents, including **Claude Code and Pi**, can be used in
+Other command-line agents, including **Claude Code**, can be used in
 terminal sessions. A terminal session and a native agent conversation offer
 different controls.
 
