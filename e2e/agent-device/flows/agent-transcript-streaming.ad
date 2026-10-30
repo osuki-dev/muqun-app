@@ -3,6 +3,7 @@
 open "muqun://agent?asid=demo-streaming-markdown"
 wait "id=\"demo-streaming-transcript\"" 15000
 # Start a finite stream. Keep the reader's history anchored as output grows.
+wait "id=\"demo-stream-restart\"" 10000
 press "id=\"demo-stream-restart\""
 scroll bottom
 
@@ -39,6 +40,7 @@ wait "id=\"agent-generation-speed-demo-stream-answer\"" 5000
 is visible "id=\"agent-generation-speed-demo-stream-answer\""
 is visible "text=\"123.4 tok/s\""
 screenshot "shots/transcript-generation-speed.png"
+wait "id=\"demo-stream-restart\"" 10000
 press "id=\"demo-stream-restart\""
 wait 2000
 is visible "id=\"demo-streaming-list\""

@@ -16,6 +16,7 @@ screenshot "shots/agent-session-command-menu.png"
 # The demo has no paired transport proof. The route must keep its own gate.
 press "id=agent-composer-command-simulator"
 wait "id=simfarm-pair" 10000
+wait "id=simfarm-close" 10000
 press "id=simfarm-close"
 wait "id=agent-composer-input" 10000
 # section triggers
