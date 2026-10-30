@@ -476,7 +476,8 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
         node.rect.height > control.height
     );
   const bounds = sheet?.rect;
-  if (!bounds) throw new Error('Cannot dismiss sheet without observed fixed-header bounds');
+  if (!sheet || !bounds)
+    throw new Error('Cannot dismiss sheet without observed fixed-header bounds');
   const descendsFrom = (node: Node, index: number): boolean => {
     const seen = new Set<number>();
     let parent = node.parentIndex;
@@ -496,7 +497,11 @@ function sheetDismissStart(nodes: Node[], grabber: Node): { x: number; y: number
       rect.x + rect.width <= bounds.x + bounds.width &&
       rect.y >= bounds.y &&
       rect.y + rect.height <= bounds.y + bounds.height + 1 &&
-      (!container || descendsFrom(node, container.index))
+      // Flattened captures emit the presented sheet after the background Home
+      // content. Retain the sheet's scroll ancestors, but not those earlier siblings.
+      (container
+        ? descendsFrom(node, container.index)
+        : node.index > sheet.index || descendsFrom(sheet, node.index))
     );
   });
   // A scroll-root form puts the heading inside the sheet's outer scroller.
