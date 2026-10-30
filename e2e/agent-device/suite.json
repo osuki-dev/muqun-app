@@ -6968,9 +6968,7 @@
       }
     ],
     "subflows/restart-demo": [
-      {
-        "run": "subflows/restart-demo.ad#s1"
-      },
+      { "include": "subflows/launch-home" },
       {
         "target": {
           "text": "Try the demo"
