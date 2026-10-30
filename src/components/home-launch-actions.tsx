@@ -14,7 +14,7 @@ import {
 } from '@/icons';
 import { useIsFocused, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -270,6 +270,7 @@ export function HomeLaunchActions({
   grid = false,
   newOnly = false,
   dock = false,
+  presentation = 'default',
 }: {
   controller: HomeLaunchController;
   /**
@@ -283,6 +284,8 @@ export function HomeLaunchActions({
    * The wide Pad cover uses the same agent grid with compact utilities.
    */
   dock?: boolean;
+  /** Stage's Sessions panel shows only agents in a wrapping, fully visible grid. */
+  presentation?: 'default' | 'session-panel';
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -298,6 +301,8 @@ export function HomeLaunchActions({
   const bleed = useSideBleed();
   const { chosen, chosenOffline, chosenConnection, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
+  const { fontScale } = useWindowDimensions();
+  const sessionPanel = presentation === 'session-panel';
 
   // The row is a projection of what the chosen gateway said about itself; a
   // gateway never asked, or too old to be asked, projects to the fixed five.
@@ -315,6 +320,14 @@ export function HomeLaunchActions({
     : model.entries;
   const agentEntries = entries.filter(isAgentEntry);
   const utilityEntries = entries.filter((entry) => !isAgentEntry(entry));
+  const panelColumns = Math.max(
+    1,
+    Math.min(
+      4,
+      Math.floor((availableWidth + LAUNCH_GRID_GAP) / (140 * fontScale + LAUNCH_GRID_GAP))
+    )
+  );
+  const panelCellWidth = (availableWidth - LAUNCH_GRID_GAP * (panelColumns - 1)) / panelColumns;
   const layout = launchRowLayout({
     width: availableWidth,
     agentCount: agentEntries.length,
@@ -351,8 +364,9 @@ export function HomeLaunchActions({
       testID: entry.testID,
       marker: entry.marker,
       ...(cell ? { width: cell.width } : {}),
-      rowHeight:
-        entry.kind !== 'agent' && !utilityCompact
+      rowHeight: sessionPanel
+        ? 48
+        : entry.kind !== 'agent' && !utilityCompact
           ? DOCK_ROW_HEIGHT * 2 + LAUNCH_MOSAIC_GAP
           : DOCK_ROW_HEIGHT,
     };
@@ -512,15 +526,25 @@ export function HomeLaunchActions({
       ) : null}
       <View
         testID={
-          dock
-            ? 'home-launch-actions-dock'
-            : grid
-              ? 'home-launch-actions-grid'
-              : 'home-launch-actions-mosaic'
+          sessionPanel
+            ? 'home-launch-agents-panel'
+            : dock
+              ? 'home-launch-actions-dock'
+              : grid
+                ? 'home-launch-actions-grid'
+                : 'home-launch-actions-mosaic'
         }
         style={styles.grid}>
         {availableWidth > 0 ? (
-          layout.mode === 'scroll' ? (
+          sessionPanel ? (
+            <View style={styles.gridRow}>
+              {agentEntries.map((entry) => (
+                <View key={entry.key} style={{ width: panelCellWidth }}>
+                  {renderEntry(entry, { compact: false })}
+                </View>
+              ))}
+            </View>
+          ) : layout.mode === 'scroll' ? (
             <Animated.ScrollView
               horizontal
               nestedScrollEnabled

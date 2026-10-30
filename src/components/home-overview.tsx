@@ -1370,6 +1370,24 @@ export function HomeOverview({
             headerAction={phoneToolbarFor(true)}
             hasAttention={!loading && !hydrationError && hasAttention}
             attention={attentionSection}
+            launches={
+              !loading && !hydrationError && launchController.chosen ? (
+                <View style={{ gap: 12 }}>
+                  <Text variant="subheading" accessibilityRole="header">
+                    <Trans>New session</Trans>
+                  </Text>
+                  <HomeLaunchActions
+                    controller={launchController}
+                    presentation="session-panel"
+                    onNewAgent={commands.newAgent}
+                    onOpenAgent={commands.openAgent}
+                    onNewTerminal={commands.newTerminal}
+                    onOpenTerminal={commands.openServer}
+                    onSsh={commands.openSsh}
+                  />
+                </View>
+              ) : undefined
+            }
             fullList={
               <>
                 {recentHeading}

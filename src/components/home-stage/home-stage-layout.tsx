@@ -104,6 +104,8 @@ export type HomeStageLayoutProps = {
   /** Needs you, as Home builds it for every layout. */
   attention?: ReactNode;
   hasAttention: boolean;
+  /** The selected computer's agent launch entries, mounted only while the list is open. */
+  launches?: ReactNode;
   /** Every computer's Recent list and the connections: the pulled-up list. */
   fullList?: ReactNode;
   /** Nothing paired: Home's pairing card. */
@@ -295,6 +297,7 @@ export function HomeStageLayout({
   onReplySession,
   attention,
   hasAttention,
+  launches,
   fullList,
   emptyState,
   storageError,
@@ -693,6 +696,7 @@ export function HomeStageLayout({
               />
             }>
             {attention}
+            {launches}
             {fullList}
           </ScrollView>
         ) : null}

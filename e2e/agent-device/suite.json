@@ -347,6 +347,30 @@
       },
       {
         "target": {
+          "id": "home-launch-agents-panel"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-new-agent-opencode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-launch-actions-scroll"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "target": {
           "id": "home-continue-search"
         },
         "mode": "visible",
@@ -396,6 +420,14 @@
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "home-launch-agents-panel"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
       },
       {
         "target": {
