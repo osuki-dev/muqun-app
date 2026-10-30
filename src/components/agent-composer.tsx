@@ -62,6 +62,8 @@ import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-k
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
+import { AgentMark } from '@/components/agent-mark';
+import { agentMarkKind } from '@/lib/agent-mark-kind';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { FloatingMenu } from '@/components/floating-menu';
@@ -498,6 +500,8 @@ export interface AgentComposerProps {
   disabled?: boolean;
   /** The agent's display name, for the offline placeholder. */
   agentName?: string;
+  /** Provider kind from discovery, independent of the selected agent mode. */
+  agentKind?: string;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
   /** How many running shells the Background tasks sheet can show. */
@@ -705,6 +709,7 @@ export const AgentComposer = memo(function AgentComposer({
   onCreateNewSession,
   disabled,
   agentName,
+  agentKind,
   onOpenModelSheet,
   onOpenModeSheet,
   canPickMode = true,
@@ -2144,7 +2149,11 @@ export const AgentComposer = memo(function AgentComposer({
                           { borderRadius: profile.chrome.roundControl },
                           { backgroundColor: surfaceBackground(chromeGlass) },
                         ]}>
-                        <StackIcon size={16} color={chromeText} />
+                        {agentKind && agentMarkKind(agentKind) ? (
+                          <AgentMark kind={agentKind} size={16} color={chromeText} />
+                        ) : (
+                          <StackIcon size={16} color={chromeText} />
+                        )}
                       </PressableScale>
                     ) : null}
 

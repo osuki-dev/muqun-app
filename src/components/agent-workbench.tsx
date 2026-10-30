@@ -6082,6 +6082,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
+        agentKind={activeAgentEntry?.kind}
         running={isRunning && canInteractNatively}
         interactionBlockedReason={
           canInteractNatively

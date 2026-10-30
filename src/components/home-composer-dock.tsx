@@ -2235,6 +2235,13 @@ export function HomeComposerDock({
       interactionBlockedReason={offlineReason}
       blockedReasonInField
       agentName={agentLabel}
+      agentKind={
+        threadSession
+          ? discoveredAgents?.find((entry) => entry.id === threadSession.agentId)?.kind
+          : !thread && agent?.kind === 'session'
+            ? agent.agentKind
+            : undefined
+      }
       placeholder={replyContext ? '' : t`New conversation with ${agentLabel}`}
       inputAccessibilityLabel={replyContext}
       fieldHeader={
