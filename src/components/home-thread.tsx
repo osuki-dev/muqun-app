@@ -86,9 +86,9 @@ export function followHomeSession({
   onEvent: (event: AgentDomainEvent) => void;
   onNotFound?: () => void;
   onError?: () => void;
-}): () => void {
+}): (() => void) & { refresh: () => void } {
   const owner = useGatewayConnectionStore.getState().record;
-  if (owner?.serverId !== serverId) return () => {};
+  if (owner?.serverId !== serverId) return Object.assign(() => {}, { refresh: () => {} });
   const owns = () => {
     const now = useGatewayConnectionStore.getState().record;
     return sameComputer(now, owner) && now?.deviceId === owner.deviceId;
@@ -185,12 +185,15 @@ export function followHomeSession({
     connectStream();
   }
   read();
-  return () => {
-    active = false;
-    if (retryTimer) clearTimeout(retryTimer);
-    releaseSocket?.();
-    closeStream?.();
-  };
+  return Object.assign(
+    () => {
+      active = false;
+      if (retryTimer) clearTimeout(retryTimer);
+      releaseSocket?.();
+      closeStream?.();
+    },
+    { refresh: read }
+  );
 }
 
 /**

@@ -2344,6 +2344,10 @@ msgstr "이름을 바꿀 수 없습니다"
 msgid "Could not reply"
 msgstr "응답할 수 없습니다"
 
+#: src/components/agent-session-activation-notice.tsx
+msgid "Could not resume the session"
+msgstr "세션을 재개할 수 없습니다"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "해제할 수 없습니다"
@@ -5735,6 +5739,7 @@ msgid "Resume"
 msgstr "재개"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
@@ -6517,6 +6522,7 @@ msgid "Some theme colors need more contrast"
 msgstr "일부 테마 색상은 대비를 높여야 합니다"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx

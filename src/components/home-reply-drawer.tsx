@@ -1,3 +1,6 @@
+import { useIsFocused } from 'expo-router';
+import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { AgentSessionActivationNotice } from '@/components/agent-session-activation-notice';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import { useLingui } from '@lingui/react/macro';
@@ -915,7 +918,7 @@ export function HomeReplyDrawer({
                 </GestureDetector>
                 <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
                   {target.kind === 'session' ? (
-                    <DrawerSession key={homeThreadKey(target)} target={target} />
+                    <DrawerSession key={homeThreadKey(target)} target={target} open={open} />
                   ) : target.kind === 'pane' ? (
                     // The terminal's own gestures own its bounds: no drawer gesture
                     // wraps it, so its scrollback pans and pinches win there.
@@ -958,7 +961,13 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
  * where they are when output lands under them, with the session screen's
  * "Latest" to come back down; their own send takes them to the end.
  */
-function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
+function DrawerSession({
+  target,
+  open,
+}: {
+  target: Extract<HomeThreadTarget, { kind: 'session' }>;
+  open: boolean;
+}) {
   const { t } = useLingui();
   const { width } = useWindowDimensions();
   const transcriptContentStyle = useMemo(
@@ -997,6 +1006,17 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   });
   const readRuntime = useLatestReader(runtime);
   const [agentId, setAgentId] = useState(target.agentId);
+  const refreshSession = useRef<(() => void) | null>(null);
+  const focused = useIsFocused();
+  const appActive = useAppActive();
+  const sessionActivation = useForegroundAgentSession({
+    serverId,
+    agentId,
+    asid,
+    foreground: open && focused && appActive,
+    // The follower queues this behind its current read, preserving the cursor/window.
+    onPrepared: () => refreshSession.current?.(),
+  });
   const features = useAgentFeatures(serverId, agentId);
   const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
   const supportsEarlier = canLoadEarlierAgentTimeline(capabilities, features);
@@ -1131,9 +1151,11 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
       },
       onError: () => setReadFailed(true),
     });
+    refreshSession.current = stop.refresh;
     return () => {
       active = false;
       loadEarlier.current = null;
+      refreshSession.current = null;
       stop();
     };
   }, [
@@ -1270,6 +1292,10 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   if (!loaded)
     return (
       <View testID="home-reply-loading" style={styles.center}>
+        <AgentSessionActivationNotice
+          error={sessionActivation.error}
+          onRetry={sessionActivation.retry}
+        />
         {readFailed ? (
           <Pressable
             accessibilityRole="button"
@@ -1285,7 +1311,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
               {t`Retry`}
             </Text>
           </Pressable>
-        ) : (
+        ) : sessionActivation.error ? null : (
           <ActivityIndicator color={theme.colors.primary} />
         )}
       </View>
@@ -1343,7 +1369,15 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
             </Text>
           </View>
         }
-        ListFooterComponent={requests}
+        ListFooterComponent={
+          <>
+            <AgentSessionActivationNotice
+              error={sessionActivation.error}
+              onRetry={sessionActivation.retry}
+            />
+            {requests}
+          </>
+        }
         style={styles.fill}
         contentContainerStyle={transcriptContentStyle}
       />

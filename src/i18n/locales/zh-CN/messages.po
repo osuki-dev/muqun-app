@@ -2344,6 +2344,10 @@ msgstr "无法重命名"
 msgid "Could not reply"
 msgstr "无法回复"
 
+#: src/components/agent-session-activation-notice.tsx
+msgid "Could not resume the session"
+msgstr "无法恢复会话"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "无法撤销授权"
@@ -5735,6 +5739,7 @@ msgid "Resume"
 msgstr "恢复"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
@@ -6517,6 +6522,7 @@ msgid "Some theme colors need more contrast"
 msgstr "部分主题颜色需要更高的对比度"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx

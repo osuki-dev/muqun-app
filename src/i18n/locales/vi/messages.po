@@ -2344,6 +2344,10 @@ msgstr "Không thể đổi tên"
 msgid "Could not reply"
 msgstr "Không thể trả lời"
 
+#: src/components/agent-session-activation-notice.tsx
+msgid "Could not resume the session"
+msgstr "Không thể tiếp tục phiên"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "Không thể thu hồi"
@@ -5735,6 +5739,7 @@ msgid "Resume"
 msgstr "Tiếp tục"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
@@ -6517,6 +6522,7 @@ msgid "Some theme colors need more contrast"
 msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx

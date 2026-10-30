@@ -178,3 +178,19 @@ test('switching computers before socket fallback prevents opening the previous s
     f.stop();
   }
 });
+
+test('foreground activation refresh queues behind history and stops with its reader', async () => {
+  const f = fixture();
+  f.stop.refresh();
+  f.stop.refresh();
+  expect(f.reads).toHaveLength(1);
+  f.reads[0].resolve(snapshot(1));
+  await tick();
+  expect(f.reads).toHaveLength(2);
+  f.reads[1].resolve(snapshot(2));
+  await tick();
+  expect(f.snapshots.map((value) => value.seq)).toEqual([1, 2]);
+  f.stop();
+  f.stop.refresh();
+  expect(f.reads).toHaveLength(2);
+});

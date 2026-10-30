@@ -1,3 +1,5 @@
+import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { AgentSessionActivationNotice } from '@/components/agent-session-activation-notice';
 import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
 import { createQuestionDrafts } from '@/lib/agent-question-drafts';
 import {
@@ -2761,6 +2763,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // socket may have been held open by the OS and delivered nothing.
   const applicationActive = useAppActive();
   const appActive = applicationActive && visible;
+  const sessionActivation = useForegroundAgentSession({
+    serverId,
+    agentId: sessionInfo?.asid === activeAsid ? sessionInfo?.agent_id : undefined,
+    asid: activeAsid,
+    foreground: appActive && globalOwnerEpoch > 0,
+    ownsForeground: isGlobalOwner,
+    onPrepared: () => {
+      setCatalogRevision((revision) => revision + 1);
+      void loadSnapshot('silent').catch(() => {});
+    },
+  });
   useEffect(() => {
     appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
@@ -5037,7 +5050,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || replyableForms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice && !externalRuntime) return null;
+    if (
+      !hasFormsOrPerms &&
+      !isRunning &&
+      !statusNotice &&
+      !externalRuntime &&
+      !sessionActivation.error
+    )
+      return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
       "Thinking…" over a form whose only blocker was the reader. The agent is
@@ -5047,6 +5067,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const waitingOnReader = hasBlockingAgentForm(replyableForms);
     return (
       <View style={styles.footerContainer}>
+        <AgentSessionActivationNotice
+          error={sessionActivation.error}
+          onRetry={sessionActivation.retry}
+        />
         {externalRuntime ? (
           <AgentRuntimeNotice
             runtime={externalRuntime}
@@ -5170,6 +5194,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [
     footerPermissions,
     replyableForms,
+    sessionActivation.error,
+    sessionActivation.retry,
     handleQuestionDraftChange,
     isRunning,
     statusNotice,

@@ -2344,6 +2344,10 @@ msgstr "No se pudo renombrar"
 msgid "Could not reply"
 msgstr "No se pudo responder"
 
+#: src/components/agent-session-activation-notice.tsx
+msgid "Could not resume the session"
+msgstr "No se pudo reanudar la sesión"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "No se pudo revocar"
@@ -5735,6 +5739,7 @@ msgid "Resume"
 msgstr "Reanudar"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
@@ -6517,6 +6522,7 @@ msgid "Some theme colors need more contrast"
 msgstr "Algunos colores del tema necesitan más contraste"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx

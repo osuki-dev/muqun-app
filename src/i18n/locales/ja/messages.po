@@ -2344,6 +2344,10 @@ msgstr "名前を変更できませんでした"
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
+#: src/components/agent-session-activation-notice.tsx
+msgid "Could not resume the session"
+msgstr "セッションを再開できませんでした"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "取り消せませんでした"
@@ -5735,6 +5739,7 @@ msgid "Resume"
 msgstr "再開"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
@@ -6517,6 +6522,7 @@ msgid "Some theme colors need more contrast"
 msgstr "一部のテーマカラーはコントラストを高める必要があります"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
