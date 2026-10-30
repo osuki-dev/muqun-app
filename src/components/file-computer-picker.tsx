@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react/macro';
 import { ComputerIcon, CloseIcon } from '@/icons';
 import { AgentActionMenu } from './agent-action-menu';
 import { loadGateways } from '@/lib/gateway-storage';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import {
   FileComputerSelection,
   resolveAgentFileAsset,
@@ -13,61 +14,84 @@ import {
 
 const FileResolver = createContext<typeof resolveAgentFileAsset>(resolveAgentFileAsset);
 type Choice = {
+  scopeKey: string;
   path: string;
   computers: { serverId: string; label: string }[];
   finish: (serverId: string | null) => void;
 };
 
+function requireFileSelectionScope(scopeKey: string, readScope: () => string, signal: AbortSignal) {
+  if (signal.aborted || readScope() !== scopeKey) throw new Error('Operation cancelled');
+}
+
+function cancelFileSelections(pending: Map<() => void, string>, scopeKey: string) {
+  for (const [cancel, owner] of pending) if (owner === scopeKey) cancel();
+}
+
 /** Displays a Gateway-requested choice; path resolution and authorization stay on the host. */
-export function FileComputerPicker({ children }: { children: ReactNode }) {
+export function FileComputerPicker({
+  children,
+  scopeKey = '',
+}: {
+  children: ReactNode;
+  scopeKey?: string;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const [choice, setChoice] = useState<Choice | null>(null);
-  const [pending] = useState(() => new Set<() => void>());
-  useEffect(
-    () => () => {
-      for (const cancel of pending) cancel();
-    },
-    [pending]
-  );
+  const [pending] = useState(() => new Map<() => void, string>());
+  const readScope = useLatestReader(scopeKey);
+  const activeChoice = choice?.scopeKey === scopeKey ? choice : null;
+  useEffect(() => () => cancelFileSelections(pending, scopeKey), [pending, scopeKey]);
 
-  const resolve: typeof resolveAgentFileAsset = async (asid, uri, signal, serverId) => {
+  async function resolve(
+    ...[asid, uri, signal, serverId]: Parameters<typeof resolveAgentFileAsset>
+  ): ReturnType<typeof resolveAgentFileAsset> {
+    requireFileSelectionScope(scopeKey, readScope, signal);
     try {
-      return await resolveAgentFileAsset(asid, uri, signal, serverId);
+      const asset = await resolveAgentFileAsset(asid, uri, signal, serverId);
+      requireFileSelectionScope(scopeKey, readScope, signal);
+      return asset;
     } catch (error) {
+      requireFileSelectionScope(scopeKey, readScope, signal);
       if (!(error instanceof FileComputerSelection) || signal.aborted) throw error;
-      const computers = (await loadGateways())
+      const gateways = await loadGateways();
+      requireFileSelectionScope(scopeKey, readScope, signal);
+      const computers = gateways
         .filter((record) => record.serverId !== serverId)
         .map(({ serverId: id, label }) => ({ serverId: id, label }));
       if (!computers.length) throw new Error(t`No other paired computer is available.`);
       if (signal.aborted) throw new Error('Operation cancelled');
       const path = error.path;
       const selected = await new Promise<string>((accept, reject) => {
-        for (const previous of pending) previous();
+        for (const previous of pending.keys()) previous();
         const finish = (id: string | null) => {
           signal.removeEventListener('abort', cancel);
           pending.delete(cancel);
           setChoice((current) => (current?.finish === finish ? null : current));
-          if (id && !signal.aborted) accept(id);
+          if (id && !signal.aborted && readScope() === scopeKey) accept(id);
           else reject(new Error('Operation cancelled'));
         };
         const cancel = () => finish(null);
-        pending.add(cancel);
+        pending.set(cancel, scopeKey);
         signal.addEventListener('abort', cancel, { once: true });
-        setChoice({ path, computers, finish });
+        setChoice({ scopeKey, path, computers, finish });
       });
-      return resolveComputerFile(path, selected, signal);
+      requireFileSelectionScope(scopeKey, readScope, signal);
+      const asset = await resolveComputerFile(path, selected, signal);
+      requireFileSelectionScope(scopeKey, readScope, signal);
+      return asset;
     }
-  };
+  }
 
   return (
     <FileResolver.Provider value={resolve}>
       {children}
       <Modal
-        visible={choice !== null}
+        visible={activeChoice !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => choice?.finish(null)}>
+        onRequestClose={() => activeChoice?.finish(null)}>
         <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0008' }}>
           <View
             testID="file-computer-picker"
@@ -81,23 +105,23 @@ export function FileComputerPicker({ children }: { children: ReactNode }) {
             }}>
             <Text style={{ fontSize: 20 }}>{t`Open from computer`}</Text>
             <Text numberOfLines={3} style={{ marginVertical: 12 }}>
-              {choice?.path}
+              {activeChoice?.path}
             </Text>
             <ScrollView style={{ maxHeight: 360 }}>
               <AgentActionMenu
                 surface="ground"
                 items={[
-                  ...(choice?.computers.map((computer) => ({
+                  ...(activeChoice?.computers.map((computer) => ({
                     id: computer.serverId,
                     label: computer.label,
                     Icon: ComputerIcon,
-                    onPress: () => choice.finish(computer.serverId),
+                    onPress: () => activeChoice.finish(computer.serverId),
                   })) ?? []),
                   {
                     id: 'cancel',
                     label: t`Cancel`,
                     Icon: CloseIcon,
-                    onPress: () => choice?.finish(null),
+                    onPress: () => activeChoice?.finish(null),
                   },
                 ]}
               />

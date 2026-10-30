@@ -439,7 +439,7 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     ? KeyboardAwareLegendList<string>
     : (LegendList<string> as unknown as typeof KeyboardAwareLegendList<string>);
   return (
-    <FileComputerPicker key={namespace}>
+    <FileComputerPicker scopeKey={owner}>
       <RowContext.Provider value={context}>
         <List
           {...props}
