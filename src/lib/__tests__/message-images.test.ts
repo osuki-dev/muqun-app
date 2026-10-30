@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   escapeMarkdownText,
+  groupBlockImages,
   isHostPathSource,
   messageImageResolver,
   parseMessageImageAssets,
@@ -21,6 +22,38 @@ describe('splitBlockImages', () => {
   test('preserves fenced examples, inline images and indented code', () => {
     const text = '```md\n![cover](a.png)\n```\nText ![inline](b.png) here\n    ![code](c.png)';
     expect(splitBlockImages(text)).toEqual([{ kind: 'markdown', text, start: 0 }]);
+  });
+});
+describe('groupBlockImages', () => {
+  test('joins block images across blank paragraphs while preserving identity and source order', () => {
+    const markdown =
+      '![first](a.png)\r\n\r\n  \r\n<img alt="second" src="b.png">\r\n\r\n![third](c.png)';
+    const parsed = splitBlockImages(markdown);
+    const grouped = groupBlockImages(parsed);
+    expect(grouped).toEqual([
+      { kind: 'images', images: parsed.filter((part) => part.kind === 'image') },
+    ]);
+    const gallery = grouped[0];
+    expect(gallery?.kind === 'images' && gallery.images.map((image) => image.uri)).toEqual([
+      'a.png',
+      'b.png',
+      'c.png',
+    ]);
+  });
+
+  test('prose and code stay between galleries rather than being reordered or swallowed', () => {
+    const markdown =
+      '![first](a.png)\n\nDescription between images.\n\n![second](b.png)\n\n```md\n![example](example.png)\n```\n\n![third](c.png)';
+    const grouped = groupBlockImages(splitBlockImages(markdown));
+    expect(grouped.map((part) => part.kind)).toEqual([
+      'images',
+      'markdown',
+      'images',
+      'markdown',
+      'images',
+    ]);
+    expect(grouped[1]).toMatchObject({ text: '\nDescription between images.\n\n' });
+    expect(grouped[3].kind === 'markdown' && grouped[3].text).toContain('![example](example.png)');
   });
 });
 const caption = (alt: string) => `_[no image: ${escapeMarkdownText(alt)}]_`;

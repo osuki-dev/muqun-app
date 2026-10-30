@@ -54,6 +54,7 @@ import {
   readUploadImageSource,
 } from '@/lib/gateway-client';
 import { rawAlbumImage } from '@/lib/image-album-source';
+import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 import {
   messageImageForSource,
   unavailableMessageImage,
@@ -87,6 +88,7 @@ import { plainFromMarkdown } from '@/lib/markdown-text';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
+  groupBlockImages,
   messageImageResolver,
   isHostPathSource,
   rewriteMessageImages,
@@ -135,6 +137,7 @@ function imagesInAttachments(
 function messageNeedsMediaWidth(item: TimelineItem, audioSessionId?: string): boolean {
   if (item.part.type !== 'text') return false;
   return (
+    splitDiagramMarkdown(item.part.text).some((part) => part.source !== undefined) ||
     splitBlockImages(item.part.text).filter((block) => block.kind === 'image').length > 1 ||
     Boolean(
       audioSessionId &&
@@ -968,29 +971,6 @@ const MessageTextPart = memo(function MessageTextPart({
     </View>
   );
 });
-
-type GroupedBlock =
-  | { kind: 'images'; images: { uri: string; alt: string; start: number }[] }
-  | { kind: 'markdown'; text: string; start: number };
-
-function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedBlock[] {
-  const grouped: GroupedBlock[] = [];
-  let images: { uri: string; alt: string; start: number }[] = [];
-  const flush = () => {
-    if (images.length === 0) return;
-    grouped.push({ kind: 'images', images });
-    images = [];
-  };
-  for (const block of blocks) {
-    if (block.kind === 'image') images.push(block);
-    else {
-      flush();
-      grouped.push(block);
-    }
-  }
-  flush();
-  return grouped;
-}
 
 function ImageAlbum({
   asid,
