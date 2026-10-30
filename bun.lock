@@ -11,8 +11,8 @@
         "@formatjs/intl-pluralrules": "^6.3.16",
         "@hot-updater/react-native": "1.1.4",
         "@legendapp/list": "^3.7.0",
-        "@lingui/core": "^6.10.1",
-        "@lingui/react": "^6.10.1",
+        "@lingui/core": "^6.11.0",
+        "@lingui/react": "^6.11.0",
         "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.1",
         "@osuki-dev/skia-diagrams": "0.2.0",
@@ -92,9 +92,9 @@
         "@hot-updater/expo": "1.1.4",
         "@hot-updater/plugin-core": "1.1.4",
         "@hot-updater/server": "1.1.4",
-        "@lingui/babel-plugin-lingui-macro": "^6.10.1",
-        "@lingui/cli": "^6.10.1",
-        "@lingui/format-po": "^6.10.1",
+        "@lingui/babel-plugin-lingui-macro": "^6.11.0",
+        "@lingui/cli": "^6.11.0",
+        "@lingui/format-po": "^6.11.0",
         "@oxlint/plugins": "^1.90.0",
         "@react-native-community/cli": "^20.2.0",
         "@types/react": "~19.3.0",
@@ -535,41 +535,41 @@
 
     "@legendapp/list": ["@legendapp/list@3.7.0", "", { "dependencies": { "use-sync-external-store": "^1.5.0" }, "peerDependencies": { "react": "*", "react-dom": "*", "react-native": "*" }, "optionalPeers": ["react-dom", "react-native"] }, "sha512-Er2D5eKIv+rfbakJ3ra4pD7NCNtOj2m1nrU6s6Ea3dO+x3vgt0h9NE0dn5WHOLIRkPEWHiwbslgl95QxZiEkjg=="],
 
-    "@lingui/babel-plugin-extract-messages": ["@lingui/babel-plugin-extract-messages@6.10.1", "", { "dependencies": { "@lingui/conf": "6.10.1" } }, "sha512-geg2chO+ahysUT7RdPdOMHNVb2hpM7jDrQpro+IyZKG6NwZ6BlsroxXpJKC27k/Jw1g7uvMBrkw7zOPeGCfi5A=="],
+    "@lingui/babel-plugin-extract-messages": ["@lingui/babel-plugin-extract-messages@6.11.0", "", { "dependencies": { "@lingui/conf": "6.11.0" } }, "sha512-gKXMoLOJf91nVm959bn5AJCY5PdNXZjXP3ltKahhe1UjCZCMVQI8CTmt0bzEH8MlUm7/zXqqvME8dIAQTiNFYw=="],
 
-    "@lingui/babel-plugin-lingui-macro": ["@lingui/babel-plugin-lingui-macro@6.10.1", "", { "dependencies": { "@lingui/conf": "6.10.1", "@lingui/message-utils": "6.10.1" }, "peerDependencies": { "@babel/core": "^7.20.12 || ^8.0.0" }, "optionalPeers": ["@babel/core"] }, "sha512-AQs7UsweJS+JMb1ySzETHFktdgwmdQaJM7B9WWVvuhJv0BtiI/S/XJcl2Nyh93mvWD3HArIFRWECKnZ0y5lIeQ=="],
+    "@lingui/babel-plugin-lingui-macro": ["@lingui/babel-plugin-lingui-macro@6.11.0", "", { "dependencies": { "@lingui/conf": "6.11.0", "@lingui/message-utils": "6.11.0" }, "peerDependencies": { "@babel/core": "^7.20.12 || ^8.0.0" }, "optionalPeers": ["@babel/core"] }, "sha512-cFy6lJ8ZnvUowUuNoB5KSPUyT03lL9YNsFqeg7EbqHbzwcsT0uitIGc8pZ96+mwNq8RaACgd5amHcRfr18aAUQ=="],
 
-    "@lingui/cli": ["@lingui/cli@6.10.1", "", { "dependencies": { "@babel/core": "^7.21.0", "@babel/generator": "^7.28.5", "@babel/parser": "^7.22.0", "@babel/types": "^7.21.2", "@lingui/babel-plugin-extract-messages": "6.10.1", "@lingui/babel-plugin-lingui-macro": "6.10.1", "@lingui/conf": "6.10.1", "@lingui/core": "6.10.1", "@lingui/format-po": "6.10.1", "@lingui/message-utils": "6.10.1", "@lingui/native-tools": "^0.1.6", "chokidar": "5.0.0", "cli-table3": "^0.6.5", "commander": "^14.0.2", "jiti": "^2.6.1", "micromatch": "^4.0.7", "ms": "^2.1.3", "normalize-path": "^3.0.0", "ora": "^9.1.0", "pseudolocale": "^3.1.0", "source-map": "^0.7.6", "tinypool": "^2.1.0" }, "peerDependencies": { "esbuild": "^0.28.1", "rolldown": "^1.0.0" }, "optionalPeers": ["esbuild", "rolldown"], "bin": { "lingui": "dist/lingui.js" } }, "sha512-C80aWjnGutoPFkw7F995yt3APK32+7X5d36DdyL5MKSrAHf8irBOG2wjy2nhm6gjDWOS0+s6zCTh8HX2HDC+CQ=="],
+    "@lingui/cli": ["@lingui/cli@6.11.0", "", { "dependencies": { "@babel/core": "^7.21.0", "@babel/generator": "^7.28.5", "@babel/parser": "^7.22.0", "@babel/types": "^7.21.2", "@lingui/babel-plugin-extract-messages": "6.11.0", "@lingui/babel-plugin-lingui-macro": "6.11.0", "@lingui/conf": "6.11.0", "@lingui/core": "6.11.0", "@lingui/format-po": "6.11.0", "@lingui/message-utils": "6.11.0", "@lingui/native-tools": "^0.2.0", "chokidar": "5.0.0", "cli-table3": "^0.6.5", "commander": "^14.0.2", "jiti": "^2.6.1", "micromatch": "^4.0.7", "ms": "^2.1.3", "normalize-path": "^3.0.0", "ora": "^9.1.0", "pseudolocale": "^3.1.0", "source-map": "^0.7.6", "tinypool": "^2.1.2" }, "peerDependencies": { "esbuild": "^0.28.1", "rolldown": "^1.0.0" }, "optionalPeers": ["esbuild", "rolldown"], "bin": { "lingui": "dist/lingui.js" } }, "sha512-R5qiCOAsV6STn+O3bWF+ttngLuh7Q+wf+83J34D0xDN/5pPAnYiek26rqGFwcpM9nAESzCEM0IoQsutpGCRLvg=="],
 
-    "@lingui/conf": ["@lingui/conf@6.10.1", "", { "dependencies": { "jest-validate": "^29.4.3", "jiti": "^2.5.1", "lilconfig": "^3.1.3", "normalize-path": "^3.0.0" } }, "sha512-utgrZY0AUj08dLi/9jSrR0chwBlvPKjGGDCPHR1UHCVZb/EIxskbITiCVITUfVuxp5+FMSPMm0V1lzF1Q86qlg=="],
+    "@lingui/conf": ["@lingui/conf@6.11.0", "", { "dependencies": { "jest-validate": "^29.4.3", "jiti": "^2.5.1", "lilconfig": "^3.1.3", "normalize-path": "^3.0.0" } }, "sha512-2TYTmbXkecuUxFU0DaPrRF8slUCzEd+G3Wh0RXws/uP2RkakvrcMx+m+ZjdVHypT/3VyjIGsCfDpFSnlLppo+g=="],
 
-    "@lingui/core": ["@lingui/core@6.10.1", "", { "dependencies": { "@lingui/babel-plugin-lingui-macro": "6.10.1", "@lingui/message-utils": "6.10.1" }, "peerDependencies": { "babel-plugin-macros": "2 || 3" }, "optionalPeers": ["babel-plugin-macros"] }, "sha512-s2b2yyXBwNFdKz5r3S9zaGLlJpSTH3+k+q0RGQr/TbjoTDsuTCMbHHT6stTWj377/4p/E3UTOrIy7r7J5jTGUA=="],
+    "@lingui/core": ["@lingui/core@6.11.0", "", { "dependencies": { "@lingui/babel-plugin-lingui-macro": "6.11.0", "@lingui/message-utils": "6.11.0" }, "peerDependencies": { "babel-plugin-macros": "2 || 3" }, "optionalPeers": ["babel-plugin-macros"] }, "sha512-JQLQeUCu0MWxHbBjQbrRdoPQqD15tKLFpXMaXII60TsWnfeNhcqBVhL1c2U9VStIjlc3c9S2sMaieawahyMkwQ=="],
 
-    "@lingui/format-po": ["@lingui/format-po@6.10.1", "", { "dependencies": { "@lingui/conf": "6.10.1", "@lingui/message-utils": "6.10.1", "pofile-ts": "^4.0.3" } }, "sha512-C+PjhCV4ERBCTFFymcIpBNfZaQfMcwh97+YENvmqgaUNQ95WcMVV9dk+qV+V+QG4g82a6ZCNbce1zSAxoy7rdw=="],
+    "@lingui/format-po": ["@lingui/format-po@6.11.0", "", { "dependencies": { "@lingui/conf": "6.11.0", "@lingui/message-utils": "6.11.0", "pofile-ts": "^4.0.3" } }, "sha512-XID3qLdPlxvM2nx+5cWtmAaCsxYFGBNe5xA5XHE4KRF0nG98BKN50M4577ntG3+cK+6G+0b5US4WLe1sdH65vw=="],
 
-    "@lingui/message-utils": ["@lingui/message-utils@6.10.1", "", { "dependencies": { "@messageformat/date-skeleton": "^1.1.0", "@messageformat/parser": "^5.0.0", "js-sha256": "^0.10.1" } }, "sha512-IzCtKG+wtC0uMFs7pONVAFscHzQN0FjW6RG7DULVJcHaLmH/hOGc7QpGX7Jzm7d8QguDfUM0QmSwFwLkYDmNvQ=="],
+    "@lingui/message-utils": ["@lingui/message-utils@6.11.0", "", { "dependencies": { "@messageformat/date-skeleton": "^1.1.0", "@messageformat/parser": "^5.0.0", "@noble/hashes": "^2.4.0" } }, "sha512-pRRELzVBQyXKhdFzhOi98hCfRDCHBhQmmCxraxrSkuthO+YD+4Xurap+9LiejAQqj1D2HAUxC+pEc7I9MPXfzQ=="],
 
-    "@lingui/native-tools": ["@lingui/native-tools@0.1.6", "", { "dependencies": { "@swc/types": "^0.1.25" }, "optionalDependencies": { "@lingui/native-tools-android-arm64": "0.1.6", "@lingui/native-tools-darwin-arm64": "0.1.6", "@lingui/native-tools-darwin-x64": "0.1.6", "@lingui/native-tools-linux-arm64-gnu": "0.1.6", "@lingui/native-tools-linux-arm64-musl": "0.1.6", "@lingui/native-tools-linux-x64-gnu": "0.1.6", "@lingui/native-tools-linux-x64-musl": "0.1.6", "@lingui/native-tools-win32-arm64-msvc": "0.1.6", "@lingui/native-tools-win32-x64-msvc": "0.1.6" }, "peerDependencies": { "@lingui/conf": "^6.0.1" } }, "sha512-xsn2R9YvWL9WuemM0ivSlXy14ORlfvPYLxFP3kbcFU3Pg5T9aRnmYOTfwszwGnjt4QsORO1mHHZT6k/Wr7V9pA=="],
+    "@lingui/native-tools": ["@lingui/native-tools@0.2.0", "", { "dependencies": { "@swc/types": "^0.1.25" }, "optionalDependencies": { "@lingui/native-tools-android-arm64": "0.2.0", "@lingui/native-tools-darwin-arm64": "0.2.0", "@lingui/native-tools-darwin-x64": "0.2.0", "@lingui/native-tools-linux-arm64-gnu": "0.2.0", "@lingui/native-tools-linux-arm64-musl": "0.2.0", "@lingui/native-tools-linux-x64-gnu": "0.2.0", "@lingui/native-tools-linux-x64-musl": "0.2.0", "@lingui/native-tools-win32-arm64-msvc": "0.2.0", "@lingui/native-tools-win32-x64-msvc": "0.2.0" }, "peerDependencies": { "@lingui/conf": "^6.0.1" } }, "sha512-60zML3mPXI6bdMSTGO9r1cL0DWD1n7ajkOPGdaxl3oiHZc2Y9huEeftwtNYEvPXFLrDV+qt/F5mCqZEj1PFeQg=="],
 
-    "@lingui/native-tools-android-arm64": ["@lingui/native-tools-android-arm64@0.1.6", "", { "os": "android", "cpu": "arm64" }, "sha512-kAwVqJlKv868dGJOhqXXqHwhI3bOlvdHSZz8rozlEEidvBuw6Srr0Es5hwisLlwybzcTYstjOeVGxmvu3QAV4g=="],
+    "@lingui/native-tools-android-arm64": ["@lingui/native-tools-android-arm64@0.2.0", "", { "os": "android", "cpu": "arm64" }, "sha512-8iBKJbVT83n6MAmeVCJDWaPqm69AHV8mjnY0hklH0SPP2V3rx8V4tLG7WLktg9qO++mbreYGmaHzIowwRwTgKQ=="],
 
-    "@lingui/native-tools-darwin-arm64": ["@lingui/native-tools-darwin-arm64@0.1.6", "", { "os": "darwin", "cpu": "arm64" }, "sha512-0KEoSob+pYS1jyRB+2bJp78L2L2i/VODFIk5Gs8LmKV58xZ+uN8MOhf1dYBBsi6+0tiqPartSCk3WA4i+lKPUQ=="],
+    "@lingui/native-tools-darwin-arm64": ["@lingui/native-tools-darwin-arm64@0.2.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-NuJmNQjMOnMMvQgyUuN95/yER6Pspujav4xUm08WE3fKPTOZPIkB2TmOpBM2cVXhuDcsv5g+3x3tsnkwcd65DQ=="],
 
-    "@lingui/native-tools-darwin-x64": ["@lingui/native-tools-darwin-x64@0.1.6", "", { "os": "darwin", "cpu": "x64" }, "sha512-e7liIjkzbJ8w3F9PHzZPmpYpeiv7XO4Np9J1tEpUamKYEdYBNt4AKr/UmWAQ7AjxbZSV9N8lj1ulUl3pdFUuaQ=="],
+    "@lingui/native-tools-darwin-x64": ["@lingui/native-tools-darwin-x64@0.2.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-n4G3GLcHKw5R56UzkKNFnm1ju/9nxBtPE40g+U+sUL4XUo6tPMX4J8b4yIE1dXYY6i5g7jQJm9Kvr/lIxibzOg=="],
 
-    "@lingui/native-tools-linux-arm64-gnu": ["@lingui/native-tools-linux-arm64-gnu@0.1.6", "", { "os": "linux", "cpu": "arm64" }, "sha512-JKu/8CvLsYUiRbRSnuzmrQk24tfuizgnDYlMxE5/awUUrRE+GlpaMP76PhJpkl+tV0v7t6zVe3+I5lbq7LaqVw=="],
+    "@lingui/native-tools-linux-arm64-gnu": ["@lingui/native-tools-linux-arm64-gnu@0.2.0", "", { "os": "linux", "cpu": "arm64", "libc": "glibc" }, "sha512-vmb7cuTr/vyfn5kgyO/0JkCuru9r8DFAkgJLTUsbG12NL0ti/PN+lJeflplUFEcRiWZryvCJ6UFNtMw65WX9GQ=="],
 
-    "@lingui/native-tools-linux-arm64-musl": ["@lingui/native-tools-linux-arm64-musl@0.1.6", "", { "os": "linux", "cpu": "arm64" }, "sha512-Aeexf/Ta0nZDZz3cDMAZ95GmFZ2lOxMwf1FK/ShK+U4WcNVSn3aI2KeuOeaLUfot9ZT8AiIIELPV4gO6b/GJgg=="],
+    "@lingui/native-tools-linux-arm64-musl": ["@lingui/native-tools-linux-arm64-musl@0.2.0", "", { "os": "linux", "cpu": "arm64", "libc": "musl" }, "sha512-Y3gEixa7EFIozkFVMp2KKDWn5aGYzxCFPBgEB1EtVXHj+VyPewc/Oo7xvXORpqD9u4vZQzuOYQJh6G6UVL9wnQ=="],
 
-    "@lingui/native-tools-linux-x64-gnu": ["@lingui/native-tools-linux-x64-gnu@0.1.6", "", { "os": "linux", "cpu": "x64" }, "sha512-SwX1dLcQE9pVcXwIxSGTE2+zBmaO6NbjD9XPqCiyoO8RFTkUTLjdnRDGHxFlFpIGMlVArQz5mMQ6coyUFl+AiA=="],
+    "@lingui/native-tools-linux-x64-gnu": ["@lingui/native-tools-linux-x64-gnu@0.2.0", "", { "os": "linux", "cpu": "x64", "libc": "glibc" }, "sha512-5gmB+mQt/DtenAm8KV2b2RihXZwce1SjF+E/lytQWGWfe/6JHl+kqBWOmrc3uhuB76xInyRw3ui4gDut5oAQYA=="],
 
-    "@lingui/native-tools-linux-x64-musl": ["@lingui/native-tools-linux-x64-musl@0.1.6", "", { "os": "linux", "cpu": "x64" }, "sha512-aWI8e10I6i7K9BG77LJDHREozx/VT8j8onf0wxd43ACor2S1VwS0ZNlIfpNWQTWovmU/CUliGO/VWQq2jGa+Sg=="],
+    "@lingui/native-tools-linux-x64-musl": ["@lingui/native-tools-linux-x64-musl@0.2.0", "", { "os": "linux", "cpu": "x64", "libc": "musl" }, "sha512-Y6E+9ZgW5y+8OyzpEdCJc+waRhNHv2i0h4ulU6xX7/GOOPnb3QpmRvOd6aCXkg6HwOy5SNJ/Rm8drQRJKei6qg=="],
 
-    "@lingui/native-tools-win32-arm64-msvc": ["@lingui/native-tools-win32-arm64-msvc@0.1.6", "", { "os": "win32", "cpu": "arm64" }, "sha512-M2TZP4gKgLaLbiboXIrY5+8GsaQLHvZ8E6cUFgAuSaBa8AMa73+pZO1eay/St9t8yDh6EL6hOlqN0HedUHMwyQ=="],
+    "@lingui/native-tools-win32-arm64-msvc": ["@lingui/native-tools-win32-arm64-msvc@0.2.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-I/XzCL7eZaT4BSDMVKc+FBhCGPxecf1E0aR2YQshz9KMwmuubOfpqBw6ZjEEaggvZWO8cg+G0FP3v8U01m3JvQ=="],
 
-    "@lingui/native-tools-win32-x64-msvc": ["@lingui/native-tools-win32-x64-msvc@0.1.6", "", { "os": "win32", "cpu": "x64" }, "sha512-5KvuSTFtDB8UGHS3Rxd+juYZgc51isQSx0hPukDObre6UxZGuUVCBmJ9YwoGVzXedViiNGmsQvrnCTBbVqI75g=="],
+    "@lingui/native-tools-win32-x64-msvc": ["@lingui/native-tools-win32-x64-msvc@0.2.0", "", { "os": "win32", "cpu": "x64" }, "sha512-Po3MvSbHqzy8LhGDcCKrhQOOZL3PSBIct/fj5DpEkiP4+OrUocYbwX62AaV67ne/vzUTpYkEjALjq7ymSD14aA=="],
 
-    "@lingui/react": ["@lingui/react@6.10.1", "", { "dependencies": { "@lingui/babel-plugin-lingui-macro": "6.10.1", "@lingui/core": "6.10.1", "use-sync-external-store": "^1.6.0" }, "peerDependencies": { "babel-plugin-macros": "2 || 3", "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" }, "optionalPeers": ["babel-plugin-macros"] }, "sha512-r0e4T7WpkeKeVxT+qt56u7i8z1ykRIotpsCXaA6Vm2K0iVkE0SebcWpBaEFpBX8FyHEzXSA5nshSH6dm50pL1Q=="],
+    "@lingui/react": ["@lingui/react@6.11.0", "", { "dependencies": { "@lingui/babel-plugin-lingui-macro": "6.11.0", "@lingui/core": "6.11.0", "use-sync-external-store": "^1.6.0" }, "peerDependencies": { "babel-plugin-macros": "2 || 3", "react": "^16.14.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" }, "optionalPeers": ["babel-plugin-macros"] }, "sha512-cHPALGiDeIeHOVOuBaYvgcs3ES4HuGSLM5DD4Q+RwneCP64gytHCoiSWhf8AfNySV7CxfNbtPSmuCqAP3NP+qA=="],
 
     "@mermaid-js/parser": ["@mermaid-js/parser@2.0.1", "", { "dependencies": { "@chevrotain/types": "~13.2.0" } }, "sha512-j37dj/h6p6pots1L7pLPPNuABEEu9WP4OYg9pW1g+nYG331j0+3canE9OagtYdytYvdSAMG+2fKU5cxep6LgjA=="],
 
@@ -586,6 +586,8 @@
     "@neodrag/core": ["@neodrag/core@3.0.0-next.11", "", {}, "sha512-3WQWxyrbxiaK9zS5JU2wJsW2gpoQlZBXVghduBh61JpqaeE0T0cte8R0qYK2RuJo3J2TYQYqxO19CpG/C1i5eg=="],
 
     "@neodrag/solid": ["@neodrag/solid@3.0.0-next.11", "", { "peerDependencies": { "@neodrag/core": "3.0.0-next.11", "solid-js": "^1.0.0" } }, "sha512-vCBIn/pimjWMQ6vhTS2/O1XNAwzVtc4eUhdbQ91WykbZWWqQ5NocDXt/1OdYrEkeRzJcpCv8wEz5PnMkgKP81Q=="],
+
+    "@noble/hashes": ["@noble/hashes@2.4.0", "", {}, "sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA=="],
 
     "@nodable/entities": ["@nodable/entities@2.2.0", "", {}, "sha512-9uGyhaQavEUMC8AIddIjau4NsnsXhou+j5sBAGojCM1oxmQpVKTWR/9JxABD6UAv12vpIms55fPZKFQEhG6uBg=="],
 
@@ -1864,8 +1866,6 @@
     "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
 
     "joi": ["joi@17.13.9", "", { "dependencies": { "@hapi/hoek": "^9.3.0", "@hapi/topo": "^5.1.0", "@sideway/address": "^4.1.5", "@sideway/formula": "^3.0.1", "@sideway/pinpoint": "^2.0.0" } }, "sha512-llFCT2rVtfwgBCaIqxtjim+iHqrgss4ONiGSYiiGH9jnjWq90ppSRffqmqKvwpa8W+YfILyQV6XyGcegXX2T4g=="],
-
-    "js-sha256": ["js-sha256@0.10.1", "", {}, "sha512-5obBtsz9301ULlsgggLg542s/jqtddfOpV5KJc4hajc9JV8GeY2gZHSVpYBn4nWqAUTJ9v+xwtbJ1mIBgIH5Vw=="],
 
     "js-tokens": ["js-tokens@4.0.0", "", {}, "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="],
 
