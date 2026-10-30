@@ -35,6 +35,8 @@ is visible "label=\"Control ✓\""
 is visible "label=\"Alt ✓\""
 is visible "id=\"virtual-key-q\" label=\"Q\""
 press "label=\"Right arrow\""
+# AX commits the consumed chord asynchronously; require its absence before asserting.
+wait absent "label=\"Control ✓\"" 2000
 is hidden "label=\"Control ✓\""
 is hidden "label=\"Alt ✓\""
 is visible "id=\"virtual-key-q\" label=\"q\""
