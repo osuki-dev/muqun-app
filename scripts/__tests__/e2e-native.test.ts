@@ -292,6 +292,59 @@ const coverSheetCaptures = [
   gitSheetCapture(false),
   gitSheetCapture(true),
   scrollRootSheetCapture(),
+  {
+    // Sanitized agent-device 0.21.12 XCTest capture: semantic type plus native class role.
+    name: 'iPhone XCTest native-class roles',
+    x: 201,
+    y: 184,
+    nodes: [
+      {
+        index: 0,
+        type: 'Application',
+        role: 'UIApplication',
+        rect: { x: 0, y: 0, width: 402, height: 874 },
+      },
+      {
+        index: 1,
+        parentIndex: 0,
+        type: 'Button',
+        role: 'UIButton',
+        label: 'Sheet Grabber',
+        rect: { x: 151, y: 58, width: 100, height: 24 },
+      },
+      {
+        index: 2,
+        parentIndex: 0,
+        type: 'Other',
+        role: 'RCTViewComponentView',
+        identifier: 'agent-subagent-detail-sheet',
+        rect: { x: 0, y: 62, width: 402, height: 812 },
+      },
+      {
+        index: 3,
+        parentIndex: 0,
+        type: 'StaticText',
+        role: 'RCTViewComponentView',
+        label: 'Subagent',
+        rect: { x: 20, y: 66, width: 304, height: 24 },
+      },
+      {
+        index: 4,
+        parentIndex: 0,
+        type: 'StaticText',
+        role: 'UILabel',
+        label: 'Session metadata',
+        rect: { x: 20, y: 153, width: 362, height: 17 },
+      },
+      {
+        index: 5,
+        parentIndex: 0,
+        type: 'ScrollView',
+        role: 'RCTEnhancedScrollView',
+        rect: { x: 0, y: 185.66666412353516, width: 402, height: 688.3333333333333 },
+      },
+    ],
+  },
 ];
 
 describe('native end-to-end gate', () => {
@@ -1932,6 +1985,18 @@ describe('native end-to-end gate', () => {
       await runner.run([{ target: { text: 'Done' }, mode: 'press', run: 'unused.ad' }]);
       expect(target).toBe(`role="${role}" label="Done"`);
     }
+  });
+  test('semantic roles keep priority over a generic native type', async () => {
+    const parent = { ...node, type: 'Other', index: 1, ref: 'e2' };
+    const button = { ...node, type: 'Other', role: 'button', index: 2, parentIndex: 1, ref: 'e3' };
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => (args[0] === 'snapshot' ? { nodes: [parent, button] } : { pass: true }),
+      {}
+    );
+    expect((await runner.locate({ text: 'Done' }))?.index).toBe(2);
   });
   test('selector roles use native matcher types, not snapshot display aliases', async () => {
     for (const [type, role] of [

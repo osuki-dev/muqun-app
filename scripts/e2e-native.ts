@@ -302,7 +302,12 @@ export function appViewport(nodes: Node[]): NonNullable<Node['rect']> {
 }
 
 function nodeRole(node: Node): string {
-  const source = node.kind ?? node.role ?? node.type ?? '';
+  // Newer iOS captures expose the UIKit/RN class in role and the semantic
+  // accessibility type separately. Keep semantic roles from older captures.
+  const source =
+    node.kind ??
+    (/^(RCT|UI|NS)/.test(node.role ?? '') ? (node.type ?? node.role) : (node.role ?? node.type)) ??
+    '';
   const role = source
     .replace(/^XCUIElementType/, '')
     .split('.')
