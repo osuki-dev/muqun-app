@@ -3265,6 +3265,7 @@ export type AgentDomainEvent =
       status: CompactionStatus | 'started';
       reason: CompactionReason;
       delta?: string;
+      error?: AgentErrorInfo;
     }
   | { type: 'agent.inbox.changed'; asid: string; seq: number; items: InboxItem[] }
   | {
@@ -3389,6 +3390,7 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     }
     case 'agent.compaction.changed': {
       const delta = asString(rec.delta);
+      const error = parseAgentError(rec.error);
       return {
         type,
         asid,
@@ -3396,6 +3398,7 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
         status: parseCompactionStatus(rec.status),
         reason: parseCompactionReason(rec.reason),
         ...(delta ? { delta } : {}),
+        ...(error ? { error } : {}),
       };
     }
     case 'agent.inbox.changed':

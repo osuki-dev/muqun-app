@@ -145,6 +145,16 @@ export function CompactionPill({
             </PressableScale>
           ) : null}
         </View>
+        {failed && activity.error?.message ? (
+          <Text
+            testID="agent-compaction-error"
+            variant="caption"
+            color={theme.colors.danger}
+            style={styles.error}
+            numberOfLines={4}>
+            {activity.error.message}
+          </Text>
+        ) : null}
         {hasSummary && expanded ? (
           <View testID="agent-compaction-details" style={styles.details}>
             <ScrollView
@@ -197,6 +207,7 @@ const styles = StyleSheet.create({
   },
   label: { flexShrink: 1 },
   action: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
+  error: { paddingHorizontal: 12, paddingBottom: 10 },
   details: { paddingHorizontal: 12 },
   output: { maxHeight: 180 },
   copy: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },

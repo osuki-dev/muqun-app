@@ -242,3 +242,27 @@ describe('real compaction summary stream', () => {
     expect(running?.summary).toBe(text);
   });
 });
+
+test('failed compaction preserves a structured native error without changing reason or summary', () => {
+  const parsed = parseAgentDomainEvent('agent.compaction.changed', {
+    session_id: 'session-a',
+    seq: 20,
+    status: 'failed',
+    reason: 'manual',
+    error: {
+      code: 'compaction_too_small',
+      message: 'Nothing to compact: this session is too short.',
+    },
+  });
+  if (parsed?.type !== 'agent.compaction.changed') throw new Error('Invalid error fixture');
+  const failed = applyCompactionEvent(beginCompaction('session-a', 'manual', 19), parsed);
+  expect(failed?.error?.message).toBe('Nothing to compact: this session is too short.');
+  expect(failed?.reason).toBe('manual');
+  expect(failed?.summary).toBe('');
+  expect(applyCompactionEvent(failed, event(19, 'running'))).toBe(failed);
+  expect(applyCompactionEvent(failed, event(21, 'started'))?.error).toBeUndefined();
+  expect(applyCompactionEvent(null, event(22, 'failed'))?.error).toBeUndefined();
+  expect(
+    applyCompactionEvent(failed, event(23, 'failed', undefined, 'session-b'))?.error
+  ).toBeUndefined();
+});
