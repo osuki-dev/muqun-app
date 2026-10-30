@@ -1,5 +1,12 @@
 # Native agent-device action sections; suite.json composes guards and includes.
 # dismiss-logbox
 
+# section open-debugger-notice
+# React Native development builds can place this migration notice directly over
+# pinned controls on iPad. Open its debugger explicitly, preserve the
+# warning output there, and prove the notice left before the next app action.
+press "label=\"!, Open debugger to view warnings.\""
+wait absent "label=\"!, Open debugger to view warnings.\"" 10000
+
 # section s5
 react-native dismiss-overlay

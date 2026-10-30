@@ -709,12 +709,7 @@
       {
         "run": "flows/custom-themes.ad#install"
       },
-      {
-        "when": {
-          "target": { "text": "!, Open debugger to view warnings." }
-        },
-        "steps": [{ "run": "flows/custom-themes.ad#open-debugger-notice" }]
-      },
+      { "include": "subflows/dismiss-logbox" },
       { "run": "flows/custom-themes.ad#apply" },
       {
         "target": {
@@ -6544,6 +6539,12 @@
       }
     ],
     "subflows/dismiss-logbox": [
+      {
+        "when": {
+          "target": { "text": "!, Open debugger to view warnings." }
+        },
+        "steps": [{ "run": "subflows/dismiss-logbox.ad#open-debugger-notice" }]
+      },
       {
         "run": "subflows/dismiss-logbox.ad#s5"
       }

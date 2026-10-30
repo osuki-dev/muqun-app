@@ -29,13 +29,6 @@ wait "id=custom-theme-preview" 15000
 scroll down --until "id=theme-apply"
 is visible "id=theme-apply"
 
-# section open-debugger-notice
-# React Native development builds can place this migration notice directly over
-# the pinned Apply button on iPad. Open its debugger explicitly, preserve the
-# warning output there, and prove the notice left before the actual app action.
-press "label=\"!, Open debugger to view warnings.\""
-wait absent "label=\"!, Open debugger to view warnings.\"" 10000
-
 # section apply
 press "id=theme-apply"
 # Applying from the file viewer goes home in one move under the reskin cover:
