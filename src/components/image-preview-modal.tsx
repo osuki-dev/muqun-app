@@ -46,7 +46,7 @@ import Animated, {
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, timing, zoomIn } from '@/lib/motion';
 
 const AXIS_LOCK_DISTANCE = 8;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -128,7 +128,7 @@ export function ImagePreviewModal({
               : { width: next.width, height: next.height }
           );
         }}>
-        <Animated.View style={styles.root}>
+        <Animated.View entering={zoomIn('modal')} style={styles.root}>
           <PreviewSelection
             key={sourceKey}
             images={images}
