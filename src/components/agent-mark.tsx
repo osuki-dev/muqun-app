@@ -1,5 +1,7 @@
 import { AgentIcon } from '@/icons';
 
+import { AntigravityIcon } from '@/components/antigravity-icon';
+import { ClaudeIcon } from '@/components/claude-icon';
 import { CodexIcon } from '@/components/codex-icon';
 import { DeepSeekIcon } from '@/components/deepseek-icon';
 import { OpenCodeIcon } from '@/components/opencode-icon';
@@ -31,6 +33,10 @@ export function AgentMark({ kind, size, color }: { kind: string; size: number; c
       return <FxIcon size={size} color={color} />;
     case 'qoder':
       return <QoderIcon size={size} color={color} />;
+    case 'claude':
+      return <ClaudeIcon size={size} color={color} />;
+    case 'antigravity':
+      return <AntigravityIcon size={size} color={color} />;
     default:
       return <AgentIcon size={size} color={color} />;
   }

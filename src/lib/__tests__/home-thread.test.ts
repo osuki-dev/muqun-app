@@ -197,14 +197,19 @@ describe('what Send does', () => {
     ).toEqual({ kind: 'busy' });
   });
 
-  test('a session that lives in a terminal is continued there, not prompted natively', () => {
-    expect(
-      homeThreadSendPlan({
-        target: SESSION,
-        live: { status: 'idle', interaction: 'terminal' },
-        features: NO_FEATURES,
-      })
-    ).toEqual({ kind: 'terminal' });
+  test('a session that lives in a terminal is continued there unless its agent takes input from here', () => {
+    for (const [terminalInput, kind] of [
+      [false, 'terminal'],
+      [true, 'session'],
+    ] as const) {
+      expect(
+        homeThreadSendPlan({
+          target: SESSION,
+          live: { status: 'idle', interaction: 'terminal' },
+          features: { ...NO_FEATURES, terminalInput },
+        }).kind
+      ).toBe(kind);
+    }
   });
 
   test('pills changed since targeting are switched on the session; unchanged ones are not', () => {

@@ -3552,6 +3552,10 @@ msgstr "Install an app build with voice recording support to use the microphone"
 msgid "Install an updated app build to use realtime transcription."
 msgstr "Install an updated app build to use realtime transcription"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Install command copied"

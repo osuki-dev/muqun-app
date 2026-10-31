@@ -889,6 +889,7 @@ export function HomeComposerDock({
       features: {
         inbox: threadFeatures.inbox,
         steering: threadFeatures.extra.promptSteering === true,
+        terminalInput: threadFeatures.extra.terminalInput === true,
       },
       ...(pills ? { pills } : {}),
     });

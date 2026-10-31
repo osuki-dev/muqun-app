@@ -3552,6 +3552,10 @@ msgstr "Installez une version de l’app prenant en charge l’enregistrement vo
 msgid "Install an updated app build to use realtime transcription."
 msgstr "Installez une version à jour de l’app pour utiliser la transcription en temps réel"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "Installez Claude Code et Node.js 22 ou plus récent sur l'ordinateur, connectez-vous à Claude Code, puis vérifiez à nouveau"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Commande d'installation copiée"

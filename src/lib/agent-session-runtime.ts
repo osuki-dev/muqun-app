@@ -62,6 +62,22 @@ export function nativeAgentInteraction(runtime: AgentSessionRuntime | undefined)
   return runtime === undefined || runtime.interaction === 'native';
 }
 
+/**
+ * A conversation held by a terminal whose agent takes prompts from here: the
+ * gateway types them into that terminal (`terminalInput`, Claude Code today).
+ * Other native controls stay with the terminal.
+ */
+export function terminalPromptInput(
+  runtime: AgentSessionRuntime | undefined,
+  features: { extra: Record<string, unknown> }
+): boolean {
+  return (
+    runtime?.interaction === 'terminal' &&
+    runtime.terminal !== undefined &&
+    features.extra.terminalInput === true
+  );
+}
+
 /** Manual history stays frozen; subscribed live or persisted events retain normal viewport policy. */
 export function replaceAgentTranscript(
   mode: 'enter' | 'silent' | 'refresh',
