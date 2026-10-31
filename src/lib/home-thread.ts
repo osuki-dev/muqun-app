@@ -241,8 +241,8 @@ export function homeThreadSendPlan(input: {
   task?: TaskView;
   /** What the live strip last read of the session. */
   live?: { status?: AgentRunStatus; interaction?: AgentSessionRuntime['interaction'] };
-  /** The target agent's `inbox` and `promptSteering`. */
-  features: { inbox: boolean; steering: boolean };
+  /** The target agent's `inbox`, `promptSteering` and `terminalInput`. */
+  features: { inbox: boolean; steering: boolean; terminalInput?: boolean };
   delivery?: 'steer' | 'queue';
   /** The dock's mode and model now, when they name the target's own agent. */
   pills?: HomeSessionParams;
@@ -258,7 +258,7 @@ export function homeThreadSendPlan(input: {
       paneId: target.paneId,
       ...(target.sessionId ? { sessionId: target.sessionId } : {}),
     };
-  if (live?.interaction === 'terminal') return { kind: 'terminal' };
+  if (live?.interaction === 'terminal' && !features.terminalInput) return { kind: 'terminal' };
   const running = live?.status !== undefined && RUNNING.includes(live.status);
   if (running && !features.inbox && !features.steering) return { kind: 'busy' };
   const delivery = input.delivery ?? (features.steering ? 'steer' : 'queue');

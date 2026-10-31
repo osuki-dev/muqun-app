@@ -3552,6 +3552,10 @@ msgstr "마이크를 사용하려면 음성 녹음을 지원하는 앱 빌드를
 msgid "Install an updated app build to use realtime transcription."
 msgstr "실시간 변환을 사용하려면 최신 앱을 설치하세요"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "컴퓨터에 Claude Code와 Node.js 22 이상을 설치하고 그곳에서 Claude Code에 로그인한 다음 다시 확인하세요"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
