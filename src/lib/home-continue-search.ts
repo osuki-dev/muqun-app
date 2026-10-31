@@ -76,7 +76,13 @@ export function homeProviderTextColor(
   const brand = agentMarkKind(kind.trim().toLowerCase().split(/\s+/)[0]);
   if (!brand) return colors.textMuted;
   // Monochrome official marks use the theme's normal text ink.
-  if (brand === 'codex' || brand === 'pi' || brand === 'fx' || brand === 'qoder')
+  if (
+    brand === 'codex' ||
+    brand === 'pi' ||
+    brand === 'fx' ||
+    brand === 'qoder' ||
+    brand === 'claude'
+  )
     return colors.text;
   const authored = { opencode: colors.primary, deepseek: colors.info, t3: colors.success };
   const contrastSurface = providerContrastSurface(surface, colors.surface);

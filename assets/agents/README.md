@@ -27,6 +27,10 @@ Its background plate is omitted and its viewBox is cropped around the mark.
 Neither website states a separate artwork license; no license or trademark
 grant is inferred from the fx repository's Apache-2.0 code license.
 
+The Claude mark, used for Claude Code in both its terminal panes and its native
+sessions, comes from [Simple Icons 16.36.0](https://github.com/simple-icons/simple-icons/blob/16.36.0/icons/claude.svg),
+CC0-1.0; the path is unchanged. The mark remains Anthropic's trademark.
+
 These marks identify their respective agents. Their trademark rights remain with
 their owners, and their inclusion does not imply endorsement. Like the existing
 Codex mark, all three inherit the surrounding entry's theme color and are
