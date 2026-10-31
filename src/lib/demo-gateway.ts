@@ -169,6 +169,47 @@ export const demoRecord: GatewayRecord = {
 };
 
 let active = false;
+let demoSessionRecovered = false;
+
+/** A transport failure at the normal snapshot boundary, recovered by explicit Refresh. */
+export function demoSessionRecoverySnapshot(
+  asid: string,
+  refresh = false
+): AgentSessionSnapshot | null {
+  if (!active || asid !== 'demo-session-recovery') return null;
+  if (refresh) demoSessionRecovered = true;
+  if (!demoSessionRecovered)
+    throw new Error(
+      'java.lang.RuntimeException: Cronet failed: net::ERR_NAME_NOT_RESOLVED\n at native.transport.Request.run(Request.java:1)'
+    );
+  return {
+    info: {
+      asid,
+      backend_session_id: asid,
+      agent_id: 'opencode',
+      title: 'Session recovery sample',
+      directory: '/demo/muqun',
+      status: 'idle',
+      updated_ms: 1,
+      model: null,
+    },
+    timeline: [
+      {
+        id: 'demo-recovery-answer',
+        message_id: 'demo-recovery-answer',
+        role: 'assistant',
+        ordinal: 0,
+        seq: 1,
+        updated_ms: 1,
+        part: { type: 'text', text: 'DEMO_SESSION_RECOVERED' },
+      },
+    ],
+    permissions: [],
+    forms: [],
+    inbox: [],
+    seq: 1,
+  };
+}
 let demoLazygit = false;
 let demoLazygitCwd = '~/code/muqun';
 
@@ -192,6 +233,7 @@ export function demoSendAgentText(target: string, text: string): void {
 
 export function setDemoActive(value: boolean): void {
   if (!value) {
+    demoSessionRecovered = false;
     demoAssistant = null;
     demoLazygit = false;
     demoCompactionListeners.clear();

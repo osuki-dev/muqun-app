@@ -79,6 +79,7 @@ function reader() {
   let reads = 0;
   let now = 0;
   let failure = parked;
+  let snapshotFailure: { source: string | null; asid: string; error: unknown } | null = null;
   const shown: { title: string; message: string }[] = [];
   const dismissed: string[] = [];
   const promises: Promise<void>[] = [];
@@ -119,6 +120,9 @@ function reader() {
     isAgentSessionPreparingAt: () => context.preparing,
     isPreparingSessionHistory,
     setLoading: (_value: boolean) => {},
+    setSnapshotFailure: (value: typeof snapshotFailure) => {
+      snapshotFailure = value;
+    },
     setEarlierExhausted: () => {},
     transcriptStore: { getState: () => ({ timeline: [] }) },
     reconcileAgentSnapshotPending: () => [],
@@ -166,6 +170,7 @@ function reader() {
     load,
     catchUp: () => runInNewContext(transpile(callback('catchUp')), context)(),
     reads: () => reads,
+    snapshotFailure: () => snapshotFailure,
     settle: () => Promise.allSettled(promises),
     failWith: (error: Error) => (failure = error),
     expire: () => (now = 10_000),
@@ -217,6 +222,7 @@ test('only parked-history refusal during actual preparation is transient; failed
   await f.settle();
   expect(f.shown).toHaveLength(0);
   expect(f.context.openedAsidRef.current).toBe('session-a');
+  expect(f.snapshotFailure()).toBeNull();
   f.catchUp();
   await f.settle();
   expect(f.reads()).toBe(1);
@@ -332,6 +338,7 @@ test('an older cached success cannot dismiss a newer real failure notice', async
   const stale = f.load('silent');
   await f.load('silent');
   expect(f.shown).toHaveLength(1);
+  expect(f.snapshotFailure()?.error).toBe(changed);
   older.resolve({
     history_cursor: null,
     info: null,
@@ -344,4 +351,5 @@ test('an older cached success cannot dismiss a newer real failure notice', async
   await stale;
   expect(f.dismissed).toEqual([]);
   expect(f.shown).toHaveLength(1);
+  expect(f.snapshotFailure()?.error).toBe(changed);
 });

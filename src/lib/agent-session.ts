@@ -45,6 +45,7 @@ import {
   DEMO_NATIVE_PREVIEW_CHILD_ASID,
   DEMO_SERVER_ID,
   demoCompactionSnapshot,
+  demoSessionRecoverySnapshot,
   demoNativePreviewSnapshot,
   demoCompactionLogsSnapshot,
   advanceDemoCompactionLogs,
@@ -663,6 +664,8 @@ export async function getAgentSessionSnapshot(
   options?: { refresh?: boolean; capabilities?: readonly string[]; historyCursor?: string | null }
 ): Promise<AgentSessionSnapshot> {
   if (usesOfflineDemo()) {
+    const recovery = demoSessionRecoverySnapshot(asid, options?.refresh);
+    if (recovery) return recovery;
     const stage = demoStageSnapshot(asid);
     if (stage) return stage;
     if (asid === DEMO_COMPACTION_ASID) return demoCompactionSnapshot();
