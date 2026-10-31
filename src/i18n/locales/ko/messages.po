@@ -3560,6 +3560,10 @@ msgstr "컴퓨터에 Claude Code와 Node.js 22 이상을 설치하고 그곳에�
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
+#: src/i18n/labels.ts
+msgid "Install Cursor's CLI on the computer and run `agent login` there, then check again."
+msgstr "컴퓨터에 Cursor CLI를 설치하고 그곳에서 `agent login`을 실행한 다음 다시 확인하세요"
+
 #: src/components/settings-font-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Installed"

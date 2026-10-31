@@ -519,6 +519,11 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     command: 'muqun-gateway agent setup claude',
     installUrl: 'https://docs.claude.com/en/docs/claude-code/setup',
   },
+  cursor: {
+    start: msg`Install Cursor's CLI on the computer and run \`agent login\` there, then check again.`,
+    command: 'muqun-gateway agent setup cursor',
+    installUrl: 'https://cursor.com/docs/cli/installation',
+  },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait

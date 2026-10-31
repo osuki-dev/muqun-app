@@ -3560,6 +3560,10 @@ msgstr "Installiere Claude Code und Node.js 22 oder neuer auf dem Computer, meld
 msgid "Install command copied"
 msgstr "Installationsbefehl kopiert"
 
+#: src/i18n/labels.ts
+msgid "Install Cursor's CLI on the computer and run `agent login` there, then check again."
+msgstr "Installiere die Cursor-CLI auf dem Computer, führe dort `agent login` aus und prüfe dann erneut"
+
 #: src/components/settings-font-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Installed"
