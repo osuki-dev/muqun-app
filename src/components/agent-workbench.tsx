@@ -723,6 +723,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
+  useEffect(() => {
+    if (!visible || !isGlobalOwner() || !entrySource || !activeAsid) return;
+    return readFeedback.activate(JSON.stringify([entrySource, activeAsid, 'history']));
+  }, [activeAsid, entrySource, globalOwnerEpoch, isGlobalOwner, readFeedback, visible]);
   const newSessionCreationRef = useRef(false);
   const promptDispatchRef = useRef(false);
   const [creatingSession, setCreatingSession] = useState(false);

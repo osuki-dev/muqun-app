@@ -12,6 +12,51 @@ const changed = new Error(
   'Failed to get snapshot: 502 {"error":{"code":"agent_error","message":"ACP session changed while loading; refresh again"}}'
 );
 const source = productionSource('src/components/agent-workbench.tsx');
+
+test('switching the foreground session dismisses its old failure before showing the next one', () => {
+  let next = 0;
+  const active = new Map<string, string>();
+  const feedback = new SessionReadFeedback(
+    (notice) => {
+      const id = String(++next);
+      active.set(id, notice.message);
+      return id;
+    },
+    (id) => active.delete(id)
+  );
+  const notice = { variant: 'danger' as const, title: 'Read failed', message: 'refused' };
+  const leaveA = feedback.activate('source/a/history');
+  feedback.failed('source/a/history', notice);
+  // The new screen can mount before the old retained screen cleans up.
+  const leaveB = feedback.activate('source/b/history');
+  feedback.failed('source/b/history', notice);
+  leaveA();
+  expect([...active.values()]).toEqual(['refused']);
+  expect([...active.keys()]).toEqual(['2']);
+  leaveB();
+  expect(active.size).toBe(0);
+});
+
+test('late cleanup of the same session cannot dismiss its new foreground owner', () => {
+  const dismissed: string[] = [];
+  const feedback = new SessionReadFeedback(
+    () => 'notice',
+    (id) => dismissed.push(id)
+  );
+  const leaveOld = feedback.activate('source/a/history');
+  const leaveNew = feedback.activate('source/a/history');
+  feedback.failed('source/a/history', {
+    variant: 'danger',
+    title: 'Read failed',
+    message: 'refused',
+  });
+  leaveOld();
+  expect(dismissed).toEqual([]);
+  leaveNew();
+  leaveNew();
+  expect(dismissed).toEqual(['notice']);
+});
+
 function callback(name: string): string {
   let found = '';
   walk(source.program, (node) => {
