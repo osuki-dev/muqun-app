@@ -10,7 +10,7 @@
         "@formatjs/intl-locale": "^5.4.1",
         "@formatjs/intl-pluralrules": "^6.4.0",
         "@hot-updater/react-native": "1.1.5",
-        "@legendapp/list": "^3.7.0",
+        "@legendapp/list": "^3.7.1",
         "@lingui/core": "^6.11.0",
         "@lingui/react": "^6.11.0",
         "@osuki-dev/react-native-splash": "0.4.0",
@@ -114,9 +114,9 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
+    "@legendapp/list@3.7.1": "patches/javascript/@legendapp%2Flist@3.7.1.patch",
     "expo-alternate-app-icons@11.0.0": "patches/expo-alternate-app-icons@11.0.0.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
-    "@legendapp/list@3.7.0": "patches/javascript/@legendapp%2Flist@3.7.0.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
   },
   "overrides": {
@@ -537,7 +537,7 @@
 
     "@keyv/serialize": ["@keyv/serialize@1.1.1", "", {}, "sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA=="],
 
-    "@legendapp/list": ["@legendapp/list@3.7.0", "", { "dependencies": { "use-sync-external-store": "^1.5.0" }, "peerDependencies": { "react": "*", "react-dom": "*", "react-native": "*" }, "optionalPeers": ["react-dom", "react-native"] }, "sha512-Er2D5eKIv+rfbakJ3ra4pD7NCNtOj2m1nrU6s6Ea3dO+x3vgt0h9NE0dn5WHOLIRkPEWHiwbslgl95QxZiEkjg=="],
+    "@legendapp/list": ["@legendapp/list@3.7.1", "", { "dependencies": { "use-sync-external-store": "^1.5.0" }, "peerDependencies": { "react": "*", "react-dom": "*", "react-native": "*" }, "optionalPeers": ["react-dom", "react-native"] }, "sha512-zgIy84yG2JP93+kib61rZBTcYGZ6fULrkCQz/MF7WrjVJeJQa/rR4z+rXfM5oveirO5mYkro4IDGytARIjJe9w=="],
 
     "@lingui/babel-plugin-extract-messages": ["@lingui/babel-plugin-extract-messages@6.11.0", "", { "dependencies": { "@lingui/conf": "6.11.0" } }, "sha512-gKXMoLOJf91nVm959bn5AJCY5PdNXZjXP3ltKahhe1UjCZCMVQI8CTmt0bzEH8MlUm7/zXqqvME8dIAQTiNFYw=="],
 
