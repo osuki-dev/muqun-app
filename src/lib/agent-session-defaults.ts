@@ -57,7 +57,18 @@ export interface RememberedAgentDefaults {
   workspace?: RememberedAgentChoice;
   /** The last pick made anywhere on this server, for a workspace never used. */
   server?: RememberedAgentChoice;
+  /** `workspace` (or `server`, with no directory) when it was picked in this launch. */
+  thisLaunch?: RememberedAgentChoice;
 }
+
+/**
+ * The capability that says the catalog's `defaults` carry what was last
+ * chosen for the agent in the catalog's directory (then on the computer),
+ * shared by every paired device, rather than only the agent's own default.
+ * TODO(feat/session-defaults): confirm the capability name with the gateway's
+ * docs/agent-api.md once that branch lands.
+ */
+export const AGENT_SESSION_DEFAULTS_CAPABILITY = 'agent_session_defaults';
 
 export interface NewSessionDefaultsInput {
   /**
@@ -67,6 +78,13 @@ export interface NewSessionDefaultsInput {
   picked: RememberedAgentChoice;
   workspace?: RememberedAgentChoice;
   server?: RememberedAgentChoice;
+  thisLaunch?: RememberedAgentChoice;
+  /**
+   * The catalog's `defaults` are the host's shared memory of the last choice
+   * (`AGENT_SESSION_DEFAULTS_CAPABILITY`): they then rank above this device's
+   * own memory, which stays the answer for an older gateway.
+   */
+  catalogRemembers?: boolean;
   /**
    * The root sessions this server holds, newest-updated first or in any order.
    *
@@ -270,6 +288,9 @@ export function firstUsableModel(
  *   8. the first enabled free model in the catalog (model only)
  *   9. nothing, and only when the catalog lists nothing to send
  *
+ * On a host whose catalog remembers (`catalogRemembers`), this launch's pick
+ * for the place and then the catalog's `defaults` sit between rungs 2 and 3.
+ *
  * Per field, because the two are chosen per field: picking a model in a
  * workspace does not say anything about which agent belongs there. A value the
  * catalog no longer lists falls through to the next rung rather than ending the
@@ -302,8 +323,17 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
   const here = recentSessionChoice(sessions, input.directory);
   const anywhere = recentSessionChoice(sessions);
   const refused = unsupportedModelRefs(sessions);
+  // A host that remembers answers right after this launch's own pick, ahead of
+  // this device's older memory: another device may have chosen since.
+  const shared = input.catalogRemembers ? input.thisLaunch : undefined;
+  const hostMode = input.catalogRemembers ? catalogModeId(catalogDefaults?.mode, modes) : undefined;
+  const hostModel = input.catalogRemembers
+    ? catalogModelRef(usableCatalogDefaultModel(catalogDefaults?.model, refused), models)
+    : undefined;
   const mode =
     picked.mode ??
+    catalogModeId(shared?.mode, modes) ??
+    hostMode ??
     catalogModeId(workspace?.mode, modes) ??
     catalogModeId(server?.mode, modes) ??
     catalogModeId(here.mode, modes) ??
@@ -313,6 +343,8 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
   const model =
     picked.model ??
     catalogModelRef(modeModel, models) ??
+    catalogModelRef(shared?.model, models) ??
+    hostModel ??
     catalogModelRef(workspace?.model, models) ??
     catalogModelRef(server?.model, models) ??
     catalogModelRef(here.model, models) ??

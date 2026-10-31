@@ -12,12 +12,12 @@
  * Pure, so the rule is pinned by Bun tests.
  */
 
-import type { MirroredServerDiscovery } from '@/lib/agent-discovery';
+import type { HomeAgentEntry, MirroredServerDiscovery } from '@/lib/agent-discovery';
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { agentBrandName } from '@/lib/herdr-entity';
 import {
   launchAgentCaption,
-  projectLaunchAgents,
+  partitionLaunchAgents,
   type LaunchAgentCaption,
 } from '@/lib/home-launch-model';
 
@@ -32,6 +32,10 @@ export type HomeAgentOption =
       name: string;
       ready: boolean;
       caption: LaunchAgentCaption;
+      /** Listed under "More agents" (`agentPickerPlacement`). */
+      more?: boolean;
+      /** Hidden by the reader on the host; More offers Show. */
+      hidden?: boolean;
     }
   | {
       /** `terminal:<kind>`. */
@@ -69,27 +73,34 @@ export function terminalAgentKey(kind: string): string {
   return `terminal:${kind}`;
 }
 
+function sessionOption(agent: HomeAgentEntry, more: boolean): HomeAgentOption {
+  return {
+    key: sessionAgentKey(agent.id),
+    kind: 'session',
+    agentId: agent.id,
+    agentKind: agent.kind,
+    name: agent.name,
+    ready: agent.readiness === 'ready',
+    caption: launchAgentCaption(agent),
+    ...(more ? { more: true } : {}),
+    ...(agent.visibility === 'hidden' ? { hidden: true } : {}),
+  };
+}
+
 /**
- * Everything the computer offers, in its own order: the session agents
- * discovery lists, then the terminal agents its catalog found installed. A
- * terminal kind can also have a session adapter: these are separate destinations,
- * so discovery must not remove an installed terminal choice.
+ * Everything the computer offers, in its own order: the session agents of the
+ * default group, then the terminal agents its catalog found installed, then the
+ * session agents under "More agents". A terminal kind can also have a session
+ * adapter: these are separate destinations, so neither discovery nor hiding the
+ * session form removes an installed terminal choice.
  */
 export function homeAgentOptions(
   discovery: MirroredServerDiscovery | null | undefined,
   terminal: readonly AgentProfile[] | null | undefined
 ): HomeAgentOption[] {
-  const listed = projectLaunchAgents(discovery);
+  const { offered, more } = partitionLaunchAgents(discovery);
   const sessions: HomeAgentOption[] = discovery?.agents?.agents
-    ? listed.map((agent) => ({
-        key: sessionAgentKey(agent.id),
-        kind: 'session' as const,
-        agentId: agent.id,
-        agentKind: agent.kind,
-        name: agent.name,
-        ready: agent.readiness === 'ready',
-        caption: launchAgentCaption(agent),
-      }))
+    ? offered.map((agent) => sessionOption(agent, false))
     : [FALLBACK];
   const terminals: HomeAgentOption[] = [];
   for (const profile of terminal ?? []) {
@@ -107,9 +118,10 @@ export function homeAgentOptions(
   // A session provider whose ledger can also carry its goal into a terminal
   // pane is offered in both forms, so the delivery is the reader's pick and
   // never an app rule; the computer's own terminal launcher for that kind,
-  // when it has one, is the terminal entry already.
-  for (const agent of listed) {
-    if (!agent.ledgerDelivery?.includes('pane')) continue;
+  // when it has one, is the terminal entry already. Hiding the session form
+  // leaves the terminal form where it was; switching the agent off does not.
+  for (const agent of [...offered, ...more]) {
+    if (agent.readiness === 'unsupported' || !agent.ledgerDelivery?.includes('pane')) continue;
     const key = terminalAgentKey(agent.kind);
     if (terminals.some((entry) => entry.key === key)) continue;
     terminals.push({
@@ -127,7 +139,7 @@ export function homeAgentOptions(
     return at < 0 ? PREFERRED_TERMINAL_KINDS.length : at;
   };
   terminals.sort((a, b) => rank(a) - rank(b));
-  return [...sessions, ...terminals];
+  return [...sessions, ...terminals, ...more.map((agent) => sessionOption(agent, true))];
 }
 
 /** Only duplicate provider names need a terminal suffix in the chooser and dock. */
@@ -144,7 +156,8 @@ export function homeAgentNeedsTerminalLabel(
 /**
  * The agent Send uses: the stored choice while the computer still offers it;
  * an unavailable terminal choice stays selected and must be rechecked before
- * sending. With no choice, use the first ready agent, then the first listed one.
+ * sending. With no choice, use the first ready agent of the default group, then
+ * its first agent, and only then anything under More.
  */
 export function resolveHomeAgent(
   options: readonly HomeAgentOption[],
@@ -169,7 +182,8 @@ export function resolveHomeAgent(
       };
     }
   }
-  return options.find((option) => option.ready) ?? options[0] ?? null;
+  const listed = options.filter((option) => option.kind === 'terminal' || !option.more);
+  return listed.find((option) => option.ready) ?? listed[0] ?? options[0] ?? null;
 }
 
 /** Stored as `{ [serverId]: key }`; anything else in storage is dropped. */

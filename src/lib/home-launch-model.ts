@@ -15,7 +15,12 @@
  */
 
 import type { HomeAgentEntry, MirroredServerDiscovery } from '@/lib/agent-discovery';
-import { agentReadiness, findAgent, normalizeAgentId } from '@/lib/agent-discovery';
+import {
+  agentPickerPlacement,
+  agentReadiness,
+  findAgent,
+  normalizeAgentId,
+} from '@/lib/agent-discovery';
 
 /** What an agent tile says under its name; state is never colour alone. */
 export type LaunchAgentCaption =
@@ -23,7 +28,8 @@ export type LaunchAgentCaption =
   | 'not-installed'
   | 'needs-setup'
   | 'needs-update'
-  | 'offline';
+  | 'offline'
+  | 'off';
 
 type LaunchEntryBase = {
   /** Stable React key. */
@@ -87,25 +93,45 @@ export function launchAgentTestID(agentId: string): string {
   return `home-new-agent-${agentId}`;
 }
 
+/** A computer's session agents, split the way the new-session picker lists them. */
+export type LaunchAgentGroups = {
+  /** Listed by default, in the gateway's order with the last-used agent first. */
+  offered: HomeAgentEntry[];
+  /** Under "More agents": hidden, not installed, or switched off on the host. */
+  more: HomeAgentEntry[];
+};
+
 /**
- * The agents Home offers a tile for: everything discovery lists except an
- * agent switched off (a choice made on the host, not a fault). One that still
- * needs setup keeps its tile, which opens the guide, in the gateway's own order with the last-used agent first.
- *
- * Every offered agent gets a tile; no separate overflow picker hides entries.
+ * The picker groups (`agentPickerPlacement`). A computer with nothing in the
+ * default group but agents still to install keeps those listed, so the way to
+ * the install guide is never folded away; a hidden or switched-off agent stays
+ * under More either way.
  */
+export function partitionLaunchAgents(
+  discovery: MirroredServerDiscovery | null | undefined,
+  lastUsedAgentId?: string
+): LaunchAgentGroups {
+  const listed = discovery?.agents?.agents;
+  if (!listed) return { offered: [], more: [] };
+  const entries = listed.map((agent) => ({ ...agent, readiness: agentReadiness(agent) }));
+  let offered = entries.filter((agent) => agentPickerPlacement(agent) === 'default');
+  if (offered.length === 0) {
+    offered = entries.filter(
+      (agent) => agent.readiness !== 'unsupported' && agent.visibility !== 'hidden'
+    );
+  }
+  const more = entries.filter((agent) => !offered.includes(agent));
+  const last = lastUsedAgentId ? offered.findIndex((agent) => agent.id === lastUsedAgentId) : -1;
+  if (last > 0) offered = [offered[last]!, ...offered.slice(0, last), ...offered.slice(last + 1)];
+  return { offered, more };
+}
+
+/** The agents Home offers a tile for: the picker's default group. */
 export function projectLaunchAgents(
   discovery: MirroredServerDiscovery | null | undefined,
   lastUsedAgentId?: string
 ): HomeAgentEntry[] {
-  const listed = discovery?.agents?.agents;
-  if (!listed) return [];
-  const offered = listed
-    .map((agent) => ({ ...agent, readiness: agentReadiness(agent) }))
-    .filter((agent) => agent.readiness !== 'unsupported');
-  const last = lastUsedAgentId ? offered.findIndex((agent) => agent.id === lastUsedAgentId) : -1;
-  if (last <= 0) return offered;
-  return [offered[last]!, ...offered.slice(0, last), ...offered.slice(last + 1)];
+  return partitionLaunchAgents(discovery, lastUsedAgentId).offered;
 }
 
 export function launchAgentCaption(agent: HomeAgentEntry): LaunchAgentCaption {
@@ -116,6 +142,8 @@ export function launchAgentCaption(agent: HomeAgentEntry): LaunchAgentCaption {
     case 'needs-setup':
     case 'needs-update':
       return agent.readiness;
+    case 'unsupported':
+      return 'off';
     default:
       return 'offline';
   }

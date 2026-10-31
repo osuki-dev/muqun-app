@@ -2072,6 +2072,7 @@ msgstr "Không thể hủy tác vụ"
 msgid "Could not change delivery"
 msgstr "Không thể đổi cách gửi"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/settings-fleet-peers.tsx
 msgid "Could not change this setting"
 msgstr "Không thể thay đổi cài đặt này"
@@ -3338,6 +3339,7 @@ msgstr "Hướng dẫn về ghép nối, terminal, tác nhân và giao diện"
 msgid "Haptic feedback"
 msgstr "Phản hồi rung"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
 msgstr "Ẩn"
@@ -3357,6 +3359,10 @@ msgstr "Ẩn {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Ẩn bàn phím"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Hide on this computer"
+msgstr "Ẩn trên máy tính này"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
@@ -4066,6 +4072,10 @@ msgstr "Giới hạn tín dụng hằng tháng"
 msgid "More actions"
 msgstr "Thao tác khác"
 
+#: src/components/home-agent-sheet.tsx
+msgid "More agents"
+msgstr "Tác nhân khác"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Thêm ký hiệu"
@@ -4583,6 +4593,7 @@ msgid "Not reported"
 msgstr "Chưa báo cáo"
 
 #: src/components/simfarm-stage.tsx
+#: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Đã tắt"
 
@@ -4661,10 +4672,13 @@ msgstr "Đã bắt đầu quan sát"
 msgid "Off"
 msgstr "Tắt"
 
+#: src/i18n/labels.ts
+msgid "Off on this computer"
+msgstr "Đã tắt trên máy tính này"
+
 #: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
-#: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Ngoại tuyến"
 
@@ -6368,6 +6382,7 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, chuyển chế độ"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Show"
 msgstr "Hiện"
@@ -7765,6 +7780,7 @@ msgstr "Tin cậy"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/home-agent-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
 #: src/components/theme-gallery.tsx

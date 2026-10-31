@@ -23,11 +23,14 @@ import {
   normalizeAgentId,
   parseAgentAvailability,
   parseAgentFeatures,
+  parseAgentPickerPlacement,
+  parseAgentVisibility,
   parseTransportsDiscovery,
   parseUploadLimits,
   type AgentAvailability,
   type AgentFeatures,
   type AgentInfo,
+  type AgentPickerPlacement,
   type AgentsDiscovery,
   type GatewayDiscovery,
   type SshDiscovery,
@@ -177,6 +180,28 @@ export function agentReadiness(info: Pick<AgentInfo, 'status' | 'enabled'>): Age
     default:
       return 'offline';
   }
+}
+
+/**
+ * The capability that says `PUT /api/agents/{kind}/visibility` exists, so the
+ * picker may offer Hide and Show.
+ * TODO(feat/agent-visibility): confirm the capability name and route.
+ */
+export const AGENT_VISIBILITY_CAPABILITY = 'agent_visibility';
+
+/**
+ * Which picker group a native-session agent belongs in: the gateway's own
+ * `picker` when it sent one; otherwise the same table worked out here, so an
+ * older gateway still gets its not-installed and switched-off agents folded
+ * away. Hidden goes to More; everything that can be used or set up stays.
+ */
+export function agentPickerPlacement(
+  info: Pick<AgentInfo, 'status' | 'enabled' | 'visibility' | 'picker'>
+): AgentPickerPlacement {
+  if (info.picker) return info.picker;
+  if (info.visibility === 'hidden') return 'more';
+  const readiness = agentReadiness(info);
+  return readiness === 'unsupported' || readiness === 'not-installed' ? 'more' : 'default';
 }
 
 export function isAgentReady(info: Pick<AgentInfo, 'status' | 'enabled'>): boolean {
@@ -345,6 +370,8 @@ export function mirrorAgent(info: AgentInfo): MirroredAgent {
     ...(info.reason ? { reason: info.reason } : {}),
     features: info.features,
     ...(info.ledgerDelivery ? { ledgerDelivery: info.ledgerDelivery } : {}),
+    ...(info.visibility ? { visibility: info.visibility } : {}),
+    ...(info.picker ? { picker: info.picker } : {}),
   };
 }
 
@@ -401,6 +428,12 @@ function parseMirroredAgent(value: unknown): MirroredAgent | null {
     features: parseAgentFeatures(value.features),
     ...(parseLedgerDelivery(value.ledgerDelivery)
       ? { ledgerDelivery: parseLedgerDelivery(value.ledgerDelivery) }
+      : {}),
+    ...(parseAgentVisibility(value.visibility)
+      ? { visibility: parseAgentVisibility(value.visibility) }
+      : {}),
+    ...(parseAgentPickerPlacement(value.picker)
+      ? { picker: parseAgentPickerPlacement(value.picker) }
       : {}),
   };
 }

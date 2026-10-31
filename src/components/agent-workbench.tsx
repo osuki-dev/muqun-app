@@ -171,7 +171,11 @@ import {
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/agent-session-memory';
 import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
-import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
+import {
+  AGENT_SESSION_DEFAULTS_CAPABILITY,
+  catalogModelRef,
+  resolveNewSessionDefaults,
+} from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import {
@@ -776,6 +780,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const canSendPrompts = canInteractNatively || terminalPromptInput(runtime, agentFeatures);
   const readCanSendPrompts = useLatestReader(canSendPrompts);
   const historyCapabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  // The model and mode memory is the computer's, shared with Home's pills; a
+  // screen not yet told its computer keeps the terminal session's scope, which
+  // is also where this screen wrote before (read as a fallback only).
+  const memoryScope = serverId || sessionId;
+  // A host that remembers the last choice answers in the catalog's `defaults`.
+  const catalogRemembers = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes(AGENT_SESSION_DEFAULTS_CAPABILITY) === true
+  );
   const supportsRemoteEarlier = canLoadEarlierAgentTimeline(historyCapabilities, agentFeatures);
   const earlierUnavailableReason = timelineEarlierUnavailableReason(
     historyCapabilities,
@@ -1304,7 +1316,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             ...(pickedAgentRef.current && selectedAgent ? { mode: selectedAgent } : {}),
             ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
           },
-          ...loadRememberedAgentDefaults(sessionId, directory, agent),
+          ...loadRememberedAgentDefaults(memoryScope, directory, agent, sessionId),
+          catalogRemembers,
           // Another agent's sessions ran another agent's models and modes.
           sessions: sessionsOfAgent(sessionsRef.current, agent),
           ...(directory ? { directory } : {}),
@@ -1320,6 +1333,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       selectedAgent,
       selectedModel,
       sessionId,
+      memoryScope,
+      catalogRemembers,
       serverId,
       agentChoiceRef,
       catalogDefaults,
@@ -1611,7 +1626,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (pickedModelRef.current && pickedAgentRef.current) return;
     const resolved = resolveNewSessionDefaults({
       picked: pickedAgentRef.current && selectedAgent ? { mode: selectedAgent } : {},
-      ...loadRememberedAgentDefaults(sessionId, activeDirectory, catalogAgentId),
+      ...loadRememberedAgentDefaults(memoryScope, activeDirectory, catalogAgentId, sessionId),
+      catalogRemembers,
       sessions: sessionsOfAgent(sessionsRef.current, catalogAgentId),
       ...(activeDirectory ? { directory: activeDirectory } : {}),
       catalogDefaults,
@@ -1622,6 +1638,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!pickedAgentRef.current && resolved.mode) setSelectedAgent(resolved.mode);
   }, [
     sessionId,
+    memoryScope,
+    catalogRemembers,
     activeAsid,
     activeDirectory,
     catalogAgentId,
@@ -3099,7 +3117,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         pickedModelRef.current = true;
         setManualModelOverride(true);
         applySelectedModel(model);
-        rememberAgentChoice(sessionId, owner.directory, { model }, undefined, activeAgentId);
+        rememberAgentChoice(memoryScope, owner.directory, { model }, undefined, activeAgentId);
       };
       if (!activeAsid) {
         applyModel();
@@ -3140,6 +3158,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       applySelectedModel,
       readRuntime,
       sessionId,
+      memoryScope,
       serverId,
       stagesNextTurnModel,
       sessionInfo?.status,
@@ -3615,7 +3634,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         pickedModelRef.current = false;
         setManualModelOverride(false);
         setSelectedAgent(agent);
-        rememberAgentChoice(sessionId, owner.directory, { mode: agent }, undefined, activeAgentId);
+        rememberAgentChoice(
+          memoryScope,
+          owner.directory,
+          { mode: agent },
+          undefined,
+          activeAgentId
+        );
       };
       if (!activeAsid) {
         applyMode();
@@ -3652,6 +3677,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       activeAsid,
       sessionId,
+      memoryScope,
       showToast,
       t,
       availableAgents,
@@ -4303,11 +4329,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       pathname: '/agent-model',
       params: {
         sessionId,
+        memoryScope,
         ...(activeDirectory ? { directory: activeDirectory } : {}),
         ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
       },
     });
-  }, [router, sessionId, activeDirectory, catalogAgentId]);
+  }, [router, sessionId, memoryScope, activeDirectory, catalogAgentId]);
 
   const openModeSheet = useCallback(() => {
     router.push({

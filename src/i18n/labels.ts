@@ -464,12 +464,18 @@ export const taskStateWord: Record<TaskState, MessageDescriptor> = {
   cancelled: msg({ message: 'Cancelled', context: 'task state' }),
 };
 
+/**
+ * An agent's state in the words the gateway's CLI and `manage` use too: ready
+ * (said as the action it offers), needs setup, not running, not installed,
+ * needs update, off. `connected` and `reachable` are both ready.
+ */
 export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
   'new-session': msg`New session`,
   'not-installed': msg`Not installed`,
   'needs-setup': msg`Needs setup`,
   'needs-update': msg`Needs update`,
-  offline: msg`Offline`,
+  offline: msg`Not running`,
+  off: msg`Off on this computer`,
 };
 
 /** What the readiness guide tells the reader to do for one kind of agent. */

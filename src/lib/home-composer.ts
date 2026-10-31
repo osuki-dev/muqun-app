@@ -146,6 +146,11 @@ export function homeSessionParams(input: {
   /** Models this server already refused (`unsupportedModelRefs`), when its sessions are known. */
   refused?: ReadonlySet<string>;
   /**
+   * The catalog's `defaults` are the host's memory of the last choice here
+   * (`AGENT_SESSION_DEFAULTS_CAPABILITY`), so its mode is sent as well.
+   */
+  catalogRemembers?: boolean;
+  /**
    * False until the catalog has answered (or when its read failed): the
    * remembered pick is then sent and shown as stored, since there is nothing
    * to check it against yet and dropping it would let the host pick.
@@ -181,9 +186,10 @@ export function homeSessionParams(input: {
     catalogModelRef(shownModeModel, models) ??
     catalogModelRef(usableCatalogDefaultModel(catalogDefaults.model, refused), models) ??
     firstUsableModel(models, refused);
+  const sentMode = mode ?? (input.catalogRemembers ? shownMode : undefined);
   return {
     params: {
-      ...(mode ? { mode } : {}),
+      ...(sentMode ? { mode: sentMode } : {}),
       ...(shownModel ? { model: shownModel } : {}),
       ...agent,
     },

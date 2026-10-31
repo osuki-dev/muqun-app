@@ -47,7 +47,16 @@ import {
   classifyAgentRequestError,
   isAgentDeliveryUnconfirmed,
 } from '@/lib/agent-request-error';
-import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
+import {
+  AGENT_SESSION_DEFAULTS_CAPABILITY,
+  unsupportedModelRefs,
+} from '@/lib/agent-session-defaults';
+import {
+  rememberAgentChoice,
+  rememberAgentMode,
+  rememberAgentModel,
+} from '@/lib/agent-model-memory';
+import { useRememberedAgentDefaults } from '@/hooks/use-remembered-agent-defaults';
 import {
   createAgentSession,
   formatModelName,
@@ -545,7 +554,16 @@ export function HomeComposerDock({
 
   // The catalog behind the pills, read for the computer and agent on the bar.
   // Kept with the key it was read for, so another target never shows it.
-  const catalogKey = `${targetId ?? ''}\u0000${agentId ?? ''}`;
+  // A host that remembers the last choice per folder answers in the catalog's
+  // `defaults`, so its catalog is read for the folder the goal will run in.
+  const catalogRemembers = useServerCapabilities((state) =>
+    targetId
+      ? state.byServer[targetId]?.includes(AGENT_SESSION_DEFAULTS_CAPABILITY) === true
+      : false
+  );
+  const choiceDirectory = folder && folder !== '~' ? folder : defaultCwd;
+  const catalogDirectory = catalogRemembers ? choiceDirectory : undefined;
+  const catalogKey = `${targetId ?? ''}\u0000${agentId ?? ''}\u0000${catalogDirectory ?? ''}`;
   const [catalogRead, setCatalogRead] = useState<{ key: string; catalog: AgentCatalog } | null>(
     null
   );
@@ -562,9 +580,13 @@ export function HomeComposerDock({
   useEffect(() => {
     if (!ready || !selected || terminalAgent) return;
     let current = true;
-    const peeked = peekAgentCatalog(HOME_AGENT_SESSION_ID, agentId ? { agentId } : undefined);
+    const scope = {
+      ...(agentId ? { agentId } : {}),
+      ...(catalogDirectory ? { directory: catalogDirectory } : {}),
+    };
+    const peeked = peekAgentCatalog(HOME_AGENT_SESSION_ID, scope);
     if (peeked) setCatalogRead({ key: catalogKey, catalog: peeked });
-    getAgentCatalog(HOME_AGENT_SESSION_ID, undefined, agentId ? { agentId } : undefined)
+    getAgentCatalog(HOME_AGENT_SESSION_ID, undefined, scope)
       .then((catalog) => {
         if (current) setCatalogRead({ key: catalogKey, catalog });
       })
@@ -586,7 +608,7 @@ export function HomeComposerDock({
     return () => {
       current = false;
     };
-  }, [ready, selected, agentId, catalogKey, terminalAgent, catalogAttempt]);
+  }, [ready, selected, agentId, catalogDirectory, catalogKey, terminalAgent, catalogAttempt]);
   useEffect(() => {
     if (!ready || !selected || threadCatalogKey === null || !threadSessionId) return;
     let current = true;
@@ -673,15 +695,22 @@ export function HomeComposerDock({
   // summary, compaction) and subagents are not modes a reader sends a goal to.
   const modes = selectableModes(catalog?.modes ?? []);
 
-  // What the reader last picked in the dock for this computer and agent,
-  // kept across launches; nothing picked runs the agent's own default.
-  const picked = useHomeAgentChoice((state) =>
+  // What the reader last picked for this computer, agent and folder -- the
+  // memory a session screen reads and writes too -- kept across launches.
+  // Picks the dock made before that memory was shared are the last fallback.
+  // A host that remembers answers ahead of this device's older picks.
+  const remembered = useRememberedAgentDefaults(targetId, choiceDirectory, agentId);
+  const legacyPicked = useHomeAgentChoice((state) =>
     targetId ? state.modelChoice[homeModelChoiceKey(targetId, agentId)] : undefined
   );
-  const chooseModel = useHomeAgentChoice((state) => state.chooseModel);
-  const chooseMode = useHomeAgentChoice((state) => state.chooseMode);
+  const picked =
+    remembered.thisLaunch ??
+    (catalogRemembers
+      ? undefined
+      : { ...legacyPicked, ...remembered.server, ...remembered.workspace });
   const { params: sessionParams, shown } = homeSessionParams({
     picked: picked ?? {},
+    catalogRemembers,
     ...(refused ? { refused } : {}),
     catalogDefaults: catalog?.defaults ?? {},
     models,
@@ -728,7 +757,7 @@ export function HomeComposerDock({
   const threadPills = (current: HomeThreadTarget): HomeSessionParams | undefined => current.pills;
 
   const selectModel = useStableHandler((model: ModelRef) => {
-    if (targetId) chooseModel(targetId, agentId, model);
+    if (targetId) rememberAgentModel(targetId, choiceDirectory, model, agentId);
   });
   useEffect(() => () => useHomeComposerSheet.getState().release(selectModel), [selectModel]);
   function openModelSheet() {
@@ -738,6 +767,7 @@ export function HomeComposerDock({
       pathname: '/agent-model',
       params: {
         sessionId: HOME_AGENT_SESSION_ID,
+        ...(targetId ? { memoryScope: targetId } : {}),
         ...(agentId ? { agentId } : {}),
         owner: 'home',
       },
@@ -747,9 +777,19 @@ export function HomeComposerDock({
   // model pick is dropped and the ladder starts from the mode again. A mode
   // that names none keeps the model the reader picked.
   function selectMode(mode: string) {
-    const bringsModel = modes.find((entry) => entry.id === mode)?.model !== undefined;
+    const modeModel = modes.find((entry) => entry.id === mode)?.model;
     if (targetId) {
-      chooseMode(targetId, agentId, mode, bringsModel);
+      if (modeModel) {
+        rememberAgentChoice(
+          targetId,
+          choiceDirectory,
+          { mode, model: modeModel },
+          Date.now(),
+          agentId
+        );
+      } else {
+        rememberAgentMode(targetId, choiceDirectory, mode, agentId);
+      }
       if (mode !== shown.mode) playTransition('choice');
     }
   }

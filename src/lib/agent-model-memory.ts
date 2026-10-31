@@ -44,6 +44,27 @@ function memoryKey(serverId: string, agentId: string | undefined): string {
   return scope ? `${KEY_PREFIX}${serverId}#${scope}` : KEY_PREFIX + serverId;
 }
 
+/** Picks made since this moment were made in this launch (`thisLaunch`). */
+const LAUNCHED_AT_MS = Date.now();
+
+/**
+ * Bumped on every write, so a screen that shows the memory (Home's pills)
+ * follows a pick made on another screen (a session's model sheet).
+ */
+let revision = 0;
+const listeners = new Set<() => void>();
+
+export function subscribeAgentChoiceMemory(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function agentChoiceMemoryRevision(): number {
+  return revision;
+}
+
 /**
  * How many workspaces one server remembers.
  *
@@ -140,6 +161,8 @@ function writeServerMemory(serverId: string, memory: StoredServerMemory, agentId
   } catch {
     // See above.
   }
+  revision += 1;
+  for (const listener of listeners) listener();
 }
 
 /** Newest first, capped, so one server's memory cannot grow without bound. */
@@ -237,14 +260,32 @@ export function rememberAgentMode(
 export function loadRememberedAgentDefaults(
   serverId: string,
   directory?: string,
-  agentId?: string
+  agentId?: string,
+  /**
+   * Where this caller wrote before the memory was keyed by computer: the
+   * session screen keyed it by its terminal session id (`herdr`, the same on
+   * every computer). Read per field where the computer has nothing yet, never
+   * copied forward, so a pick made on one computer does not become another
+   * computer's memory.
+   */
+  legacyScope?: string
 ): RememberedAgentDefaults {
   if (!serverId) return {};
   const memory = readServerMemory(serverId, agentId);
-  const workspace = directory ? memory.workspaces[directory] : undefined;
+  const legacy =
+    legacyScope && legacyScope !== serverId ? readServerMemory(legacyScope, agentId) : undefined;
+  const workspace = directory
+    ? (memory.workspaces[directory] ?? legacy?.workspaces[directory])
+    : undefined;
+  const last = memory.last ?? legacy?.last;
+  // The pick for this very place, when it was made in this launch: it outranks
+  // a host that also remembers (`resolveNewSessionDefaults`), whose record of
+  // it only lands once a session is created.
+  const here = directory ? memory.workspaces[directory] : memory.last;
   return {
     ...(workspace ? { workspace: choiceOf(workspace) } : {}),
-    ...(memory.last ? { server: choiceOf(memory.last) } : {}),
+    ...(last ? { server: choiceOf(last) } : {}),
+    ...(here && here.at >= LAUNCHED_AT_MS ? { thisLaunch: choiceOf(here) } : {}),
   };
 }
 
@@ -257,6 +298,14 @@ function choiceOf(stored: StoredChoice): RememberedAgentChoice {
 }
 
 /** References only: names, prices and capabilities always come from the live catalog. */
-export function loadRecentAgentModels(serverId: string, agentId?: string): ModelRef[] {
-  return serverId ? (readServerMemory(serverId, agentId).recent ?? []) : [];
+export function loadRecentAgentModels(
+  serverId: string,
+  agentId?: string,
+  /** As `loadRememberedAgentDefaults`: read only while the computer has none. */
+  legacyScope?: string
+): ModelRef[] {
+  if (!serverId) return [];
+  const recent = readServerMemory(serverId, agentId).recent ?? [];
+  if (recent.length || !legacyScope || legacyScope === serverId) return recent;
+  return readServerMemory(legacyScope, agentId).recent ?? [];
 }

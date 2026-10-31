@@ -2072,6 +2072,7 @@ msgstr "Não foi possível cancelar a tarefa"
 msgid "Could not change delivery"
 msgstr "Não foi possível alterar a entrega"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/settings-fleet-peers.tsx
 msgid "Could not change this setting"
 msgstr "Não foi possível alterar esta configuração"
@@ -3338,6 +3339,7 @@ msgstr "Guias de emparelhamento, do terminal, de agentes e de temas"
 msgid "Haptic feedback"
 msgstr "Feedback háptico"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
 msgstr "Oculta"
@@ -3357,6 +3359,10 @@ msgstr "Ocultar {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Ocultar o teclado"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Hide on this computer"
+msgstr "Ocultar neste computador"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
@@ -4066,6 +4072,10 @@ msgstr "Limite mensal de créditos"
 msgid "More actions"
 msgstr "Mais ações"
 
+#: src/components/home-agent-sheet.tsx
+msgid "More agents"
+msgstr "Mais agentes"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Mais símbolos"
@@ -4583,6 +4593,7 @@ msgid "Not reported"
 msgstr "Não informado"
 
 #: src/components/simfarm-stage.tsx
+#: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Não está a correr"
 
@@ -4661,10 +4672,13 @@ msgstr "Observação iniciada"
 msgid "Off"
 msgstr "Desativado"
 
+#: src/i18n/labels.ts
+msgid "Off on this computer"
+msgstr "Desativado neste computador"
+
 #: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
-#: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Offline"
 
@@ -6368,6 +6382,7 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, mudar de modo"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Show"
 msgstr "Mostrar"
@@ -7765,6 +7780,7 @@ msgstr "Confiar"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/home-agent-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
 #: src/components/theme-gallery.tsx
