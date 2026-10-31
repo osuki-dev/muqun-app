@@ -51,7 +51,12 @@ import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useHomeSessionReplies } from '@/components/home-session-replies';
 import { useAppSettings } from '@/stores/app-settings';
-import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import {
+  noteGatewayGeneration,
+  useGatewayGeneration,
+} from '@/stores/gateway-connection-generation';
+import { isAgentSessionPreparingAt } from '@/lib/agent-session-prepare';
+import { isPreparingSessionHistory } from '@/lib/session-read-feedback';
 import {
   foldPaneWindow,
   terminalOwnsScreen,
@@ -1006,6 +1011,7 @@ function DrawerSession({
   });
   const readRuntime = useLatestReader(runtime);
   const [agentId, setAgentId] = useState(target.agentId);
+  const readAgentId = useLatestReader(agentId);
   const refreshSession = useRef<(() => void) | null>(null);
   const focused = useIsFocused();
   const appActive = useAppActive();
@@ -1149,7 +1155,21 @@ function DrawerSession({
         setMissing(true);
         setLoaded(true);
       },
-      onError: (error) => setReadError(error),
+      onError: (error) => {
+        // The drawer's own preparation re-reads when it lands; until then the
+        // parked-history refusal is expected, not a failure (as in the workbench).
+        const record = useGatewayConnectionStore.getState().record;
+        const preparing =
+          record?.serverId === serverId &&
+          isAgentSessionPreparingAt({
+            serverId,
+            record,
+            agentId: readAgentId(),
+            asid,
+            restart: useGatewayGeneration.getState().restarts[serverId] ?? 0,
+          });
+        if (!isPreparingSessionHistory(error, preparing)) setReadError(error);
+      },
     });
     refreshSession.current = stop.refresh;
     return () => {
@@ -1165,6 +1185,7 @@ function DrawerSession({
     store,
     readRuntime,
     readSupportsEarlier,
+    readAgentId,
     target.agentId,
     readAttempt,
   ]);

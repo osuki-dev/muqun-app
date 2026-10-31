@@ -9,8 +9,15 @@ import {
 import { recoverWith, settleAfter } from '../compiler-safe-control-flow';
 import { SessionPreparationFlights } from '../foreground-session-activation';
 import { assertDeliveryCurrent } from '../bound-delivery';
+import { isTransientPreparationError } from '../agent-request-error';
 
-function harness(data: unknown = { data: { prepared: true } }, status = 200) {
+type Reply = { status: number; body?: string } | Error;
+
+function harness(
+  data: unknown = { data: { prepared: true } },
+  status = 200,
+  replies: Reply[] = []
+) {
   const calls: { endpoint: unknown; url: string; init: RequestInit }[] = [];
   const api = runInNewContext(
     transpile(
@@ -23,12 +30,23 @@ function harness(data: unknown = { data: { prepared: true } }, status = 200) {
     {
       flights: new SessionPreparationFlights(),
       assertDeliveryCurrent,
+      isTransientPreparationError,
+      PREPARE_RETRY_DELAYS_MS: [0, 0],
+      setTimeout,
       isGatewayEncryptionDisabled: () => false,
       withRecordBaseUrl: (record: { url: string }, body: (base: string) => Promise<void>) =>
         body(record.url.replace(/\/$/, '')),
       gatewayEndpointFetch: async (endpoint: unknown, url: string, init: RequestInit) => {
         calls.push({ endpoint, url, init });
-        return { ok: status === 200, status, json: async () => data, text: async () => 'refused' };
+        const reply = replies.shift();
+        if (reply instanceof Error) throw reply;
+        const code = reply?.status ?? status;
+        return {
+          ok: code === 200,
+          status: code,
+          json: async () => data,
+          text: async () => reply?.body ?? 'refused',
+        };
       },
     }
   ) as {
@@ -164,4 +182,27 @@ test('pending prepare is source/provider/session scoped and ends after acknowled
   const refused = harness({}, 502);
   await expect(refused.prepare(request)).rejects.toThrow('502');
   expect(refused.preparing(request)).toBe(false);
+});
+
+test('preparation retries only a gateway still attaching agents or a request with no answer', async () => {
+  const unavailable = {
+    status: 503,
+    body: '{"error":{"code":"agent_unavailable","message":"Agent \'qoder\' is not available"}}',
+  };
+  const network = Object.assign(new Error('Network request failed'), { name: 'NetworkError' });
+  const refusal = { status: 502, body: '{"error":{"code":"agent_error","message":"no"}}' };
+  for (const [replies, calls, settles] of [
+    [[unavailable], 2, true],
+    [[network, unavailable], 3, true],
+    [[unavailable, unavailable, unavailable], 3, false],
+    [[refusal], 1, false],
+    [[{ status: 503, body: 'refused' }], 1, false],
+    [[new Error('Request timed out')], 1, false],
+  ] as [Reply[], number, boolean][]) {
+    const run = harness(undefined, 200, [...replies]);
+    const result = run.prepare({ ...options, capabilities: ['agent_session_resume_v1'] });
+    if (settles) await result;
+    else await expect(result).rejects.toThrow();
+    expect(run.calls).toHaveLength(calls);
+  }
 });

@@ -190,6 +190,20 @@ export function agentRequestErrorDetail(err: unknown): {
   };
 }
 
+/**
+ * A session preparation worth sending again: the gateway is still attaching
+ * its agents (`503 agent_unavailable` right after a restart) or the network
+ * failed outright (resuming with the App). A refusal is final, and so is a
+ * timeout: it already spent the whole request budget.
+ */
+export function isTransientPreparationError(err: unknown): boolean {
+  const { raw, status, code } = readAgentRequestError(err);
+  if (status) return status === 503 && code === 'agent_unavailable';
+  const timedOut =
+    (err as { name?: unknown } | null)?.name === 'AbortError' || /time(?:d ?)?out|abort/i.test(raw);
+  return !timedOut && transportFailure(err, raw);
+}
+
 /** A failed acknowledgement cannot establish that a prompt was rejected. */
 export function isAgentDeliveryUnconfirmed(err: unknown): boolean {
   if (err && typeof err === 'object' && 'code' in err && err.code === 'EACKUNCONFIRMED')
