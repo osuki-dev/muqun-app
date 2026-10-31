@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
+import { isTransientPreparationError } from '../agent-request-error';
 import { declaration, transpile } from '../../test-support/production-source';
 import { directGatewayBaseUrl, GatewayTunnelUnavailableError } from '../ssh-tunnel';
 import { dedupeKey, withRequestDedupe } from '../request-dedupe';
@@ -70,6 +71,8 @@ function fixture(tunnelled = true, sealed = true) {
     isStreamingRequest: () => false,
     fetchWithin: (_: number, __: string, url: string, init: RequestInit) => send(url, init),
     noteRefusedResponse: async () => {},
+    isTransientPreparationError,
+    PREPARE_RETRY_DELAYS_MS: [0, 0],
   };
   const { request, prepare, source } = runInNewContext(
     transpile(

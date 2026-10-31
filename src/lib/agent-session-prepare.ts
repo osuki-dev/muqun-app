@@ -6,8 +6,11 @@ import {
 import type { GatewayRecord } from './gateway-storage';
 import { assertDeliveryCurrent } from './bound-delivery';
 import { SessionPreparationFlights } from './foreground-session-activation';
+import { isTransientPreparationError } from './agent-request-error';
 
 const flights = new SessionPreparationFlights();
+/** Waits before the second and third attempt: about 5 s in all, then the error shows. */
+const PREPARE_RETRY_DELAYS_MS = [1_500, 3_000];
 
 /** Include pairing credentials in memory identity; never persist or display this key. */
 export function sessionPreparationSource(
@@ -52,29 +55,42 @@ export function prepareAgentSessionAt(options: {
     options.agentId,
     options.asid,
   ]);
+  const send = (current: () => boolean) =>
+    withRecordBaseUrl(record, async (baseUrl) => {
+      // The forward may have opened after the reader changed computer or session.
+      assertDeliveryCurrent(current);
+      // Retain this record's lease through the response body, without consulting globals.
+      const response = await gatewayEndpointFetch(
+        { ...record, url: baseUrl },
+        baseUrl + path,
+        { method: 'POST', headers: { Authorization: `Bearer ${record.token}` } },
+        60_000
+      );
+      if (!response.ok)
+        throw new Error(`Failed to resume session: ${response.status} ${await response.text()}`);
+      const json = (await response.json()) as {
+        data?: { prepared?: unknown };
+        prepared?: unknown;
+      } | null;
+      assertDeliveryCurrent(current);
+      if ((json?.data ?? json)?.prepared !== true)
+        throw new Error('Failed to resume session: unreadable response');
+    });
   return flights.run(
     key,
-    (current) =>
-      withRecordBaseUrl(record, async (baseUrl) => {
-        // The forward may have opened after the reader changed computer or session.
-        assertDeliveryCurrent(current);
-        // Retain this record's lease through the response body, without consulting globals.
-        const response = await gatewayEndpointFetch(
-          { ...record, url: baseUrl },
-          baseUrl + path,
-          { method: 'POST', headers: { Authorization: `Bearer ${record.token}` } },
-          60_000
-        );
-        if (!response.ok)
-          throw new Error(`Failed to resume session: ${response.status} ${await response.text()}`);
-        const json = (await response.json()) as {
-          data?: { prepared?: unknown };
-          prepared?: unknown;
-        } | null;
-        assertDeliveryCurrent(current);
-        if ((json?.data ?? json)?.prepared !== true)
-          throw new Error('Failed to resume session: unreadable response');
-      }),
+    async (current) => {
+      // The flight stays pending across retries, so readers keep treating the
+      // parked-history refusal as preparation in progress.
+      for (const delay of [...PREPARE_RETRY_DELAYS_MS, undefined]) {
+        try {
+          return await send(current);
+        } catch (error) {
+          if (delay === undefined || !isTransientPreparationError(error)) throw error;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          assertDeliveryCurrent(current);
+        }
+      }
+    },
     options.current
   );
 }
