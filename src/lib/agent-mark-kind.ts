@@ -7,7 +7,8 @@ export type AgentMarkKind =
   | 'pi'
   | 'fx'
   | 'qoder'
-  | 'claude';
+  | 'claude'
+  | 'antigravity';
 
 const MARK_KINDS: ReadonlySet<string> = new Set<AgentMarkKind>([
   'opencode',
@@ -18,10 +19,12 @@ const MARK_KINDS: ReadonlySet<string> = new Set<AgentMarkKind>([
   'fx',
   'qoder',
   'claude',
+  'antigravity',
 ]);
 
 export function agentMarkKind(kind: string): AgentMarkKind | null {
   if (kind === 'qodercli' || kind === 'qoder-cli') return 'qoder';
   if (kind === 'claude-code') return 'claude';
+  if (kind === 'agy') return 'antigravity';
   return MARK_KINDS.has(kind) ? (kind as AgentMarkKind) : null;
 }

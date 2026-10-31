@@ -31,6 +31,14 @@ The Claude mark, used for Claude Code in both its terminal panes and its native
 sessions, comes from [Simple Icons 16.36.0](https://github.com/simple-icons/simple-icons/blob/16.36.0/icons/claude.svg),
 CC0-1.0; the path is unchanged. The mark remains Anthropic's trademark.
 
+The Antigravity mark, used for the `agy` terminal agent, comes from Google's
+official [press assets](https://antigravity.google/press), specifically the
+[one-color SVG](https://antigravity.google/assets/image/brand/antigravity-icon__one-color.svg).
+Its path and 180-unit viewBox are retained; only the fill inherits the theme.
+The [official CLI documentation](https://antigravity.google/docs/getting-started?tab=cli)
+names the command `agy`. No separate artwork license is asserted; retrieved on
+2026-10-31.
+
 These marks identify their respective agents. Their trademark rights remain with
 their owners, and their inclusion does not imply endorsement. Like the existing
 Codex mark, all three inherit the surrounding entry's theme color and are

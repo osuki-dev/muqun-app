@@ -3534,6 +3534,10 @@ msgstr "マイクを使うには、音声録音に対応したアプリをイン
 msgid "Install an updated app build to use realtime transcription."
 msgstr "リアルタイム文字起こしを利用するには、最新のアプリをインストールしてください"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "コンピュータに Claude Code と Node.js 22 以降をインストールし、そこで Claude Code にサインインしてから、もう一度確認してください"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"

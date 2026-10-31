@@ -512,6 +512,13 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     start: msg`Gateway starts or joins DeepSeek Harness on the computer (default http://127.0.0.1:3080, override deepseek.endpoint).`,
     command: 'muqun-gateway agent setup deepseek',
   },
+  // Claude Code's native sessions need claude (signed in) and Node.js 22+ on
+  // the computer; the gateway's status reason names whichever is missing.
+  claude: {
+    start: msg`Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again.`,
+    command: 'muqun-gateway agent setup claude',
+    installUrl: 'https://docs.claude.com/en/docs/claude-code/setup',
+  },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait

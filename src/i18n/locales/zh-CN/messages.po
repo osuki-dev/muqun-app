@@ -3534,6 +3534,10 @@ msgstr "请安装支持语音录音的 App 版本以使用麦克风"
 msgid "Install an updated app build to use realtime transcription."
 msgstr "请安装新版 App 以使用实时转录"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "请在电脑上安装 Claude Code 和 Node.js 22 或更新版本，并在那里登录 Claude Code，然后重新检查"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "已复制安装命令"

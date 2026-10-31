@@ -3534,6 +3534,10 @@ msgstr "Cài bản ứng dụng hỗ trợ ghi âm giọng nói để sử dụn
 msgid "Install an updated app build to use realtime transcription."
 msgstr "Cài đặt phiên bản ứng dụng mới để dùng phiên âm thời gian thực"
 
+#: src/i18n/labels.ts
+msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
+msgstr "Cài Claude Code và Node.js 22 trở lên trên máy tính, đăng nhập Claude Code ở đó, rồi kiểm tra lại"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"

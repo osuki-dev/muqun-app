@@ -81,7 +81,8 @@ export function homeProviderTextColor(
     brand === 'pi' ||
     brand === 'fx' ||
     brand === 'qoder' ||
-    brand === 'claude'
+    brand === 'claude' ||
+    brand === 'antigravity'
   )
     return colors.text;
   const authored = { opencode: colors.primary, deepseek: colors.info, t3: colors.success };

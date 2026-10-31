@@ -13,6 +13,7 @@ import {
   matchesRuntimeTerminal,
   nativeAgentInteraction,
   replaceAgentTranscript,
+  terminalPromptInput,
   type AgentSessionRuntime,
 } from '@/lib/agent-session-runtime';
 import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
@@ -754,6 +755,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const agentChoice = useSelectedAgent(serverId);
   const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
   const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  // Prompts and Stop also reach a terminal-held conversation that takes input.
+  const canSendPrompts = canInteractNatively || terminalPromptInput(runtime, agentFeatures);
+  const readCanSendPrompts = useLatestReader(canSendPrompts);
   const historyCapabilities = useServerCapabilities((state) => state.byServer[serverId]);
   const supportsRemoteEarlier = canLoadEarlierAgentTimeline(historyCapabilities, agentFeatures);
   const earlierUnavailableReason = timelineEarlierUnavailableReason(
@@ -3314,7 +3318,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (attachmentOwnership && !attachmentOwnership.isCurrent()) return false;
     const running = isBusyStatus(sessionInfo?.status);
     if (
-      !canInteractNatively ||
+      !canSendPrompts ||
       !canSendAgentPrompt(
         running,
         agentFeatures.inbox,
@@ -3546,7 +3550,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * said out loud rather than papered over.
    */
   const handleAbort = useCallback(async () => {
-    if (!activeAsid || !nativeAgentInteraction(readRuntime())) return;
+    if (!activeAsid || !readCanSendPrompts()) return;
     try {
       await abortAgentSession(sessionId, activeAsid);
     } catch (err) {
@@ -3557,7 +3561,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         message: agentErrorRef.current(err),
       });
     }
-  }, [activeAsid, sessionId, showToast, t, readRuntime]);
+  }, [activeAsid, sessionId, showToast, t, readCanSendPrompts]);
 
   /**
    * The agent mode, switched on the session rather than in a local variable.
@@ -6199,9 +6203,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         disabled={isOffline}
         agentName={agentName}
         agentKind={activeAgentEntry?.kind}
-        running={isRunning && canInteractNatively}
+        running={isRunning && canSendPrompts}
         interactionBlockedReason={
-          canInteractNatively
+          canSendPrompts
             ? undefined
             : runtime?.interaction === 'terminal'
               ? t`Continue in the linked terminal. Your draft stays here.`

@@ -52,6 +52,9 @@ See [AUDIT.md](./AUDIT.md) for the visual review and its limits.
   [the agent artwork notes](../agents/README.md).
 - `brand-claude.svg`: Claude mark from Simple Icons 16.36.0 (`icons/claude.svg`),
   CC0-1.0; path and 24 × 24 viewBox unchanged.
+- `brand-antigravity.svg`: Google's official Antigravity one-color press icon;
+  its 180-unit viewBox and path are retained, with the fill inheriting the theme.
+  Sources and trademark context are in [the agent artwork notes](../agents/README.md).
 - `working-spinner.svg`: Muqun's existing working-state arc.
 
 ## Runtime and OTA
