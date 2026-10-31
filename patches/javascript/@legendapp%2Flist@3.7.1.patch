@@ -3,7 +3,7 @@ codegen, native dependencies or config-plugin changes. Native patches stay in
 the existing native fingerprint inputs; verify the official hash is unchanged
 before publishing a JavaScript-only update. Do not edit native build records.
 
-Legend List 3.7.0 (native): initial end placement can move short content above
+Legend List 3.7.1 (native): initial end placement can move short content above
 its viewport when a row grows during bootstrap. The end target adds the row's
 height delta to MVCP after the position adjustment, without clamping that final
 delta to the available scroll range. React Native then applies that delta as a
