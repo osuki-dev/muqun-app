@@ -2136,7 +2136,11 @@ export const AgentComposer = memo(function AgentComposer({
                         paddingRight: styles.actionRowContent.paddingRight + rowBleed.right,
                       },
                     ]}
-                    style={styles.actionRowScroll}>
+                    // With Stop pinned beside it, chips must not scroll underneath it.
+                    style={[
+                      styles.actionRowScroll,
+                      chipIds.has('stop') && styles.actionRowScrollClipped,
+                    ]}>
                     {/* All-sessions button (icon only) */}
                     {chipIds.has('sessions') ? (
                       <PressableScale
@@ -2436,7 +2440,11 @@ export const AgentComposer = memo(function AgentComposer({
                     ) : null}
 
                     {sessionCommandButton}
-                    {chipIds.has('stop') ? (
+                  </ScrollView>
+                  {chipIds.has('stop') ? (
+                    // Pinned outside the scroll: a full row of chips must not push the
+                    // one way to end a running turn off the edge.
+                    <View style={[styles.stopActionSlot, { paddingRight: rowBleed.right }]}>
                       <PressableScale
                         onPress={onAbort}
                         accessibilityRole="button"
@@ -2455,8 +2463,8 @@ export const AgentComposer = memo(function AgentComposer({
                           <Trans>Stop</Trans>
                         </Text>
                       </PressableScale>
-                    ) : null}
-                  </ScrollView>
+                    </View>
+                  ) : null}
                 </View>
               )}
 
@@ -2958,10 +2966,16 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   actionRowViewport: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   actionRowScroll: {
+    flex: 1,
     overflow: 'visible',
+  },
+  actionRowScrollClipped: {
+    overflow: 'hidden',
   },
   actionRowContent: {
     flexDirection: 'row',
@@ -2994,6 +3008,9 @@ const styles = StyleSheet.create({
   },
   stopActionBtn: {
     paddingHorizontal: 10,
+  },
+  stopActionSlot: {
+    paddingLeft: 6,
   },
   inboxCard: {
     borderCurve: 'continuous',
