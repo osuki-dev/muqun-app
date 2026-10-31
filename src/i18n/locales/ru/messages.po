@@ -3553,6 +3553,10 @@ msgid "Install an updated app build to use realtime transcription."
 msgstr "Установите обновлённую версию приложения для расшифровки в реальном времени"
 
 #: src/i18n/labels.ts
+msgid "Install Antigravity's agy on the computer and sign in with your Google account by running agy once in a terminal, then check again."
+msgstr "Установите agy от Antigravity на компьютер и войдите в аккаунт Google, один раз запустив agy в терминале, затем проверьте снова"
+
+#: src/i18n/labels.ts
 msgid "Install Claude Code and Node.js 22 or newer on the computer, sign in to Claude Code there, then check again."
 msgstr "Установите Claude Code и Node.js 22 или новее на компьютер, войдите там в Claude Code, затем проверьте снова"
 

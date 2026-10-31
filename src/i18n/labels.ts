@@ -524,6 +524,11 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     command: 'muqun-gateway agent setup cursor',
     installUrl: 'https://cursor.com/docs/cli/installation',
   },
+  antigravity: {
+    start: msg`Install Antigravity's agy on the computer and sign in with your Google account by running agy once in a terminal, then check again.`,
+    command: 'muqun-gateway agent setup antigravity',
+    installUrl: 'https://antigravity.google/docs/getting-started?tab=cli',
+  },
   // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
   // is offered the command that starts it; one that is running but unpaired
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
