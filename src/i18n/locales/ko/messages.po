@@ -242,6 +242,11 @@ msgstr "{agentName}은(는) 이전 원격 기록 불러오기를 지원하지 �
 msgid "{agentName} does not support that action."
 msgstr "{agentName}은(는) 이 작업을 지원하지 않습니다"
 
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "{agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again."
+msgstr "{agentName}이(가) 이 컴퓨터에 로그인되어 있지 않습니다. 이 컴퓨터의 터미널에서 로그인한 뒤 다시 시도하세요"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -406,6 +411,10 @@ msgstr "{name}은(는) 다른 컴퓨터의 작업을 받지 않습니다"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name}의 이름이 {other}와(과) 같습니다. 둘 중 하나의 이름을 바꾸세요"
 
+#: src/components/task-row.tsx
+msgid "{name} is not signed in on this computer"
+msgstr "{name}이(가) 이 컴퓨터에 로그인되어 있지 않습니다"
+
 #: src/components/home-composer-dock.tsx
 msgid "{name} is still working and cannot take a message now. Your draft stays here."
 msgstr "{name}이(가) 아직 작업 중이라 지금은 메시지를 받을 수 없습니다. 초안은 여기에 남아 있습니다"
@@ -413,6 +422,10 @@ msgstr "{name}이(가) 아직 작업 중이라 지금은 메시지를 받을 수
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} 설정이 필요합니다. 탭하여 설정 방법 보기"
+
+#: src/components/task-row.tsx
+msgid "{name} refused the request (code {code})"
+msgstr "{name}이(가) 요청을 거부했습니다(코드 {code})"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -1974,6 +1987,7 @@ msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
 #: src/components/settings-servers.tsx
+#: src/components/task-row.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
@@ -1999,6 +2013,10 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "복사"
+
+#: src/components/task-row.tsx
+msgid "Copy error details"
+msgstr "오류 세부 정보 복사"
 
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy input"

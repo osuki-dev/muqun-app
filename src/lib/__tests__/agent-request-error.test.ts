@@ -8,6 +8,7 @@ import {
   isAgentOfflineError,
   paneGoneError,
   isAgentDeliveryUnconfirmed,
+  readAcpRejection,
 } from '../agent-request-error';
 
 const refusal = (status: number, code: string, message: string) =>
@@ -45,6 +46,41 @@ test('a pane read the gateway answers "no such pane" is gone; nothing else is', 
     [new Error('Network request failed'), false],
   ];
   expect(cases.map(([err]) => paneGoneError(err))).toEqual(cases.map(([, gone]) => gone));
+});
+
+test('an ACP refusal is read by its code: only auth_required means not signed in', () => {
+  const said = 'Qoder ACP request rejected (code -32000)';
+  const cases: [
+    string,
+    ReturnType<typeof readAcpRejection>,
+    ReturnType<typeof classifyAgentRequestError>['kind'],
+  ][] = [
+    // Task summary from a Gateway that sends only the code.
+    [
+      `agent: Agent request failed: ${said}`,
+      { agent: 'Qoder', code: -32000, signInRequired: true },
+      'sign-in-required',
+    ],
+    // The Gateway's own auth_required sentence after the code.
+    [
+      `Agent request failed: ${said}: authentication required; sign in to Qoder on this computer`,
+      { agent: 'Qoder', code: -32000, signInRequired: true },
+      'sign-in-required',
+    ],
+    // Any other code says nothing certain about why: refused, never offline.
+    [
+      'Agent request failed: Qoder ACP request rejected (code -32603)',
+      { agent: 'Qoder', code: -32603, signInRequired: false },
+      'refused',
+    ],
+    ['Agent session not found: session-1', null, 'refused'],
+  ];
+  expect(
+    cases.map(([text]) => ({
+      reading: readAcpRejection(text),
+      kind: classifyAgentRequestError(refusal(502, 'agent_error', text)).kind,
+    }))
+  ).toEqual(cases.map(([, reading, kind]) => ({ reading, kind })));
 });
 
 describe('classifyAgentRequestError', () => {

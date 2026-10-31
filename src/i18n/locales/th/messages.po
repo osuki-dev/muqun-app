@@ -242,6 +242,11 @@ msgstr "{agentName} ไม่รองรับการโหลดประว
 msgid "{agentName} does not support that action."
 msgstr "{agentName} ไม่รองรับการดำเนินการนี้"
 
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "{agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again."
+msgstr "{agentName} ยังไม่ได้ลงชื่อเข้าใช้บนคอมพิวเตอร์เครื่องนี้ ลงชื่อเข้าใช้ในเทอร์มินัลบนเครื่องนั้นแล้วลองอีกครั้ง"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -406,6 +411,10 @@ msgstr "{name} ไม่รับงานจากคอมพิวเตอ�
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} มีชื่อเดียวกับ {other} โปรดเปลี่ยนชื่อเครื่องใดเครื่องหนึ่ง"
 
+#: src/components/task-row.tsx
+msgid "{name} is not signed in on this computer"
+msgstr "{name} ยังไม่ได้ลงชื่อเข้าใช้บนคอมพิวเตอร์เครื่องนี้"
+
 #: src/components/home-composer-dock.tsx
 msgid "{name} is still working and cannot take a message now. Your draft stays here."
 msgstr "{name} ยังทำงานอยู่และรับข้อความตอนนี้ไม่ได้ ร่างของคุณยังอยู่ที่นี่"
@@ -413,6 +422,10 @@ msgstr "{name} ยังทำงานอยู่และรับข้อ�
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} ต้องตั้งค่าก่อน แตะเพื่อดูวิธีตั้งค่า"
+
+#: src/components/task-row.tsx
+msgid "{name} refused the request (code {code})"
+msgstr "{name} ปฏิเสธคำขอ (รหัส {code})"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -1974,6 +1987,7 @@ msgstr "ความช่วยเหลือแบบสนทนาและ
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
 #: src/components/settings-servers.tsx
+#: src/components/task-row.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
@@ -1999,6 +2013,10 @@ msgstr "คัดลอกให้พร้อมวางในเทอร์
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "คัดลอก"
+
+#: src/components/task-row.tsx
+msgid "Copy error details"
+msgstr "คัดลอกรายละเอียดข้อผิดพลาด"
 
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy input"

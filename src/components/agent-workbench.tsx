@@ -389,6 +389,8 @@ interface AgentErrorSentences {
   unsupported: string;
   /** `invalid_agent`: the gateway does not know this agent. */
   unknownAgent: string;
+  /** ACP `auth_required`: the agent is not signed in on its computer. */
+  signInRequired: string;
 }
 
 /**
@@ -414,6 +416,8 @@ function formatAgentErrorMessage(
       return sentences.unsupported;
     case 'unknown-agent':
       return sentences.unknownAgent;
+    case 'sign-in-required':
+      return sentences.signInRequired;
     case 'other':
       return reading.message;
   }
@@ -829,6 +833,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refused: (message) => t`${agentName} refused the request: ${message}`,
       unsupported: t`${agentName} does not support that action.`,
       unknownAgent: t`This computer does not know ${agentName}. Refresh the agent list and try again.`,
+      signInRequired: t`${agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again.`,
     }),
     [agentName, offlineFallback, startAdvice, t]
   );

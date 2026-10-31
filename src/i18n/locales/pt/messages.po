@@ -242,6 +242,11 @@ msgstr "{agentName} não permite carregar o histórico remoto anterior"
 msgid "{agentName} does not support that action."
 msgstr "{agentName} não suporta essa ação"
 
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "{agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again."
+msgstr "{agentName} não está conectado neste computador. Entre em um terminal nesse computador e tente novamente"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -406,6 +411,10 @@ msgstr "{name} não aceita trabalho de outros computadores"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} tem o mesmo nome que {other}; renomeie um deles"
 
+#: src/components/task-row.tsx
+msgid "{name} is not signed in on this computer"
+msgstr "{name} não está conectado neste computador"
+
 #: src/components/home-composer-dock.tsx
 msgid "{name} is still working and cannot take a message now. Your draft stays here."
 msgstr "{name} ainda está trabalhando e não pode receber uma mensagem agora. Seu rascunho fica aqui"
@@ -413,6 +422,10 @@ msgstr "{name} ainda está trabalhando e não pode receber uma mensagem agora. S
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} precisa de configuração. Toque para ver as instruções de configuração"
+
+#: src/components/task-row.tsx
+msgid "{name} refused the request (code {code})"
+msgstr "{name} recusou a solicitação (código {code})"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -1974,6 +1987,7 @@ msgstr "Ajuda conversacional e perguntas abertas sobre o projeto"
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
 #: src/components/settings-servers.tsx
+#: src/components/task-row.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Copiado"
@@ -1999,6 +2013,10 @@ msgstr "Copia-o, pronto a colar num terminal"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Copiar"
+
+#: src/components/task-row.tsx
+msgid "Copy error details"
+msgstr "Copiar detalhes do erro"
 
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy input"
