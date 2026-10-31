@@ -50,6 +50,8 @@ See [AUDIT.md](./AUDIT.md) for the visual review and its limits.
   plate and with a cropped square viewBox. The source paths are retained.
   Sources and artwork-license limits for these marks are recorded in
   [the agent artwork notes](../agents/README.md).
+- `brand-cursor.svg`: Cursor cube mark from [Simple Icons 16.36.0](https://github.com/simple-icons/simple-icons/blob/16.36.0/icons/cursor.svg),
+  CC0-1.0; path and 24 × 24 viewBox unchanged. Brand reference: [Cursor](https://cursor.com/brand).
 - `brand-claude.svg`: Claude mark from Simple Icons 16.36.0 (`icons/claude.svg`),
   CC0-1.0; path and 24 × 24 viewBox unchanged.
 - `brand-antigravity.svg`: Google's official Antigravity one-color press icon;
