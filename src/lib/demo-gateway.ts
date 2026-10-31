@@ -1,7 +1,9 @@
 import { demoStagePanes, demoStagePaneOutput, demoStageTasks } from './demo-stage-progress';
 import { stopDemoStageProgress } from './demo-stage-progress-native';
 import { demoPdfBytes } from './demo-pdf';
+import { demoImageGallerySnapshot } from './demo-image-gallery';
 import {
+  DEMO_COMPACTION_ERROR,
   demoCompactionLogSnapshot,
   isDemoCompactionLogAsid,
   startDemoCompactionLog,
@@ -295,6 +297,7 @@ function demoCompactionEvent(): AgentDomainEvent {
     seq: 32 + demoCompactionStep,
     status: phase === 1 ? 'completed' : phase === 3 ? 'failed' : 'running',
     reason: phase >= 2 ? 'auto' : 'manual',
+    ...(phase === 3 ? { error: DEMO_COMPACTION_ERROR } : {}),
   };
 }
 
@@ -412,6 +415,8 @@ export function demoAgentSessionTree(): {
 
 /** Independent native-preview session: never replace compaction history or old tool fixtures. */
 export function demoNativePreviewSnapshot(asid: string): AgentSessionSnapshot | null {
+  const gallery = demoImageGallerySnapshot(asid);
+  if (gallery) return gallery;
   if (asid === DEMO_ITALIC_BOUNDARY_ASID) {
     return {
       info: {

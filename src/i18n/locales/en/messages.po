@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Authentication is unavailable. Try again or check system settings"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "Auto-approve every action"
+msgid "Auto-approve supported requests"
+msgstr "Auto-approve supported requests"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -1381,6 +1381,10 @@ msgstr "Choose Home and app chrome. Colours stay with your theme"
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Choose how Home gets updates from your computers."
 msgstr "Choose how Home gets updates from your computers"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "Choose image"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1795,6 +1799,7 @@ msgstr "Connections"
 msgid "Contains subagent sessions"
 msgstr "Contains subagent sessions"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Context"
@@ -2073,6 +2078,10 @@ msgstr "Could not confirm submission"
 msgid "Could not connect"
 msgstr "Could not connect"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "Could not connect to this computer. Check the address and network, then try again"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Could not connect to this machine — tap to retry"
@@ -2117,6 +2126,10 @@ msgstr "Could not download. Check the link and your connection"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Could not enable App Lock"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "Could not establish a secure connection. Check the certificate and this device's date and time"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2339,6 +2352,15 @@ msgstr "Could not rename"
 msgid "Could not reply"
 msgstr "Could not reply"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "Could not resolve this computer's address. Check the address, network or VPN"
+
+#: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Could not resume the session"
+msgstr "Could not resume the session"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "Could not revoke"
@@ -2378,6 +2400,10 @@ msgstr "Could not save shortcut"
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
 msgstr "Could not save theme"
+
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "Could not save this image. Check the image and available storage, then try again"
 
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
@@ -3351,6 +3377,10 @@ msgstr "Home connections"
 msgid "Home folder"
 msgstr "Home folder"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "Home image"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3629,6 +3659,10 @@ msgstr "Keys"
 msgid "Know what is coming next."
 msgstr "Know what is coming next"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3707,6 +3741,10 @@ msgstr "Later"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Latest"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "Launch image"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -4307,6 +4345,10 @@ msgstr "No models match “{0}”"
 msgid "No models on this host."
 msgstr "No models on this host"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "No network connection is available. Check Wi-Fi or mobile data and try again"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "No older captured output"
@@ -4456,6 +4498,7 @@ msgid "Not accepting work"
 msgstr "Not accepting work"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4653,6 +4696,10 @@ msgstr "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} le
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Only this Home row is hidden. The task and its history remain available. Running work is not stopped"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "Only this session. Unclear requests still need your approval"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -5128,6 +5175,10 @@ msgstr "Playback position"
 #: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "Please retry or remove failed attachments"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5692,6 +5743,10 @@ msgstr "Restore hidden default commands"
 msgid "Restore hidden defaults"
 msgstr "Restore hidden defaults"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "Restore theme image"
+
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"
 msgstr "Result available in Details"
@@ -5701,13 +5756,13 @@ msgid "Resume"
 msgstr "Resume"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6173,6 +6228,7 @@ msgid "Session name"
 msgstr "Session name"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "Session Tokens"
 
@@ -6482,6 +6538,7 @@ msgid "Some theme colors need more contrast"
 msgstr "Some theme colors need more contrast"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -7085,14 +7142,6 @@ msgstr "The agent is still running"
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent"
 
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "The agent stops asking; irreversibly destructive commands stay blocked"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "The agent will act without asking each time. Irreversibly destructive commands are still blocked"
-
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "The camera did not start"
@@ -7128,6 +7177,10 @@ msgstr "The connection dropped"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "The connection to the simulator stopped"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "The connection was lost. Check the network and try again"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

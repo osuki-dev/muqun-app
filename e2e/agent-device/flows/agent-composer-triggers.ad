@@ -1,4 +1,5 @@
 # The ordinary offline AgentWorkbench and AgentComposer, without sending a prompt.
+# section menu
 open "muqun://agent?asid=demo-compaction-layout&agentId=opencode"
 wait "id=agent-composer-input" 15000
 is visible "id=agent-composer-action-row"
@@ -15,8 +16,10 @@ screenshot "shots/agent-session-command-menu.png"
 # The demo has no paired transport proof. The route must keep its own gate.
 press "id=agent-composer-command-simulator"
 wait "id=simfarm-pair" 10000
+wait "id=simfarm-close" 10000
 press "id=simfarm-close"
 wait "id=agent-composer-input" 10000
+# section triggers
 # Re-focus the real input after the native simulator sheet relinquishes focus.
 press "id=agent-composer-input"
 fill "id=agent-composer-input" "@"
@@ -38,10 +41,29 @@ press "id=skill-offline-review"
 wait absent "id=skill" 5000
 is visible "id=agent-composer-input value=\"$offline-review \""
 fill "id=agent-composer-input" "/"
-wait "id=slash-command-/new" 10000
+# This recipient returns no native commands. The app must not invent shortcuts.
+wait absent "id=slash-command" 5000
 wait 400
 is visible "id=agent-composer-input value=/"
 snapshot
 screenshot "shots/agent-composer-commands.png"
 fill "id=agent-composer-input" ""
 wait absent "id=slash-command" 5000
+
+# The exact offline fixture streams for real elapsed time, then reports a
+# structured synthetic error. No live agent request or prompt is sent.
+open "muqun:///"
+open "muqun://agent?asid=demo-compaction-log-failed&agentId=opencode"
+wait "id=agent-composer-tokens-pill" 15000
+press "id=agent-composer-tokens-pill"
+wait "id=agent-context-sheet" 10000
+scroll down --until "id=agent-context-compact-btn"
+press "id=agent-context-compact-btn"
+wait absent "id=agent-context-sheet" 10000
+wait "id=agent-compaction-error" 50000
+is visible "id=agent-compaction-error label=\"Offline QA compaction failed: synthetic provider rejected the request.\""
+press "id=agent-composer-compaction-pill"
+wait "id=agent-compaction-details" 10000
+is visible "id=agent-compaction-error"
+screenshot "shots/compaction-failure-details.png"
+open "muqun:///"

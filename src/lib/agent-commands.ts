@@ -51,7 +51,6 @@ export function commandKey(name: string): string {
 }
 
 export type SlashCommand =
-  | { kind: 'client'; name: AgentClientCommandId; args: string }
   | { kind: 'server'; name: string; args: string }
   /** A catalog skill, run by `POST …/skill {skill}`. `name` is its id. */
   | { kind: 'skill'; name: string; args: string };
@@ -59,12 +58,10 @@ export type SlashCommand =
 /**
  * What a typed line is, or `null` when it is an ordinary prompt.
  *
- * The host's catalog wins over the app's list, because a host that ships its
- * own `/review` means that one; the app's entries are the fallback for the
- * names no catalog claims. A line that starts with a slash and matches nothing
- * is a prompt: a model is perfectly able to be asked about `/etc/hosts`.
+ * Only the host's catalog can identify a command. A line that starts with a
+ * slash and matches nothing is a prompt: it can name a path such as `/etc/hosts`.
  *
- * Skills sit between the two, and for the same reason commands sit above them:
+ * Commands take precedence over slash-invocable skills:
  * both come from the host, and a skill the host offers as a slash line is
  * something the reader chose to install. Only the ones marked `slash` count --
  * the rest are the agent's own to reach for, and a `/`-line naming one of them
@@ -91,9 +88,6 @@ export function readSlashCommand(
 
   const skill = skills.find((entry) => isSlashSkill(entry) && entry.id.toLowerCase() === key);
   if (skill) return { kind: 'skill', name: skill.id, args };
-
-  const client = AGENT_CLIENT_COMMANDS.find((command) => commandKey(command.name) === key);
-  if (client) return { kind: 'client', name: client.id, args };
 
   return null;
 }

@@ -210,6 +210,30 @@ export function splitBlockImages(markdown: string): BlockImagePart[] {
   return parts;
 }
 
+type GroupedBlockImagePart =
+  | { kind: 'images'; images: Extract<BlockImagePart, { kind: 'image' }>[] }
+  | Extract<BlockImagePart, { kind: 'markdown' }>;
+
+/** Blank lines separate Markdown image blocks without ending their gallery. */
+export function groupBlockImages(blocks: readonly BlockImagePart[]): GroupedBlockImagePart[] {
+  const grouped: GroupedBlockImagePart[] = [];
+  let images: Extract<BlockImagePart, { kind: 'image' }>[] = [];
+  const flush = () => {
+    if (images.length === 0) return;
+    grouped.push({ kind: 'images', images });
+    images = [];
+  };
+  for (const block of blocks) {
+    if (block.kind === 'image') images.push(block);
+    else if (block.text.trim()) {
+      flush();
+      grouped.push(block);
+    }
+  }
+  flush();
+  return grouped;
+}
+
 /**
  * The resolver a transcript part uses: a source the gateway resolved and the
  * app has a URI for is swapped; one still on its way is left as written (an

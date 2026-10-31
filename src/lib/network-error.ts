@@ -1,4 +1,5 @@
 import { t } from '@lingui/core/macro';
+import { classifyConnectionError } from './connection-error';
 
 import { TerminalBackendUnavailableError } from './herdr-compatibility';
 
@@ -130,6 +131,26 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
   // type error here rather than a silent fallback at runtime.
 }
 
+/** Short device-to-computer connection messages; the original error remains diagnostic data. */
+export function describeConnectionError(error: unknown): string | null {
+  switch (classifyConnectionError(error)) {
+    case 'dns':
+      return t`Could not resolve this computer's address. Check the address, network or VPN.`;
+    case 'offline':
+      return t`No network connection is available. Check Wi-Fi or mobile data and try again.`;
+    case 'lost':
+      return t`The connection was lost. Check the network and try again.`;
+    case 'timeout':
+      return t`Gateway did not respond in time.`;
+    case 'certificate':
+      return t`Could not establish a secure connection. Check the certificate and this device's date and time.`;
+    case 'connection':
+      return t`Could not connect to this computer. Check the address and network, then try again.`;
+    case null:
+      return null;
+  }
+}
+
 /**
  * Note what is *not* translated here: `apiMessage`, scraped out of the
  * gateway's JSON. That copy is the gateway's to write, and it arrives already
@@ -155,6 +176,16 @@ export function describeGatewayFailure(
   // and `unknown_host` (pairing will not help at all), so the code decides.
   if (error instanceof GatewayTransportRefusalError) {
     return describeTransportRefusal(classifyTransportRefusal(error.status, error.body));
+  }
+
+  const connection = describeConnectionError(error);
+  if (connection) {
+    return {
+      kind: classifyConnectionError(error) === 'timeout' ? 'timeout' : 'network',
+      message: connection,
+      retryable: true,
+      needsPairing: false,
+    };
   }
 
   const raw = error instanceof Error ? error.message : String(error ?? '');

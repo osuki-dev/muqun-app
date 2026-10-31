@@ -439,7 +439,7 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     ? KeyboardAwareLegendList<string>
     : (LegendList<string> as unknown as typeof KeyboardAwareLegendList<string>);
   return (
-    <FileComputerPicker key={namespace}>
+    <FileComputerPicker scopeKey={owner}>
       <RowContext.Provider value={context}>
         <List
           {...props}
@@ -456,6 +456,9 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
           data={keys}
           keyExtractor={keyOfRow}
           renderItem={renderRow}
+          // Native Markdown can wrap beyond the estimate; reveal each new row
+          // only after its measured height and the following positions agree.
+          experimental_hideItemsUntilMeasured
           recycleItems
         />
       </RowContext.Provider>

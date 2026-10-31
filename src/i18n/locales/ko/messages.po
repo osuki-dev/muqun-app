@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "모든 작업 자동 승인"
+msgid "Auto-approve supported requests"
+msgstr "지원되는 요청 자동 승인"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -1381,6 +1381,10 @@ msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테�
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Choose how Home gets updates from your computers."
 msgstr "홈에서 컴퓨터의 업데이트를 받는 방법을 선택하세요"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "이미지 선택"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1795,6 +1799,7 @@ msgstr "연결"
 msgid "Contains subagent sessions"
 msgstr "하위 에이전트 세션 포함"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "컨텍스트"
@@ -2073,6 +2078,10 @@ msgstr "제출을 확인할 수 없습니다"
 msgid "Could not connect"
 msgstr "연결할 수 없습니다"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "이 컴퓨터에 연결할 수 없습니다. 주소와 네트워크를 확인한 후 다시 시도하세요"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "이 머신에 연결할 수 없음 — 눌러서 다시 시도"
@@ -2117,6 +2126,10 @@ msgstr "다운로드하지 못했습니다. 링크와 연결을 확인하세요"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "보안 연결을 설정할 수 없습니다. 인증서와 이 기기의 날짜 및 시간을 확인하세요"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2339,6 +2352,15 @@ msgstr "이름을 바꿀 수 없습니다"
 msgid "Could not reply"
 msgstr "응답할 수 없습니다"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "이 컴퓨터의 주소를 확인할 수 없습니다. 주소, 네트워크 또는 VPN을 확인하세요"
+
+#: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Could not resume the session"
+msgstr "세션을 재개할 수 없습니다"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "해제할 수 없습니다"
@@ -2378,6 +2400,10 @@ msgstr "단축 명령을 저장하지 못했습니다"
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
 msgstr "테마를 저장하지 못했어요"
+
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "이미지를 저장할 수 없습니다. 이미지와 사용 가능한 저장 공간을 확인한 후 다시 시도하세요"
 
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
@@ -3351,6 +3377,10 @@ msgstr "홈 연결"
 msgid "Home folder"
 msgstr "홈 폴더"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "홈 이미지"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3629,6 +3659,10 @@ msgstr "키"
 msgid "Know what is coming next."
 msgstr "업데이트 내용을 미리 확인하세요"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "알려진 위험 명령은 계속 차단됩니다. 입력이나 선택지가 불명확한 요청은 여전히 승인이 필요합니다"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3707,6 +3741,10 @@ msgstr "나중에"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "최신"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "시작 이미지"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -4307,6 +4345,10 @@ msgstr "“{0}”과 일치하는 모델이 없습니다"
 msgid "No models on this host."
 msgstr "이 호스트에는 모델이 없습니다"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "사용 가능한 네트워크 연결이 없습니다. Wi-Fi 또는 모바일 데이터를 확인한 후 다시 시도하세요"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "더 이전에 캡처된 출력이 없습니다"
@@ -4456,6 +4498,7 @@ msgid "Not accepting work"
 msgstr "작업 받지 않음"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4653,6 +4696,10 @@ msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "홈의 이 항목만 숨깁니다. 작업과 해당 기록은 계속 사용할 수 있습니다. 실행 중인 작업은 중지되지 않습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "이 세션에만 적용됩니다. 불명확한 요청은 여전히 승인이 필요합니다"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -5128,6 +5175,10 @@ msgstr "재생 위치"
 #: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG 또는 WebP. 최대 8 MB, 1,600만 화소"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5692,6 +5743,10 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "테마 이미지 복원"
+
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"
 msgstr "자세히에서 결과 보기"
@@ -5701,13 +5756,13 @@ msgid "Resume"
 msgstr "재개"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6173,6 +6228,7 @@ msgid "Session name"
 msgstr "세션 이름"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "세션 토큰"
 
@@ -6482,6 +6538,7 @@ msgid "Some theme colors need more contrast"
 msgstr "일부 테마 색상은 대비를 높여야 합니다"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -7085,14 +7142,6 @@ msgstr "에이전트가 아직 실행 중입니다"
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "에이전트가 답변을 기다리고 있습니다. 질문의 버튼이나 터미널 키보드로 답변하세요. 메시지가 전송되지 않았습니다"
 
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "에이전트가 더 이상 묻지 않습니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "에이전트가 매번 묻지 않고 실행합니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
-
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "카메라가 시작되지 않았습니다"
@@ -7128,6 +7177,10 @@ msgstr "연결이 끊어졌습니다"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "시뮬레이터 연결이 끊겼습니다"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "연결이 끊어졌습니다. 네트워크를 확인한 후 다시 시도하세요"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

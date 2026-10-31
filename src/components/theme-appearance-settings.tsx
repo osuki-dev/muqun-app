@@ -64,6 +64,7 @@ export function ThemeAppearanceSettings({
     installed.hideHomeLogo,
     installed.hideHomeText,
     installed.homeArtwork,
+    installed.artworkImages,
   ].some((value) => value !== undefined);
   const artwork = homeArtworkPreference(installed);
   return (

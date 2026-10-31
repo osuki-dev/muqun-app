@@ -406,11 +406,12 @@ export function isSessionUnread(info: AgentSessionInfo): boolean {
 
 export type PermissionDecision = 'allow' | 'allow_always' | 'deny';
 
-export function parsePermissionDecision(value: unknown): PermissionDecision {
+export function parsePermissionDecision(value: unknown): PermissionDecision | undefined {
   const raw = asString(value)?.toLowerCase();
+  if (raw === 'allow' || raw === 'once') return 'allow';
   if (raw === 'allow_always' || raw === 'always') return 'allow_always';
   if (raw === 'deny' || raw === 'reject') return 'deny';
-  return 'allow';
+  return undefined;
 }
 
 export interface PermissionOption {
@@ -462,11 +463,12 @@ export function parsePermissionRequest(value: unknown): PermissionRequest | null
       const optionRec = asRecord(entry);
       if (!optionRec) continue;
       const label = pickString(optionRec, ['label', 'title', 'name']);
-      if (!label) continue;
+      const decision = parsePermissionDecision(optionRec.decision);
+      if (!label || !decision) continue;
       options.push({
         index: asFiniteNumber(optionRec.index) ?? options.length,
         label,
-        decision: parsePermissionDecision(optionRec.decision),
+        decision,
       });
     }
   }
@@ -1672,6 +1674,43 @@ export function contextFillRatio(
   const used = reportedTotal ?? contextTokenTotal(tokens);
   if (used <= 0) return 0;
   return Math.min(1, used / limit);
+}
+
+/** Current context and cumulative spend are distinct measurements, for every provider. */
+export function agentUsageSummary(
+  context: AgentContextUsage | null | undefined,
+  tokens: TokensUsage | undefined,
+  contextLimit?: number
+): { source: 'context' | 'session'; total: number; ratio: number | null } | null {
+  const validCount = (value: number) => Number.isFinite(value) && value >= 0;
+  const measuredTotal = (usage: TokensUsage | null | undefined): number | null => {
+    if (!usage) return null;
+    const counts = [
+      usage.input,
+      usage.output,
+      usage.reasoning ?? 0,
+      usage.cache_read ?? 0,
+      usage.cache_write ?? 0,
+    ];
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    return counts.every(validCount) && validCount(total) ? total : null;
+  };
+  const reported = context?.total_tokens;
+  const current =
+    reported !== undefined && validCount(reported) ? reported : measuredTotal(context?.tokens);
+  if (current !== null) {
+    const limit = context?.limit?.context ?? contextLimit;
+    return {
+      source: 'context',
+      total: current,
+      ratio:
+        limit !== undefined && Number.isFinite(limit) && limit > 0
+          ? Math.min(1, current / limit)
+          : null,
+    };
+  }
+  const spent = measuredTotal(tokens);
+  return spent !== null && spent > 0 ? { source: 'session', total: spent, ratio: null } : null;
 }
 
 export interface ShellInfo {
@@ -3226,6 +3265,7 @@ export type AgentDomainEvent =
       status: CompactionStatus | 'started';
       reason: CompactionReason;
       delta?: string;
+      error?: AgentErrorInfo;
     }
   | { type: 'agent.inbox.changed'; asid: string; seq: number; items: InboxItem[] }
   | {
@@ -3350,6 +3390,7 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     }
     case 'agent.compaction.changed': {
       const delta = asString(rec.delta);
+      const error = parseAgentError(rec.error);
       return {
         type,
         asid,
@@ -3357,6 +3398,7 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
         status: parseCompactionStatus(rec.status),
         reason: parseCompactionReason(rec.reason),
         ...(delta ? { delta } : {}),
+        ...(error ? { error } : {}),
       };
     }
     case 'agent.inbox.changed':

@@ -1,0 +1,201 @@
+expo-alternate-app-icons 11.0.0 (Android): preserve icon selections when upgrading
+from versions that disabled MainActivity. Repair the old component override and
+suppress only the new implicit Default alias, on package replacement and module
+initialization, without changing explicit icon selections or application data.
+Remove when upstream provides an equivalent idempotent upgrade migration.
+
+diff --git a/android/build.gradle b/android/build.gradle
+index 8acd280e314ed01ef316de4a3e737b2134d95245..dc505f864e2bf0cfbd88679d874880a540bdf0cf 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -20,3 +20,7 @@ android {
+     abortOnError false
+   }
+ }
++
++dependencies {
++  testImplementation 'junit:junit:4.13.2'
++}
+diff --git a/android/src/main/AndroidManifest.xml b/android/src/main/AndroidManifest.xml
+index bdae66c8f5a82773eaadc8f7befc05437e27cf25..2c70274d496e3a2c2824b655d6b6fb8ee8829b0a 100644
+--- a/android/src/main/AndroidManifest.xml
++++ b/android/src/main/AndroidManifest.xml
+@@ -1,2 +1,11 @@
+-<manifest>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android">
++  <application>
++    <receiver
++      android:name="expo.modules.alternateappicons.IconStateMigrationReceiver"
++      android:exported="false">
++      <intent-filter>
++        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
++      </intent-filter>
++    </receiver>
++  </application>
+ </manifest>
+diff --git a/android/src/main/java/expo/modules/alternateappicons/ExpoAlternateAppIconsModule.kt b/android/src/main/java/expo/modules/alternateappicons/ExpoAlternateAppIconsModule.kt
+index c1e8a188c9502c2223ca53674e424d0c42ded96b..27542badf2017f82382b576fbc48f62c2a698a13 100644
+--- a/android/src/main/java/expo/modules/alternateappicons/ExpoAlternateAppIconsModule.kt
++++ b/android/src/main/java/expo/modules/alternateappicons/ExpoAlternateAppIconsModule.kt
+@@ -15,6 +15,10 @@ class ExpoAlternateAppIconsModule : Module() {
+   override fun definition() = ModuleDefinition {
+     Name("ExpoAlternateAppIcons")
+ 
++    OnCreate {
++      appContext.reactContext?.let(IconStateMigration::migrate)
++    }
++
+     Constants(
+       "supportsAlternateIcons" to true
+     )
+diff --git a/android/src/main/java/expo/modules/alternateappicons/IconStateMigration.kt b/android/src/main/java/expo/modules/alternateappicons/IconStateMigration.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..1d78f0a1af2d8e4d679c01364d1ce2a2a98a67cd
+--- /dev/null
++++ b/android/src/main/java/expo/modules/alternateappicons/IconStateMigration.kt
+@@ -0,0 +1,79 @@
++package expo.modules.alternateappicons
++
++import android.content.ComponentName
++import android.content.Context
++import android.content.pm.PackageManager
++import android.os.Build
++import android.util.Log
++
++internal data class IconStateMigrationPlan(
++  val enableMainActivity: Boolean,
++  val disableImplicitDefault: Boolean
++)
++
++internal fun planIconStateMigration(
++  mainState: Int,
++  defaultState: Int?,
++  hasExplicitAlternate: Boolean
++): IconStateMigrationPlan {
++  val knownMainState = mainState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT ||
++    mainState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
++    mainState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
++  return IconStateMigrationPlan(
++    enableMainActivity = mainState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
++    disableImplicitDefault = knownMainState && hasExplicitAlternate &&
++      defaultState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
++  )
++}
++
++internal object IconStateMigration {
++  fun migrate(context: Context) {
++    val pm = context.packageManager
++    val packageName = context.packageName
++    try {
++      val activities = pm.getPackageInfo(
++        packageName,
++        PackageManager.GET_ACTIVITIES or PackageManager.MATCH_DISABLED_COMPONENTS
++      ).activities.orEmpty()
++      val main = activities.firstOrNull {
++        it.name == "$packageName.$MAIN_ACTIVITY_NAME" && it.targetActivity == null
++      } ?: return
++      val aliases = activities.filter {
++        it.targetActivity == main.name && it.name.startsWith("$packageName.$MAIN_ACTIVITY_NAME")
++      }
++      val defaultAlias = aliases.firstOrNull { it.name == "$packageName.$DEFAULT_ALIAS_NAME" }
++      val plan = planIconStateMigration(
++        pm.getComponentEnabledSetting(ComponentName(packageName, main.name)),
++        defaultAlias?.let { pm.getComponentEnabledSetting(ComponentName(packageName, it.name)) },
++        aliases.any {
++          it !== defaultAlias &&
++            pm.getComponentEnabledSetting(ComponentName(packageName, it.name)) ==
++            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
++        }
++      )
++      val changes = mutableListOf<Pair<ComponentName, Int>>()
++      // Versions before 11 disabled MainActivity when selecting an alternate.
++      // Keep that explicit alternate; only suppress the newly implicit Default.
++      if (plan.enableMainActivity) {
++        changes.add(ComponentName(packageName, main.name) to PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
++      }
++      if (plan.disableImplicitDefault && defaultAlias != null) {
++        changes.add(ComponentName(packageName, defaultAlias.name) to PackageManager.COMPONENT_ENABLED_STATE_DISABLED)
++      }
++      if (changes.isEmpty()) return
++      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
++        pm.setComponentEnabledSettings(changes.map { (component, state) ->
++          PackageManager.ComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
++        })
++      } else {
++        changes.forEach { (component, state) ->
++          pm.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
++        }
++      }
++    } catch (exception: Exception) {
++      // A package update can race package-manager reads. Retry at module init
++      // instead of making a failed repair crash an otherwise usable launcher.
++      Log.w("ExpoAlternateAppIcons", "Could not migrate legacy icon components", exception)
++    }
++  }
++}
+diff --git a/android/src/main/java/expo/modules/alternateappicons/IconStateMigrationReceiver.kt b/android/src/main/java/expo/modules/alternateappicons/IconStateMigrationReceiver.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c474b6ae782ea7350b0c7a5ead2d70f8db64785
+--- /dev/null
++++ b/android/src/main/java/expo/modules/alternateappicons/IconStateMigrationReceiver.kt
+@@ -0,0 +1,13 @@
++package expo.modules.alternateappicons
++
++import android.content.BroadcastReceiver
++import android.content.Context
++import android.content.Intent
++
++class IconStateMigrationReceiver : BroadcastReceiver() {
++  override fun onReceive(context: Context, intent: Intent) {
++    if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
++      IconStateMigration.migrate(context)
++    }
++  }
++}
+diff --git a/android/src/test/java/expo/modules/alternateappicons/IconStateMigrationTest.kt b/android/src/test/java/expo/modules/alternateappicons/IconStateMigrationTest.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..91123673e6886d429b8fac9e63a1a7a2756c0283
+--- /dev/null
++++ b/android/src/test/java/expo/modules/alternateappicons/IconStateMigrationTest.kt
+@@ -0,0 +1,41 @@
++package expo.modules.alternateappicons
++
++import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT as DEFAULT
++import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED as DISABLED
++import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED as DISABLED_UNTIL_USED
++import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER as DISABLED_USER
++import android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED as ENABLED
++import org.junit.Assert.assertEquals
++import org.junit.Test
++
++class IconStateMigrationTest {
++  @Test
++  fun legacyAlternateKeepsItsSelectionAndRestoresLinks() {
++    assertEquals(IconStateMigrationPlan(true, true), planIconStateMigration(DISABLED, DEFAULT, true))
++  }
++
++  @Test
++  fun successfulRepairAndRepeatedInitializationAreNoOps() {
++    assertEquals(IconStateMigrationPlan(false, false), planIconStateMigration(ENABLED, DISABLED, true))
++    assertEquals(IconStateMigrationPlan(false, true), planIconStateMigration(ENABLED, DEFAULT, true))
++  }
++
++  @Test
++  fun freshAndExplicitDefaultSelectionsArePreserved() {
++    assertEquals(IconStateMigrationPlan(false, false), planIconStateMigration(DEFAULT, DEFAULT, false))
++    assertEquals(IconStateMigrationPlan(true, false), planIconStateMigration(DISABLED, ENABLED, false))
++    assertEquals(IconStateMigrationPlan(true, false), planIconStateMigration(DISABLED, ENABLED, true))
++  }
++
++  @Test
++  fun missingDefaultAliasDoesNotCreateOrDisableAComponent() {
++    assertEquals(IconStateMigrationPlan(true, false), planIconStateMigration(DISABLED, null, true))
++  }
++
++  @Test
++  fun userAndUnknownDisabledStatesAreNotOverridden() {
++    for (state in listOf(DISABLED_USER, DISABLED_UNTIL_USED, 99)) {
++      assertEquals(IconStateMigrationPlan(false, false), planIconStateMigration(state, DEFAULT, true))
++    }
++  }
++}

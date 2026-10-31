@@ -195,6 +195,7 @@ import {
   type EncryptedEnvelope,
 } from './gateway-transport';
 import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
+import { PermissionReplyFlights } from './agent-permission-replies';
 import {
   endpointIsAbsent,
   sessionSnapshotFromAnswer,
@@ -1129,7 +1130,7 @@ export function setGatewayTunnelSessionOpener(
  * own loopback because a forward would not open is exactly the leak this
  * feature's threat model is written against.
  */
-async function withRecordBaseUrl<T>(
+export async function withRecordBaseUrl<T>(
   record: GatewayRecord,
   body: (baseUrl: string) => Promise<T>
 ): Promise<T> {
@@ -1645,6 +1646,26 @@ export function configuredGatewayServerId(): string | null {
   return currentRecord?.serverId ?? null;
 }
 
+const permissionReplyFlights = new PermissionReplyFlights();
+
+/** Capture the same identity gatewayFetchWithin binds before its first await. */
+export function withGatewayPermissionReply(
+  asid: string,
+  requestId: string,
+  decision: string,
+  message: string | undefined,
+  send: () => Promise<void>
+): Promise<void> {
+  const record = currentRecord;
+  const source = JSON.stringify(
+    record
+      ? [record.serverId, record.url, record.deviceId, record.token, record.transportKey]
+      : [null, currentBaseUrl, currentDeviceId, currentToken, currentTransportKey]
+  );
+  const payload = JSON.stringify(message ? { decision, message } : { decision });
+  return permissionReplyFlights.run(source, asid, requestId, payload, send);
+}
+
 export function isGatewayConfigured(): boolean {
   return Boolean(currentBaseUrl && currentBaseUrl.trim().length > 0);
 }
@@ -1937,8 +1958,22 @@ export function uploadImageSource(name: string): AssetImageSource | null {
 /** The encrypted-transport path: bytes are authenticated here and decoded from a data URI. */
 export async function readUploadImageSource(
   name: string,
-  options: { signal?: AbortSignal } = {}
+  options: {
+    signal?: AbortSignal;
+    owner?: { serverId: string | null; connectionKey: string };
+  } = {}
 ): Promise<AssetImageSource> {
+  const owner = options.owner ?? {
+    serverId: configuredGatewayServerId(),
+    connectionKey: gatewayImageConnectionKey(),
+  };
+  const isCurrent = () =>
+    owner.serverId === configuredGatewayServerId() &&
+    owner.connectionKey === gatewayImageConnectionKey();
+  const assertCurrent = () => {
+    if (!isCurrent()) throw new Error('The image belongs to a different Gateway connection');
+  };
+  assertCurrent();
   const direct = uploadImageSource(name);
   if (direct) return direct;
   const response = await encryptedGatewayFetch(
@@ -1946,13 +1981,15 @@ export async function readUploadImageSource(
     { headers: gatewayAuthHeaders(), signal: options.signal },
     IMAGE_DOWNLOAD_TIMEOUT_MS,
     undefined,
-    undefined,
+    isCurrent,
     25 * 1024 * 1024
   );
+  assertCurrent();
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
   if (!mime.startsWith('image/')) throw new Error('Gateway did not return an image.');
   const bytes = QuickCrypto.Buffer.from(await response.arrayBuffer());
+  assertCurrent();
   return {
     uri: `data:${mime};base64,${bytes.toString('base64')}`,
     cacheKey: `upload:${name}:encrypted`,

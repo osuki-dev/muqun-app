@@ -29,6 +29,7 @@ import {
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
+import { Paths } from 'expo-file-system';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
   cancelAnimation,
@@ -46,7 +47,14 @@ import {
   UnmappedImageThumbnail,
 } from '@/components/gateway-image-thumbnail';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
-import { gatewayImageBinding } from '@/lib/gateway-client';
+import {
+  gatewayImageBinding,
+  configuredGatewayServerId,
+  gatewayImageConnectionKey,
+  readUploadImageSource,
+} from '@/lib/gateway-client';
+import { rawAlbumImage } from '@/lib/image-album-source';
+import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 import {
   messageImageForSource,
   unavailableMessageImage,
@@ -80,6 +88,7 @@ import { plainFromMarkdown } from '@/lib/markdown-text';
 import { normalizeAssistantMarkdown } from '@/lib/assistant-markdown';
 import {
   escapeMarkdownText,
+  groupBlockImages,
   messageImageResolver,
   isHostPathSource,
   rewriteMessageImages,
@@ -110,6 +119,35 @@ function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
 }
 
+function imagesInAttachments(
+  attachments: readonly string[],
+  assets: readonly MessageImageAsset[],
+  files?: readonly { image: boolean }[]
+): number {
+  return attachments.filter((uri, index) => {
+    const asset = messageImageForSource(assets, uri);
+    const file = files?.[index];
+    return (
+      asset?.mime.startsWith('image/') || (!asset && (file ? file.image : isImageAttachment(uri)))
+    );
+  }).length;
+}
+
+/** Galleries and players need a definite row width; plain prose can hug its text. */
+function messageNeedsMediaWidth(item: TimelineItem, audioSessionId?: string): boolean {
+  if (item.part.type !== 'text') return false;
+  return (
+    splitDiagramMarkdown(item.part.text).some((part) => part.source !== undefined) ||
+    splitBlockImages(item.part.text).filter((block) => block.kind === 'image').length > 1 ||
+    Boolean(
+      audioSessionId &&
+      splitAudioMarkdown(item.part.text).some(
+        (part) => part.kind === 'audio' || part.kind === 'video'
+      )
+    )
+  );
+}
+
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
   imageAssets,
@@ -127,10 +165,23 @@ const MessageAttachments = memo(function MessageAttachments({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const raised = useTranscriptPlate('raised');
+  const images = attachments.flatMap((uri, index) => {
+    const asset = messageImageForSource(imageAssets, uri);
+    const file = files?.[index];
+    return asset?.mime.startsWith('image/') ||
+      (!asset && (file ? file.image : isImageAttachment(uri)))
+      ? [{ uri, alt: file?.name || t`Open attachment`, pending: false, asset }]
+      : [];
+  });
+  const firstImageIndex = attachments.findIndex((uri) => images.some((image) => image.uri === uri));
 
   return (
     <View style={styles.attachmentRow}>
       {attachments.map((att, attIdx) => {
+        if (images.length > 1 && images.some((image) => image.uri === att))
+          return attIdx === firstImageIndex ? (
+            <ImageAlbum key={`album:${attIdx}`} images={images} attachmentSources />
+          ) : null;
         const image = messageImageForSource(imageAssets, att);
         if (image)
           return (
@@ -818,8 +869,6 @@ const MessageTextPart = memo(function MessageTextPart({
                   ? images.headers
                   : undefined,
               }))}
-              onPress={onPreviewImage}
-              onGatewayPreview={openGatewayPreview}
             />
           );
         }
@@ -923,34 +972,10 @@ const MessageTextPart = memo(function MessageTextPart({
   );
 });
 
-type GroupedBlock =
-  | { kind: 'images'; images: { uri: string; alt: string; start: number }[] }
-  | { kind: 'markdown'; text: string; start: number };
-
-function groupBlockImages(blocks: ReturnType<typeof splitBlockImages>): GroupedBlock[] {
-  const grouped: GroupedBlock[] = [];
-  let images: { uri: string; alt: string; start: number }[] = [];
-  const flush = () => {
-    if (images.length === 0) return;
-    grouped.push({ kind: 'images', images });
-    images = [];
-  };
-  for (const block of blocks) {
-    if (block.kind === 'image') images.push(block);
-    else {
-      flush();
-      grouped.push(block);
-    }
-  }
-  flush();
-  return grouped;
-}
-
 function ImageAlbum({
   asid,
   images,
-  onPress,
-  onGatewayPreview,
+  attachmentSources = false,
 }: {
   asid?: string;
   images: {
@@ -961,43 +986,105 @@ function ImageAlbum({
     asset?: MessageImageAsset;
     source?: PreviewImageSource | null;
   }[];
-  onPress?: (uri: string, album?: readonly string[]) => void;
-  onGatewayPreview?: (image: PreviewImageDescriptor, assets: readonly MessageImageAsset[]) => void;
+  attachmentSources?: boolean;
 }) {
-  const uris = images.map((image) => image.uri);
+  const [width, setWidth] = useState(0);
+  const [sourceOwner] = useState(() => ({
+    serverId: configuredGatewayServerId(),
+    connectionKey: gatewayImageConnectionKey(),
+  }));
+  const [preview, setPreview] = useState<{
+    images: PreviewImageDescriptor[];
+    index: number;
+  } | null>(null);
+  const columns = images.length === 2 ? 2 : 3;
+  const cellWidth = Math.floor((width - 6 * (columns - 1)) / columns);
+  const open = (selected: number, opened?: PreviewImageDescriptor) => {
+    if (
+      sourceOwner.serverId !== configuredGatewayServerId() ||
+      sourceOwner.connectionKey !== gatewayImageConnectionKey()
+    )
+      return;
+    const album = images.flatMap((image, index) => {
+      const descriptor = image.asset ? gatewayImageBinding(image.asset)?.image : undefined;
+      if (image.asset && !descriptor) return [];
+      const raw = descriptor
+        ? null
+        : rawAlbumImage(image.uri, attachmentSources, [Paths.cache.uri, Paths.document.uri]);
+      if (!descriptor && !raw) return [];
+      const uploadName = raw?.uploadName;
+      return [
+        {
+          index,
+          image:
+            index === selected && opened
+              ? opened
+              : (descriptor ?? {
+                  id: image.uri,
+                  uri: image.uri,
+                  headers: image.headers,
+                  ...(uploadName
+                    ? {
+                        resolveSource: (signal: AbortSignal) =>
+                          readUploadImageSource(uploadName, { signal, owner: sourceOwner }),
+                      }
+                    : {}),
+                }),
+        },
+      ];
+    });
+    const index = album.findIndex((entry) => entry.index === selected);
+    if (index >= 0) setPreview({ images: album.map((entry) => entry.image), index });
+  };
   return (
-    <View style={styles.album}>
-      {images.map((image) => (
-        <View key={image.uri} style={styles.albumCell}>
-          {image.asset ? (
-            <GatewayImageThumbnail
-              asset={image.asset}
-              label={image.alt || image.asset.src}
-              block
-              sourceOverride={image.source ?? null}
-              onPreview={(opened) =>
-                onGatewayPreview?.(
-                  opened,
-                  images.flatMap((entry) => (entry.asset ? [entry.asset] : []))
-                )
-              }
-            />
-          ) : asid && isHostPathSource(image.uri) ? (
-            <InlineFileLink
-              asid={asid}
-              file={{ uri: image.uri, name: image.alt || image.uri.split('/').pop() || image.uri }}
-            />
-          ) : (
-            <TranscriptBlockImage
-              uri={image.uri}
-              alt={image.alt}
-              headers={image.headers}
-              pending={image.pending}
-              onPress={onPress ? (uri) => onPress(uri, uris) : undefined}
-            />
-          )}
-        </View>
-      ))}
+    <View
+      testID={`message-image-album-${columns}-columns`}
+      style={styles.album}
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      {width > 0
+        ? images.map((image, index) => (
+            <View key={`${image.uri}:${index}`} style={{ width: cellWidth }}>
+              {image.asset ? (
+                <GatewayImageThumbnail
+                  asset={image.asset}
+                  label={image.alt || image.asset.src}
+                  block
+                  sourceOverride={image.source}
+                  onPreview={(opened) => open(index, opened)}
+                />
+              ) : attachmentSources ? (
+                <AttachmentImage
+                  uri={image.uri}
+                  label={image.alt}
+                  onPreviewImage={() => open(index)}
+                />
+              ) : asid && isHostPathSource(image.uri) ? (
+                <InlineFileLink
+                  asid={asid}
+                  file={{
+                    uri: image.uri,
+                    name: image.alt || image.uri.split('/').pop() || image.uri,
+                  }}
+                />
+              ) : (
+                <TranscriptBlockImage
+                  uri={image.uri}
+                  alt={image.alt}
+                  headers={image.headers}
+                  pending={image.pending}
+                  onPress={() => open(index)}
+                />
+              )}
+            </View>
+          ))
+        : null}
+      {preview ? (
+        <ImagePreviewModal
+          images={preview.images}
+          initialIndex={preview.index}
+          onClose={() => setPreview(null)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -1378,6 +1465,16 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     [group.items, text]
   );
   const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
+  const wideMedia =
+    imagesInAttachments(
+      attachments,
+      group.items.flatMap((item) => item.image_assets ?? []),
+      queued?.attachment_files
+    ) > 1 ||
+    group.items.some((item) => messageNeedsMediaWidth(item, actions.audioSessionId)) ||
+    attachments.some((uri, index) =>
+      videoFileMime({ uri, name: queued?.attachment_files?.[index]?.name })
+    );
   const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
 
   /**
@@ -1443,6 +1540,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         delayLongPress={260}
         style={[
           styles.messageBlock,
+          !wideMedia && styles.contentPlate,
           plate,
           styles.userBlock,
           { borderLeftColor: colors.accent },
@@ -1663,17 +1761,23 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   let run: ReactNode[] = [];
   let runKey = '';
   let runHasOnlyAudio = true;
+  let runNeedsMediaWidth = false;
   const flush = () => {
     if (run.length === 0) return;
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={runHasOnlyAudio ? styles.standaloneRow : [styles.messageBlock, plate]}>
+        style={
+          runHasOnlyAudio
+            ? styles.standaloneRow
+            : [styles.messageBlock, !runNeedsMediaWidth && styles.contentPlate, plate]
+        }>
         {run}
       </View>
     );
     run = [];
     runHasOnlyAudio = true;
+    runNeedsMediaWidth = false;
   };
   displayEntries.forEach((displayEntry) => {
     if (displayEntry.kind === 'tool-group') {
@@ -1725,6 +1829,8 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       return;
     }
     if (run.length === 0) runKey = entry.item.id;
+    runNeedsMediaWidth =
+      runNeedsMediaWidth || messageNeedsMediaWidth(entry.item, actions.audioSessionId);
     const audioParts =
       entry.item.part.type === 'text' && actions.audioSessionId
         ? splitAudioMarkdown(entry.item.part.text)
@@ -1788,7 +1894,7 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
 export const TRANSCRIPT_ROW_GAP = TRANSCRIPT_GRID.rowGap;
 
 const styles = StyleSheet.create({
-  /** The one geometry both sides share: full width, padded, on a plate. */
+  /** Base plate spacing; ordinary message prose overrides the full width below. */
   messageBlock: {
     alignSelf: 'stretch',
     width: '100%',
@@ -1796,6 +1902,13 @@ const styles = StyleSheet.create({
     paddingVertical: TRANSCRIPT_GRID.plateInsetY,
     paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: 6,
+  },
+  // Native Markdown measures its intrinsic width under this maximum. Keep the
+  // full-width row styles for tools, thoughts and compaction disclosures.
+  contentPlate: {
+    alignSelf: 'flex-start',
+    width: 'auto',
+    maxWidth: '100%',
   },
   generationFooter: {
     paddingHorizontal: TRANSCRIPT_GRID.inset,
@@ -1965,10 +2078,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     alignSelf: 'stretch',
-  },
-  albumCell: {
-    width: '48%',
-    flexGrow: 1,
+    width: '100%',
   },
   fileRow: {
     alignSelf: 'stretch',

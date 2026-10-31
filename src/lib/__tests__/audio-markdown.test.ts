@@ -90,3 +90,26 @@ test('explicit file links do not require a filename extension allowlist', () => 
   ).toEqual([]);
   expect(files('`[CSR](/tmp/request.certSigningRequest)`')).toEqual([]);
 });
+
+test('local source links resolve the file without treating line locations as a filename', () => {
+  expect(
+    files(
+      [
+        '[source](/project/src/main.rs:10)',
+        '[column](/project/src/main.rs:10:4)',
+        '[range](<./project with spaces/main.ts#L12-L18>)',
+        '[fragment](file:///project/main.ts#L12C4)',
+      ].join(' ')
+    )
+  ).toEqual([
+    '/project/src/main.rs',
+    '/project/src/main.rs',
+    './project with spaces/main.ts',
+    'file:///project/main.ts',
+  ]);
+  expect(files('[literal](file:///project/report%3A10) [other](/project/report:latest)')).toEqual([
+    'file:///project/report%3A10',
+    '/project/report:latest',
+  ]);
+  expect(files('[web](https://host/main.ts#L12) `[code](/project/main.rs:10)`')).toEqual([]);
+});

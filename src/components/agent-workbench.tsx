@@ -1,3 +1,12 @@
+import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { describeConnectionError } from '@/lib/network-error';
+import { isAgentSessionPreparingAt, sessionPreparationSource } from '@/lib/agent-session-prepare';
+import { isPreparingSessionHistory, sessionReadFeedback } from '@/lib/session-read-feedback';
+import {
+  bindForegroundSessionAgents,
+  foregroundSessionAgent,
+} from '@/lib/foreground-session-activation';
+import { AgentSessionActivationNotice } from '@/components/agent-session-activation-notice';
 import { AgentRuntimeNotice } from '@/components/agent-runtime-notice';
 import { createQuestionDrafts } from '@/lib/agent-question-drafts';
 import {
@@ -165,6 +174,11 @@ import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import {
+  PermissionReplyGate,
+  samePermissionReplyOwner,
+  type PermissionReplyOwner,
+} from '@/lib/agent-permission-replies';
+import {
   agentRevertPath,
   oneStepRevertTarget,
   removeTimelineItems,
@@ -308,7 +322,7 @@ import {
   type AgentPromptOwnership,
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
-import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { recoverWith, settleAfter, rethrow } from '@/lib/compiler-safe-control-flow';
 import { promptedSessionWaitMs } from '@/lib/prompted-agent-sessions';
 
 /**
@@ -388,6 +402,8 @@ function formatAgentErrorMessage(
   sentences: AgentErrorSentences
 ): string {
   if (!err) return fallback;
+  const connection = describeConnectionError(err);
+  if (connection) return connection;
   const reading = classifyAgentRequestError(err);
   switch (reading.kind) {
     case 'offline':
@@ -454,6 +470,46 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
   const navigation = useNavigation();
+  const permissionRecord = useGatewayConnectionStore((state) => state.record);
+  const entryRestart = useGatewayGeneration((state) => state.restarts[serverId] ?? 0);
+  const entrySource =
+    permissionRecord?.serverId === serverId
+      ? JSON.stringify([
+          sessionId,
+          sessionPreparationSource(serverId, permissionRecord, entryRestart),
+        ])
+      : null;
+  // A durable session's provider survives a native process restart. Request and
+  // acknowledgment ownership still fence restarts in useForegroundAgentSession.
+  const preparationSource =
+    permissionRecord?.serverId === serverId
+      ? JSON.stringify([sessionId, sessionPreparationSource(serverId, permissionRecord)])
+      : null;
+  const readPreparationSource = useCallback(
+    (includeRestart = false) => {
+      const record = useGatewayConnectionStore.getState().record;
+      return record?.serverId === serverId
+        ? JSON.stringify([
+            sessionId,
+            sessionPreparationSource(
+              serverId,
+              record,
+              includeRestart ? (useGatewayGeneration.getState().restarts[serverId] ?? 0) : 0
+            ),
+          ])
+        : null;
+    },
+    [serverId, sessionId]
+  );
+  const [preparationBindings, setPreparationBindings] = useState(() =>
+    bindForegroundSessionAgents(
+      null,
+      preparationSource,
+      initialIntent !== 'new' && initialAsid && initialAgentId
+        ? [{ asid: initialAsid, agent_id: initialAgentId }]
+        : []
+    )
+  );
   const rootNavigation = useNavigation('/');
   const visible =
     agentWorkbenchNavigationScope({
@@ -543,7 +599,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
-  const { showToast } = useToast();
+  const { showToast, dismissToast } = useToast();
+  const readFeedback = sessionReadFeedback(showToast, dismissToast);
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
@@ -888,6 +945,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // ref or a setter used above its own declaration as an access out of order
   // and declines to compile the workbench. Each is described where it is used.
   const openedAsidRef = useRef<string | undefined>(undefined);
+  const entryIntentRef = useRef<string | null>(null);
+  const snapshotReadRef = useRef(0);
   const catchUpRef = useRef<() => void>(() => {});
   const handleCreateNewSessionRef = useRef<((agentId?: string) => Promise<void>) | null>(null);
   const [worktreeRevision, setWorktreeRevision] = useState(0);
@@ -1145,16 +1204,41 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (previousAsid && previousAsid !== activeAsid) setManualModelOverride(false);
     manualModelSessionRef.current = activeAsid;
   }, [activeAsid]);
-  // YOLO mode: every permission request is answered automatically, `allow`
-  // except for the irreversibly dangerous commands the safety list denies.
-  // Mirrored in a ref so the stream handler sees the current value without
-  // re-subscribing the SSE connection on every toggle.
-  const yoloModeRef = useRef(false);
-  const [yoloMode, setYoloModeState] = useState(false);
-  const setYoloMode = useCallback((next: boolean) => {
-    yoloModeRef.current = next;
-    setYoloModeState(next);
-  }, []);
+  const permissionOwner = useMemo(
+    () => ({
+      scope: JSON.stringify([serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration]),
+      connection: permissionRecord,
+    }),
+    [serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration, permissionRecord]
+  );
+  const canAutoApprove = Boolean(
+    activeAsid &&
+    permissionRecord?.serverId === serverId &&
+    canInteractNatively &&
+    agentFeatures.toolApprovals
+  );
+  const [permissionReplies] = useState(() => new PermissionReplyGate());
+  const [yoloOwner, setYoloOwner] = useState<PermissionReplyOwner | null>(null);
+  const yoloMode = canAutoApprove && samePermissionReplyOwner(yoloOwner, permissionOwner);
+  const readAutoPermission = useLatestReader({
+    owner: permissionOwner,
+    allowed: canAutoApprove,
+    enabled: yoloMode,
+    asid: activeAsid,
+    generation: gatewayGeneration,
+  });
+  useEffect(() => {
+    permissionReplies.enter(permissionOwner);
+    if (!canAutoApprove || !samePermissionReplyOwner(yoloOwner, permissionOwner))
+      setYoloOwner(null);
+  }, [permissionReplies, permissionOwner, canAutoApprove, yoloOwner]);
+  const setYoloMode = useCallback(
+    (next: boolean) => {
+      const environment = readAutoPermission();
+      setYoloOwner(next && environment.allowed ? environment.owner : null);
+    },
+    [readAutoPermission]
+  );
   // The model the workbench has actually settled on, tracked in a ref so the
   // catalog's async default cannot clobber the session model the server
   // restored: whichever source writes first wins, but a session's own model
@@ -1287,9 +1371,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * worktree is remembered where it now lives rather than where it used to.
    */
   useEffect(() => {
-    if (!activeAsid) return;
+    // A workspace switch renders its destination before the lookup settles;
+    // the source session must not overwrite that destination's remembered pick.
+    if (
+      !activeAsid ||
+      sessionInfo?.asid !== activeAsid ||
+      !sameDirectory(sessionInfo.directory, activeDirectory)
+    )
+      return;
     rememberOpenedAgentSession(sessionId, activeDirectory, activeAsid);
-  }, [sessionId, activeDirectory, activeAsid]);
+  }, [sessionId, activeDirectory, activeAsid, sessionInfo?.asid, sessionInfo?.directory]);
 
   /**
    * Whether the badge reads may run: context, diff, shells, worktrees.
@@ -1551,6 +1642,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         directory,
         matchAsid: false,
       };
+      const source = readPreparationSource();
+      const sourceOwner = readPreparationSource(true);
       const ownsList = () =>
         request === sessionListRequestRef.current && ownsWorkbench(capturedOwner);
       if (!ownsList()) return;
@@ -1587,6 +1680,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               if (!ownsList()) return;
               setIsOffline(false);
               if (list) {
+                if (source && readPreparationSource(true) === sourceOwner)
+                  setPreparationBindings((previous) =>
+                    bindForegroundSessionAgents(previous, source, list)
+                  );
                 if (!directory)
                   hostListCompleteRef.current =
                     observation.authoritative &&
@@ -1653,6 +1750,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       initialIntent,
       listAgentIdRef,
       ownsWorkbench,
+      readPreparationSource,
       serverId,
       sessionId,
       syncHomeRecentObservation,
@@ -1732,45 +1830,66 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     void listRef.current?.scrollToEnd({ animated: false });
   }, []);
 
-  // YOLO answers every permission request itself: `allow` for anything the
-  // safety list lets through, `deny` (with a report) for irreversibly
-  // destructive commands — this is the only honesty YOLO mode has.
+  // Only this authorized session's current pending requests may be auto-answered.
   const handleAutoPermission = useCallback(
     (req: PermissionRequest) => {
-      if (!nativeAgentInteraction(readRuntime())) return;
-      const asid = req.asid;
-      if (!asid) return;
+      const environment = readAutoPermission();
+      if (
+        !environment.enabled ||
+        req.asid !== environment.asid ||
+        useGatewayConnectionStore.getState().record !== environment.owner.connection ||
+        useGatewayGeneration.getState().byServer[serverId] !== environment.generation ||
+        !nativeAgentInteraction(readRuntime())
+      )
+        return;
+      const decision = yoloDecision(req);
+      if (!decision) return;
       const sourceAsid = activeAsidRef.current;
       const directory = activeDirectoryRef.current;
       const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
       if (!sourceAsid || !ownsWorkbench(capturedOwner)) return;
-      // A child request still belongs to its child and must be answered on that
-      // asid, but its attention summary belongs nowhere on the active root card.
-      const target = asid === sourceAsid ? homeTargetFor(asid, directory) : null;
-      const decision = yoloDecision(req);
-      void replyAgentPermission(sessionId, asid, req.id, decision)
+      const ticket = permissionReplies.begin(environment.owner, req, true);
+      if (!ticket) return;
+      const target = homeTargetFor(req.asid, directory);
+      void replyAgentPermission(sessionId, req.asid, req.id, decision)
         .then(() => {
-          // A confirmed answer resolves the exact captured source even after
-          // the reader leaves it. Child requests intentionally have no Home
-          // summary rather than being attributed to the root.
+          permissionReplies.finish(ticket, true);
           if (target) {
             useHomeAttention.getState().resolve(target, req.id);
             permissionTargetsRef.current.delete(req.id);
           }
+          if (!ownsWorkbench(capturedOwner)) return;
+          setPermissions((previous) => previous.filter((permission) => permission.id !== req.id));
+          if (dangerousPermissionReason(req))
+            showToast({
+              variant: 'danger',
+              title: t`Blocked by agent safety`,
+              message: req.resources[0] ?? t`Unknown command`,
+            });
         })
         .catch((err) => {
+          permissionReplies.finish(ticket, false);
           console.warn('YOLO permission reply failed:', err);
+          if (ownsWorkbench(capturedOwner))
+            showToast({
+              variant: 'danger',
+              title: t`Could not reply`,
+              message: agentErrorRef.current(err),
+            });
         });
-      const danger = dangerousPermissionReason(req);
-      if (danger) {
-        showToast({
-          variant: 'danger',
-          title: t`Blocked by agent safety`,
-          message: req.resources[0] ?? t`Unknown command`,
-        });
-      }
     },
-    [readRuntime, captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
+    [
+      readAutoPermission,
+      permissionReplies,
+      readRuntime,
+      captureWorkbenchOwner,
+      homeTargetFor,
+      ownsWorkbench,
+      sessionId,
+      serverId,
+      showToast,
+      t,
+    ]
   );
 
   /**
@@ -1935,7 +2054,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * already at the bottom.
    */
   const loadSnapshot = useCallback(
-    async (mode: 'enter' | 'silent' | 'refresh' = 'enter') => {
+    async (mode: 'enter' | 'silent' | 'refresh' = 'enter', current?: () => boolean) => {
       const asid = activeAsid;
       if (!asid) {
         if (initialCheckDoneRef.current) {
@@ -1944,12 +2063,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return;
       }
       const ownerGeneration = ownerGenerationRef.current;
+      const source = readPreparationSource();
+      const sourceOwner = readPreparationSource(true);
+      const foregroundOwner = globalOwnerRef.current;
+      const feedbackScope = JSON.stringify([sourceOwner, asid, 'history']);
       const ownsSnapshot = () =>
+        current?.() !== false &&
         mountedRef.current &&
         ownerGenerationRef.current === ownerGeneration &&
         activeAsidRef.current === asid &&
+        readPreparationSource(true) === sourceOwner &&
         useGatewayConnectionStore.getState().record?.serverId === serverId;
       if (!ownsSnapshot()) return;
+      // A prepared refresh supersedes the earlier cold read's failure, even
+      // when that old refusal arrives after preparation has already settled.
+      const request = ++snapshotReadRef.current;
+      if (mode === 'refresh') readFeedback.clear(feedbackScope);
       if (mode === 'enter' && freshSessionRef.current !== asid) setLoading(true);
       const snapshotTicket = useHomeAttention.getState().reserve();
       return settleAfter(
@@ -1976,6 +2105,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 });
               }
               if (!ownsSnapshot()) return;
+              if (request === snapshotReadRef.current) readFeedback.clear(feedbackScope);
               historyCursorRef.current = snap.history_cursor;
               setEarlierExhausted(snap.history_cursor === null);
               const fresh = freshSessionRef.current === asid;
@@ -1993,6 +2123,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               }
               const info = snap.info;
               if (info) {
+                if (info.asid === asid && source && readPreparationSource(true) === sourceOwner)
+                  setPreparationBindings((previous) =>
+                    bindForegroundSessionAgents(previous, source, [info])
+                  );
                 observedRuntimeRef.current = { serverId, asid: info.asid, runtime: info.runtime };
                 setSessionInfo((previous) =>
                   pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
@@ -2070,16 +2204,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setWindowStart(nextWindow);
               }
 
-              if (yoloModeRef.current && nativeAgentInteraction(info?.runtime)) {
-                // Auto-answer everything the engine raised while we were away — the
-                // safety list still denies its share.
-                for (const perm of snap.permissions) void handleAutoPermission(perm);
-                for (const item of snap.timeline) {
-                  if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
-                }
-                setPermissions([]);
-              } else {
-                setPermissions(snap.permissions);
+              const pendingPermissions = permissionReplies.replace(
+                readAutoPermission().owner,
+                snap.permissions.map((permission) =>
+                  permission.asid ? permission : { ...permission, asid }
+                )
+              );
+              setPermissions(pendingPermissions);
+              if (readAutoPermission().enabled && nativeAgentInteraction(info?.runtime)) {
+                for (const permission of pendingPermissions) handleAutoPermission(permission);
               }
               setForms(snap.forms);
               /**
@@ -2136,7 +2269,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               );
             },
             (err) => {
-              if (!ownsSnapshot()) return;
+              if (!ownsSnapshot() || request !== snapshotReadRef.current) return;
               console.warn('Failed to load snapshot:', err);
               const gone = freshSessionRef.current !== asid ? classifyAgentSessionGone(err) : null;
               if (gone) {
@@ -2176,21 +2309,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setActiveAsid(undefined);
                 return;
               }
-              // Anything else is a session that exists and could not be read. The
-              // entry guard is released so this session can be opened again: a
-              // snapshot that failed once -- the gateway's address not hydrated yet,
-              // a dropped request -- must not leave the screen permanently empty.
+              // A failed read does not create another foreground open intent.
+              // Reconnect/resync and explicit Refresh may still recover this reader.
+              const record = useGatewayConnectionStore.getState().record;
+              const preparing =
+                record?.serverId === serverId &&
+                isAgentSessionPreparingAt({
+                  serverId,
+                  record,
+                  agentId: foregroundSessionAgent(preparationBindings, source, asid),
+                  asid,
+                  restart: useGatewayGeneration.getState().restarts[serverId] ?? 0,
+                });
+              if (isPreparingSessionHistory(err, preparing)) return;
               openedAsidRef.current = undefined;
-              showToast({
-                variant: 'danger',
-                title: t`Could not load the session`,
-                message: agentErrorRef.current(err),
-              });
+              // The prepare owner's refresh failure belongs in its persistent
+              // recovery notice with Retry, rather than another transient toast.
+              if (current) return rethrow(err);
+              if (isGlobalOwner() && globalOwnerRef.current === foregroundOwner) {
+                readFeedback.failed(feedbackScope, {
+                  variant: 'danger',
+                  title: t`Could not load the session`,
+                  message: agentErrorRef.current(err),
+                });
+              }
             }
           );
         },
         () => {
-          if (mode === 'enter' && ownsSnapshot()) setLoading(false);
+          if (ownsSnapshot() && request === snapshotReadRef.current) setLoading(false);
         }
       );
     },
@@ -2204,35 +2351,40 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       applyViewed,
       follow,
       handleAutoPermission,
+      permissionReplies,
+      readAutoPermission,
       homeTargetFor,
       noteWorkspaceMissing,
       syncHomeRecentTitle,
       syncHomeRecentObservation,
       serverId,
+      readPreparationSource,
+      preparationBindings,
+      readFeedback,
+      isGlobalOwner,
       showToast,
       t,
     ]
   );
 
-  /**
-   * Entering a session is one snapshot, once.
-   *
-   * The effect used to depend on `loadSnapshot`, and `loadSnapshot` changed
-   * identity whenever anything it called did -- so opening the screen ran the
-   * whole entry twice. What the reader is entering is an `asid`, so that is
-   * what this is keyed on: the loader still re-declares when the session
-   * changes, and the ref says whether that session has already been opened.
-   */
-  useEffect(() => {
+  // Read the latest loader without treating catalog/callback updates as user opens.
+  const enterSnapshot = useEffectEvent(() => {
     if (!activeAsid) {
+      entryIntentRef.current = null;
       openedAsidRef.current = undefined;
       if (initialCheckDoneRef.current) setLoading(false);
       return;
     }
-    if (openedAsidRef.current === activeAsid) return;
+    if (!visible || !isGlobalOwner() || !entrySource) return;
+    const intent = JSON.stringify([entrySource, activeAsid, globalOwnerRef.current?.id]);
+    if (entryIntentRef.current === intent) return;
+    entryIntentRef.current = intent;
     openedAsidRef.current = activeAsid;
     void loadSnapshot('enter').catch(() => {});
-  }, [activeAsid, loadSnapshot]);
+  });
+  useEffect(() => {
+    enterSnapshot();
+  }, [activeAsid, entrySource, globalOwnerEpoch, visible]);
 
   // Load known projects for workspace switcher
   useEffect(() => {
@@ -2493,6 +2645,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         case 'agent.permission.pending': {
           if (!mountedRef.current) break;
           const eventAsid = event.asid || activeAsid;
+          const request = event.request.asid
+            ? event.request
+            : { ...event.request, asid: eventAsid || '' };
+          if (!permissionReplies.add(readAutoPermission().owner, request)) break;
           const target =
             forActiveSession && eventAsid === activeAsidRef.current
               ? homeTargetFor(eventAsid, activeDirectoryRef.current)
@@ -2501,13 +2657,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             permissionTargetsRef.current.set(event.request.id, target);
             useHomeAttention.getState().pending(target, event.request.id, Date.now());
           }
-          if (yoloModeRef.current) {
-            handleAutoPermission(event.request);
-          } else {
-            setPermissions((prev) =>
-              prev.some((p) => p.id === event.request.id) ? prev : [...prev, event.request]
-            );
-          }
+          setPermissions((prev) =>
+            prev.some((p) => p.id === request.id) ? prev : [...prev, request]
+          );
+          if (readAutoPermission().enabled) handleAutoPermission(request);
           break;
         }
 
@@ -2518,6 +2671,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (target) {
             useHomeAttention.getState().resolve(target, event.request_id, Date.now());
           }
+          permissionReplies.resolve(readAutoPermission().owner, {
+            asid: event.asid || activeAsid || '',
+            id: event.request_id,
+          });
           setPermissions((prev) => prev.filter((p) => p.id !== event.request_id));
           break;
         }
@@ -2616,6 +2773,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshDiffs,
       applyViewed,
       handleAutoPermission,
+      permissionReplies,
+      readAutoPermission,
       homeTargetFor,
       syncHomeRecentTitle,
       syncHomeRecentObservation,
@@ -2694,6 +2853,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // socket may have been held open by the OS and delivered nothing.
   const applicationActive = useAppActive();
   const appActive = applicationActive && visible;
+  const sessionActivation = useForegroundAgentSession({
+    serverId,
+    agentId: foregroundSessionAgent(preparationBindings, preparationSource, activeAsid),
+    asid: activeAsid,
+    foreground: appActive && globalOwnerEpoch > 0,
+    ownsForeground: isGlobalOwner,
+    onPrepared: (current) => {
+      setCatalogRevision((revision) => revision + 1);
+      return loadSnapshot('silent', current);
+    },
+  });
   useEffect(() => {
     appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
@@ -3483,7 +3653,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     async (permId: string, decision: PermissionDecision) => {
       if (!nativeAgentInteraction(readRuntime())) return;
       const request = permissions.find((permission) => permission.id === permId);
-      const asid = request?.asid || activeAsidRef.current;
+      if (!request) return;
+      const asid = request.asid || activeAsidRef.current;
       if (!asid) return;
       const capturedTarget = permissionTargetsRef.current.get(permId);
       const directory = activeDirectoryRef.current;
@@ -3492,9 +3663,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         capturedTarget ?? (sourceAsid === asid ? homeTargetFor(asid, directory) : null);
       const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
       if (!ownsWorkbench(capturedOwner)) return;
+      const environment = readAutoPermission();
+      if (useGatewayConnectionStore.getState().record !== environment.owner.connection) return;
+      const ticket = permissionReplies.begin(environment.owner, request, false);
+      if (!ticket) return;
       try {
         await replyAgentPermission(sessionId, asid, permId, decision);
       } catch (err) {
+        permissionReplies.finish(ticket, false);
         console.warn('Failed to reply permission:', err);
         if (ownsWorkbench(capturedOwner))
           showToast({
@@ -3504,6 +3680,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           });
         return;
       }
+      permissionReplies.finish(ticket, true);
       // The gateway confirmed this exact request. Its Home summary is allowed
       // to settle after navigation, while the visible workbench is not.
       if (target) {
@@ -3516,6 +3693,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       readRuntime,
+      permissionReplies,
+      readAutoPermission,
       captureWorkbenchOwner,
       homeTargetFor,
       ownsWorkbench,
@@ -3527,8 +3706,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleToggleYoloMode = useCallback(() => {
-    setYoloMode(!yoloModeRef.current);
-  }, [setYoloMode]);
+    const environment = readAutoPermission();
+    if (
+      !samePermissionReplyOwner(permissionOwner, environment.owner) ||
+      useGatewayConnectionStore.getState().record !== permissionOwner.connection
+    )
+      return;
+    setYoloMode(!environment.enabled);
+  }, [permissionOwner, setYoloMode, readAutoPermission]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -3896,6 +4081,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // answers with names the folder, and a refusal puts the old one back.
       const typedHome = isHomeRelativePath(directory);
       const previousDirectory = activeDirectoryRef.current;
+      const remembered = loadRememberedAgentSession(sessionId, directory);
       activeDirectoryRef.current = directory;
       setActiveDirectory(directory);
       // Home's explicit new-session intent has no backend session yet. Keep
@@ -3911,9 +4097,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // workspace gets a new session made for it.
           const existing = await listAgentSessions(sessionId, { roots: true, directory });
           if (!ownsSelection()) return;
-          const opening = existing
-            ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
-            : null;
+          const opening = existing ? pickSessionToOpen(existing, remembered) : null;
           let target = opening;
           if (!target) {
             if (!ownsSelection()) return;
@@ -3930,12 +4114,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           activeAsidRef.current = target.asid;
           setActiveAsid(target.asid);
           setSessionInfo(target);
+          if (!opening) {
+            // The directory's list may already have settled empty before create.
+            const created = target;
+            freshSessionRef.current = created.asid;
+            setSessions((previous) => [
+              created,
+              ...previous.filter((item) => item.asid !== created.asid),
+            ]);
+          }
           setTimeline([]);
           setWindowStart(0);
           setPermissions([]);
           setForms([]);
           syncRef.current = CATCH_UP_START;
-          refreshSessions();
         },
         (err) => {
           console.warn('Failed to switch workspace session:', err);
@@ -3959,17 +4151,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
       );
     },
-    [
-      setTimeline,
-      newSessionParams,
-      ownsWorkbench,
-      refreshSessions,
-      initialIntent,
-      serverId,
-      sessionId,
-      showToast,
-      t,
-    ]
+    [setTimeline, newSessionParams, ownsWorkbench, initialIntent, serverId, sessionId, showToast, t]
   );
 
   /**
@@ -4958,7 +5140,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || replyableForms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice && !externalRuntime) return null;
+    if (
+      !hasFormsOrPerms &&
+      !isRunning &&
+      !statusNotice &&
+      !externalRuntime &&
+      !sessionActivation.error
+    )
+      return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
       "Thinking…" over a form whose only blocker was the reader. The agent is
@@ -4968,6 +5157,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const waitingOnReader = hasBlockingAgentForm(replyableForms);
     return (
       <View style={styles.footerContainer}>
+        <AgentSessionActivationNotice
+          error={sessionActivation.error}
+          onRetry={sessionActivation.retry}
+        />
         {externalRuntime ? (
           <AgentRuntimeNotice
             runtime={externalRuntime}
@@ -5091,6 +5284,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [
     footerPermissions,
     replyableForms,
+    sessionActivation.error,
+    sessionActivation.retry,
     handleQuestionDraftChange,
     isRunning,
     statusNotice,
@@ -5519,8 +5714,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void handleMoveSession(directory);
       },
       toggleReasoning: handleToggleReasoning,
-      toggleYolo: handleToggleYoloMode,
-      compactContext: handleCompactContext,
+      toggleYolo: canAutoApprove ? handleToggleYoloMode : undefined,
+      compactContext:
+        canInteractNatively && agentFeatures.compaction ? handleCompactContext : undefined,
       clearContext: handleClearContext,
     }),
     [
@@ -5534,6 +5730,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleMoveSession,
       handleToggleReasoning,
       handleToggleYoloMode,
+      canAutoApprove,
+      canInteractNatively,
+      agentFeatures.compaction,
       handleCompactContext,
       handleClearContext,
       selectAsid,
@@ -5999,6 +6198,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
+        agentKind={activeAgentEntry?.kind}
         running={isRunning && canInteractNatively}
         interactionBlockedReason={
           canInteractNatively

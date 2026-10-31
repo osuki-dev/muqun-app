@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "การยืนยันตัวตนไม่พร้อมใช้งาน ลองอีกครั้งหรือตรวจสอบการตั้งค่าระบบ"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "อนุมัติทุกการกระทำอัตโนมัติ"
+msgid "Auto-approve supported requests"
+msgstr "อนุมัติคำขอที่รองรับโดยอัตโนมัติ"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -1381,6 +1381,10 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Choose how Home gets updates from your computers."
 msgstr "เลือกวิธีที่หน้าหลักรับข้อมูลอัปเดตจากคอมพิวเตอร์"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "เลือกรูปภาพ"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1795,6 +1799,7 @@ msgstr "การเชื่อมต่อ"
 msgid "Contains subagent sessions"
 msgstr "มีเซสชันของเอเจนต์ย่อย"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "บริบท"
@@ -2073,6 +2078,10 @@ msgstr "ไม่สามารถยืนยันการส่งได้
 msgid "Could not connect"
 msgstr "เชื่อมต่อไม่ได้"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "ไม่สามารถเชื่อมต่อกับคอมพิวเตอร์เครื่องนี้ได้ ตรวจสอบที่อยู่และเครือข่ายแล้วลองอีกครั้ง"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "เชื่อมต่อเครื่องนี้ไม่ได้ แตะเพื่อลองอีกครั้ง"
@@ -2117,6 +2126,10 @@ msgstr "ดาวน์โหลดไม่สำเร็จ ตรวจส�
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "เปิดใช้การล็อกแอปไม่ได้"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "ไม่สามารถสร้างการเชื่อมต่อที่ปลอดภัยได้ ตรวจสอบใบรับรองและวันที่กับเวลาของอุปกรณ์นี้"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2339,6 +2352,15 @@ msgstr "เปลี่ยนชื่อไม่ได้"
 msgid "Could not reply"
 msgstr "ไม่สามารถตอบกลับได้"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "ไม่สามารถแปลงชื่อที่อยู่ของคอมพิวเตอร์เครื่องนี้ได้ ตรวจสอบที่อยู่ เครือข่าย หรือ VPN"
+
+#: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Could not resume the session"
+msgstr "ไม่สามารถดำเนินเซสชันต่อได้"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "เพิกถอนไม่ได้"
@@ -2378,6 +2400,10 @@ msgstr "บันทึกปุ่มลัดไม่ได้"
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
 msgstr "บันทึกธีมไม่ได้"
+
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "บันทึกรูปภาพนี้ไม่ได้ ตรวจสอบรูปภาพและพื้นที่จัดเก็บที่ว่าง แล้วลองอีกครั้ง"
 
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
@@ -3351,6 +3377,10 @@ msgstr "การเชื่อมต่อหน้าหลัก"
 msgid "Home folder"
 msgstr "โฟลเดอร์หลัก"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "รูปภาพหน้าหลัก"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3629,6 +3659,10 @@ msgstr "ปุ่ม"
 msgid "Know what is coming next."
 msgstr "รู้ว่ามีอะไรใหม่ก่อนอัปเดต"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "คำสั่งอันตรายที่ทราบยังคงถูกบล็อก คำขอที่มีข้อมูลนำเข้าหรือตัวเลือกไม่ชัดเจนยังต้องได้รับการอนุมัติจากคุณ"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3707,6 +3741,10 @@ msgstr "ภายหลัง"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "ล่าสุด"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "รูปภาพขณะเปิดแอป"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -4307,6 +4345,10 @@ msgstr "ไม่มีโมเดลที่ตรงกับ “{0}”"
 msgid "No models on this host."
 msgstr "ไม่มีโมเดลบนโฮสต์นี้"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "ไม่มีการเชื่อมต่อเครือข่าย ตรวจสอบ Wi-Fi หรือข้อมูลมือถือแล้วลองอีกครั้ง"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "ไม่มีเอาต์พุตที่บันทึกไว้เก่ากว่านี้"
@@ -4456,6 +4498,7 @@ msgid "Not accepting work"
 msgstr "ไม่รับงาน"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4653,6 +4696,10 @@ msgstr "เพิ่มเฉพาะ {MAX_ATTACHMENTS_PER_PICK} ไฟล์�
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "ซ่อนเฉพาะรายการนี้จากหน้าหลัก งานและประวัติยังคงเข้าถึงได้ งานที่กำลังทำจะไม่หยุด"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "เฉพาะเซสชันนี้ คำขอที่ไม่ชัดเจนยังต้องได้รับการอนุมัติจากคุณ"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -5128,6 +5175,10 @@ msgstr "ตำแหน่งการเล่น"
 #: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG, JPEG หรือ WebP สูงสุด 8 MB และ 16 ล้านพิกเซล"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5692,6 +5743,10 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "คืนค่ารูปภาพของธีม"
+
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"
 msgstr "ดูผลลัพธ์ในรายละเอียด"
@@ -5701,13 +5756,13 @@ msgid "Resume"
 msgstr "ดำเนินการต่อ"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6173,6 +6228,7 @@ msgid "Session name"
 msgstr "ชื่อเซสชัน"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "โทเค็นเซสชัน"
 
@@ -6482,6 +6538,7 @@ msgid "Some theme colors need more contrast"
 msgstr "สีบางสีของธีมต้องเพิ่มความต่างระดับสี"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -7085,14 +7142,6 @@ msgstr "เอเจนต์ยังทำงานอยู่"
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "เอเจนต์กำลังรอคำตอบ ใช้ตัวควบคุมของคำถามหรือแป้นพิมพ์เทอร์มินัลเพื่อตอบ ยังไม่ได้ส่งข้อความของคุณ"
 
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "เอเจนต์จะเลิกถาม แต่คำสั่งที่ทำลายอย่างกู้คืนไม่ได้ยังถูกบล็อกอยู่"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "เอเจนต์จะลงมือทำโดยไม่ถามทุกครั้ง คำสั่งที่ทำลายอย่างกู้คืนไม่ได้ยังถูกบล็อกอยู่"
-
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "กล้องไม่เริ่มทำงาน"
@@ -7128,6 +7177,10 @@ msgstr "การเชื่อมต่อหลุด"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "การเชื่อมต่อกับเครื่องจำลองหยุดลง"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "การเชื่อมต่อขาดหาย ตรวจสอบเครือข่ายแล้วลองอีกครั้ง"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

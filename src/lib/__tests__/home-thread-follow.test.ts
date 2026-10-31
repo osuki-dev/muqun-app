@@ -35,6 +35,7 @@ function fixture() {
   const events: AgentDomainEvent[] = [];
   let watcher: GatewaySocketListener = {};
   let errors = 0;
+  const failures: unknown[] = [];
   let missing = 0;
   let streams = 0;
   const follow = runInNewContext(
@@ -79,13 +80,17 @@ function fixture() {
     onSnapshot: (value) => snapshots.push(value),
     onEvent: (event) => events.push(event),
     onNotFound: () => missing++,
-    onError: () => errors++,
+    onError: (error) => {
+      errors++;
+      failures.push(error);
+    },
   });
   return {
     connection,
     reads,
     snapshots,
     events,
+    failures,
     stop,
     watcher,
     errors: () => errors,
@@ -97,14 +102,19 @@ function fixture() {
   };
 }
 
-test('a rejected snapshot reports a read failure and resync can recover the session', async () => {
+test('a rejected snapshot retains its native error and resync can recover the session', async () => {
   const f = fixture();
   try {
     expect(f.reads).toHaveLength(1);
     expect(f.reads[0]).toMatchObject({ sessionId: 'terminal-a', asid: 'agent-session-a' });
-    f.reads[0].reject(new Error('Network request failed'));
+    const failure = new Error(
+      'java.lang.RuntimeException: Cronet failed: net::ERR_NAME_NOT_RESOLVED\n' +
+        ' at org.chromium.net.impl.CronetUrlRequest.onError(Request.java:74)'
+    );
+    f.reads[0].reject(failure);
     await tick();
     expect(f.errors()).toBe(1);
+    expect(f.failures[0]).toBe(failure);
     expect(f.missing()).toBe(0);
     expect(f.snapshots).toEqual([]);
     f.watcher.onResync?.();
@@ -177,4 +187,20 @@ test('switching computers before socket fallback prevents opening the previous s
   } finally {
     f.stop();
   }
+});
+
+test('foreground activation refresh queues behind history and stops with its reader', async () => {
+  const f = fixture();
+  f.stop.refresh();
+  f.stop.refresh();
+  expect(f.reads).toHaveLength(1);
+  f.reads[0].resolve(snapshot(1));
+  await tick();
+  expect(f.reads).toHaveLength(2);
+  f.reads[1].resolve(snapshot(2));
+  await tick();
+  expect(f.snapshots.map((value) => value.seq)).toEqual([1, 2]);
+  f.stop();
+  f.stop.refresh();
+  expect(f.reads).toHaveLength(2);
 });

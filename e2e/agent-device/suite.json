@@ -207,7 +207,9 @@
     "flows/simulator": [{ "run": "flows/simulator.ad" }],
     "flows/agent-composer-triggers": [
       { "include": "subflows/open-demo" },
-      { "run": "flows/agent-composer-triggers.ad" }
+      { "run": "flows/agent-composer-triggers.ad#menu" },
+      { "include": "subflows/dismiss-logbox" },
+      { "run": "flows/agent-composer-triggers.ad#triggers" }
     ],
     "flows/home-stage-progress": [
       {
@@ -347,6 +349,30 @@
       },
       {
         "target": {
+          "id": "home-launch-agents-panel"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-new-agent-opencode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#visible"
+      },
+      {
+        "target": {
+          "id": "home-launch-actions-scroll"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
+      },
+      {
+        "target": {
           "id": "home-continue-search"
         },
         "mode": "visible",
@@ -396,6 +422,14 @@
         },
         "mode": "press",
         "run": "flows/home-stage-progress.ad#press"
+      },
+      {
+        "target": {
+          "id": "home-launch-agents-panel"
+        },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-stage-progress.ad#hidden"
       },
       {
         "target": {
@@ -677,6 +711,8 @@
       {
         "run": "flows/custom-themes.ad#install"
       },
+      { "include": "subflows/dismiss-logbox" },
+      { "run": "flows/custom-themes.ad#apply" },
       {
         "target": {
           "text": "Back to computers"
@@ -848,6 +884,23 @@
       },
       {
         "run": "flows/custom-themes.ad#opacity-reset"
+      },
+      {
+        "run": "flows/custom-themes.ad#artwork-entries"
+      },
+      {
+        "run": "flows/custom-themes.ad#artwork-open-picker"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/custom-themes.ad#artwork-cancel-android" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/custom-themes.ad#artwork-cancel-ios" }]
+      },
+      {
+        "run": "flows/custom-themes.ad#artwork-canceled"
       },
       {
         "run": "flows/custom-themes.ad#back-to-library"
@@ -1533,7 +1586,8 @@
         },
         "mode": "visible",
         "run": "flows/attachments-ui.ad#s15"
-      }
+      },
+      { "run": "flows/attachments-ui.ad#message-galleries" }
     ],
     "flows/demo-tour": [
       {
@@ -4802,6 +4856,7 @@
     "flows/slash-commands": [
       { "include": "subflows/open-demo" },
       { "run": "subflows/open-agent-pane.ad" },
+      { "include": "subflows/dismiss-logbox" },
       { "run": "flows/slash-commands.ad" }
     ],
     "flows/ssh": [
@@ -6488,6 +6543,12 @@
     ],
     "subflows/dismiss-logbox": [
       {
+        "when": {
+          "target": { "text": "!, Open debugger to view warnings." }
+        },
+        "steps": [{ "run": "subflows/dismiss-logbox.ad#open-debugger-notice" }]
+      },
+      {
         "run": "subflows/dismiss-logbox.ad#s5"
       }
     ],
@@ -6918,9 +6979,7 @@
       }
     ],
     "subflows/restart-demo": [
-      {
-        "run": "subflows/restart-demo.ad#s1"
-      },
+      { "include": "subflows/launch-home" },
       {
         "target": {
           "text": "Try the demo"

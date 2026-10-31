@@ -129,7 +129,31 @@ export function isDangerousPermission(request: PermissionRequest): boolean {
   return dangerousPermissionReason(request) !== undefined;
 }
 
-/** The decision YOLO mode answers with, missing the danger list entirely. */
-export function yoloDecision(request: PermissionRequest): PermissionDecision {
-  return dangerousPermissionReason(request) ? 'deny' : 'allow';
+/** Unknown operation inputs or ambiguous choices remain pending for a human. */
+export function yoloDecision(request: PermissionRequest): PermissionDecision | undefined {
+  const shell = request.action === 'shell' || request.action === 'bash';
+  const fileOrRead = [
+    'read',
+    'edit',
+    'write',
+    'patch',
+    'glob',
+    'grep',
+    'list',
+    'webfetch',
+    'websearch',
+    'external_directory',
+  ].includes(request.action);
+  if (
+    (!shell && !fileOrRead) ||
+    !request.resources.length ||
+    request.resources.some((value) => !value.trim())
+  )
+    return undefined;
+  if (request.options.filter((option) => option.decision === 'allow').length !== 1)
+    return undefined;
+  const decision = dangerousPermissionReason(request) ? 'deny' : 'allow';
+  return request.options.filter((option) => option.decision === decision).length === 1
+    ? decision
+    : undefined;
 }

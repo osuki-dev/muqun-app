@@ -32,6 +32,7 @@ export function HomeSheetHeader({
   title,
   titleLines,
   titleVariant = 'heading',
+  compact = false,
   caption,
   trailing,
   onClose,
@@ -40,7 +41,9 @@ export function HomeSheetHeader({
   title: string;
   titleLines?: number;
   /** A sheet that leaves room for its content asks for a smaller title. */
-  titleVariant?: 'heading' | 'subheading';
+  titleVariant?: 'heading' | 'subheading' | 'body';
+  /** Compact chrome for a transcript that needs the available height. */
+  compact?: boolean;
   /** One quiet line under the title. */
   caption?: ReactNode;
   trailing?: ReactNode;
@@ -50,7 +53,7 @@ export function HomeSheetHeader({
   const { t } = useLingui();
   const theme = useThemeTokens();
   return (
-    <View style={homeSheetStyles.header}>
+    <View style={[homeSheetStyles.header, compact && homeSheetStyles.compactHeader]}>
       <View style={homeSheetStyles.headerCopy}>
         <Text variant={titleVariant} accessibilityRole="header" numberOfLines={titleLines}>
           {title}
@@ -62,7 +65,8 @@ export function HomeSheetHeader({
         testID={closeTestID}
         accessibilityRole="button"
         accessibilityLabel={t`Close`}
-        hitSlop={12}
+        style={compact ? homeSheetStyles.compactAction : undefined}
+        hitSlop={compact ? 0 : 12}
         onPress={onClose}>
         <CloseIcon size={20} color={theme.colors.textMuted} />
       </PressableScale>
@@ -79,6 +83,8 @@ export const homeSheetStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
+  compactHeader: { paddingHorizontal: 12, paddingVertical: 6, gap: 4 },
+  compactAction: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerCopy: { flex: 1, gap: 2 },
   content: { paddingHorizontal: 18, gap: 16 },
 });

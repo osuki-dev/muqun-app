@@ -185,6 +185,12 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    * `slotFontFamily` for why a per-file family name is what makes that true.
    */
   async function apply(id: FontSlotId, slot: FontSlot) {
+    const current = useAppSettings.getState()[SLOT_SETTING[id]];
+    if (
+      current.kind === slot.kind &&
+      (slot.kind === 'system' || (current.kind === 'file' && current.file === slot.file))
+    )
+      return;
     await loadUserFont(id, slot);
     // The face is already registered by here, so the only thing left to happen
     // is every text node in the app re-measuring at once. That is what the
@@ -296,15 +302,17 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
   }
 
   async function clearSlot(id: FontSlotId) {
+    const previous = useAppSettings.getState()[SLOT_SETTING[id]];
+    if (previous.kind === 'system') return;
     await feedback('selection');
-    const previous = slots[id];
     await reskin.run({
       kind: 'font',
       apply: () => useAppSettings.getState().update({ [SLOT_SETTING[id]]: SYSTEM_FONT_SLOT }),
     });
     // The setting first, the file after: a slot that is already back on the
     // system font cannot be left pointing at bytes that have gone.
-    removeUserFontFile(previous);
+    const current = useAppSettings.getState()[SLOT_SETTING[id]];
+    if (current.kind !== 'file' || current.file !== previous.file) removeUserFontFile(previous);
     setSlotError(id, undefined);
   }
 

@@ -28,6 +28,8 @@ wait "id=custom-theme-preview" 15000
 # Seek the confirm by identity; it may already fit below the preview.
 scroll down --until "id=theme-apply"
 is visible "id=theme-apply"
+
+# section apply
 press "id=theme-apply"
 # Applying from the file viewer goes home in one move under the reskin cover:
 # the viewer and the files sheet close with it, so nothing is left to dismiss.
@@ -155,6 +157,37 @@ wait stable 400 5000
 # before the sheet redesign. The manifest's next step is a bounded
 # scroll-to-visible for the same id, which proves it appeared and leaves it
 # reachable for `opacity-reset` to press.
+
+# section artwork-entries
+# Both personal-image slots belong to this installed theme. A theme-default
+# reset leaves the picker entries available without personal-image reset actions.
+scroll down 0.2 --until "id=theme-image-launch-pick"
+is visible "id=theme-image-launch-pick"
+scroll down 0.2 --until "id=theme-image-home-pick"
+is visible "id=theme-image-home-pick"
+is hidden "id=theme-image-launch-reset"
+is hidden "id=theme-image-home-reset"
+screenshot "shots/theme-artwork-entries.png"
+
+# section artwork-open-picker
+scroll up 0.2 --until "id=theme-image-launch-pick"
+press "id=theme-image-launch-pick"
+wait stable 400 5000
+
+# section artwork-cancel-android
+wait absent "id=custom-theme-editor" 10000
+back --system
+
+# section artwork-cancel-ios
+wait "role=\"button\" label=\"Cancel\"" 10000
+press "role=\"button\" label=\"Cancel\""
+
+# section artwork-canceled
+wait "id=custom-theme-editor" 10000
+wait stable 400 5000
+is hidden "id=theme-image-launch-reset"
+is hidden "id=theme-image-home-reset"
+screenshot "shots/theme-artwork-canceled.png"
 
 # section back-to-library
 # Return from the detail editor before continuing to Settings storage checks.

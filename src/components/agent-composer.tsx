@@ -62,6 +62,8 @@ import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-k
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
+import { AgentMark } from '@/components/agent-mark';
+import { agentMarkKind } from '@/lib/agent-mark-kind';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { FloatingMenu } from '@/components/floating-menu';
@@ -124,16 +126,14 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
-  AGENT_CLIENT_COMMANDS,
   readSkillInvocation,
   readSlashCommand,
   skillPopupTrigger,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
-import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
+import { agentHostCommandDescription } from '@/i18n/labels';
 import {
-  contextFillRatio,
-  contextTokenTotal,
+  agentUsageSummary,
   formatModelName,
   hasRealSessionTitle,
   isSessionUnread,
@@ -500,6 +500,8 @@ export interface AgentComposerProps {
   disabled?: boolean;
   /** The agent's display name, for the offline placeholder. */
   agentName?: string;
+  /** Provider kind from discovery, independent of the selected agent mode. */
+  agentKind?: string;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
   /** How many running shells the Background tasks sheet can show. */
@@ -707,6 +709,7 @@ export const AgentComposer = memo(function AgentComposer({
   onCreateNewSession,
   disabled,
   agentName,
+  agentKind,
   onOpenModelSheet,
   onOpenModeSheet,
   canPickMode = true,
@@ -724,8 +727,6 @@ export const AgentComposer = memo(function AgentComposer({
   commands = EMPTY_COMMANDS,
   onRunCommand,
   onInvokeSkill,
-  onClientCommand,
-  hiddenClientCommands = NO_HIDDEN_COMMANDS,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -860,23 +861,26 @@ export const AgentComposer = memo(function AgentComposer({
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
-  // Session spend cannot substitute for the latest context measurement.
+  // A provider may report session spend without reporting context occupancy.
   const contextPill = useMemo(() => {
-    const live = contextUsage?.tokens ?? null;
-    const total = contextUsage?.total_tokens ?? contextTokenTotal(live);
-    if (total <= 0) return null;
-    const ratio = contextFillRatio(
-      live,
-      contextUsage?.limit?.context ?? contextLimit,
-      contextUsage?.total_tokens
-    );
+    const usage = agentUsageSummary(contextUsage, tokens, contextLimit);
+    if (!usage)
+      return activeAsid && onPressTokens
+        ? { label: t`Context`, ratio: null, source: 'unknown' as const }
+        : null;
+    const { total, ratio, source } = usage;
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
     const costStr =
       cost === undefined || cost === null ? null : cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return { label: costStr === null ? tokStr : `${tokStr} • ${costStr}`, ratio };
-  }, [contextUsage, contextLimit, cost, t]);
+    const amount = costStr === null ? tokStr : `${tokStr} • ${costStr}`;
+    return {
+      label: source === 'session' ? `${t`Session Tokens`} · ${amount}` : amount,
+      ratio,
+      source,
+    };
+  }, [contextUsage, tokens, contextLimit, cost, activeAsid, onPressTokens, t]);
 
   const modelDisplayName = useMemo(
     () => modelName || formatModelName(selectedModel, t`Model`),
@@ -944,28 +948,7 @@ export const AgentComposer = memo(function AgentComposer({
     if (!attachmentSendGuard.isPending()) attachmentUploads.retryUpload(id);
   };
 
-  /**
-   * The app's own commands, and the host's.
-   *
-   * Every entry used to be a literal that was typed into the prompt and sent to
-   * the model as text -- `/init`, `/review`, `/mode`, `/model`, `/help` -- and
-   * the model read them as prose. Half of them are the app's own navigation and
-   * belong to the screen; the rest are the host's, listed by
-   * `GET /api/agent-catalog` and run by `POST …/command`. Neither is a prompt.
-   */
-  const builtinCommands: PaneSlashCommand[] = useMemo(
-    () =>
-      AGENT_CLIENT_COMMANDS.filter((command) => !hiddenClientCommands.includes(command.id)).map(
-        (command) => ({
-          name: command.name,
-          description: _(agentClientCommandDescription[command.id]),
-          argsHint: '',
-          source: 'builtin' as const,
-        })
-      ),
-    [_, hiddenClientCommands]
-  );
-
+  /** Only commands reported by the current recipient belong in its slash menu. */
   const serverCommands: PaneSlashCommand[] = useMemo(
     () =>
       commands.map((command) => {
@@ -982,21 +965,21 @@ export const AgentComposer = memo(function AgentComposer({
   );
 
   /**
-   * `/` is the commands: the screen's own and the host's. Skills are `$`, for
+   * `/` is the host's commands. Skills are `$`, for
    * every agent, so a skill the host also lets be typed as `/name` is not
    * listed here a second time; typing it by hand still runs it.
    */
   const slashCatalog = useMemo(() => {
     const seen = new Set<string>();
     const rows = [];
-    for (const command of [...builtinCommands, ...serverCommands]) {
+    for (const command of serverCommands) {
       const key = command.name.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       rows.push(command);
     }
     return rows;
-  }, [builtinCommands, serverCommands]);
+  }, [serverCommands]);
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
   /**
@@ -1287,11 +1270,6 @@ export const AgentComposer = memo(function AgentComposer({
         );
         return;
       }
-      if (parsed?.kind === 'client' && onClientCommand) {
-        onClientCommand(parsed.name);
-        setText('');
-        return;
-      }
     }
 
     if (!promptAllowed || disabled) return;
@@ -1401,7 +1379,6 @@ export const AgentComposer = memo(function AgentComposer({
     skills,
     onRunCommand,
     onInvokeSkill,
-    onClientCommand,
   ]);
 
   useEffect(() => {
@@ -2172,7 +2149,11 @@ export const AgentComposer = memo(function AgentComposer({
                           { borderRadius: profile.chrome.roundControl },
                           { backgroundColor: surfaceBackground(chromeGlass) },
                         ]}>
-                        <StackIcon size={16} color={chromeText} />
+                        {agentKind && agentMarkKind(agentKind) ? (
+                          <AgentMark kind={agentKind} size={16} color={chromeText} />
+                        ) : (
+                          <StackIcon size={16} color={chromeText} />
+                        )}
                       </PressableScale>
                     ) : null}
 
@@ -2385,9 +2366,13 @@ export const AgentComposer = memo(function AgentComposer({
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={
-                          contextPill.ratio === null
-                            ? t`Tokens usage and cost`
-                            : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                          contextPill.source === 'unknown'
+                            ? t`Context`
+                            : contextPill.source === 'session'
+                              ? `${contextPill.label}. ${t`Context`}: ${t`Not available`}`
+                              : contextPill.ratio === null
+                                ? t`Tokens usage and cost`
+                                : t`Context ${Math.round(contextPill.ratio * 100)}% full`
                         }
                         style={[
                           styles.actionBtnWithLabel,
@@ -2600,7 +2585,9 @@ export const AgentComposer = memo(function AgentComposer({
                         : t`The agent is offline`
                       : (fieldBlockedReason ??
                         placeholder ??
-                        t`Send a message, type / for commands, $ for skills, @ for files`),
+                        (slashCatalog.length
+                          ? t`Send a message, type / for commands, $ for skills, @ for files`
+                          : t`Send a message`)),
                     shortPlaceholder:
                       fieldBlockedReason ?? (placeholder === '' ? '' : t`Send a message`),
                     accessibilityLabel: inputAccessibilityLabel,
@@ -2812,7 +2799,6 @@ const COMPOSER_INNER_GUTTER = 12;
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
-const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
   flushSurface: {

@@ -1,3 +1,6 @@
+import { useIsFocused } from 'expo-router';
+import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
+import { AgentSessionActivationNotice } from '@/components/agent-session-activation-notice';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { useHomeThreadTitle } from '@/hooks/use-home-thread-title';
 import { useLingui } from '@lingui/react/macro';
@@ -61,7 +64,8 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeIcon } from '@/theme/icon-direction';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-import { HomeSheetGrabber, HomeSheetHeader } from '@/components/home-sheet';
+import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
+import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { SheetGround } from '@/components/sheet-ground';
 import { ThemeArtwork, SHELL_WALLPAPER_FALLBACK } from '@/components/theme-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -888,7 +892,8 @@ export function HomeReplyDrawer({
                     <HomeSheetHeader
                       title={title}
                       titleLines={1}
-                      titleVariant="subheading"
+                      titleVariant="body"
+                      compact
                       closeTestID="home-reply-close"
                       onClose={close}
                       caption={
@@ -902,7 +907,7 @@ export function HomeReplyDrawer({
                             testID="home-reply-open"
                             accessibilityRole="button"
                             accessibilityLabel={t`Open the full conversation`}
-                            hitSlop={12}
+                            style={homeSheetStyles.compactAction}
                             onPress={onOpenFull}>
                             <OpenExternalIcon size={18} color={theme.colors.textMuted} />
                           </PressableScale>
@@ -913,7 +918,7 @@ export function HomeReplyDrawer({
                 </GestureDetector>
                 <View style={[styles.body, { paddingBottom: controller.field + FIELD_CLEARANCE }]}>
                   {target.kind === 'session' ? (
-                    <DrawerSession key={homeThreadKey(target)} target={target} />
+                    <DrawerSession key={homeThreadKey(target)} target={target} open={open} />
                   ) : target.kind === 'pane' ? (
                     // The terminal's own gestures own its bounds: no drawer gesture
                     // wraps it, so its scrollback pans and pinches win there.
@@ -956,8 +961,19 @@ function visibleOver(height: number, keyboard: number, floor: number): number {
  * where they are when output lands under them, with the session screen's
  * "Latest" to come back down; their own send takes them to the end.
  */
-function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: 'session' }> }) {
+function DrawerSession({
+  target,
+  open,
+}: {
+  target: Extract<HomeThreadTarget, { kind: 'session' }>;
+  open: boolean;
+}) {
   const { t } = useLingui();
+  const { width } = useWindowDimensions();
+  const transcriptContentStyle = useMemo(
+    () => [styles.transcriptContent, { paddingHorizontal: width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14 }],
+    [width]
+  );
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
   const markdownStyle = usePaneChatMarkdownStyle();
@@ -966,7 +982,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   const [runtime, setRuntime] = useState<AgentSessionRuntime | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
   const [missing, setMissing] = useState(false);
-  const [readFailed, setReadFailed] = useState(false);
+  const [readError, setReadError] = useState<unknown>(null);
   const [readAttempt, setReadAttempt] = useState(0);
   const listRef = useRef<LegendListRef>(null);
   const { serverId, sessionId, asid } = target;
@@ -990,6 +1006,17 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
   });
   const readRuntime = useLatestReader(runtime);
   const [agentId, setAgentId] = useState(target.agentId);
+  const refreshSession = useRef<(() => void) | null>(null);
+  const focused = useIsFocused();
+  const appActive = useAppActive();
+  const sessionActivation = useForegroundAgentSession({
+    serverId,
+    agentId,
+    asid,
+    foreground: open && focused && appActive,
+    // The follower queues this behind its current read, preserving the cursor/window.
+    onPrepared: () => refreshSession.current?.(),
+  });
   const features = useAgentFeatures(serverId, agentId);
   const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
   const supportsEarlier = canLoadEarlierAgentTimeline(capabilities, features);
@@ -1066,7 +1093,7 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
       sessionId,
       asid,
       onSnapshot: (snapshot) => {
-        setReadFailed(false);
+        setReadError(null);
         const transcript = store.getState();
         if (!initialized || snapshot.history_reset) {
           windowStart = Math.max(0, snapshot.timeline.length - HISTORY_PAGE_SIZE);
@@ -1122,11 +1149,13 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
         setMissing(true);
         setLoaded(true);
       },
-      onError: () => setReadFailed(true),
+      onError: (error) => setReadError(error),
     });
+    refreshSession.current = stop.refresh;
     return () => {
       active = false;
       loadEarlier.current = null;
+      refreshSession.current = null;
       stop();
     };
   }, [
@@ -1260,27 +1289,26 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
     });
   };
 
+  // Preparation and history are one recovery path; retain the original errors,
+  // but offer only the action that can recover the currently failed stage.
+  const recoveryError = sessionActivation.error ?? readError;
+  const recoveryNotice = recoveryError ? (
+    <AgentSessionActivationNotice
+      error={recoveryError}
+      title={
+        sessionActivation.error ? t`Could not resume the session` : t`Could not load the session`
+      }
+      onRetry={() => {
+        setReadError(null);
+        if (sessionActivation.error) sessionActivation.retry();
+        else setReadAttempt((attempt) => attempt + 1);
+      }}
+    />
+  ) : null;
   if (!loaded)
     return (
       <View testID="home-reply-loading" style={styles.center}>
-        {readFailed ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t`Retry`}
-            onPress={() => {
-              setReadFailed(false);
-              setReadAttempt((attempt) => attempt + 1);
-            }}>
-            <Text variant="bodySmall" color={theme.colors.textMuted}>
-              {t`Could not load the session`}
-            </Text>
-            <Text variant="bodySmall" color={theme.colors.primary}>
-              {t`Retry`}
-            </Text>
-          </Pressable>
-        ) : (
-          <ActivityIndicator color={theme.colors.primary} />
-        )}
+        {recoveryNotice ?? <ActivityIndicator color={theme.colors.primary} />}
       </View>
     );
   if (missing)
@@ -1336,9 +1364,14 @@ function DrawerSession({ target }: { target: Extract<HomeThreadTarget, { kind: '
             </Text>
           </View>
         }
-        ListFooterComponent={requests}
+        ListFooterComponent={
+          <>
+            {recoveryNotice}
+            {requests}
+          </>
+        }
         style={styles.fill}
-        contentContainerStyle={styles.transcriptContent}
+        contentContainerStyle={transcriptContentStyle}
       />
       {imagePreview?.owner === key ? (
         <ImagePreviewModal
@@ -1627,7 +1660,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   empty: { paddingVertical: 24, alignItems: 'center' },
-  transcriptContent: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
+  transcriptContent: { paddingTop: 4, paddingBottom: 12 },
   requests: { gap: 10, paddingTop: 8 },
   pane: { flex: 1, overflow: 'hidden' },
 });

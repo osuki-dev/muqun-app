@@ -1,10 +1,6 @@
 # Native agent-device action sections; suite.json composes guards and includes.
 # restart-demo
 
-# section s1
-open "dev.osuki.muqun" --relaunch
-wait "label=\"Try the demo\"" 60000
-
 # section s2
 is visible "${TARGET}"
 

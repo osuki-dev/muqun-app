@@ -39,6 +39,7 @@
  */
 
 import type { InstalledTheme, ThemeSelection } from '@/theme/repository';
+import { themeAssetReferences } from '@/theme/artwork-overrides';
 
 /**
  * One file directly beneath the theme asset directory.
@@ -70,7 +71,7 @@ export type UnusedThemes = {
 function referencedNames(themes: readonly InstalledTheme[]): Set<string> {
   const names = new Set<string>();
   for (const theme of themes)
-    for (const uri of Object.values(theme.assets)) {
+    for (const uri of themeAssetReferences(theme)) {
       // The last segment, and an empty one is a URI this file has nothing to
       // say about rather than a name every entry would match.
       const name = uri.slice(uri.lastIndexOf('/') + 1);

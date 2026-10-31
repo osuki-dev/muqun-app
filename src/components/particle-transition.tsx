@@ -45,12 +45,11 @@ export function ParticleTransition({
   const canvas = useCanvasRef();
   const reduced = useReducedMotion();
   const hasIncoming = Boolean(to);
-  const outgoing = useDerivedValue(() => Math.min(1, Math.max(0, progress.get() / 0.7)));
+  const outgoing = useDerivedValue(() =>
+    Math.min(1, Math.max(0, progress.get() / (hasIncoming ? 0.7 : 1)))
+  );
   const incoming = useDerivedValue(() =>
     Math.min(1, Math.max(0, (1 - Math.min(1, Math.max(0, progress.get()))) / 0.7))
-  );
-  const backdrop = useDerivedValue(() =>
-    hasIncoming ? 1 : 1 - Math.min(1, Math.max(0, progress.get()))
   );
   const fading = useDerivedValue(() => 1 - Math.min(1, Math.max(0, progress.get())));
   const appearing = useDerivedValue(() => Math.min(1, Math.max(0, progress.get())));
@@ -74,9 +73,7 @@ export function ParticleTransition({
     );
   return (
     <Canvas ref={canvas} pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Group opacity={backdrop}>
-        <Fill color={backgroundColor} />
-      </Group>
+      {to ? <Fill color={backgroundColor} /> : null}
       {to ? (
         <ParticleField
           image={to}

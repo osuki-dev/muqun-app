@@ -82,6 +82,7 @@ export function AgentSubagentDetailSheet({
   const showReasoning = useAgentSheetBridge((state) => state.showReasoning);
   const scopeKey = agentSubagentDetailScopeKey({ serverId, sessionId, ownerSessionId, asid });
   const [store] = useState(createAgentTranscriptStore);
+  const [emptyStore] = useState(createAgentTranscriptStore);
   const [loaded, setLoaded] = useState<LoadedDetail | null>(null);
   const [preview, setPreview] = useState<{ scopeKey: string; uri: string } | null>(null);
   const [attempt, setAttempt] = useState<{ scopeKey: string; sequence: number } | null>(null);
@@ -273,35 +274,23 @@ export function AgentSubagentDetailSheet({
         onLayout={side.onLayout}
         style={[styles.column, { paddingLeft: side.left, paddingRight: side.right }]}>
         {header}
-        {contentState === 'loading' ? (
-          <View testID="agent-subagent-detail-loading" style={styles.center}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        ) : contentState === 'error' ? (
-          <View testID="agent-subagent-detail-error" style={styles.center}>
-            <Text variant="bodySmall" color={colors.textMuted} style={styles.message}>
-              {t`Could not load the session`}
-            </Text>
-            <SheetSceneAction
-              testID="agent-subagent-detail-retry"
-              label={t`Try again`}
-              onPress={() =>
-                setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
-              }
-            />
-          </View>
-        ) : (
+        <View style={styles.content}>
+          {/* Android discovers the native scrolling child when the sheet first
+              lays out. Keep it mounted through loading and child navigation. */}
           <AgentTranscriptList
             keyboardAware={false}
             nestedScrollEnabled
-            testID="agent-subagent-detail-transcript"
-            store={store}
+            testID={hasSnapshot ? 'agent-subagent-detail-transcript' : undefined}
+            store={hasSnapshot ? store : emptyStore}
             rowProps={rowProps}
-            dataKey={asid}
+            dataKey={`${scopeKey}:${hasSnapshot ? 'loaded' : 'loading'}`}
             alignItemsAtEnd={false}
             initialScrollAtEnd
             maintainScrollAtEnd={false}
             showsVerticalScrollIndicator={false}
+            pointerEvents={hasSnapshot ? 'auto' : 'none'}
+            accessibilityElementsHidden={!hasSnapshot}
+            importantForAccessibility={hasSnapshot ? 'auto' : 'no-hide-descendants'}
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Text variant="bodySmall" color={colors.textMuted}>
@@ -310,10 +299,32 @@ export function AgentSubagentDetailSheet({
               </View>
             }
             ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
-            style={sheetSceneStyles.scroller}
+            style={[sheetSceneStyles.scroller, !hasSnapshot && styles.hidden]}
             contentContainerStyle={styles.transcriptContent}
           />
-        )}
+          {contentState === 'loading' ? (
+            <View
+              testID="agent-subagent-detail-loading"
+              style={[styles.center, StyleSheet.absoluteFill]}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : contentState === 'error' ? (
+            <View
+              testID="agent-subagent-detail-error"
+              style={[styles.center, StyleSheet.absoluteFill]}>
+              <Text variant="bodySmall" color={colors.textMuted} style={styles.message}>
+                {t`Could not load the session`}
+              </Text>
+              <SheetSceneAction
+                testID="agent-subagent-detail-retry"
+                label={t`Try again`}
+                onPress={() =>
+                  setAttempt((value) => ({ scopeKey, sequence: (value?.sequence ?? 0) + 1 }))
+                }
+              />
+            </View>
+          ) : null}
+        </View>
       </View>
       {previewImages ? (
         <ImagePreviewModal
@@ -329,6 +340,8 @@ export function AgentSubagentDetailSheet({
 
 const styles = StyleSheet.create({
   column: { flex: 1, minHeight: 0 },
+  content: { flex: 1, minHeight: 0 },
+  hidden: { opacity: 0 },
   header: { paddingHorizontal: 20 },
   metadata: { gap: 4, paddingBottom: 16 },
   center: {

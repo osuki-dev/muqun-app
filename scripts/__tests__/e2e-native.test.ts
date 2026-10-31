@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { fileURLToPath } from 'node:url';
-import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, readdir } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -36,6 +37,108 @@ const suite: Suite = {
   programs: {},
 };
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
+
+describe('native CLI device profile selection', () => {
+  async function withCli(
+    check: (run: (args: string[]) => ReturnType<typeof spawnSync>, reports: string) => Promise<void>
+  ) {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-native-profile-'));
+    const reports = path.join(directory, 'reports');
+    try {
+      await writeFile(
+        path.join(directory, 'xcrun'),
+        '#!/bin/sh\nprintf \'%s\\n\' \'{"devices":{"runtime":[{"udid":"duo-qa","name":"iPhone Duo QA"}]}}\'\n',
+        { mode: 0o755 }
+      );
+      const binary = path.join(directory, 'agent-device');
+      await writeFile(
+        binary,
+        '#!/bin/sh\nif [ "$1" = "--version" ]; then echo 0.21.35; exit 0; fi\necho "test transport refuses device commands" >&2\nexit 78\n',
+        { mode: 0o755 }
+      );
+      const run = (args: string[]) =>
+        spawnSync(
+          process.execPath,
+          [
+            fileURLToPath(new URL('../e2e-native-cli.ts', import.meta.url)),
+            '--device',
+            'duo-qa',
+            '--platform',
+            'ios',
+            ...args,
+          ],
+          {
+            encoding: 'utf8',
+            timeout: 10000,
+            env: {
+              ...process.env,
+              PATH: `${directory}${path.delimiter}${process.env.PATH ?? ''}`,
+              AGENT_DEVICE_BIN: binary,
+              E2E_REPORT_DIR: reports,
+            },
+          }
+        );
+      await check(run, reports);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }
+
+  test('an explicit wide profile survives iPhone Duo identity discovery', async () => {
+    await withCli(async (run) => {
+      const result = run(['--flow', 'home-stage-progress', '--env', 'DEVICE_KIND=ipad']);
+      expect(result.status).toBe(1);
+      expect(result.stderr?.toString()).toContain('does not run on ipad');
+      expect(result.stdout?.toString()).not.toContain('home-stage-progress on');
+    });
+  }, 15000);
+
+  test('profile overrides are validated before device discovery', async () => {
+    await withCli(async (run) => {
+      for (const [profile, message] of [
+        ['unknown', 'DEVICE_KIND must be one of'],
+        ['android-tablet', 'does not match platform ios'],
+      ]) {
+        const result = run(['--flow', 'simulator', '--env', `DEVICE_KIND=${profile}`]);
+        expect(result.status).toBe(1);
+        expect(result.stderr?.toString()).toContain(message);
+        expect(result.stdout?.toString()).not.toContain('e2e: agent-device');
+      }
+    });
+  }, 15000);
+
+  test('reports retain the hardware identity beside the selected layout profile', async () => {
+    await withCli(async (run, reports) => {
+      run(['--flow', 'simulator', '--env', 'DEVICE_KIND=ipad']);
+      const [report] = (await readdir(reports)).filter((entry) => entry.startsWith('simulator-'));
+      const tooling = JSON.parse(
+        await readFile(path.join(reports, report, 'tooling.json'), 'utf8')
+      );
+      expect(tooling).toMatchObject({
+        platform: 'ios',
+        device: 'duo-qa',
+        deviceName: 'iPhone Duo QA',
+        deviceKind: 'ipad',
+        deviceKindOverridden: true,
+      });
+    });
+  }, 15000);
+
+  test('without an override the existing model-based profile stays in effect', async () => {
+    await withCli(async (run, reports) => {
+      run(['--flow', 'simulator']);
+      const [report] = (await readdir(reports)).filter((entry) => entry.startsWith('simulator-'));
+      const tooling = JSON.parse(
+        await readFile(path.join(reports, report, 'tooling.json'), 'utf8')
+      );
+      expect(tooling).toMatchObject({
+        deviceName: 'iPhone Duo QA',
+        deviceKind: 'iphone',
+        deviceKindOverridden: false,
+      });
+    });
+  }, 15000);
+});
 
 // Sanitized UIKit/private-AX capture geometry, including the flattened header.
 function coverSheetCapture(subagent: boolean, flat = false) {
@@ -182,13 +285,81 @@ function scrollRootSheetCapture() {
   );
   return { ...capture, name: 'scroll-root New task', y: 106 };
 }
-const coverSheetCaptures = [
+const coverSheetCaptures: ReturnType<typeof coverSheetCapture>[] = [
   coverSheetCapture(false),
   coverSheetCapture(true),
   coverSheetCapture(true, true),
   gitSheetCapture(false),
   gitSheetCapture(true),
   scrollRootSheetCapture(),
+  {
+    // Sanitized agent-device 0.21.12 XCTest capture: semantic type plus native class role.
+    name: 'iPhone XCTest native-class roles',
+    x: 201,
+    y: 184,
+    nodes: [
+      {
+        index: 0,
+        ref: 'e1',
+        type: 'Application',
+        role: 'UIApplication',
+        rect: { x: 0, y: 0, width: 402, height: 874 },
+      },
+      {
+        index: 1,
+        ref: 'e2',
+        parentIndex: 0,
+        type: 'StaticText',
+        role: 'RCTParagraphComponentView',
+        label: 'Background Home caption',
+        rect: { x: 107, y: 183, width: 275, height: 22 },
+      },
+      {
+        index: 2,
+        ref: 'e3',
+        parentIndex: 0,
+        type: 'Button',
+        role: '_UIGrabber',
+        label: 'Sheet Grabber',
+        rect: { x: 151, y: 58, width: 100, height: 24 },
+      },
+      {
+        index: 3,
+        ref: 'e4',
+        parentIndex: 0,
+        type: 'Other',
+        role: 'RCTViewComponentView',
+        identifier: 'agent-subagent-detail-sheet',
+        rect: { x: 0, y: 62, width: 402, height: 812 },
+      },
+      {
+        index: 4,
+        ref: 'e5',
+        parentIndex: 0,
+        type: 'StaticText',
+        role: 'RCTViewComponentView',
+        label: 'Subagent',
+        rect: { x: 20, y: 66, width: 304, height: 24 },
+      },
+      {
+        index: 5,
+        ref: 'e6',
+        parentIndex: 0,
+        type: 'StaticText',
+        role: 'UILabel',
+        label: 'Session metadata',
+        rect: { x: 20, y: 153, width: 362, height: 17 },
+      },
+      {
+        index: 6,
+        ref: 'e7',
+        parentIndex: 0,
+        type: 'ScrollView',
+        role: 'RCTEnhancedScrollView',
+        rect: { x: 0, y: 185.66666412353516, width: 402, height: 688.3333333333333 },
+      },
+    ],
+  },
 ];
 
 describe('native end-to-end gate', () => {
@@ -1516,6 +1687,7 @@ describe('native end-to-end gate', () => {
           {
             index: 1,
             type: 'Button',
+            role: '_UIGrabber',
             label: 'Sheet Grabber',
             rect: grabber,
           },
@@ -1829,6 +2001,18 @@ describe('native end-to-end gate', () => {
       await runner.run([{ target: { text: 'Done' }, mode: 'press', run: 'unused.ad' }]);
       expect(target).toBe(`role="${role}" label="Done"`);
     }
+  });
+  test('semantic roles keep priority over a generic native type', async () => {
+    const parent = { ...node, type: 'Other', index: 1, ref: 'e2' };
+    const button = { ...node, type: 'Other', role: 'button', index: 2, parentIndex: 1, ref: 'e3' };
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => (args[0] === 'snapshot' ? { nodes: [parent, button] } : { pass: true }),
+      {}
+    );
+    expect((await runner.locate({ text: 'Done' }))?.index).toBe(2);
   });
   test('selector roles use native matcher types, not snapshot display aliases', async () => {
     for (const [type, role] of [

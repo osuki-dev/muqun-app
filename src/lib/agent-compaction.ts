@@ -1,5 +1,6 @@
 import type {
   AgentDomainEvent,
+  AgentErrorInfo,
   CompactionReason,
   CompactionStatus,
   TimelineItem,
@@ -11,6 +12,7 @@ export interface CompactionActivity {
   status: CompactionStatus;
   reason: CompactionReason;
   summary: string;
+  error?: AgentErrorInfo;
   startedSeq: number;
   lastSeq: number;
   /** Tail refetches re-stamp old rows, so seq alone cannot identify this run. */
@@ -58,6 +60,9 @@ export function applyCompactionEvent(
     status: event.status === 'started' ? 'running' : event.status,
     reason: previous?.reason ?? event.reason,
     summary,
+    ...(event.status === 'failed' && (event.error ?? previous?.error)
+      ? { error: event.error ?? previous?.error }
+      : {}),
     startedSeq: previous?.startedSeq ?? event.seq,
     lastSeq: event.seq,
     previousBoundaryIds:
@@ -98,6 +103,8 @@ export function reconcileCompactionTimeline(
   // lastSeq alone so a later-delivered real delta is still appended once.
   const summary = hasSummary && !current.summary ? (part.summary ?? '') : current.summary;
   if (status === 'completed' && !summary.trim()) return null;
-  if (status === current.status && summary === current.summary) return current;
-  return { ...current, status, summary };
+  const error = status === 'failed' ? (part.error ?? current.error) : undefined;
+  if (status === current.status && summary === current.summary && error === current.error)
+    return current;
+  return { ...current, status, summary, error };
 }

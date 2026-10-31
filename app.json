@@ -294,6 +294,7 @@
           }
         ]
       ],
+      "./plugins/with-android-icon-intents.js",
       [
         "@osuki-dev/react-native-splash",
         {

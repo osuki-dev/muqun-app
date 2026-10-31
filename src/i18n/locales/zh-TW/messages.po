@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "目前無法驗證。請再試一次，或檢查系統設定"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "自動核准所有操作"
+msgid "Auto-approve supported requests"
+msgstr "自動核准支援的請求"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -1381,6 +1381,10 @@ msgstr "選擇首頁與應用程式介面樣式。配色仍由主題決定"
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Choose how Home gets updates from your computers."
 msgstr "選擇首頁取得電腦動態的方式"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "選擇圖片"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1795,6 +1799,7 @@ msgstr "連線"
 msgid "Contains subagent sessions"
 msgstr "包含子代理程式工作階段"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "上下文"
@@ -2073,6 +2078,10 @@ msgstr "無法確認提交"
 msgid "Could not connect"
 msgstr "無法連線"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "無法連線至這部電腦。請檢查位址與網路後重試"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "無法連線至這台機器，點按重試"
@@ -2117,6 +2126,10 @@ msgstr "無法下載。請檢查連結和網路連線"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "無法啟用 App 鎖定"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "無法建立安全連線。請檢查憑證及此裝置的日期與時間"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2339,6 +2352,15 @@ msgstr "無法重新命名"
 msgid "Could not reply"
 msgstr "無法回覆"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "無法解析這部電腦的位址。請檢查位址、網路或 VPN"
+
+#: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Could not resume the session"
+msgstr "無法恢復工作階段"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "無法撤銷授權"
@@ -2378,6 +2400,10 @@ msgstr "無法儲存快捷命令"
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
 msgstr "無法儲存主題"
+
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "無法儲存此圖片。請檢查圖片與可用儲存空間後再試"
 
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
@@ -3351,6 +3377,10 @@ msgstr "首頁連線"
 msgid "Home folder"
 msgstr "主資料夾"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "首頁插圖"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3629,6 +3659,10 @@ msgstr "按鍵"
 msgid "Know what is coming next."
 msgstr "更新之前，先了解新變化"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "已知的危險命令仍會遭到封鎖。輸入或選項不明確的請求仍需你核准"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3707,6 +3741,10 @@ msgstr "稍後"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "啟動圖"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -4307,6 +4345,10 @@ msgstr "沒有與「{0}」相符的模型"
 msgid "No models on this host."
 msgstr "此主機上沒有模型"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "目前沒有可用的網路連線。請檢查 Wi-Fi 或行動數據後重試"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "沒有更早的已擷取輸出"
@@ -4456,6 +4498,7 @@ msgid "Not accepting work"
 msgstr "不接受工作"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4653,6 +4696,10 @@ msgstr "僅加入了前 {MAX_ATTACHMENTS_PER_PICK} 個檔案，{dropped} 個未�
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "僅隱藏此首頁項目。任務及其記錄仍然保留，正在執行的工作不會停止"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "僅限此工作階段。不明確的請求仍需你核准"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -5128,6 +5175,10 @@ msgstr "播放進度"
 #: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "請重試或移除上傳失敗的附件"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "支援 PNG、JPEG 或 WebP，每張不超過 8 MB 與 1600 萬像素"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5692,6 +5743,10 @@ msgstr "還原隱藏的預設指令"
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "還原主題原圖"
+
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"
 msgstr "在詳細資料中查看結果"
@@ -5701,13 +5756,13 @@ msgid "Resume"
 msgstr "恢復"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6173,6 +6228,7 @@ msgid "Session name"
 msgstr "工作階段名稱"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "工作階段 Token"
 
@@ -6482,6 +6538,7 @@ msgid "Some theme colors need more contrast"
 msgstr "部分主題顏色需要更高的對比度"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -7085,14 +7142,6 @@ msgstr "代理仍在執行"
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "Agent 正在等待回答。請使用問題中的控制項或終端鍵盤回覆。你的訊息尚未傳送"
 
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "代理將不再詢問；不可逆的破壞性指令仍會被攔截"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "代理會自行動作，不再每次詢問。不可逆的破壞性指令仍會被攔截"
-
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "相機沒有啟動"
@@ -7128,6 +7177,10 @@ msgstr "連線已中斷"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "與模擬器的連線中斷了"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "連線已中斷。請檢查網路後重試"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

@@ -998,8 +998,8 @@ msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every action"
-msgstr "すべての操作を自動承認する"
+msgid "Auto-approve supported requests"
+msgstr "対応するリクエストを自動承認"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -1381,6 +1381,10 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 #: src/components/settings-home-connections-sheet.tsx
 msgid "Choose how Home gets updates from your computers."
 msgstr "ホームでパソコンの更新を受け取る方法を選びます"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Choose image"
+msgstr "画像を選択"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1795,6 +1799,7 @@ msgstr "接続"
 msgid "Contains subagent sessions"
 msgstr "サブエージェントのセッションを含みます"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "コンテキスト"
@@ -2073,6 +2078,10 @@ msgstr "送信を確認できませんでした"
 msgid "Could not connect"
 msgstr "接続できませんでした"
 
+#: src/lib/network-error.ts
+msgid "Could not connect to this computer. Check the address and network, then try again."
+msgstr "このコンピュータに接続できません。アドレスとネットワークを確認して、再試行してください"
+
 #: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "このマシンに接続できません — タップして再試行"
@@ -2117,6 +2126,10 @@ msgstr "ダウンロードできませんでした。リンクと接続を確認
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "アプリロックを有効にできませんでした"
+
+#: src/lib/network-error.ts
+msgid "Could not establish a secure connection. Check the certificate and this device's date and time."
+msgstr "安全な接続を確立できません。証明書とこのデバイスの日時を確認してください"
 
 #: src/components/task-row.tsx
 msgid "Could not follow this task on {computer}"
@@ -2339,6 +2352,15 @@ msgstr "名前を変更できませんでした"
 msgid "Could not reply"
 msgstr "返信できませんでした"
 
+#: src/lib/network-error.ts
+msgid "Could not resolve this computer's address. Check the address, network or VPN."
+msgstr "このコンピュータのアドレスを名前解決できません。アドレス、ネットワーク、VPNを確認してください"
+
+#: src/components/agent-session-activation-notice.tsx
+#: src/components/home-reply-drawer.tsx
+msgid "Could not resume the session"
+msgstr "セッションを再開できませんでした"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Could not revoke"
 msgstr "取り消せませんでした"
@@ -2378,6 +2400,10 @@ msgstr "ショートカットを保存できませんでした"
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
 msgstr "テーマを保存できませんでした"
+
+#: src/components/custom-theme-library.tsx
+msgid "Could not save this image. Check the image and available storage, then try again."
+msgstr "画像を保存できませんでした。画像とストレージの空き容量を確認して、もう一度お試しください"
 
 #: src/components/home-composer-dock.tsx
 msgid "Could not save this outgoing draft. Nothing was sent. Your draft is kept."
@@ -3351,6 +3377,10 @@ msgstr "ホームの接続"
 msgid "Home folder"
 msgstr "ホームフォルダー"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Home image"
+msgstr "ホーム画像"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -3629,6 +3659,10 @@ msgstr "キー"
 msgid "Know what is coming next."
 msgstr "更新の内容を、先に確認"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
+msgstr "既知の危険なコマンドは引き続きブロックされます。入力や選択肢が不明確なリクエストには承認が必要です"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -3707,6 +3741,10 @@ msgstr "後で"
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "Launch image"
+msgstr "起動画像"
 
 #: src/app/commands.tsx
 msgid "Lazygit"
@@ -4307,6 +4345,10 @@ msgstr "「{0}」に一致するモデルはありません"
 msgid "No models on this host."
 msgstr "このホストにモデルはありません"
 
+#: src/lib/network-error.ts
+msgid "No network connection is available. Check Wi-Fi or mobile data and try again."
+msgstr "ネットワークに接続できません。Wi-Fiまたはモバイルデータを確認して、再試行してください"
+
 #: src/components/pane-history-sheet.tsx
 msgid "No older captured output."
 msgstr "これより古いキャプチャ出力はありません"
@@ -4456,6 +4498,7 @@ msgid "Not accepting work"
 msgstr "作業の受け付け停止中"
 
 #: src/components/agent-account-limits-section.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -4653,6 +4696,10 @@ msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{droppe
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "ホームのこの行だけを非表示にします。タスクとその履歴は引き続き利用でき、実行中の作業は停止しません"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Only this session. Unclear requests still need your approval."
+msgstr "このセッションのみ。不明確なリクエストには引き続き承認が必要です"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -5128,6 +5175,10 @@ msgstr "再生位置"
 #: src/lib/attachments.ts
 msgid "Please retry or remove failed attachments."
 msgstr "失敗した添付ファイルを再試行または削除してください"
+
+#: src/components/theme-artwork-settings.tsx
+msgid "PNG, JPEG or WebP. Up to 8 MB and 16 megapixels."
+msgstr "PNG、JPEG、WebP に対応。最大 8 MB、1600 万画素"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5692,6 +5743,10 @@ msgstr "非表示にした標準コマンドを元に戻す"
 msgid "Restore hidden defaults"
 msgstr "非表示の標準を元に戻す"
 
+#: src/components/theme-artwork-settings.tsx
+msgid "Restore theme image"
+msgstr "テーマの画像に戻す"
+
 #: src/components/agent-muqun-tool-body.tsx
 msgid "Result available in Details"
 msgstr "結果は詳細で確認"
@@ -5701,13 +5756,13 @@ msgid "Resume"
 msgstr "再開"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/attachment-strip.tsx
 #: src/components/changes-worktree-list.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/home-composer-dock.tsx
-#: src/components/home-reply-drawer.tsx
 #: src/components/pane-history-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -6173,6 +6228,7 @@ msgid "Session name"
 msgstr "セッション名"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Session Tokens"
 msgstr "セッショントークン"
 
@@ -6482,6 +6538,7 @@ msgid "Some theme colors need more contrast"
 msgstr "一部のテーマカラーはコントラストを高める必要があります"
 
 #: src/app/diagram-viewer.tsx
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -7085,14 +7142,6 @@ msgstr "エージェントはまだ実行中です"
 msgid "The agent is waiting for an answer. Use the question's controls or the terminal keyboard to respond. Your message has not been sent."
 msgstr "エージェントが回答を待っています。質問の操作項目またはターミナルのキーボードで回答してください。メッセージは送信されていません"
 
-#: src/components/agent-context-sheet.tsx
-msgid "The agent stops asking; irreversibly destructive commands stay blocked"
-msgstr "エージェントは確認しなくなりますが、取り返しのつかない破壊的なコマンドは引き続きブロックされます"
-
-#: src/components/agent-context-sheet.tsx
-msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "エージェントは毎回確認せずに実行します。取り返しのつかない破壊的なコマンドは引き続きブロックされます"
-
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "カメラが起動しませんでした"
@@ -7128,6 +7177,10 @@ msgstr "接続が切れました"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "シミュレータとの接続が切れました"
+
+#: src/lib/network-error.ts
+msgid "The connection was lost. Check the network and try again."
+msgstr "接続が切れました。ネットワークを確認して、再試行してください"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."

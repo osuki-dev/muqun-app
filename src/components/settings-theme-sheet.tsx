@@ -98,12 +98,18 @@ import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-prefe
 import { chunkCardRows, type CardRow } from '@/lib/theme-grid-rows';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { useThemeLibrary } from '@/stores/theme-library';
+import { useAppSettings } from '@/stores/app-settings';
 import { exportInstalledTheme } from '@/theme/assets';
 import type { ThemeIndexEntry } from '@/theme/gallery';
 import { pickThemeManifest, shareThemeFile, type ThemeFileStage } from '@/theme/local-files';
 import { prepareThemeArtwork } from '@/theme/prepare-artwork';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
-import { BUILTIN_THEME_INSTALLATION_ID, type InstalledTheme } from '@/theme/repository';
+import {
+  BUILTIN_THEME_INSTALLATION_ID,
+  effectiveThemeManifest,
+  effectiveThemeAssets,
+  type InstalledTheme,
+} from '@/theme/repository';
 import type { ThemeManifest } from '@/theme/schema';
 import { sheetFrostAlpha, surfaceBackgroundFill } from '@/theme/surface-background';
 
@@ -369,6 +375,15 @@ export function SettingsThemeSheet({
   }
 
   function choosePack(id: ThemePackId) {
+    const current = useThemeLibrary.getState();
+    const selected = current.library.selection;
+    if (
+      !current.active &&
+      (selected?.kind === 'builtin' ? selected.id : useAppSettings.getState().themePack) === id
+    ) {
+      void onClose();
+      return;
+    }
     wear({
       pack: resolveThemePack(id),
       apply: () => useThemeLibrary.getState().apply({ kind: 'builtin', id }),
@@ -378,6 +393,10 @@ export function SettingsThemeSheet({
   function chooseDefault() {
     const builtin = useThemeLibrary.getState().defaultTheme;
     if (!builtin) return;
+    if (useThemeLibrary.getState().active?.installationId === BUILTIN_THEME_INSTALLATION_ID) {
+      void onClose();
+      return;
+    }
     wear({
       pack: builtin,
       prepare: () =>
@@ -392,9 +411,20 @@ export function SettingsThemeSheet({
   }
 
   function chooseCustom(theme: InstalledTheme) {
+    const current = useThemeLibrary.getState().library.selection;
+    if (current?.kind === 'custom' && current.id === theme.id) {
+      void onClose();
+      return;
+    }
     wear({
       pack: theme.manifest.variants,
-      prepare: () => prepareThemeArtwork(theme.manifest, theme.assets, resolvedMode, window.width),
+      prepare: () =>
+        prepareThemeArtwork(
+          effectiveThemeManifest(theme),
+          effectiveThemeAssets(theme),
+          resolvedMode,
+          window.width
+        ),
       apply: () => useThemeLibrary.getState().apply({ kind: 'custom', id: theme.id }),
     });
   }
