@@ -2072,6 +2072,7 @@ msgstr "無法取消任務"
 msgid "Could not change delivery"
 msgstr "無法變更傳送方式"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/settings-fleet-peers.tsx
 msgid "Could not change this setting"
 msgstr "無法變更此設定"
@@ -3338,6 +3339,7 @@ msgstr "配對、終端機、Agent 和主題的使用指南"
 msgid "Haptic feedback"
 msgstr "觸覺回饋"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
 msgstr "隱藏"
@@ -3357,6 +3359,10 @@ msgstr "隱藏 {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Hide on this computer"
+msgstr "在這台電腦上隱藏"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
@@ -4066,6 +4072,10 @@ msgstr "每月點數上限"
 msgid "More actions"
 msgstr "更多操作"
 
+#: src/components/home-agent-sheet.tsx
+msgid "More agents"
+msgstr "更多 Agent"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "更多符號"
@@ -4583,6 +4593,7 @@ msgid "Not reported"
 msgstr "未提供"
 
 #: src/components/simfarm-stage.tsx
+#: src/i18n/labels.ts
 msgid "Not running"
 msgstr "未執行"
 
@@ -4661,10 +4672,13 @@ msgstr "開始觀察"
 msgid "Off"
 msgstr "關閉"
 
+#: src/i18n/labels.ts
+msgid "Off on this computer"
+msgstr "已在這台電腦上關閉"
+
 #: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
-#: src/i18n/labels.ts
 msgid "Offline"
 msgstr "離線"
 
@@ -6368,6 +6382,7 @@ msgstr "Shift Tab 鍵"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab 鍵，循環切換模式"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Show"
 msgstr "顯示"
@@ -7765,6 +7780,7 @@ msgstr "信任"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/home-agent-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
 #: src/components/theme-gallery.tsx

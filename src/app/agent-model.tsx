@@ -13,6 +13,8 @@ export default function AgentModelScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId?: string;
+    /** The computer whose remembered models are listed as recent. */
+    memoryScope?: string;
     directory?: string;
     agentId?: string;
     /** `home`: opened from Home's dock, which has no session behind it. */
@@ -34,6 +36,7 @@ export default function AgentModelScreen() {
   return (
     <AgentModelSheet
       sessionId={params.sessionId || (fromHome ? undefined : bridgeSessionId) || undefined}
+      memoryScope={params.memoryScope || undefined}
       directory={params.directory || (fromHome ? undefined : bridgeDirectory) || undefined}
       agentId={params.agentId || (fromHome ? undefined : bridgeAgentId) || undefined}
       selectedModel={selectedModel}

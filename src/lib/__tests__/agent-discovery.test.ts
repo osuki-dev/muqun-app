@@ -35,6 +35,8 @@ import {
   type AgentInfo,
   type GatewayDiscovery,
 } from '../agent-protocol';
+import { homeAgentOptions, resolveHomeAgent } from '../home-agent-choice';
+import { partitionLaunchAgents } from '../home-launch-model';
 import {
   agentCatalogCacheVariant,
   agentCatalogPath,
@@ -584,5 +586,108 @@ describe('selectors for Home', () => {
       'opencode'
     );
     expect(serverOffersAgentChoice(index, 'srv-1')).toBe(false);
+  });
+});
+
+describe('the new-session picker groups', () => {
+  /** Through the wire parser and the persisted mirror, as Home reads it. */
+  const mirrored = (agents: Record<string, unknown>[]) =>
+    parseAgentsMirrorIndex(
+      serializeAgentsMirrorIndex(
+        withMirroredDiscovery(
+          emptyAgentsMirror(),
+          'srv',
+          mirrorDiscovery(parseGatewayDiscovery({ planes: { agents: { agents } } }), 1)
+        )
+      )
+    ).servers.srv;
+
+  const cases: {
+    name: string;
+    agents: Record<string, unknown>[];
+    lastUsed?: string;
+    offered: string[];
+    more: string[];
+  }[] = [
+    {
+      name: 'an older gateway folds away not-installed and switched-off agents locally',
+      agents: [
+        { id: 'codex', status: 'connected' },
+        { id: 'cursor', status: 'not_installed' },
+        { id: 'qoder', status: 'reachable', enabled: false },
+        { id: 't3', status: 'unconfigured' },
+        { id: 'pi', status: 'offline' },
+      ],
+      offered: ['codex', 't3', 'pi'],
+      more: ['cursor', 'qoder'],
+    },
+    {
+      name: "the gateway's own placement wins, and hidden goes to More",
+      agents: [
+        { id: 'codex', status: 'connected', visibility: 'auto', picker: 'default' },
+        { id: 'pi', status: 'reachable', visibility: 'hidden', picker: 'more' },
+        { id: 'cursor', status: 'not_installed', picker: 'default' },
+      ],
+      offered: ['codex', 'cursor'],
+      more: ['pi'],
+    },
+    {
+      name: 'hidden without a placement (and an unknown visibility is auto)',
+      agents: [
+        { id: 'codex', status: 'connected', visibility: 'shown' },
+        { id: 'fx', status: 'reachable', visibility: 'hidden' },
+      ],
+      offered: ['codex'],
+      more: ['fx'],
+    },
+    {
+      name: 'nothing usable keeps the install guides listed, never hidden or off ones',
+      agents: [
+        { id: 'opencode', status: 'not_installed' },
+        { id: 'pi', status: 'not_installed', visibility: 'hidden', picker: 'more' },
+        { id: 'qoder', status: 'disabled' },
+      ],
+      offered: ['opencode'],
+      more: ['pi', 'qoder'],
+    },
+    {
+      name: 'the last-used agent leads the default group only',
+      agents: [
+        { id: 'codex', status: 'connected' },
+        { id: 'claude', status: 'connected' },
+        { id: 'cursor', status: 'not_installed' },
+      ],
+      lastUsed: 'claude',
+      offered: ['claude', 'codex'],
+      more: ['cursor'],
+    },
+  ];
+
+  for (const entry of cases) {
+    test(entry.name, () => {
+      const groups = partitionLaunchAgents(mirrored(entry.agents), entry.lastUsed);
+      expect(groups.offered.map((agent) => agent.id)).toEqual(entry.offered);
+      expect(groups.more.map((agent) => agent.id)).toEqual(entry.more);
+    });
+  }
+
+  test('hiding the session form keeps the terminal form and the default pick', () => {
+    const options = homeAgentOptions(
+      mirrored([
+        { id: 'codex', status: 'offline' },
+        { id: 'claude', status: 'connected', visibility: 'hidden', ledgerDelivery: ['pane'] },
+      ]),
+      []
+    );
+    expect(
+      options.map((option) => [option.key, option.kind === 'session' && option.hidden === true])
+    ).toEqual([
+      ['session:codex', false],
+      ['terminal:claude', false],
+      ['session:claude', true],
+    ]);
+    // Nothing chosen: the default group decides, never a folded-away agent.
+    expect(resolveHomeAgent(options, undefined)?.key).toBe('terminal:claude');
+    expect(resolveHomeAgent(options, 'session:claude')?.key).toBe('session:claude');
   });
 });

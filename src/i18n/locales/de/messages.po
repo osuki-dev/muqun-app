@@ -2072,6 +2072,7 @@ msgstr "Aufgabe konnte nicht abgebrochen werden"
 msgid "Could not change delivery"
 msgstr "Zustellung konnte nicht geändert werden"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/settings-fleet-peers.tsx
 msgid "Could not change this setting"
 msgstr "Diese Einstellung konnte nicht geändert werden"
@@ -3338,6 +3339,7 @@ msgstr "Anleitungen zu Kopplung, Terminal, Agents und Themes"
 msgid "Haptic feedback"
 msgstr "Haptisches Feedback"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
 msgstr "Ausgeblendet"
@@ -3357,6 +3359,10 @@ msgstr "{name} ausblenden"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Tastatur ausblenden"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Hide on this computer"
+msgstr "Auf diesem Computer ausblenden"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
@@ -4066,6 +4072,10 @@ msgstr "Monatliches Credit-Limit"
 msgid "More actions"
 msgstr "Weitere Aktionen"
 
+#: src/components/home-agent-sheet.tsx
+msgid "More agents"
+msgstr "Weitere Agenten"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Weitere Symbole"
@@ -4583,6 +4593,7 @@ msgid "Not reported"
 msgstr "Nicht gemeldet"
 
 #: src/components/simfarm-stage.tsx
+#: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Läuft nicht"
 
@@ -4661,10 +4672,13 @@ msgstr "Beobachtung gestartet"
 msgid "Off"
 msgstr "Aus"
 
+#: src/i18n/labels.ts
+msgid "Off on this computer"
+msgstr "Auf diesem Computer aus"
+
 #: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
-#: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Offline"
 
@@ -6368,6 +6382,7 @@ msgstr "Umschalt Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Umschalt Tab, Modus wechseln"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Show"
 msgstr "Anzeigen"
@@ -7765,6 +7780,7 @@ msgstr "Vertrauen"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/home-agent-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
 #: src/components/theme-gallery.tsx

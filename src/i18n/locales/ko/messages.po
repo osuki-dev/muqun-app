@@ -2072,6 +2072,7 @@ msgstr "작업을 취소할 수 없습니다"
 msgid "Could not change delivery"
 msgstr "전달 방식을 바꿀 수 없습니다"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/settings-fleet-peers.tsx
 msgid "Could not change this setting"
 msgstr "이 설정을 변경할 수 없습니다"
@@ -3338,6 +3339,7 @@ msgstr "페어링, 터미널, 에이전트, 테마 안내"
 msgid "Haptic feedback"
 msgstr "햅틱 피드백"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
 msgstr "숨김"
@@ -3357,6 +3359,10 @@ msgstr "{name} 숨기기"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
+
+#: src/components/home-agent-sheet.tsx
+msgid "Hide on this computer"
+msgstr "이 컴퓨터에서 숨기기"
 
 #: src/components/agent-compaction-pill.tsx
 #: src/components/collaboration-notice.tsx
@@ -4066,6 +4072,10 @@ msgstr "월간 크레딧 한도"
 msgid "More actions"
 msgstr "추가 작업"
 
+#: src/components/home-agent-sheet.tsx
+msgid "More agents"
+msgstr "다른 에이전트"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "기호 더 보기"
@@ -4583,6 +4593,7 @@ msgid "Not reported"
 msgstr "미보고"
 
 #: src/components/simfarm-stage.tsx
+#: src/i18n/labels.ts
 msgid "Not running"
 msgstr "실행 중이 아님"
 
@@ -4661,10 +4672,13 @@ msgstr "관찰 시작"
 msgid "Off"
 msgstr "꺼짐"
 
+#: src/i18n/labels.ts
+msgid "Off on this computer"
+msgstr "이 컴퓨터에서 꺼짐"
+
 #: src/components/agent-muqun-tool-body.tsx
 #: src/components/home-composer-options.tsx
 #: src/components/settings-server-capabilities.tsx
-#: src/i18n/labels.ts
 msgid "Offline"
 msgstr "오프라인"
 
@@ -6368,6 +6382,7 @@ msgstr "시프트 탭"
 msgid "Shift Tab, cycle mode"
 msgstr "시프트 탭, 모드 전환"
 
+#: src/components/home-agent-sheet.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Show"
 msgstr "보기"
@@ -7765,6 +7780,7 @@ msgstr "신뢰"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/home-agent-sheet.tsx
 #: src/components/inline-file-link.tsx
 #: src/components/pdf-asset-preview.tsx
 #: src/components/theme-gallery.tsx

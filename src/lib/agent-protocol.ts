@@ -2251,6 +2251,26 @@ export interface AgentModeSummary {
   description?: string;
 }
 
+/**
+ * Whether the host wants an agent's native-session form listed by default:
+ * `auto` (shown when installed) or `hidden` (kept under More agents). A
+ * terminal-pane form of the same agent is never affected.
+ */
+export type AgentVisibility = 'auto' | 'hidden';
+
+/** Where a new-session picker lists an agent; computed by the gateway. */
+export type AgentPickerPlacement = 'default' | 'more';
+
+/** Any value other than `hidden` is `auto`; absent stays absent (an older gateway). */
+export function parseAgentVisibility(value: unknown): AgentVisibility | undefined {
+  if (typeof value !== 'string') return undefined;
+  return value === 'hidden' ? 'hidden' : 'auto';
+}
+
+export function parseAgentPickerPlacement(value: unknown): AgentPickerPlacement | undefined {
+  return value === 'default' || value === 'more' ? value : undefined;
+}
+
 /** One agent, as `AgentDiscoveryInfo` on the gateway. */
 export interface AgentInfo {
   id: string;
@@ -2272,6 +2292,14 @@ export interface AgentInfo {
    * catalog entry. Absent on an older gateway.
    */
   ledgerDelivery?: LedgerDelivery[];
+  /**
+   * The host's listing choice and the picker group it implies. Absent on an
+   * older gateway, where `agentPickerPlacement` derives the group locally.
+   * TODO(feat/agent-visibility): reconcile names with the gateway's
+   * docs/agent-api.md once that branch lands.
+   */
+  visibility?: AgentVisibility;
+  picker?: AgentPickerPlacement;
 }
 
 /** The agents plane, as `AgentPlaneDiscovery` on the gateway. */
@@ -2331,6 +2359,8 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     }
   }
   const ledgerDelivery = parseLedgerDelivery(rec.ledgerDelivery ?? rec.ledger_delivery);
+  const visibility = parseAgentVisibility(rec.visibility);
+  const picker = parseAgentPickerPlacement(rec.picker);
   return {
     id,
     kind,
@@ -2346,6 +2376,8 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     modes,
     features: parseAgentFeatures(rec.features),
     ...(ledgerDelivery ? { ledgerDelivery } : {}),
+    ...(visibility ? { visibility } : {}),
+    ...(picker ? { picker } : {}),
   };
 }
 

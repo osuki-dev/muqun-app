@@ -4,11 +4,9 @@ import { create } from 'zustand';
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { parseHomeAgentChoices } from '@/lib/home-agent-choice';
 import { keepKeys } from '@/lib/keep-keys';
-import type { ModelRef } from '@/lib/agent-session';
 import type { RememberedAgentChoice } from '@/lib/agent-session-defaults';
 import {
   homeFolderPick,
-  homeModelChoiceKey,
   keepHomeModelChoices,
   parseHomeFolders,
   parseHomeModelChoices,
@@ -65,19 +63,13 @@ type HomeAgentChoiceState = {
    */
   folderByServer: Record<string, string>;
   /**
-   * The mode and model last picked on the dock, per computer and agent
-   * (`homeModelChoiceKey`). Absent: nothing picked, the agent's own default.
+   * The mode and model the dock picked per computer and agent
+   * (`homeModelChoiceKey`) before its picks moved into the memory a session
+   * screen shares (`agent-model-memory.ts`). Read-only: the last fallback
+   * for a computer and agent with nothing remembered there yet.
    */
   modelChoice: Record<string, RememberedAgentChoice>;
   choose: (serverId: string, key: string) => void;
-  chooseModel: (serverId: string, agentId: string | undefined, model: ModelRef) => void;
-  /** `bringsModel`: the mode names its own model, which then replaces the model pick. */
-  chooseMode: (
-    serverId: string,
-    agentId: string | undefined,
-    mode: string,
-    bringsModel: boolean
-  ) => void;
   /** Set (or, with a blank answer, clear) a computer's folder from a picker answer. */
   chooseFolder: (serverId: string, directory: string) => void;
   recordTerminal: (serverId: string, profiles: AgentProfile[]) => void;
@@ -118,24 +110,6 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
     const folderByServer = folder ? { ...others, [serverId]: folder } : others;
     set({ folderByServer });
     save(FOLDERS_KEY, folderByServer);
-  },
-  chooseModel(serverId, agentId, model) {
-    const key = homeModelChoiceKey(serverId, agentId);
-    const current = get().modelChoice;
-    const modelChoice = { ...current, [key]: { ...current[key], model } };
-    set({ modelChoice });
-    save(MODELS_KEY, modelChoice);
-  },
-  chooseMode(serverId, agentId, mode, bringsModel) {
-    const key = homeModelChoiceKey(serverId, agentId);
-    const current = get().modelChoice;
-    // Only a mode that names its own model replaces the model pick.
-    const modelChoice = {
-      ...current,
-      [key]: bringsModel ? { mode } : { ...current[key], mode },
-    };
-    set({ modelChoice });
-    save(MODELS_KEY, modelChoice);
   },
   keepOnly(serverIds) {
     const kept = new Set(serverIds);

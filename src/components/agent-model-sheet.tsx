@@ -55,6 +55,8 @@ const STAGGERED_ROWS = 8;
 export interface AgentModelSheetProps {
   /** The gateway session whose catalog is listed. */
   sessionId?: string;
+  /** The computer whose remembered models are recent (`agent-model-memory.ts`); else `sessionId`. */
+  memoryScope?: string;
   /**
    * The workspace whose catalog is listed.
    *
@@ -107,6 +109,7 @@ function runningStarts(lengths: readonly number[]): number[] {
 
 export const AgentModelSheet = memo(function AgentModelSheet({
   sessionId,
+  memoryScope,
   directory,
   agentId,
   selectedModel,
@@ -127,7 +130,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [recentRefs, setRecentRefs] = useState(() =>
-    loadRecentAgentModels(sessionId ?? '', agentId)
+    loadRecentAgentModels(memoryScope ?? sessionId ?? '', agentId, sessionId)
   );
   const selectModel = onSelectModel;
   const [models, setModels] = useState<ModelInfo[]>([]);
@@ -173,7 +176,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setLoadFailed(false);
     setModels([]);
     setProviders([]);
-    setRecentRefs(loadRecentAgentModels(sessionId ?? '', agentId));
+    setRecentRefs(loadRecentAgentModels(memoryScope ?? sessionId ?? '', agentId, sessionId));
     getAgentCatalog(sessionId, undefined, {
       ...(directory ? { directory } : {}),
       ...(agentId ? { agentId } : {}),
@@ -197,7 +200,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory, agentId, reloadToken]);
+  }, [sessionId, memoryScope, directory, agentId, reloadToken]);
 
   /**
    * Which rows the reader scrolls past, and nothing more.
