@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "agent-session-recovery",
+      "program": "flows/agent-session-recovery",
+      "tags": ["full", "agents", "connection"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "mcp-files",
       "program": "flows/mcp-files",
       "tags": ["full", "agents", "files"],
@@ -204,6 +210,12 @@
     }
   ],
   "programs": {
+    "flows/agent-session-recovery": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-session-recovery.ad#open" },
+      { "include": "subflows/dismiss-logbox" },
+      { "run": "flows/agent-session-recovery.ad#failure" }
+    ],
     "flows/simulator": [{ "run": "flows/simulator.ad" }],
     "flows/agent-composer-triggers": [
       { "include": "subflows/open-demo" },

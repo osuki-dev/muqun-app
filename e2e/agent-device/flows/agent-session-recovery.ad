@@ -1,0 +1,19 @@
+# Exercise a failed snapshot and explicit retry through the ordinary workbench.
+# section open
+open "muqun://agent?asid=demo-session-recovery&agentId=opencode"
+wait "id=agent-session-activation-error" 15000
+
+# section failure
+is visible "id=agent-session-activation-error"
+is visible "label=Retry"
+is hidden "id=agent-empty-new-session-btn"
+is hidden "text=\"java.lang.RuntimeException\""
+# The inline recovery action must survive the transient toast's three-second life.
+wait 4000
+is visible "label=Retry"
+screenshot "shots/session-recovery-error.png"
+press "label=Retry"
+wait "text=DEMO_SESSION_RECOVERED" 15000
+is hidden "id=agent-session-activation-error"
+is hidden "id=agent-empty-new-session-btn"
+screenshot "shots/session-recovery-success.png"

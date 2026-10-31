@@ -723,6 +723,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
+  const [snapshotFailure, setSnapshotFailure] = useState<{
+    source: string | null;
+    asid: string;
+    error: unknown;
+  } | null>(null);
+  const snapshotError =
+    snapshotFailure?.source === entrySource && snapshotFailure?.asid === activeAsid
+      ? snapshotFailure?.error
+      : null;
+  useEffect(() => {
+    if (!visible || !isGlobalOwner() || !entrySource || !activeAsid) return;
+    return readFeedback.activate(JSON.stringify([entrySource, activeAsid, 'history']));
+  }, [activeAsid, entrySource, globalOwnerEpoch, isGlobalOwner, readFeedback, visible]);
   const newSessionCreationRef = useRef(false);
   const promptDispatchRef = useRef(false);
   const [creatingSession, setCreatingSession] = useState(false);
@@ -2105,7 +2118,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 });
               }
               if (!ownsSnapshot()) return;
-              if (request === snapshotReadRef.current) readFeedback.clear(feedbackScope);
+              if (request === snapshotReadRef.current) {
+                readFeedback.clear(feedbackScope);
+                setSnapshotFailure(null);
+              }
               historyCursorRef.current = snap.history_cursor;
               setEarlierExhausted(snap.history_cursor === null);
               const fresh = freshSessionRef.current === asid;
@@ -2323,6 +2339,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 });
               if (isPreparingSessionHistory(err, preparing)) return;
               openedAsidRef.current = undefined;
+              setSnapshotFailure({ source: sourceOwner, asid, error: err });
               // The prepare owner's refresh failure belongs in its persistent
               // recovery notice with Retry, rather than another transient toast.
               if (current) return rethrow(err);
@@ -2864,6 +2881,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return loadSnapshot('silent', current);
     },
   });
+  const retryActivation = sessionActivation.retry;
+  const retrySnapshot = useCallback(() => {
+    // A user retry is a new foreground intent. Legacy gateways still need the
+    // read when they do not advertise explicit session preparation.
+    retryActivation();
+    void loadSnapshot('refresh').catch(() => {});
+  }, [retryActivation, loadSnapshot]);
   useEffect(() => {
     appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
@@ -5791,6 +5815,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             replaced by another between two frames.
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
+        ) : timelineEmpty &&
+          permissions.length === 0 &&
+          forms.length === 0 &&
+          !externalRuntime &&
+          (sessionActivation.error || snapshotError) ? (
+          <Animated.View
+            style={[
+              styles.emptyScrollWrapper,
+              emptySidePadding,
+              emptyReserveStyle,
+              { paddingBottom: emptyBottomReserve },
+            ]}>
+            <AgentSessionActivationNotice
+              error={sessionActivation.error || snapshotError}
+              title={t`Could not load the session`}
+              onRetry={retrySnapshot}
+            />
+          </Animated.View>
         ) : timelineEmpty && permissions.length === 0 && forms.length === 0 && !externalRuntime ? (
           <Animated.View
             style={[
