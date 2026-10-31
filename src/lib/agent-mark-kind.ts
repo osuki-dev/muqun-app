@@ -7,6 +7,7 @@ export type AgentMarkKind =
   | 'pi'
   | 'fx'
   | 'qoder'
+  | 'cursor'
   | 'claude'
   | 'antigravity';
 
@@ -18,6 +19,7 @@ const MARK_KINDS: ReadonlySet<string> = new Set<AgentMarkKind>([
   'pi',
   'fx',
   'qoder',
+  'cursor',
   'claude',
   'antigravity',
 ]);

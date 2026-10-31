@@ -81,6 +81,7 @@ export function homeProviderTextColor(
     brand === 'pi' ||
     brand === 'fx' ||
     brand === 'qoder' ||
+    brand === 'cursor' ||
     brand === 'claude' ||
     brand === 'antigravity'
   )
