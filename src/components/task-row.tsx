@@ -10,8 +10,10 @@ import {
   TerminalWindowIcon,
   DeleteIcon,
   CloseIcon,
+  CopyIcon,
   DismissIcon,
 } from '@/icons';
+import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -269,6 +271,17 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
       case 'mirrorFailed': {
         const there = task?.binding.kind === 'peer' ? peerName(task.binding) : '';
         return lineView(stateWord, tone, mirrorFailureLine(line.reason, there));
+      }
+      case 'acpRefused': {
+        const name = agent || line.agent;
+        const code = line.code;
+        return lineView(
+          stateWord,
+          tone,
+          line.signInRequired
+            ? t`${name} is not signed in on this computer`
+            : t`${name} refused the request (code ${code})`
+        );
       }
     }
   };
@@ -560,6 +573,21 @@ function useTaskRowModel({
           };
       }
     });
+  // The row says what the refusal means; the gateway's own words stay one tap away.
+  if (visual.line.kind === 'acpRefused') {
+    const details = visual.line.text;
+    menuItems.push({
+      id: 'copy-error',
+      label: t`Copy error details`,
+      Icon: CopyIcon,
+      testID: `task-row-copy-error-${task.taskId}`,
+      onPress: run(() => {
+        void Clipboard.setStringAsync(details).then(() =>
+          showToast({ variant: 'info', title: t`Copied`, message: details })
+        );
+      }),
+    });
+  }
   if (inComputerCard) {
     menuItems.push({
       id: 'remove-home',

@@ -242,6 +242,11 @@ msgstr "{agentName} ne permet pas de charger l’historique distant plus ancien"
 msgid "{agentName} does not support that action."
 msgstr "{agentName} ne prend pas en charge cette action"
 
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "{agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again."
+msgstr "{agentName} n’est pas connecté sur cet ordinateur. Connectez-vous dans un terminal sur cet ordinateur, puis réessayez"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -406,6 +411,10 @@ msgstr "{name} n’accepte pas de travail des autres ordinateurs"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} porte le même nom que {other} ; renommez l’un des deux"
 
+#: src/components/task-row.tsx
+msgid "{name} is not signed in on this computer"
+msgstr "{name} n’est pas connecté sur cet ordinateur"
+
 #: src/components/home-composer-dock.tsx
 msgid "{name} is still working and cannot take a message now. Your draft stays here."
 msgstr "{name} travaille encore et ne peut pas recevoir de message pour le moment. Votre brouillon reste ici"
@@ -413,6 +422,10 @@ msgstr "{name} travaille encore et ne peut pas recevoir de message pour le momen
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} doit être configuré. Touchez pour voir les instructions de configuration"
+
+#: src/components/task-row.tsx
+msgid "{name} refused the request (code {code})"
+msgstr "{name} a refusé la requête (code {code})"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -1974,6 +1987,7 @@ msgstr "Aide conversationnelle et questions ouvertes sur le projet"
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
 #: src/components/settings-servers.tsx
+#: src/components/task-row.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Copié"
@@ -1999,6 +2013,10 @@ msgstr "La copie, prête à coller dans un terminal"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Copier"
+
+#: src/components/task-row.tsx
+msgid "Copy error details"
+msgstr "Copier les détails de l’erreur"
 
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy input"

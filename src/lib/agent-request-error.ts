@@ -25,6 +25,8 @@ export type AgentRequestError =
   | { kind: 'unsupported' }
   /** `invalid_agent`: the gateway does not know the agent the app named. */
   | { kind: 'unknown-agent' }
+  /** An ACP agent answered `auth_required`: it is not signed in on its computer. */
+  | { kind: 'sign-in-required' }
   /** Anything else, as it was thrown. */
   | { kind: 'other'; message: string };
 
@@ -37,6 +39,30 @@ const UNREACHABLE_AGENT = [
   'Network error communicating with agent',
   'error sending request',
 ];
+
+/**
+ * An ACP agent's JSON-RPC refusal as the gateway words it,
+ * `<Agent> ACP request rejected (code <n>)`, possibly followed by the
+ * gateway's own sentence. The agent's text never reaches the app; the code is
+ * the part to read.
+ */
+const ACP_REJECTION = /(\S+) ACP request rejected \(code (-?\d+)\)/;
+
+/**
+ * ACP's `auth_required`. Qoder CLI answers it, and only it, when it is not
+ * signed in; any other code says nothing certain about why.
+ */
+const ACP_AUTH_REQUIRED = -32000;
+
+export type AcpRejection = { agent: string; code: number; signInRequired: boolean };
+
+/** The agent and code of a gateway-relayed ACP refusal anywhere in `text`, else null. */
+export function readAcpRejection(text: string): AcpRejection | null {
+  const match = text.match(ACP_REJECTION);
+  if (!match) return null;
+  const code = Number(match[2]);
+  return { agent: match[1]!, code, signInRequired: code === ACP_AUTH_REQUIRED };
+}
 
 /** A request that got no answer at all: the transport's words, lowercased. */
 const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'timeout', 'abort'];
@@ -200,6 +226,7 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
   if (status === 503 && !code) return { kind: 'offline' };
   if (code === 'agent_error' || status === 502) {
     const said = message ?? (match ? raw.slice(match[0].length) : raw);
+    if (readAcpRejection(said)?.signInRequired) return { kind: 'sign-in-required' };
     return said.trim() ? { kind: 'refused', message: bound(said) } : { kind: 'offline' };
   }
   if (!status && transportFailure(err, raw)) return { kind: 'offline' };

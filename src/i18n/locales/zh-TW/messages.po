@@ -242,6 +242,11 @@ msgstr "{agentName} 不支援載入更早的遠端歷史"
 msgid "{agentName} does not support that action."
 msgstr "{agentName} 不支援此操作"
 
+#: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
+msgid "{agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again."
+msgstr "{agentName} 尚未在這台電腦上登入。請在這台電腦的終端機登入後再試一次"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-composer-dock.tsx
@@ -406,6 +411,10 @@ msgstr "{name} 不接受其他電腦的任務"
 msgid "{name} has the same name as {other}; rename one of them."
 msgstr "{name} 與 {other} 同名，請重新命名其中一台"
 
+#: src/components/task-row.tsx
+msgid "{name} is not signed in on this computer"
+msgstr "{name} 尚未在這台電腦上登入"
+
 #: src/components/home-composer-dock.tsx
 msgid "{name} is still working and cannot take a message now. Your draft stays here."
 msgstr "{name} 仍在工作，現在無法接收訊息。草稿會保留在這裡"
@@ -413,6 +422,10 @@ msgstr "{name} 仍在工作，現在無法接收訊息。草稿會保留在這�
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} 需要設定。點一下查看設定說明"
+
+#: src/components/task-row.tsx
+msgid "{name} refused the request (code {code})"
+msgstr "{name} 拒絕了請求（代碼 {code}）"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -1974,6 +1987,7 @@ msgstr "對話式協助，以及關於專案的開放式問題"
 #: src/components/bounded-markdown.tsx
 #: src/components/guide-command.tsx
 #: src/components/settings-servers.tsx
+#: src/components/task-row.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "已複製"
@@ -1999,6 +2013,10 @@ msgstr "複製指令，可直接貼到終端機"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "複製"
+
+#: src/components/task-row.tsx
+msgid "Copy error details"
+msgstr "複製錯誤詳細資料"
 
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copy input"

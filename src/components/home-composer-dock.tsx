@@ -770,6 +770,8 @@ export function HomeComposerDock({
         return t`${agentName} does not support that action.`;
       case 'unknown-agent':
         return t`This computer does not know ${agentName}. Refresh the agent list and try again.`;
+      case 'sign-in-required':
+        return t`${agentName} is not signed in on this computer. Sign in to it in a terminal there, then try again.`;
       case 'other':
         return reading.message;
     }

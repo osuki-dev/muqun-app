@@ -9,6 +9,7 @@
  */
 
 import type { HomeSessionParams } from '@/lib/home-composer';
+import { readAcpRejection, type AcpRejection } from './agent-request-error';
 import { taskAttentionView, type TaskAttentionInput } from './task-attention';
 import type { ServerReachability } from './server-reachability';
 import {
@@ -835,7 +836,12 @@ export type TaskRowLine =
   /** An open mirror whose computer has gone quiet (§10.12). */
   | { kind: 'unreachable'; lastSeenMs?: number }
   /** A failed mirror, worded from the gateway's `reason` code, never its text. */
-  | { kind: 'mirrorFailed'; reason: string };
+  | { kind: 'mirrorFailed'; reason: string }
+  /**
+   * A task an ACP agent refused, worded from its code; `text` is the
+   * gateway's summary, kept for the row's Copy error details.
+   */
+  | ({ kind: 'acpRefused'; text: string } & AcpRejection);
 
 export type TaskRowTone = 'textMuted' | 'primary' | 'warning' | 'success' | 'danger';
 export type TaskRowAction = 'open' | 'cancel' | 'markDone' | 'acknowledge';
@@ -980,7 +986,7 @@ function taskStateVisual(
       return {
         tone: 'danger',
         spins: false,
-        line: said ? { kind: 'error', text: said } : ended,
+        line: said ? failedLine(said) : ended,
         clock: 'ago',
         actions: finished,
       };
@@ -993,6 +999,12 @@ function taskStateVisual(
         actions: finished,
       };
   }
+}
+
+/** A failed task's line: an ACP agent's refusal by its code, else the summary as said. */
+function failedLine(said: string): TaskRowLine {
+  const refusal = readAcpRejection(said);
+  return refusal ? { kind: 'acpRefused', text: said, ...refusal } : { kind: 'error', text: said };
 }
 
 /** Order inside a card: waiting, then working, then starting, then paused (§3). */
