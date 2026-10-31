@@ -3560,6 +3560,10 @@ msgstr "Cài Claude Code và Node.js 22 trở lên trên máy tính, đăng nh�
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
+#: src/i18n/labels.ts
+msgid "Install Cursor's CLI on the computer and run `agent login` there, then check again."
+msgstr "Cài Cursor CLI trên máy tính, chạy `agent login` ở đó rồi kiểm tra lại"
+
 #: src/components/settings-font-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Installed"

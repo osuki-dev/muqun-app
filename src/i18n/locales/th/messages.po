@@ -3560,6 +3560,10 @@ msgstr "ติดตั้ง Claude Code และ Node.js 22 ขึ้นไ�
 msgid "Install command copied"
 msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
 
+#: src/i18n/labels.ts
+msgid "Install Cursor's CLI on the computer and run `agent login` there, then check again."
+msgstr "ติดตั้ง Cursor CLI บนคอมพิวเตอร์ แล้วรัน `agent login` ที่นั่น จากนั้นตรวจสอบอีกครั้ง"
+
 #: src/components/settings-font-sheet.tsx
 #: src/components/theme-gallery.tsx
 msgid "Installed"
