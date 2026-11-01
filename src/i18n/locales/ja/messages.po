@@ -3860,10 +3860,6 @@ msgstr "聞き取り中…"
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "この保存済み履歴ではリアルタイム操作はできません。下書きはここに残ります"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "さらに読み込む"

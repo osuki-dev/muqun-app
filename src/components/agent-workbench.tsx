@@ -6278,12 +6278,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         agentName={agentName}
         agentKind={activeAgentEntry?.kind}
         running={isRunning && canSendPrompts}
+        interactionBlocked={!canSendPrompts}
         interactionBlockedReason={
-          canSendPrompts
-            ? undefined
-            : runtime?.interaction === 'terminal'
-              ? t`Continue in the linked terminal. Your draft stays here.`
-              : t`Live control is unavailable for this saved history. Your draft stays here.`
+          !canSendPrompts && runtime?.interaction === 'terminal'
+            ? t`Continue in the linked terminal. Your draft stays here.`
+            : undefined
         }
         canSendWhileRunning={agentFeatures.inbox || agentFeatures.extra.promptSteering === true}
         canQueueWhileRunning={agentFeatures.inbox}

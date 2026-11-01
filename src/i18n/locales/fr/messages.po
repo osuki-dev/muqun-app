@@ -3860,10 +3860,6 @@ msgstr "À l’écoute…"
 msgid "Live Activity"
 msgstr "Activité en direct"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "Le contrôle en direct n’est pas disponible pour cet historique enregistré. Votre brouillon reste ici"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Charger plus"
