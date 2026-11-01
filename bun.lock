@@ -114,6 +114,7 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
+    "@osuki-dev/ui@2.0.0": "patches/javascript/@osuki-dev%2Fui@2.0.0.patch",
     "@legendapp/list@3.7.1": "patches/javascript/@legendapp%2Flist@3.7.1.patch",
     "expo-alternate-app-icons@11.0.0": "patches/expo-alternate-app-icons@11.0.0.patch",
     "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
