@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { splitAudioMarkdown } from '../audio-markdown';
+import { LOCAL_FILE_LINK_PATTERN, localFileLinkPath, splitAudioMarkdown } from '../audio-markdown';
 
 const files = (text: string) =>
   splitAudioMarkdown(text).flatMap((part) =>
@@ -105,10 +105,10 @@ test('local source links resolve the file without treating line locations as a f
     '/project/src/main.rs',
     '/project/src/main.rs',
     './project with spaces/main.ts',
-    'file:///project/main.ts',
+    '/project/main.ts',
   ]);
   expect(files('[literal](file:///project/report%3A10)\n[other](/project/report:latest)')).toEqual([
-    'file:///project/report%3A10',
+    '/project/report:10',
     '/project/report:latest',
   ]);
   expect(files('[web](https://host/main.ts#L12) `[code](/project/main.rs:10)`')).toEqual([]);
@@ -131,4 +131,33 @@ test('a file link inside a sentence stays in the sentence; only a link alone on 
   expect(
     splitAudioMarkdown('Listen to [take](/tmp/take.mp3) now').map((part) => part.kind)
   ).toEqual(['markdown', 'audio', 'markdown']);
+});
+
+test('a file link destination becomes one host path, decoded once, or nothing', () => {
+  const cases: [string, string | null][] = [
+    ['file:///home/me/a%20b/%E5%9B%BE.md', '/home/me/a b/图.md'],
+    ['file:///home/me/100%2541.txt', '/home/me/100%41.txt'],
+    ['file:///home/me/main.ts#L12', '/home/me/main.ts'],
+    ['file:///home/me/report%3A10', '/home/me/report:10'],
+    ['file://localhost/home/me/x.md', '/home/me/x.md'],
+    ['file://other-host/home/me/x.md', null],
+    ['file://~/x.md', null],
+    ['file:///home/me/%00secret', null],
+    ['file:///home/me/%E5', null],
+    ['/home/me/a%20b.md', '/home/me/a%20b.md'],
+    ['/home/me/src/main.rs:10:4', '/home/me/src/main.rs'],
+    ['~/Downloads/x.pdf', '~/Downloads/x.pdf'],
+    ['./README', './README'],
+    ['https://example.com/x.md', null],
+    ['//host/x.md', null],
+    ['#section', null],
+  ];
+  const styledAsFile = new RegExp(LOCAL_FILE_LINK_PATTERN);
+  for (const [destination, path] of cases) {
+    expect([destination, localFileLinkPath(destination)]).toEqual([destination, path]);
+    // The renderer's file style never lands on a link that would not open as a file.
+    if (!styledAsFile.test(destination)) expect(path).toBeNull();
+  }
+  // The chip path is the same normalized path the inline link hands the resolver.
+  expect(files('[doc](file:///home/me/a%20b.md)')).toEqual(['/home/me/a b.md']);
 });

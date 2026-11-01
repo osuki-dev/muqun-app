@@ -33,12 +33,46 @@ function basename(path: string): string {
  * Keep percent-encoded delimiters literal; only explicit local Markdown links
  * use this convention, never arbitrary file APIs or URLs to other hosts.
  */
-export function linkedFilePath(uri: string): string {
+function stripLocation(uri: string): string {
   return uri.replace(
     /(?::[1-9]\d*(?::[1-9]\d*)?|#L[1-9]\d*(?:C[1-9]\d*)?(?:-L?[1-9]\d*(?:C[1-9]\d*)?)?)$/,
     ''
   );
 }
+
+/**
+ * The host path a local file link names, or `null` when it names none.
+ *
+ * The one place a link destination becomes a path, for the chip and for the
+ * link left inline in a sentence alike. A `file:` URL is parsed, refused when
+ * it names another host (`localhost` is this one), and its path decoded once;
+ * a plain absolute, `~` or relative path is passed as written, because the
+ * Gateway resolves those itself. A location suffix (`:12`, `#L3`) is dropped
+ * before decoding, so an encoded `%3A10` stays part of the name.
+ */
+export function localFileLinkPath(destination: string): string | null {
+  const trimmed = destination.trim();
+  if (trimmed.startsWith('#') || !isHostPathSource(trimmed)) return null;
+  let path = stripLocation(trimmed);
+  if (/^file:/i.test(path)) {
+    try {
+      const url = new URL(path);
+      if (url.host) return null;
+      path = decodeURIComponent(url.pathname);
+    } catch {
+      return null;
+    }
+  }
+  // oxlint-disable-next-line no-control-regex -- a decoded NUL or newline is never a filename
+  return path && !/[\u0000-\u001f\u007f]/.test(path) ? path : null;
+}
+
+/**
+ * Destinations `localFileLinkPath` may accept, as a native link-variant pattern
+ * (valid for both ICU and Java regex): `file:`, or no scheme and neither a
+ * network path nor an in-page anchor. The renderer draws these as files.
+ */
+export const LOCAL_FILE_LINK_PATTERN = '^(?:[Ff][Ii][Ll][Ee]:|(?!//|#|[A-Za-z][A-Za-z0-9+.-]+:))';
 
 /** A line that is nothing but a theme path, optionally bulleted or in a code span. */
 function wholeLineThemePath(line: string): string | undefined {
@@ -116,32 +150,35 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
             // link: `:codex-file-citation{path="/abs/report.pdf" purpose="output"}`.
             // Drawn raw it is markup the reader cannot use, so it becomes the
             // same tappable file a markdown link to that path would be.
-            const path = /(?:^|\s)path="([^"\n]+)"/.exec(match[3])?.[1];
-            if (!path || !isHostPathSource(path)) continue;
+            const cited = /(?:^|\s)path="([^"\n]+)"/.exec(match[3])?.[1];
+            const path = cited ? localFileLinkPath(cited) : null;
+            if (!cited || !path) continue;
             const start = offset + match.index;
             flushTo(start);
-            if (isThemeFilePath(path)) themePaths.add(path);
+            if (isThemeFilePath(cited)) themePaths.add(cited);
             parts.push({ kind: mediaKind(path), uri: path, name: basename(path), start });
             cursor = start + match[0].length;
             continue;
           }
           if (/[!\\]/.test(line[match.index - 1] ?? '')) continue;
           const destination = match[5] ?? match[6];
-          if (!destination || !isHostPathSource(destination) || destination.startsWith('#'))
-            continue;
-          const uri = linkedFilePath(destination);
+          const path = destination ? localFileLinkPath(destination) : null;
+          if (!destination || !path) continue;
+          // Theme mentions are deduplicated as written, so a link and a bare
+          // mention of the same theme file still collapse into one chip.
+          const written = stripLocation(destination.trim());
           const start = offset + match.index;
-          const kind = mediaKind(uri);
+          const kind = mediaKind(path);
           // A file link inside a sentence stays a link in the text, so the
           // sentence is not broken around a block; a player, or a link that is
           // the whole line, becomes its own block.
           if (kind === 'file' && line.trim() !== match[0]) {
-            if (isThemeFilePath(uri)) trailing.push({ uri, start });
+            if (isThemeFilePath(written)) trailing.push({ uri: written, start });
             continue;
           }
           flushTo(start);
-          if (isThemeFilePath(uri)) themePaths.add(uri);
-          parts.push({ kind, uri, name: match[4]!, start });
+          if (isThemeFilePath(written)) themePaths.add(written);
+          parts.push({ kind, uri: path, name: match[4]!, start });
           cursor = start + match[0].length;
         }
         const fresh = trailing.filter(({ uri }) => !themePaths.has(uri));
