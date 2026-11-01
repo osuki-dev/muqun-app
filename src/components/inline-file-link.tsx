@@ -1,4 +1,4 @@
-import { useFileResolver } from './file-computer-picker';
+import { FileNotOnComputer, useFileResolver } from './file-computer-picker';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { PhotoFileIcon, DocumentIcon } from '@/icons';
@@ -139,7 +139,9 @@ export function useSessionFileOpener() {
           message:
             error instanceof AudioPlaybackError
               ? t`Update the Gateway to open or save this file.`
-              : t`Try again`,
+              : error instanceof FileNotOnComputer
+                ? error.message
+                : t`Try again`,
         });
       })
       .then(() => setBusy(false));

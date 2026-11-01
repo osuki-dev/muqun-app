@@ -124,6 +124,11 @@ msgstr "{0, plural, other {ほか # 件のエージェント}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {質問}}"
 
+#. placeholder {0}: computer.label
+#: src/components/file-computer-picker.tsx
+msgid "{0} (current)"
+msgstr "{0}（現在）"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (gateway)"
@@ -4578,6 +4583,10 @@ msgstr "一部のファイルは追加されませんでした"
 msgid "Not found"
 msgstr "見つかりません"
 
+#: src/components/file-computer-picker.tsx
+msgid "Not found on {label}."
+msgstr "{label} に見つかりません"
+
 #: src/i18n/labels.ts
 msgid "Not installed"
 msgstr "未インストール"
@@ -7437,6 +7446,7 @@ msgid "This cannot be undone."
 msgstr "この操作は元に戻せません"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/file-computer-picker.tsx
 msgid "This computer"
 msgstr "このコンピュータ"
 

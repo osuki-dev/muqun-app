@@ -13,11 +13,15 @@ import {
   resolveComputerFile,
 } from '@/lib/gateway-client';
 
+/** The file is not on the session's computer and no other computer can be asked. */
+export class FileNotOnComputer extends Error {}
+
 const FileResolver = createContext<typeof resolveAgentFileAsset>(resolveAgentFileAsset);
 type Choice = {
   scopeKey: string;
   path: string;
-  computers: { serverId: string; label: string }[];
+  /** The session's own computer first, marked current; then the other paired ones. */
+  computers: { serverId: string; label: string; current?: boolean }[];
   finish: (serverId: string | null) => void;
 };
 
@@ -43,6 +47,8 @@ export function FileComputerPicker({
   const [pending] = useState(() => new Map<() => void, string>());
   const readScope = useLatestReader(scopeKey);
   const activeChoice = choice?.scopeKey === scopeKey ? choice : null;
+  const currentLabel = activeChoice?.computers.find((computer) => computer.current)?.label;
+  const notFoundOn = (label: string) => t`Not found on ${label}.`;
   useEffect(() => () => cancelFileSelections(pending, scopeKey), [pending, scopeKey]);
 
   async function resolve(
@@ -58,10 +64,21 @@ export function FileComputerPicker({
       if (!(error instanceof FileComputerSelection) || signal.aborted) throw error;
       const gateways = await loadGateways();
       requireFileSelectionScope(scopeKey, readScope, signal);
-      const computers = gateways
+      const others = gateways
         .filter((record) => record.serverId !== serverId)
         .map(({ serverId: id, label }) => ({ serverId: id, label }));
-      if (!computers.length) throw new Error(t`No other paired computer is available.`);
+      // The Gateway asks only when the file is not on the session's computer;
+      // that computer stays in the list (a retry) so the choice reads as
+      // "not here -- which one?" rather than hiding where the session lives.
+      const here = gateways.find((record) => record.serverId === serverId);
+      if (!others.length)
+        throw new FileNotOnComputer(
+          here ? notFoundOn(here.label) : t`No other paired computer is available.`
+        );
+      const computers = [
+        ...(serverId ? [{ serverId, label: here?.label ?? t`This computer`, current: true }] : []),
+        ...others,
+      ];
       if (signal.aborted) throw new Error('Operation cancelled');
       const path = error.path;
       const selected = await new Promise<string>((accept, reject) => {
@@ -110,8 +127,11 @@ export function FileComputerPicker({
               alignSelf: 'center',
             }}>
             <Text style={{ fontSize: 20 }}>{t`Open from computer`}</Text>
-            <Text numberOfLines={3} style={{ marginVertical: 12 }}>
+            <Text numberOfLines={3} style={{ marginTop: 12 }}>
               {activeChoice?.path}
+            </Text>
+            <Text variant="caption" color={theme.colors.textMuted} style={{ marginBottom: 12 }}>
+              {currentLabel ? notFoundOn(currentLabel) : null}
             </Text>
             <ScrollView style={{ maxHeight: 360 }}>
               <AgentActionMenu
@@ -119,7 +139,7 @@ export function FileComputerPicker({
                 items={[
                   ...(activeChoice?.computers.map((computer) => ({
                     id: computer.serverId,
-                    label: computer.label,
+                    label: computer.current ? t`${computer.label} (current)` : computer.label,
                     Icon: ComputerIcon,
                     onPress: () => activeChoice.finish(computer.serverId),
                   })) ?? []),

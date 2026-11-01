@@ -124,6 +124,11 @@ msgstr "{0, plural, one {and # more agent} other {and # more agents}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, one {Question} other {Questions}}"
 
+#. placeholder {0}: computer.label
+#: src/components/file-computer-picker.tsx
+msgid "{0} (current)"
+msgstr "{0} (current)"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (gateway)"
@@ -4578,6 +4583,10 @@ msgstr "Not every file was added"
 msgid "Not found"
 msgstr "Not found"
 
+#: src/components/file-computer-picker.tsx
+msgid "Not found on {label}."
+msgstr "Not found on {label}"
+
 #: src/i18n/labels.ts
 msgid "Not installed"
 msgstr "Not installed"
@@ -7437,6 +7446,7 @@ msgid "This cannot be undone."
 msgstr "This cannot be undone"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/file-computer-picker.tsx
 msgid "This computer"
 msgstr "This computer"
 
