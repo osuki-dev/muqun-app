@@ -4005,6 +4005,7 @@ msgstr "ยังไม่ได้ส่งข้อความ"
 msgid "Mine"
 msgstr "ของฉัน"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "โหมด"
@@ -6829,6 +6830,7 @@ msgstr "หยุดคำสั่งนี้"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "หยุดแล้ว"
@@ -7420,10 +7422,6 @@ msgstr "กิจกรรมนี้ไม่มีผลลัพธ์แน
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "กิจกรรมนี้ไม่มีผลลัพธ์แนบมา เปิดเซสชันเพื่ออ่านการสนทนา"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "เอเจนต์นี้รับข้อความหลังจบรอบ ร่างข้อความของคุณจะยังอยู่ที่นี่"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

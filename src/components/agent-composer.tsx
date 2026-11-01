@@ -392,7 +392,7 @@ export interface AgentComposerProps {
   searchFiles?: (query: string) => Promise<FileMentionHit[]>;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlocked?: boolean;
-  /** Why sending is blocked, shown above the field; implies `interactionBlocked`. */
+  /** Where to go instead, shown above the field; implies `interactionBlocked`. */
   interactionBlockedReason?: string;
   /**
    * Says why sending waits in the field's placeholder instead of a caption row
@@ -812,7 +812,10 @@ export const AgentComposer = memo(function AgentComposer({
    * the id made readable (`bypassPermissions` → `Bypass permissions`), never
    * the raw id.
    */
-  const modeLabel = (id: string) => catalogChoiceLabel(availableAgentsProp, id);
+  // No mode -- the catalog has not answered, or offers none of the
+  // candidates -- says so rather than naming another agent's default.
+  const modeLabel = (id: string | undefined) =>
+    id ? catalogChoiceLabel(availableAgentsProp, id) : t`Mode`;
   const [sending, setSending] = useState(false);
   const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
   const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
@@ -823,9 +826,7 @@ export const AgentComposer = memo(function AgentComposer({
   const interactionBlocked = interactionBlockedProp || interactionBlockedReason !== undefined;
   const promptAllowed = !interactionBlocked && canSendAgentPrompt(running, canSendWhileRunning);
   const fieldBlockedReason =
-    blockedReasonInField && !promptAllowed
-      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
-      : undefined;
+    blockedReasonInField && !promptAllowed ? interactionBlockedReason : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const deliveryMode = !canSteerWhileRunning
     ? 'queue'
@@ -2052,7 +2053,9 @@ export const AgentComposer = memo(function AgentComposer({
                       lead={
                         sessionLead
                           ? sessionLead(node.session)
-                          : modeLabel(node.session.mode || selectedAgent || 'build')
+                          : node.session.mode || selectedAgent
+                            ? modeLabel(node.session.mode || selectedAgent)
+                            : undefined
                       }
                       onPress={handleSelectSession}
                       onOpenTree={onOpenSessionTree}
@@ -2093,7 +2096,7 @@ export const AgentComposer = memo(function AgentComposer({
                         variant="caption"
                         numberOfLines={1}
                         color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
-                        {modeLabel(selectedAgent ?? 'build')}
+                        {modeLabel(selectedAgent)}
                       </Text>
                       <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                     </TextSegment>
@@ -2173,7 +2176,7 @@ export const AgentComposer = memo(function AgentComposer({
                           variant="caption"
                           color={theme.colors.text}
                           style={styles.actionBtnLabel}>
-                          {modeLabel(selectedAgent ?? 'build')}
+                          {modeLabel(selectedAgent)}
                         </Text>
                         <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                       </PressableScale>
@@ -2509,15 +2512,12 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {!promptAllowed &&
-              !fieldBlockedReason &&
-              (interactionBlockedReason || !interactionBlocked) ? (
+              {/* A turn that cannot take a message says so on the disabled
+                  send button only; a caller's reason (a terminal holding the
+                  session) is where to go instead, so it stays. */}
+              {interactionBlockedReason && !fieldBlockedReason ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  {interactionBlockedReason ?? (
-                    <Trans>
-                      This agent accepts messages after its turn ends. Your draft stays here.
-                    </Trans>
-                  )}
+                  {interactionBlockedReason}
                 </Text>
               ) : null}
 

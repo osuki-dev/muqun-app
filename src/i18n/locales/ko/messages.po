@@ -4005,6 +4005,7 @@ msgstr "메시지를 보내지 못했습니다"
 msgid "Mine"
 msgstr "내 테마"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "모드"
@@ -6829,6 +6830,7 @@ msgstr "이 명령 중지"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "중지됨"
@@ -7420,10 +7422,6 @@ msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "이 활동 기록에는 결과가 포함되어 있지 않습니다. 세션을 열어 대화를 확인하세요"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "이 에이전트는 턴이 끝난 후 메시지를 받습니다. 초안은 여기에 남아 있습니다"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

@@ -32,7 +32,6 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { HOME_CONTINUE_INITIAL_LIMIT } from '@/lib/home-continue';
 import {
   buildComputerCards,
-  heldCardOrder,
   lastKnownActivityCaption,
   pendingShown,
   taskRowRank,
@@ -59,6 +58,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
+import { heldOrder } from '@/lib/home-sort-hold';
 import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -300,7 +300,7 @@ export function HomeComputerCards({
   );
   // Kept by contents: a probe or a ledger ticking for something no card shows
   // rebuilds these, and must not re-render the deck and its cards.
-  const cards = useStructuralValue(heldCardOrder(shownIds, sorted));
+  const cards = useStructuralValue(heldOrder(shownIds, sorted, (card) => card.serverId));
   const followed = useStructuralValue(followedIds);
   const signatures = useStructuralValue(
     Object.fromEntries(

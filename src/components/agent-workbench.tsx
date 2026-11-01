@@ -174,8 +174,10 @@ import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/ag
 import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
 import {
   AGENT_SESSION_DEFAULTS_CAPABILITY,
+  catalogModeId,
   catalogModelRef,
   resolveNewSessionDefaults,
+  shownModeId,
 } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
@@ -1586,10 +1588,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * Whether the mode chip belongs on screen: the agent's features allow modes
    * and, once its catalog has answered, the catalog lists some. T3 has none.
    */
+  const catalogRead = catalogAnsweredFor === (catalogAgentId ?? '');
   const canPickMode =
     agentFeatures.modes &&
     (!activeAsid || agentFeatures.extra.modeSwitching !== false) &&
-    (catalogAnsweredFor !== (catalogAgentId ?? '') || availableAgents.length > 0);
+    (!catalogRead || availableAgents.length > 0);
+  // The selection only once this agent's catalog lists it: it can be another
+  // agent's mode carried over from the last session on screen.
+  const offeredSelectedMode = catalogRead
+    ? catalogModeId(selectedAgent, availableAgents)
+    : undefined;
   const chipAgents = agentChoice.agents;
   /** What each session chip leads with; the rule is `sessionChipLead`. */
   const sessionLead = useCallback(
@@ -1598,14 +1606,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionAgentId: session.agent_id,
         currentAgentId: activeAgentId,
         sessionMode: session.mode,
-        ...(selectedAgent ? { fallbackMode: selectedAgent } : {}),
+        ...(offeredSelectedMode ? { fallbackMode: offeredSelectedMode } : {}),
         agentHasModes: canPickMode,
       });
       if (!lead) return undefined;
       if (lead.kind === 'agent') return agentDisplayName(chipAgents, lead.agentId);
       return availableAgents.find((entry) => entry.id === lead.modeId)?.name || lead.modeId;
     },
-    [activeAgentId, selectedAgent, canPickMode, chipAgents, availableAgents]
+    [activeAgentId, offeredSelectedMode, canPickMode, chipAgents, availableAgents]
   );
 
   /**
@@ -4745,6 +4753,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [globalOwnerEpoch, handlePermissionDecision, isGlobalOwner]);
 
   const canRunInBackground = agentFeatures.backgroundShells;
+  // A turn the reader stopped: a call it left running never reports an end.
+  const turnStopped = sessionInfo?.status === 'interrupted';
   const toolActions = useMemo<AgentToolActions>(
     () => ({
       audioSessionId: activeAsid ?? undefined,
@@ -4756,8 +4766,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onOpenFullDiff: openDiffSheet,
       onOpenToolDetail: openToolDetail,
       childSessions,
+      turnStopped,
     }),
     [
+      turnStopped,
       activeAsid,
       canRunInBackground,
       handleRunInBackground,
@@ -5600,8 +5612,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * A `ModelRef` is three strings; everything else about a model -- its name as
    * its publisher spells it, how much it can hold -- is in the catalogue.
    */
-  const activeAgent =
-    selectedAgent ?? currentSession?.mode ?? sessionInfo?.mode ?? catalogDefaults.mode;
+  // The mode the pill names and the mode sheet marks: one this agent offers.
+  const activeAgent = shownModeId({
+    selected: selectedAgent,
+    sessionMode: activeAsid ? (currentSession?.mode ?? sessionInfo?.mode) : undefined,
+    catalogDefault: catalogDefaults.mode,
+    modes: availableAgents,
+    catalogRead,
+  });
   const activeAgentModel = catalogModelRef(
     availableAgents.find((entry) => entry.id === activeAgent)?.model,
     catalogModels
@@ -5690,7 +5708,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       selectedModel: activeModelRef,
       selectedModelName: activeModelName,
       contextLimit,
-      selectedAgent,
+      selectedAgent: activeAgent,
       showReasoning,
       yoloMode,
       todos: activeTodos ?? EMPTY_TODOS,
@@ -5723,7 +5741,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeModelRef,
     activeModelName,
     contextLimit,
-    selectedAgent,
+    activeAgent,
     showReasoning,
     yoloMode,
     activeTodos,
@@ -6281,7 +6299,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         activeAsid={activeAsid}
         activeDirectory={activeDirectory}
         activeProject={activeProject}
-        selectedAgent={selectedAgent}
+        selectedAgent={activeAgent}
         selectedModel={activeModelRef}
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}

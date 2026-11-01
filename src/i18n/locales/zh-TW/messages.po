@@ -4005,6 +4005,7 @@ msgstr "訊息未送出"
 msgid "Mine"
 msgstr "我的"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "模式"
@@ -6829,6 +6830,7 @@ msgstr "停止這條命令"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "已停止"
@@ -7420,10 +7422,6 @@ msgstr "此活動紀錄未附帶結果"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "此活動紀錄未附帶結果。開啟工作階段即可查看完整對話"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "此代理在本輪結束後接受訊息。草稿會保留在這裡"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

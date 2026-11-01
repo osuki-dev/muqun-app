@@ -2133,7 +2133,7 @@ export function HomeComposerDock({
             : '—'
           : modelName
       }
-      mode={threadSession ? (replyConfiguration?.mode ?? '—') : (shown.mode ?? 'build')}
+      mode={threadSession ? (replyConfiguration?.mode ?? '—') : (shown.mode ?? '—')}
       modes={threadSession ? selectableModes(threadCatalog?.modes ?? []) : modes}
       offline={!ready}
       onComputer={() => {

@@ -4005,6 +4005,7 @@ msgstr "消息未发送"
 msgid "Mine"
 msgstr "我的"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "模式"
@@ -6829,6 +6830,7 @@ msgstr "停止这条命令"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "已停止"
@@ -7420,10 +7422,6 @@ msgstr "此活动记录未附带结果"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "此活动记录未附带结果。打开会话即可查看完整对话"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "此智能体在本轮结束后接受消息。草稿会保留在这里"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

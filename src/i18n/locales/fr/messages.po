@@ -4005,6 +4005,7 @@ msgstr "Message non envoyé"
 msgid "Mine"
 msgstr "Les miens"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Mode"
@@ -6829,6 +6830,7 @@ msgstr "Arrêter cette commande"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "Arrêté"
@@ -7420,10 +7422,6 @@ msgstr "Aucun résultat n’est joint à cette activité"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "Aucun résultat n’est joint à cette activité. Ouvrez la session pour lire la conversation"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "Cet agent accepte les messages à la fin de son tour. Votre brouillon reste ici"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

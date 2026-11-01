@@ -18,6 +18,7 @@ import {
   type ServerAgentsIndex,
   type ServerAgentsSnapshot,
 } from './server-agents';
+import { hasRealSessionTitle } from './agent-protocol';
 import { stripTaskMarkers, taskMarkerPayload } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import {
@@ -753,6 +754,22 @@ export function sessionLedgerTask(
   return found;
 }
 
+/**
+ * What a Recent row for an agent session is called when a ledger task ran in
+ * it: the task's title, as on the card -- unless the session was renamed
+ * after the task ended. An open task's title follows the session's name on
+ * the gateway, but an ended one keeps the name it had when it ended, so a
+ * rename made afterwards never reached it. When that ended title was the
+ * session's name (not the task's label, nor the goal's sentence it reads
+ * while the session is untitled), the session's own title is the newer one.
+ */
+export function sessionRowTitle(task: TaskView, session: { asid: string; title?: string }): string {
+  const title = taskRowTitle(task);
+  const fromSessionName = !task.label && task.title && task.title !== goalTitle(task.goal);
+  if (NOW.has(task.state) || !fromSessionName || !hasRealSessionTitle(session)) return title;
+  return session.title!.trim();
+}
+
 /** The destinations for a task's work or saved result. */
 export type TaskOpeners = {
   /** Read a finished command's saved output without opening its old binding. */
@@ -1021,23 +1038,6 @@ export function taskRowRank(state: TaskRowState): number {
     default:
       return 3;
   }
-}
-
-/**
- * The cards in the order the reader is looking at (`shownIds`), while a
- * re-sort is held: a card keeps its place, a card that went is dropped, and a
- * card that arrived joins at the end, so nothing above it moves. With nothing
- * held `shownIds` is the sorted order itself and the cards come back as given.
- */
-export function heldCardOrder<T extends { serverId: string }>(
-  shownIds: readonly string[],
-  cards: readonly T[]
-): T[] {
-  const place = new Map(shownIds.map((serverId, position) => [serverId, position]));
-  const kept = cards
-    .filter((card) => place.has(card.serverId))
-    .sort((a, b) => place.get(a.serverId)! - place.get(b.serverId)!);
-  return [...kept, ...cards.filter((card) => !place.has(card.serverId))];
 }
 
 /**

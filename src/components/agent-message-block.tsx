@@ -415,6 +415,8 @@ export interface AgentToolActions {
   /** The whole call in the tool detail sheet. */
   onOpenToolDetail?: (part: ToolPart) => void;
   onExpandTool?: (toolId: string, header: ViewInstance) => ToolExpansionIntent | undefined;
+  /** The session's turn was stopped: a call still running reads as stopped. */
+  turnStopped?: boolean;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -1268,6 +1270,7 @@ const ToolPartCard = memo(function ToolPartCard({
         {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
         {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
         {...(handleOpenDetail ? { onOpenDetail: handleOpenDetail } : {})}
+        stopped={actions.turnStopped === true}
         onExpand={handleExpand}
       />
       {attachedPermission && handleDecision ? (

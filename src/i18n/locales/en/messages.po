@@ -4005,6 +4005,7 @@ msgstr "Message not sent"
 msgid "Mine"
 msgstr "Mine"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Mode"
@@ -6829,6 +6830,7 @@ msgstr "Stop this command"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/embedded-terminal-tool-block.tsx
 #: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "Stopped"
@@ -7420,10 +7422,6 @@ msgstr "This activity has no result attached"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "This activity has no result attached. Open session to read the conversation"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "This agent accepts messages after its turn ends. Your draft stays here"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

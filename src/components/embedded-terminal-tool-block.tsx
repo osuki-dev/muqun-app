@@ -86,6 +86,8 @@ export interface EmbeddedTerminalProps {
   /** A second, quieter line: the rest of a path, a working directory, a query. */
   caption?: string;
   status: ToolCallState;
+  /** A pending call whose turn was stopped: no pulse, a Stopped label. */
+  stopped?: boolean;
   /** `time.completed - time.ran`, when the engine reported both. */
   durationMs?: number;
   /** Isolated live metadata, such as a wait countdown. */
@@ -140,6 +142,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   title,
   caption,
   status,
+  stopped = false,
   durationMs,
   headerAccessory,
   truncated,
@@ -173,7 +176,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const expansionIntent = useRef<ToolExpansionIntent | undefined>(undefined);
   useEffect(() => () => expansionIntent.current?.cancel(), []);
 
-  const pending = isToolPending(status);
+  const pending = isToolPending(status) && !stopped;
   const failed = status === 'failed';
   const statusColor = failed
     ? theme.colors.danger
@@ -318,6 +321,10 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                 <ThinkingIndicator size={12} color={statusColor} />
               ) : failed ? (
                 <NoticeIcon size={12} color={statusColor} />
+              ) : stopped ? (
+                <Text variant="caption" color={theme.colors.warning}>
+                  {t`Stopped`}
+                </Text>
               ) : null}
               {headerAccessory}
               {durationMs !== undefined ? (

@@ -97,3 +97,31 @@ export function boundTask(
   }
   return found;
 }
+
+/**
+ * The ledger task a Continue row reads its status from: the open one, else
+ * the newest one when it ended after the session's status was last observed.
+ * A session's cached status is only as fresh as the last list read or visit,
+ * so a task that finished since then read "Running" until the session was
+ * opened; the ledger's later word is the current one. A status observed after
+ * the task ended (a new turn) stands.
+ */
+export function rowStatusTask(
+  tasks: readonly TaskView[] | undefined,
+  asid: string | undefined,
+  observedAtMs: number | undefined
+): TaskView | undefined {
+  const open = boundTask(tasks, asid);
+  if (open || !asid || !tasks) return open;
+  let newest: TaskView | undefined;
+  for (const task of tasks) {
+    if (
+      task.binding.kind === 'agent_session' &&
+      task.binding.asid === asid &&
+      (!newest || task.updatedMs > newest.updatedMs)
+    ) {
+      newest = task;
+    }
+  }
+  return newest && newest.updatedMs > (observedAtMs ?? 0) ? newest : undefined;
+}

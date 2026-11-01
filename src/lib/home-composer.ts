@@ -152,8 +152,9 @@ export function homeSessionParams(input: {
   catalogRemembers?: boolean;
   /**
    * False until the catalog has answered (or when its read failed): the
-   * remembered pick is then sent and shown as stored, since there is nothing
-   * to check it against yet and dropping it would let the host pick.
+   * remembered model is then sent and shown as stored, since there is nothing
+   * to check it against yet and dropping it would let the host pick. The
+   * remembered mode waits for the catalog.
    */
   catalogRead?: boolean;
 }): {
@@ -163,10 +164,9 @@ export function homeSessionParams(input: {
   const { picked, catalogDefaults, models, modes } = input;
   const agent = input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {};
   if (input.catalogRead === false) {
-    const stored = {
-      ...(picked.mode ? { mode: picked.mode } : {}),
-      ...(picked.model ? { model: picked.model } : {}),
-    };
+    // The model only: a mode the catalog cannot confirm is not sent or
+    // shown, and the host's primary mode is a real default to fall back on.
+    const stored = picked.model ? { model: picked.model } : {};
     return { params: { ...stored, ...agent }, shown: stored };
   }
   const mode = catalogModeId(picked.mode, modes);
