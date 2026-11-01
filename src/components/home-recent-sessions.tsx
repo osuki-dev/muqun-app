@@ -77,6 +77,7 @@ import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/her
 import {
   paneLedgerTask,
   sessionLedgerTask,
+  sessionRowTitle,
   taskRowTitle,
   taskRowVisual,
 } from '@/lib/home-computer-cards';
@@ -634,9 +635,9 @@ function RecentSessionRow({
     return task ? taskRowTitle(task) : undefined;
   });
   // A session a ledger task runs in says what the task says: its one-line
-  // title, as on the card (the newest task, finished too), and the open
-  // task's state -- the session's own status lags it (it read "Idle" under a
-  // working delegation).
+  // title, as on the card (the newest task, finished too, unless the session
+  // was renamed since), and the open task's state -- the session's own status
+  // lags it (it read "Idle" under a working delegation).
   const task = useServerTasksStore((state) =>
     target?.kind === 'agent-session'
       ? boundTask(state.index[target.serverId]?.tasks, target.asid)
@@ -645,7 +646,7 @@ function RecentSessionRow({
   const taskTitle = useServerTasksStore((state) => {
     if (target?.kind !== 'agent-session') return undefined;
     const named = sessionLedgerTask(state.index[target.serverId]?.tasks, target.asid);
-    return named ? taskRowTitle(named) : undefined;
+    return named ? sessionRowTitle(named, { asid: target.asid, title: entry.title }) : undefined;
   });
   const title = paneGoal
     ? paneGoal

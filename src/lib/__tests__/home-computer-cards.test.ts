@@ -21,6 +21,7 @@ import {
   taskRowVisual,
   taskRowTitle,
   taskRowDestination,
+  sessionRowTitle,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import {
@@ -926,5 +927,49 @@ describe('taskRowVisual: the rules the state table carries', () => {
     ],
   ] as const)('%s', (_name, input, opts, expected) => {
     expect(taskRowVisual(input, opts)).toMatchObject(expected);
+  });
+});
+
+describe('sessionRowTitle', () => {
+  const named = { asid: 'ses-1', title: 'Renamed later' };
+  // task title as the ledger kept it, task state, session title -> row title
+  test.each<[string, Partial<TaskView>, TaskState, { asid: string; title?: string }, string]>([
+    [
+      'an ended task named after the session yields to a rename',
+      { title: 'Old name' },
+      'done',
+      named,
+      'Renamed later',
+    ],
+    [
+      'an open task follows the session on the gateway',
+      { title: 'Old name' },
+      'working',
+      named,
+      'Old name',
+    ],
+    [
+      'a label is the task’s own name',
+      { title: 'Old name', label: 'Fix test' },
+      'done',
+      named,
+      'Fix test',
+    ],
+    [
+      'a title from the goal is not the session’s name',
+      { title: 'goal t' },
+      'done',
+      named,
+      'goal t',
+    ],
+    [
+      'an untitled session keeps the task’s title',
+      { title: 'Old name' },
+      'done',
+      { asid: 'ses-1', title: 'ses-1' },
+      'Old name',
+    ],
+  ])('%s', (_name, extra, state, session, expected) => {
+    expect(sessionRowTitle(task('t', state, 1, extra), session)).toBe(expected);
   });
 });
