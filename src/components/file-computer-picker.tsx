@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ComputerIcon, CloseIcon } from '@/icons';
@@ -91,8 +92,13 @@ export function FileComputerPicker({
         visible={activeChoice !== null}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => activeChoice?.finish(null)}>
-        <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0008' }}>
+        {/* Android presses are gesture-handler presses, and a native Modal is
+            outside the app's gesture root: without its own root no row in
+            here, Cancel included, receives a tap. */}
+        <GestureHandlerRootView
+          style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0008' }}>
           <View
             testID="file-computer-picker"
             style={{
@@ -127,7 +133,7 @@ export function FileComputerPicker({
               />
             </ScrollView>
           </View>
-        </View>
+        </GestureHandlerRootView>
       </Modal>
     </FileResolver.Provider>
   );
