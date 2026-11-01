@@ -1,4 +1,4 @@
-import { useFileResolver } from './file-computer-picker';
+import { FileNotOnComputer, useFileResolver } from './file-computer-picker';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { PhotoFileIcon, DocumentIcon } from '@/icons';
@@ -98,6 +98,58 @@ function MappedImageFileLink({
   );
 }
 
+/**
+ * Opens one session file at a time: resolves it on the session's computer
+ * (the resolver may ask which computer holds it), then shows the viewer.
+ * Shared by file chips and file links drawn inline in a message's text.
+ */
+export function useSessionFileOpener() {
+  const { t } = useLingui();
+  const { showToast } = useToast();
+  const [asset, setAsset] = useState<SessionAsset | null>(null);
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(new Set<AbortController>());
+  useEffect(() => {
+    const requests = pending.current;
+    return () => {
+      for (const controller of requests) controller.abort();
+      requests.clear();
+    };
+  }, []);
+  const load = (resolve: (signal: AbortSignal) => Promise<SessionAsset>) => {
+    const controller = new AbortController();
+    pending.current.add(controller);
+    return resolve(controller.signal)
+      .then((result) => {
+        if (controller.signal.aborted) throw new Error('Operation cancelled');
+        return result;
+      })
+      .finally(() => pending.current.delete(controller));
+  };
+  const open = (resolve: (signal: AbortSignal) => Promise<SessionAsset>) => {
+    if (busy) return;
+    setBusy(true);
+    void load(resolve)
+      .then(setAsset)
+      .catch((error: unknown) => {
+        if (error instanceof Error && /cancel/i.test(error.message)) return;
+        showToast({
+          variant: 'danger',
+          title: t`Could not open file`,
+          message:
+            error instanceof AudioPlaybackError
+              ? t`Update the Gateway to open or save this file.`
+              : error instanceof FileNotOnComputer
+                ? error.message
+                : t`Try again`,
+        });
+      })
+      .then(() => setBusy(false));
+  };
+  const viewer = asset ? <AssetViewer asset={asset} onClose={() => setAsset(null)} /> : null;
+  return { busy, load, open, viewer };
+}
+
 function RawFileLink({
   file,
   asid,
@@ -111,58 +163,26 @@ function RawFileLink({
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
-  const [asset, setAsset] = useState<SessionAsset | null>(null);
-  const [busy, setBusy] = useState(false);
   const [serverId] = useState(configuredGatewayServerId);
   const isImage = /\.(png|jpe?g|gif|webp)$/i.test(file.uri);
-  const pending = useRef(new Set<AbortController>());
-  useEffect(() => {
-    const requests = pending.current;
-    return () => {
-      for (const controller of requests) controller.abort();
-      requests.clear();
-    };
-  }, []);
-  const resolve = () => {
-    const controller = new AbortController();
-    pending.current.add(controller);
-    return (
-      remoteFile
-        ? resolveMcpFileAsset(remoteFile, controller.signal)
-        : resolveFile(asid, file.uri, controller.signal, serverId)
-    )
-      .then((result) => {
-        if (controller.signal.aborted) throw new Error('Operation cancelled');
-        return result;
-      })
-      .finally(() => pending.current.delete(controller));
-  };
-  const actions = useFileActions(file.name, async () => saveSessionAsset(await resolve()), isImage);
+  const opener = useSessionFileOpener();
+  const resolve = (signal: AbortSignal) =>
+    remoteFile
+      ? resolveMcpFileAsset(remoteFile, signal)
+      : resolveFile(asid, file.uri, signal, serverId);
+  const actions = useFileActions(
+    file.name,
+    async () => saveSessionAsset(await opener.load(resolve)),
+    isImage
+  );
   return (
     <View style={{ alignSelf: 'flex-start', maxWidth: '100%' }}>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t`Open ${file.name}`}
-        disabled={busy}
+        disabled={opener.busy}
         onLongPress={actions.show}
-        onPress={() => {
-          setBusy(true);
-          void resolve()
-            .then(setAsset)
-            .catch((error: unknown) => {
-              if (error instanceof Error && /cancel/i.test(error.message)) return;
-              showToast({
-                variant: 'danger',
-                title: t`Could not open file`,
-                message:
-                  error instanceof AudioPlaybackError
-                    ? t`Update the Gateway to open or save this file.`
-                    : t`Try again`,
-              });
-            })
-            .then(() => setBusy(false));
-        }}
+        onPress={() => opener.open(resolve)}
         style={{
           alignSelf: 'flex-start',
           maxWidth: '100%',
@@ -178,7 +198,7 @@ function RawFileLink({
         }}>
         {/* Finding the file on the computer can take seconds; the link says it
             heard the tap rather than looking dead until the viewer opens. */}
-        {busy ? (
+        {opener.busy ? (
           <ActivityIndicator size={14} color={theme.colors.primary} />
         ) : isImage ? (
           <PhotoFileIcon size={14} color={theme.colors.primary} />
@@ -190,7 +210,7 @@ function RawFileLink({
         </Text>
       </PressableScale>
       {actions.menu}
-      {asset && <AssetViewer asset={asset} onClose={() => setAsset(null)} />}
+      {opener.viewer}
     </View>
   );
 }

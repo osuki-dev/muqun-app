@@ -124,6 +124,11 @@ msgstr "{0, plural, other {另有 # 个代理}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {问题}}"
 
+#. placeholder {0}: computer.label
+#: src/components/file-computer-picker.tsx
+msgid "{0} (current)"
+msgstr "{0}（当前）"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (gateway)"
@@ -4578,6 +4583,10 @@ msgstr "部分文件未添加"
 msgid "Not found"
 msgstr "未找到"
 
+#: src/components/file-computer-picker.tsx
+msgid "Not found on {label}."
+msgstr "在 {label} 上找不到"
+
 #: src/i18n/labels.ts
 msgid "Not installed"
 msgstr "未安装"
@@ -7437,6 +7446,7 @@ msgid "This cannot be undone."
 msgstr "此操作无法撤销"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/file-computer-picker.tsx
 msgid "This computer"
 msgstr "本机"
 

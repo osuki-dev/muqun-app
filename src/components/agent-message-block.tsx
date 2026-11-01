@@ -67,7 +67,8 @@ import { TranscriptBlockImage } from '@/components/transcript-block-image';
 import { videoFileMime } from '@/lib/media-file';
 import { gatewayUploadName } from '@/lib/uploaded-attachments';
 import { InlineVideoFile } from '@/components/video-asset-preview';
-import { InlineFileLink } from '@/components/inline-file-link';
+import { InlineFileLink, useSessionFileOpener } from '@/components/inline-file-link';
+import { useFileResolver } from '@/components/file-computer-picker';
 import { ThemeFencePreview } from '@/components/theme-fence-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { splitAudioMarkdown } from '@/lib/audio-markdown';
@@ -717,6 +718,15 @@ const MessageTextPart = memo(function MessageTextPart({
 }) {
   const { t } = useLingui();
   const images = useMessageImages(imageAssets);
+  const fileOpener = useSessionFileOpener();
+  const resolveFile = useFileResolver();
+  // The session's computer, captured like a file chip's, so the resolver can
+  // tell it apart from the other paired computers if it asks for a choice.
+  const [fileServerId] = useState(configuredGatewayServerId);
+  const openFileLink =
+    audioSessionId &&
+    ((path: string) =>
+      fileOpener.open((signal) => resolveFile(audioSessionId, path, signal, fileServerId)));
   const [preview, setPreview] = useState<{
     images: PreviewImageDescriptor[];
     index: number;
@@ -884,6 +894,7 @@ const MessageTextPart = memo(function MessageTextPart({
             latexMath
             streaming={streaming}
             onImagePress={(uri: string) => previewMessageImage(uri)}
+            {...(openFileLink ? { onFileLinkPress: openFileLink } : {})}
           />
         );
       });
@@ -970,6 +981,7 @@ const MessageTextPart = memo(function MessageTextPart({
           onClose={() => setPreview(null)}
         />
       ) : null}
+      {fileOpener.viewer}
     </View>
   );
 });

@@ -124,6 +124,11 @@ msgstr "{0, plural, other {và # tác tử nữa}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {Câu hỏi}}"
 
+#. placeholder {0}: computer.label
+#: src/components/file-computer-picker.tsx
+msgid "{0} (current)"
+msgstr "{0} (hiện tại)"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (gateway)"
@@ -4578,6 +4583,10 @@ msgstr "Không phải mọi tệp đều được thêm"
 msgid "Not found"
 msgstr "Không tìm thấy"
 
+#: src/components/file-computer-picker.tsx
+msgid "Not found on {label}."
+msgstr "Không tìm thấy trên {label}"
+
 #: src/i18n/labels.ts
 msgid "Not installed"
 msgstr "Chưa cài đặt"
@@ -7437,6 +7446,7 @@ msgid "This cannot be undone."
 msgstr "Không thể hoàn tác thao tác này"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/file-computer-picker.tsx
 msgid "This computer"
 msgstr "Máy tính này"
 

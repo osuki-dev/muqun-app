@@ -80,7 +80,7 @@ test('legacy video links share container hints without interpreting code, playli
 test('explicit file links do not require a filename extension allowlist', () => {
   expect(
     files(
-      '[CSR](/tmp/request.certSigningRequest) [binary](~/Downloads/archive.unknown) [readme](./README)'
+      '[CSR](/tmp/request.certSigningRequest)\n[binary](~/Downloads/archive.unknown)\n[readme](./README)'
     )
   ).toEqual(['/tmp/request.certSigningRequest', '~/Downloads/archive.unknown', './README']);
   expect(
@@ -99,7 +99,7 @@ test('local source links resolve the file without treating line locations as a f
         '[column](/project/src/main.rs:10:4)',
         '[range](<./project with spaces/main.ts#L12-L18>)',
         '[fragment](file:///project/main.ts#L12C4)',
-      ].join(' ')
+      ].join('\n')
     )
   ).toEqual([
     '/project/src/main.rs',
@@ -107,9 +107,28 @@ test('local source links resolve the file without treating line locations as a f
     './project with spaces/main.ts',
     'file:///project/main.ts',
   ]);
-  expect(files('[literal](file:///project/report%3A10) [other](/project/report:latest)')).toEqual([
+  expect(files('[literal](file:///project/report%3A10)\n[other](/project/report:latest)')).toEqual([
     'file:///project/report%3A10',
     '/project/report:latest',
   ]);
   expect(files('[web](https://host/main.ts#L12) `[code](/project/main.rs:10)`')).toEqual([]);
+});
+
+test('a file link inside a sentence stays in the sentence; only a link alone on its line becomes a chip', () => {
+  const cases: [string, string[]][] = [
+    ['查看（[`/orders/list`](file:///home/me/app/pages/list.tsx)）。', []],
+    ['- [report](/home/me/report.pdf)', []],
+    ['The file [hello3.txt](/home/me/hello3.txt) was created.', []],
+    ['[report](/home/me/report.pdf)', ['/home/me/report.pdf']],
+    ['  [report](/home/me/report.pdf)  ', ['/home/me/report.pdf']],
+  ];
+  for (const [line, expected] of cases) {
+    expect(files(line)).toEqual(expected);
+    if (!expected.length)
+      expect(splitAudioMarkdown(line)).toEqual([{ kind: 'markdown', text: line, start: 0 }]);
+  }
+  // Players still need a block of their own.
+  expect(
+    splitAudioMarkdown('Listen to [take](/tmp/take.mp3) now').map((part) => part.kind)
+  ).toEqual(['markdown', 'audio', 'markdown']);
 });

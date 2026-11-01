@@ -9,6 +9,7 @@ class Selection extends Error {
 type Choice = {
   scopeKey: string;
   path: string;
+  computers: { serverId: string; label: string; current?: boolean }[];
   finish: (id: string | null) => void;
 };
 type Read = (...args: unknown[]) => Promise<unknown>;
@@ -101,6 +102,12 @@ test('current direct and selected file reads preserve captured arguments and ord
   selected.changeScope('');
   const result = read(selected, '', signal);
   const choice = await selected.waitChoice('');
+  // The session's own computer is offered first and marked; the file was not
+  // found there, but hiding it made the list look like it forgot the session.
+  expect(choice.computers).toEqual([
+    { serverId: 'origin', label: 'Origin', current: true },
+    { serverId: 'other', label: 'Other' },
+  ]);
   choice.finish('other');
   expect(await result).toEqual({ id: 'selected-asset' });
   expect(selected.selectedReads).toEqual([['/fixture/report.txt', 'other', signal]]);

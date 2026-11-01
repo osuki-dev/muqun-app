@@ -18,6 +18,8 @@ import { DiagramMarkdown } from '@/components/diagram-markdown';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import { linkedFilePath } from '@/lib/audio-markdown';
+import { isHostPathSource } from '@/lib/message-images';
 import {
   MARKDOWN_CHUNK_CHARS,
   MARKDOWN_NATIVE_CEILING,
@@ -123,6 +125,8 @@ export interface BoundedMarkdownProps {
   imageRequestHeaders?: Record<string, string>;
   /** A tapped image, by the URL it was loaded from. Images are inert without it. */
   onImagePress?: (url: string) => void;
+  /** A tapped link to a host file (absolute, relative or `file://`). Inert without it. */
+  onFileLinkPress?: (path: string) => void;
   /**
    * The row variant: one inline run (`inlineMarkdown`) clamped to this many
    * lines with a tail ellipsis, not selectable, links drawn as text and
@@ -143,6 +147,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   selectionColor,
   imageRequestHeaders,
   onImagePress,
+  onFileLinkPress,
   clampLines,
   testID,
 }: BoundedMarkdownProps) {
@@ -241,6 +246,8 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
           ? {
               onLinkPress: ({ url }: { url: string }) => {
                 if (isSafeExternalLink(url)) void Linking.openURL(url);
+                else if (onFileLinkPress && isHostPathSource(url) && !url.startsWith('#'))
+                  onFileLinkPress(linkedFilePath(url));
               },
             }
           : {})}

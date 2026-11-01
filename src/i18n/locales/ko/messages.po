@@ -124,6 +124,11 @@ msgstr "{0, plural, other {외 #개 에이전트}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {질문}}"
 
+#. placeholder {0}: computer.label
+#: src/components/file-computer-picker.tsx
+msgid "{0} (current)"
+msgstr "{0} (현재)"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (gateway)"
@@ -4578,6 +4583,10 @@ msgstr "일부 파일이 추가되지 않았습니다"
 msgid "Not found"
 msgstr "찾을 수 없음"
 
+#: src/components/file-computer-picker.tsx
+msgid "Not found on {label}."
+msgstr "{label}에서 찾을 수 없음"
+
 #: src/i18n/labels.ts
 msgid "Not installed"
 msgstr "설치되지 않음"
@@ -7437,6 +7446,7 @@ msgid "This cannot be undone."
 msgstr "이 작업은 되돌릴 수 없습니다"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/file-computer-picker.tsx
 msgid "This computer"
 msgstr "이 컴퓨터"
 
