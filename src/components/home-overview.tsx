@@ -192,7 +192,7 @@ import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
-import { useHomeConnectionStatuses } from '@/hooks/use-home-reachability';
+import { useHomeConnectionStatuses, useHomeListedServers } from '@/hooks/use-home-reachability';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -203,7 +203,7 @@ import { serverPrewarmGate, useServerReachability } from '@/stores/server-reacha
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { showOpeningWhile, taskOpeningKey } from '@/stores/home-task-cards';
+import { showOpeningWhile, taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -327,6 +327,13 @@ export function HomeOverview({
     () => records.filter((server) => server.serverId !== DEMO_SERVER_ID),
     [records]
   );
+  // Of those, the ones Home lists: computers that are up, plus the selected
+  // one and the deck's front, which never vanish from under the reader.
+  const deckFront = useHomeTaskCards((state) => state.deckFront);
+  const listedCardServers = useHomeListedServers(cardServers, connectionStatuses, [
+    record?.serverId,
+    deckFront,
+  ]);
   const [recentServerId, setRecentServerId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
@@ -470,7 +477,7 @@ export function HomeOverview({
   // `ComputerCardsPresence` below keeps this current; Home holds only the answer.
   const [hasComputerCards, setHasComputerCards] = useState(() =>
     hasComputerCardsAt({
-      servers: cardServers,
+      servers: listedCardServers,
       reachabilityByServer: padReachabilityByServer,
       nowMs: Date.now(),
     })
@@ -920,6 +927,12 @@ export function HomeOverview({
     reachabilityByServer: padReachabilityByServer,
     onPair: commands.pairGateway,
   });
+  // Stage's computers follow the same rule as the cards; its chosen one stays.
+  const stageServers = useHomeListedServers(launchController.servers, connectionStatuses, [
+    record?.serverId,
+    deckFront,
+    launchController.chosen?.serverId,
+  ]);
 
   const availableRecentEntries = useHomeRecentEntries({
     // Every layout keeps its pane inventory in Continue; Classic's computer
@@ -1229,7 +1242,7 @@ export function HomeOverview({
   const progressSection =
     !loading && !hydrationError && hasComputerCards ? (
       <HomeComputerCards
-        servers={cardServers}
+        servers={listedCardServers}
         followedIds={taskServerIds}
         activeConnection={activeConnection}
         skipEntering={cardsSkipEntering}
@@ -1344,7 +1357,7 @@ export function HomeOverview({
         <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
         <HomeReplyRecede>
           <HomeStage
-            servers={launchController.servers}
+            servers={stageServers}
             chosenServerId={launchController.chosen?.serverId}
             connectionStatuses={connectionStatuses}
             recentEntries={recentEntries}
@@ -1453,7 +1466,7 @@ export function HomeOverview({
           <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
           <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
           <ComputerCardsPresence
-            servers={cardServers}
+            servers={listedCardServers}
             reachabilityByServer={padReachabilityByServer}
             onChange={setHasComputerCards}
           />
@@ -1789,7 +1802,7 @@ export function HomeOverview({
         <ThemeArtwork slot="home.wallpaper" waitForTransition fallbackSlot="shell.wallpaper" />
         <HomeTaskSync serverIds={liveTaskServerIds} summaryEnabled={homeInView} />
         <ComputerCardsPresence
-          servers={cardServers}
+          servers={listedCardServers}
           reachabilityByServer={padReachabilityByServer}
           onChange={setHasComputerCards}
         />

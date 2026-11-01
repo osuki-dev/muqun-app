@@ -3860,10 +3860,6 @@ msgstr "듣는 중…"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "이 저장된 기록에서는 실시간 제어를 사용할 수 없습니다. 초안은 여기에 남아 있습니다"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "더 불러오기"

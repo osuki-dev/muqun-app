@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
+  homeListsComputer,
+  probeSaysDown,
   reachabilityOfStatus,
   resolveConnectionStatus,
   type ActiveServerConnection,
@@ -10,6 +12,7 @@ import {
   type ServerChannels,
   type ServerReachability,
 } from '@/lib/server-reachability';
+import { useStructuralValue } from '@/hooks/use-structural-value';
 import { pairingFaultOf, usePairingFaults } from '@/stores/pairing-faults';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
@@ -153,5 +156,28 @@ export function useHomeConnectionStatuses(
         })
       ),
     [direct, relayed, serverIds]
+  );
+}
+
+/**
+ * The computers Home lists, in order: every layout's computer list goes
+ * through here so they agree (`homeListsComputer`). `keptIds` are never hidden.
+ */
+export function useHomeListedServers<T extends { serverId: string }>(
+  servers: readonly T[],
+  statuses: Readonly<Record<string, ConnectionStatus | undefined>>,
+  keptIds: readonly (string | null | undefined)[]
+): readonly T[] {
+  const down = useServerReachability(
+    useShallow((state) => servers.map((server) => probeSaysDown(state.probes[server.serverId])))
+  );
+  return useStructuralValue(
+    servers.filter((server, index) =>
+      homeListsComputer(
+        statuses[server.serverId] ?? 'unknown',
+        down[index] ?? false,
+        keptIds.includes(server.serverId)
+      )
+    )
   );
 }

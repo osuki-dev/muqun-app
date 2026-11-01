@@ -3860,10 +3860,6 @@ msgstr "Höre zu…"
 msgid "Live Activity"
 msgstr "Live-Aktivität"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "Diese gespeicherte Historie lässt sich nicht live steuern. Dein Entwurf bleibt hier"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Mehr laden"
