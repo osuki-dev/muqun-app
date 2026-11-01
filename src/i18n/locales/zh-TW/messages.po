@@ -2117,13 +2117,13 @@ msgstr "無法建立會話"
 msgid "Could not create that worktree."
 msgstr "無法建立該工作樹"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "無法刪除"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "無法刪除此工作階段。請重新連線對應電腦並重新整理首頁後重試"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "無法刪除：{message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "刪除"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "正在刪除工作階段…"
@@ -5589,6 +5590,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "重新整理歷史記錄以載入目前快照"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "請重新整理首頁，確認此工作階段所屬服務後再刪除"
 
@@ -7603,7 +7605,7 @@ msgstr "這份 PDF 受密碼保護。請儲存後使用 PDF 閱讀器開啟"
 msgid "This project"
 msgstr "本專案"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "此服務不支援刪除工作階段。請開啟工作階段停止正在執行的任務，或在對應電腦上管理它"
 
@@ -7627,7 +7629,7 @@ msgstr "本次工作階段"
 msgid "This session has no message to roll back to."
 msgstr "這個工作階段還沒有可以回復到的訊息"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "此工作階段在對應服務中已無法使用。請重新整理首頁後重試"
 
@@ -7995,6 +7997,7 @@ msgid "Update Gateway on this computer first."
 msgstr "請先更新這台電腦的 Gateway"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "請更新此電腦上的 Gateway，再重新連線，即可從首頁刪除工作階段"
 

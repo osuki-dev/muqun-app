@@ -88,16 +88,14 @@ import { useHomeRecentsStore } from '@/stores/home-recents';
 import { freshHomeOverview, publishHomeOverview } from '@/lib/home-overview-sync';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { describeGatewayFailure } from '@/lib/network-error';
-import { agentRequestErrorDetail, classifyAgentRequestError } from '@/lib/agent-request-error';
 import { homeTargetAgentId } from '@/lib/home-recents';
 import {
   deleteHomeSession,
   homeSessionDeleteTarget,
-  HomeSessionDeleteUnavailableError,
   AGENT_SESSION_DELETE_SCOPED_CAPABILITY,
   type HomeDeletableTarget,
 } from '@/lib/home-session-delete';
+import { sessionDeleteFailureMessage } from '@/lib/session-delete-failure';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
@@ -786,21 +784,7 @@ function RecentSessionRow({
       (failure: unknown) => {
         deletingRef.current = false;
         setDeleting(false);
-        setMenuError(
-          failure instanceof HomeSessionDeleteUnavailableError
-            ? failure.reason === 'provider'
-              ? t`Refresh Home to identify this session’s provider before deleting it.`
-              : t`Update Gateway on this computer, then reconnect to enable deleting sessions from Home.`
-            : classifyAgentRequestError(failure).kind === 'unsupported'
-              ? t`This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer.`
-              : agentRequestErrorDetail(failure).status === 404
-                ? t`This session is no longer available in this service. Refresh Home before trying again.`
-                : ['auth', 'network', 'timeout', 'backend'].includes(
-                      describeGatewayFailure(failure).kind
-                    )
-                  ? describeGatewayFailure(failure).message
-                  : t`Could not delete this session. Reconnect to its computer and refresh Home before trying again.`
-        );
+        setMenuError(sessionDeleteFailureMessage(failure));
       }
     );
   });

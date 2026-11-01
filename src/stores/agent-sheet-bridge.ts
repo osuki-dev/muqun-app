@@ -139,9 +139,10 @@ export interface AgentSheetActions {
   renameSession: (asid: string, title: string, session?: AgentSessionInfo) => void;
   /**
    * Delete one session. The confirmation belongs to the surface that asks --
-   * this is the call that follows a yes.
+   * this is the call that follows a yes. Answers with the refusal to show in
+   * place, or null once the session is gone.
    */
-  deleteSession: (asid: string, session?: AgentSessionInfo) => void;
+  deleteSession: (asid: string, session?: AgentSessionInfo) => Promise<string | null>;
   forkSession?: (session: AgentSessionInfo) => void;
   selectModel: (model: ModelRef) => void;
   selectAgentMode: (agent: string) => void;
@@ -166,7 +167,7 @@ const NO_ACTIONS: AgentSheetActions = Object.freeze({
   selectSession: () => {},
   createSession: () => {},
   renameSession: () => {},
-  deleteSession: () => {},
+  deleteSession: async () => null,
   selectModel: () => {},
   selectAgentMode: () => {},
   selectWorkspace: () => {},

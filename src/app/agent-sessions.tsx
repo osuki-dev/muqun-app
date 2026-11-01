@@ -198,14 +198,17 @@ function OwnedAgentSessionsScreen() {
         );
         actions.renameSession(asid, title, session);
       }}
-      onDeleteSession={(asid) => {
+      onDeleteSession={async (asid) => {
         const session = merged.find((row) => row.asid === asid);
-        if (!session || !canMutateSession('delete', session)) return;
+        if (!session || !canMutateSession('delete', session)) return null;
+        const refusal = await actions.deleteSession(asid, session);
+        // Only once the gateway agreed; a refused row stays where it was.
         // The session and everything under it: OpenCode removes the children.
-        updateHostSessions((rows) =>
-          rows.filter((row) => row.asid !== asid && row.parent_id !== asid)
-        );
-        actions.deleteSession(asid, session);
+        if (refusal === null)
+          updateHostSessions((rows) =>
+            rows.filter((row) => row.asid !== asid && row.parent_id !== asid)
+          );
+        return refusal;
       }}
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.

@@ -2117,13 +2117,13 @@ msgstr "Impossible de créer la session"
 msgid "Could not create that worktree."
 msgstr "Impossible de créer ce worktree"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "Suppression impossible"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "Impossible de supprimer cette session. Reconnectez-vous à son ordinateur et actualisez l’accueil avant de réessayer"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "Suppression impossible : {message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "Supprimé"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "Suppression de la session…"
@@ -5589,6 +5590,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "Actualisez l’historique pour charger l’instantané actuel"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "Actualisez l’accueil pour identifier le fournisseur de cette session avant de la supprimer"
 
@@ -7603,7 +7605,7 @@ msgstr "Ce PDF est protégé par un mot de passe. Enregistrez-le pour l’ouvrir
 msgid "This project"
 msgstr "Ce projet"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "Ce fournisseur ne peut pas supprimer de sessions. Ouvrez la session pour arrêter le tour en cours ou gérez-la sur son ordinateur"
 
@@ -7627,7 +7629,7 @@ msgstr "Cette session"
 msgid "This session has no message to roll back to."
 msgstr "Cette session n'a aucun message vers lequel revenir"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "Cette session n’est plus disponible dans ce service. Actualisez l’accueil avant de réessayer"
 
@@ -7995,6 +7997,7 @@ msgid "Update Gateway on this computer first."
 msgstr "Mettez d’abord à jour Gateway sur cet ordinateur"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "Mettez à jour Gateway sur cet ordinateur, puis reconnectez-vous pour pouvoir supprimer des sessions depuis l’accueil"
 
