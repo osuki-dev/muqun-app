@@ -4753,6 +4753,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [globalOwnerEpoch, handlePermissionDecision, isGlobalOwner]);
 
   const canRunInBackground = agentFeatures.backgroundShells;
+  // A turn the reader stopped: a call it left running never reports an end.
+  const turnStopped = sessionInfo?.status === 'interrupted';
   const toolActions = useMemo<AgentToolActions>(
     () => ({
       audioSessionId: activeAsid ?? undefined,
@@ -4764,8 +4766,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onOpenFullDiff: openDiffSheet,
       onOpenToolDetail: openToolDetail,
       childSessions,
+      turnStopped,
     }),
     [
+      turnStopped,
       activeAsid,
       canRunInBackground,
       handleRunInBackground,

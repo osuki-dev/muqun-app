@@ -125,6 +125,8 @@ export interface AgentToolCardProps {
   audioSessionId?: string;
   part: ToolPart;
   markdownStyle: MarkdownStyle;
+  /** The turn was stopped: a call still pending reads as Stopped, with its last output. */
+  stopped?: boolean;
   /** The observed identity and state of this exact child session. */
   childSession?: AgentSessionInfo;
   onOpenChildSession?: (asid: string) => void;
@@ -466,6 +468,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   onOpenFullDiff,
   onOpenDetail,
   onExpand,
+  stopped: turnStopped = false,
 }: AgentToolCardProps) {
   const { t, i18n } = useLingui();
   const theme = useThemeTokens();
@@ -536,7 +539,10 @@ export const AgentToolCard = memo(function AgentToolCard({
     part.background === true ||
     ((kind === 'shell' || kind === 'subagent') && input?.background === true);
 
-  const pending = isToolPending(part.state);
+  // A call the stopped turn left running keeps its last output and says
+  // Stopped, rather than pulsing for an end that never comes.
+  const stopped = turnStopped && isToolPending(part.state);
+  const pending = isToolPending(part.state) && !stopped;
   // Only while it is pending: once the call has run, the result is what the
   // card is about and its arguments are in the body.
   const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
@@ -1003,6 +1009,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       }
       caption={muqun ? undefined : headerCaption}
       status={!pending && resultFailed ? 'failed' : part.state}
+      stopped={stopped}
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
       {...(!muqun && errorLine ? { error: errorLine } : {})}
