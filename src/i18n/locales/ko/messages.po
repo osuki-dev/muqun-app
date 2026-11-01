@@ -2117,13 +2117,13 @@ msgstr "세션을 생성할 수 없습니다"
 msgid "Could not create that worktree."
 msgstr "워크트리를 생성할 수 없습니다"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "삭제할 수 없습니다"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "이 세션을 삭제할 수 없습니다. 해당 컴퓨터에 다시 연결하고 홈을 새로 고친 후 다시 시도하세요"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "삭제할 수 없음: {message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "삭제됨"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "세션을 삭제하는 중…"
@@ -5585,6 +5586,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "현재 스냅샷을 불러오려면 기록을 새로고침하세요"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "홈을 새로 고쳐 이 세션의 제공업체를 확인한 후 삭제하세요"
 
@@ -7599,7 +7601,7 @@ msgstr "이 PDF는 비밀번호로 보호되어 있습니다. 저장한 다음 P
 msgid "This project"
 msgstr "이 프로젝트"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "이 제공업체는 세션을 삭제할 수 없습니다. 세션을 열어 실행 중인 턴을 중지하거나 해당 컴퓨터에서 관리하세요"
 
@@ -7623,7 +7625,7 @@ msgstr "이 세션"
 msgid "This session has no message to roll back to."
 msgstr "이 세션에는 되돌아갈 메시지가 없습니다"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "이 세션은 해당 서비스에서 더 이상 사용할 수 없습니다. 홈을 새로 고친 후 다시 시도하세요"
 
@@ -7991,6 +7993,7 @@ msgid "Update Gateway on this computer first."
 msgstr "먼저 이 컴퓨터의 Gateway를 업데이트하세요"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "이 컴퓨터의 Gateway를 업데이트하고 다시 연결하면 홈에서 세션을 삭제할 수 있습니다"
 

@@ -9,6 +9,7 @@ import { appChrome } from '@/constants/appearance';
 import { useFloatingSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
+import { readableCatalogId } from '@/lib/agent-protocol';
 import type { ModeInfo } from '@/lib/agent-session';
 
 export interface AgentModeMenuProps {
@@ -57,7 +58,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
           <PressableScale
             key={ag.id}
             testID={`agent-mode-option-${ag.id}`}
-            accessibilityLabel={ag.name || ag.id}
+            accessibilityLabel={ag.name || readableCatalogId(ag.id)}
             onPress={() => onSelectAgent(ag.id)}
             style={[
               styles.option,
@@ -71,7 +72,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
                   variant="bodySmall"
                   weight={isSelected ? 'semibold' : 'regular'}
                   color={isSelected ? theme.colors.primary : textColor}>
-                  {ag.name || ag.id}
+                  {ag.name || readableCatalogId(ag.id)}
                 </Text>
                 {ag.description ? (
                   <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>

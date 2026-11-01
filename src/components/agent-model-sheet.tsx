@@ -32,6 +32,7 @@ import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sectio
 import { findAgentModelPosition } from '@/lib/agent-model-position';
 import { modelPickerChoice } from '@/lib/agent-session-defaults';
 import {
+  catalogModelInfo,
   formatModelName,
   getAgentCatalog,
   isFreeModel,
@@ -365,13 +366,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    * a fresh session, and the reader had to pick one to find out what was
    * already selected.
    */
-  const currentModelInfo = effectiveModel
-    ? models.find(
-        (model) =>
-          model.id === effectiveModel.model_id &&
-          (!effectiveModel.provider_id || model.provider_id === effectiveModel.provider_id)
-      )
-    : undefined;
+  const currentModelInfo = catalogModelInfo(models, effectiveModel, defaults.model);
   const currentValue = effectiveModel
     ? [
         formatModelName(effectiveModel, 'Model', currentModelInfo?.name),

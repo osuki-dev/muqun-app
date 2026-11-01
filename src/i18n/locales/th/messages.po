@@ -2117,13 +2117,13 @@ msgstr "ไม่สามารถสร้างเซสชันได้"
 msgid "Could not create that worktree."
 msgstr "สร้างเวิร์กทรีนั้นไม่ได้"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "ลบไม่ได้"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "ลบเซสชันนี้ไม่ได้ เชื่อมต่อกับคอมพิวเตอร์ที่เกี่ยวข้องอีกครั้งและรีเฟรชหน้าหลักก่อนลองใหม่"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "ลบไม่ได้: {message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "ลบแล้ว"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "กำลังลบเซสชัน…"
@@ -5585,6 +5586,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "รีเฟรชประวัติเพื่อโหลดสแนปช็อตปัจจุบัน"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "รีเฟรชหน้าหลักเพื่อระบุผู้ให้บริการของเซสชันนี้ก่อนลบ"
 
@@ -7599,7 +7601,7 @@ msgstr "PDF นี้มีการป้องกันด้วยรหั�
 msgid "This project"
 msgstr "โปรเจกต์นี้"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "ผู้ให้บริการนี้ไม่รองรับการลบเซสชัน เปิดเซสชันเพื่อหยุดรอบที่กำลังทำงาน หรือจัดการบนคอมพิวเตอร์ที่เกี่ยวข้อง"
 
@@ -7623,7 +7625,7 @@ msgstr "เซสชันนี้"
 msgid "This session has no message to roll back to."
 msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "เซสชันนี้ไม่พร้อมใช้งานในบริการดังกล่าวแล้ว รีเฟรชหน้าหลักก่อนลองใหม่"
 
@@ -7991,6 +7993,7 @@ msgid "Update Gateway on this computer first."
 msgstr "โปรดอัปเดต Gateway บนเครื่องนี้ก่อน"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "อัปเดต Gateway บนคอมพิวเตอร์นี้แล้วเชื่อมต่ออีกครั้งเพื่อเปิดใช้การลบเซสชันจากหน้าหลัก"
 

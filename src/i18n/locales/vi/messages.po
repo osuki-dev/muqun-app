@@ -2117,13 +2117,13 @@ msgstr "Không thể tạo phiên"
 msgid "Could not create that worktree."
 msgstr "Không thể tạo worktree đó"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "Không thể xóa"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "Không thể xóa phiên này. Hãy kết nối lại với máy tính tương ứng và làm mới trang chủ trước khi thử lại"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "Không thể xóa: {message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "Đã xoá"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "Đang xóa phiên…"
@@ -5585,6 +5586,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "Làm mới lịch sử để tải ảnh chụp hiện tại"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "Làm mới trang chủ để xác định nhà cung cấp của phiên này trước khi xóa"
 
@@ -7599,7 +7601,7 @@ msgstr "Tệp PDF này được bảo vệ bằng mật khẩu. Hãy lưu tệp 
 msgid "This project"
 msgstr "Dự án này"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "Nhà cung cấp này không hỗ trợ xóa phiên. Hãy mở phiên để dừng lượt đang chạy hoặc quản lý nó trên máy tính tương ứng"
 
@@ -7623,7 +7625,7 @@ msgstr "Phiên này"
 msgid "This session has no message to roll back to."
 msgstr "Phiên này không có tin nhắn nào để quay lại"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "Phiên này không còn khả dụng trong dịch vụ tương ứng. Hãy làm mới trang chủ trước khi thử lại"
 
@@ -7991,6 +7993,7 @@ msgid "Update Gateway on this computer first."
 msgstr "Hãy cập nhật Gateway trên máy này trước"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "Cập nhật Gateway trên máy tính này rồi kết nối lại để bật tính năng xóa phiên từ trang chủ"
 

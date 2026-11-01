@@ -200,28 +200,23 @@ export function HomeAgentSheet() {
     </>
   );
 
-  const contentSized = primary.length + (moreCount > 0 ? 1 : 0) <= 5 && !moreOpen;
+  // Content-sized up to the room the screen leaves, then the list scrolls:
+  // ten agents and an open More overflow a phone, and More must stay reachable.
   return (
     <SheetScene
       testID="home-agent-sheet"
       title={t`Home agent`}
       caption={t`What Home starts when you send from here`}
-      contentSized={contentSized}>
-      {contentSized ? (
-        <View style={sheetSceneStyles.scrollerContent}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </View>
-      ) : (
-        <ScrollView
-          nestedScrollEnabled
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          showsVerticalScrollIndicator={false}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </ScrollView>
-      )}
+      fitsContent>
+      <ScrollView
+        nestedScrollEnabled
+        style={sheetSceneStyles.fitScroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}>
+        {rows}
+        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+      </ScrollView>
     </SheetScene>
   );
 }

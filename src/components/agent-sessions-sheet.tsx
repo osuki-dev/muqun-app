@@ -97,8 +97,11 @@ export interface AgentSessionsSheetProps {
   onCreateNewSession?: () => void;
   /** A new name for one session. The workbench owns the call and the rollback. */
   onRenameSession?: (asid: string, title: string) => void;
-  /** Delete one session, after the confirmation this sheet asks for. */
-  onDeleteSession?: (asid: string) => void;
+  /**
+   * Delete one session, after the confirmation this sheet asks for. Answers
+   * with the refusal to show under the row, or null once it is gone.
+   */
+  onDeleteSession?: (asid: string) => Promise<string | null>;
   onForkSession?: (session: AgentSessionInfo) => void;
   canMutateSession?: (action: AgentSessionAction, session: AgentSessionInfo) => boolean;
   /**
@@ -362,6 +365,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const [menuAsid, setMenuAsid] = useState<string | null>(null);
   const [renameAsid, setRenameAsid] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  /** The delete waiting on the gateway, and the last one it refused. */
+  const [deletingAsid, setDeletingAsid] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<{ asid: string; message: string } | null>(null);
   const scrollerRef = useRef<ScrollViewInstance>(null);
   /** Where each root's block sits, so a rename field can be brought up. */
   const rowOffsets = useRef<Record<string, number>>({});
@@ -382,6 +388,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const openMenu = useCallback((asid: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRenameAsid(null);
+    setDeleteError(null);
     setMenuAsid((current) => (current === asid ? null : asid));
   }, []);
 
@@ -489,9 +496,10 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     if (onDeleteSession && (canMutateSession?.('delete', session) ?? true))
       items.push({
         id: 'delete',
-        label: t`Delete`,
+        label: deletingAsid === session.asid ? t`Deleting session…` : t`Delete`,
         Icon: DeleteIcon,
         tone: 'danger',
+        disabled: deletingAsid !== null,
         // The one destructive thing on this sheet, asked in the row. A row that
         // deletes on one tap is a row that deletes by accident, and what goes
         // with it is not only this session: OpenCode removes its children too.
@@ -499,9 +507,17 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           label: t`Tap again to delete`,
           detail: t`Delete “${title}”?`,
         },
+        // The menu stays open on the row until the gateway answers, so a
+        // refusal is said where the reader asked, and the row stays.
         onPress: () => {
-          setMenuAsid(null);
-          onDeleteSession?.(session.asid);
+          const asid = session.asid;
+          setDeleteError(null);
+          setDeletingAsid(asid);
+          void onDeleteSession(asid).then((refusal) => {
+            setDeletingAsid(null);
+            if (refusal === null) setMenuAsid(null);
+            else setDeleteError({ asid, message: refusal });
+          });
         },
         testID: `agent-session-delete-${session.asid}`,
       });
@@ -572,6 +588,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           testID={`agent-session-menu-${session.asid}`}
           surface="ground"
           items={menuItems(session)}
+          error={deleteError?.asid === session.asid ? deleteError.message : null}
         />
       );
     }

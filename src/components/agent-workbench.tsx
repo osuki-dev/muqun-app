@@ -136,6 +136,7 @@ import {
   exportAgentSession,
   sendAgentCommand,
   orderKeyAfter,
+  catalogModelInfo,
   formatModelName,
   hasRealSessionTitle,
   sessionTitleOr,
@@ -280,6 +281,7 @@ import {
 } from '@/lib/agent-home-recents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import type { HomeTarget } from '@/lib/home-recents';
+import { sessionDeleteFailureMessage } from '@/lib/session-delete-failure';
 import { useAppActive } from '@/hooks/use-app-active';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
@@ -4054,26 +4056,32 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * The latest of what is left, or the empty state -- never a new session made
    * on the reader's behalf: deleting one thing must not create another. The
    * confirmation is the caller's; by the time this runs it has been given.
+   * Nothing moves until the gateway agrees: a refusal ("a terminal holds this
+   * session") leaves every row where it was and answers with what to say,
+   * which the asking surface shows in place. Never retried.
    */
   const handleDeleteSession = useCallback(
-    (asid: string, supplied?: AgentSessionInfo) => {
-      if (!asid || !canMutateSession('delete', asid, supplied)) return;
-      const previousSessions = sessions;
-      const previousChildren = childrenByParent;
-      childrenRequestRef.current++;
-      const wasActive = asid === activeAsid;
+    async (asid: string, supplied?: AgentSessionInfo): Promise<string | null> => {
+      if (!asid || !canMutateSession('delete', asid, supplied)) return null;
       const deletedInfo =
         sessions.find((session) => session.asid === asid) ??
         Object.values(childrenByParent)
           .flat()
           .find((session) => session.asid === asid);
-      // Capture identity before the optimistic navigation changes the active session.
+      // Capture identity before the answer, while the session is still listed.
       const deletedTarget = homeTargetFor(asid, deletedInfo?.directory, deletedInfo?.agent_id);
+      try {
+        await deleteAgentSession(asid);
+      } catch (err) {
+        console.warn('Failed to delete session:', err);
+        return sessionDeleteFailureMessage(err);
+      }
 
-      const remaining = sessions.filter((session) => session.asid !== asid);
-      setSessions(remaining);
+      childrenRequestRef.current++;
+      const remaining = sessionsRef.current.filter((session) => session.asid !== asid);
+      setSessions((prev) => prev.filter((session) => session.asid !== asid));
       setChildrenByParent((prev) => dropSession(prev, asid));
-      if (wasActive) {
+      if (activeAsidRef.current === asid) {
         const next = latestSession(remaining);
         setTimeline([]);
         setWindowStart(0);
@@ -4085,35 +4093,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setActiveAsid(next?.asid);
         setSessionInfo(next ?? null);
       }
-
-      deleteAgentSession(asid)
-        .then(() => {
-          if (deletedTarget) {
-            void useHomeRecentsStore.getState().remove(deletedTarget);
-            useHomeAttention.getState().observe(deletedTarget, [], Date.now());
-          }
-        })
-        .catch((err) => {
-          console.warn('Failed to delete session:', err);
-          setSessions(previousSessions);
-          setChildrenByParent(previousChildren);
-          if (wasActive) {
-            activeAsidRef.current = asid;
-            setActiveAsid(asid);
-          }
-          showScreenNotice(t`Could not delete`, agentErrorRef.current(err));
-        });
+      if (deletedTarget) {
+        void useHomeRecentsStore.getState().remove(deletedTarget);
+        useHomeAttention.getState().observe(deletedTarget, [], Date.now());
+      }
+      return null;
     },
-    [
-      canMutateSession,
-      setTimeline,
-      sessions,
-      childrenByParent,
-      activeAsid,
-      homeTargetFor,
-      showScreenNotice,
-      t,
-    ]
+    [canMutateSession, setTimeline, sessions, childrenByParent, homeTargetFor]
   );
 
   const handleSelectWorkspace = useCallback(
@@ -5631,14 +5617,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           currentSession?.model ??
           sessionInfo?.model ??
           undefined);
-  const activeModelInfo = useMemo(() => {
-    if (!activeModelRef?.model_id) return undefined;
-    return catalogModels.find(
-      (model) =>
-        model.id === activeModelRef.model_id &&
-        (!activeModelRef.provider_id || model.provider_id === activeModelRef.provider_id)
-    );
-  }, [catalogModels, activeModelRef]);
+  const activeModelInfo = useMemo(
+    () => catalogModelInfo(catalogModels, activeModelRef, catalogDefaults.model),
+    [catalogModels, activeModelRef, catalogDefaults.model]
+  );
 
   const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
 

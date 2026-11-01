@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentMark } from '@/components/agent-mark';
@@ -60,7 +60,6 @@ export function HomeAgentsSheet() {
     router.back();
   }
 
-  const contentSized = agents.length <= 5;
   const rows = agents.map((agent) => {
     const caption = _(agentLaunchCaption[launchAgentCaption(agent)]);
     return (
@@ -84,22 +83,16 @@ export function HomeAgentsSheet() {
   });
 
   return (
-    <SheetScene testID="home-agents-sheet" title={t`Choose an agent`} contentSized={contentSized}>
-      {contentSized ? (
-        <View style={sheetSceneStyles.scrollerContent}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </View>
-      ) : (
-        <ScrollView
-          nestedScrollEnabled
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          showsVerticalScrollIndicator={false}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </ScrollView>
-      )}
+    <SheetScene testID="home-agents-sheet" title={t`Choose an agent`} fitsContent>
+      <ScrollView
+        nestedScrollEnabled
+        style={sheetSceneStyles.fitScroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}>
+        {rows}
+        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+      </ScrollView>
     </SheetScene>
   );
 }

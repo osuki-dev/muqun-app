@@ -3581,13 +3581,84 @@ export function workspaceDisplayName(
   return leaf || project?.name?.trim() || fallback;
 }
 
+/**
+ * A catalog id without the bracketed parameters some providers append to it:
+ * Cursor reports the model it runs as `default[]` and lists it as `default`.
+ */
+function bareCatalogId(id: string): string {
+  return id.replace(/\[[^\]]*\]$/, '').trim() || id;
+}
+
+/**
+ * The catalog's entry for a mode or model id: by id, then by the id without
+ * its bracketed parameters; an id that only says "default" takes the entry the
+ * catalog's `defaults` name. Undefined when the catalog does not list it.
+ */
+export function catalogEntry<T extends { id: string }>(
+  entries: readonly T[] | undefined,
+  id: string,
+  defaultId?: string
+): T | undefined {
+  if (!entries?.length) return undefined;
+  const find = (wanted: string) =>
+    entries.find((entry) => entry.id === wanted) ??
+    entries.find((entry) => bareCatalogId(entry.id) === bareCatalogId(wanted));
+  const found = find(id);
+  if (found || !defaultId || bareCatalogId(id).toLowerCase() !== 'default') return found;
+  return find(defaultId);
+}
+
+/**
+ * The catalog's entry for the model a chip names: the exact provider's first,
+ * then whatever `catalogEntry` finds -- a session's model ref and the catalog
+ * do not always agree on the provider id.
+ */
+export function catalogModelInfo(
+  models: readonly ModelInfo[] | undefined,
+  model: ModelRef | null | undefined,
+  defaultModel?: ModelRef
+): ModelInfo | undefined {
+  if (!model?.model_id) return undefined;
+  return (
+    models?.find(
+      (entry) =>
+        entry.id === model.model_id &&
+        (!model.provider_id || entry.provider_id === model.provider_id)
+    ) ?? catalogEntry(models, model.model_id, defaultModel?.model_id)
+  );
+}
+
+/**
+ * An id the catalog does not name, made readable rather than shown raw:
+ * `bypassPermissions` → `Bypass permissions`, `default[]` → `Default`.
+ * Words already in capitals keep them.
+ */
+export function readableCatalogId(id: string): string {
+  const words = bareCatalogId(id)
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => (word.length > 1 && word === word.toUpperCase() ? word : word.toLowerCase()));
+  const sentence = words.join(' ');
+  return sentence ? sentence.charAt(0).toUpperCase() + sentence.slice(1) : id;
+}
+
+/** What a mode chip says: the catalog's name for the id, else the id made readable. */
+export function catalogChoiceLabel(
+  entries: readonly { id: string; name?: string }[] | undefined,
+  id: string,
+  defaultId?: string
+): string {
+  return catalogEntry(entries, id, defaultId)?.name?.trim() || readableCatalogId(id);
+}
+
 export function formatModelName(
   model?: ModelRef | null,
   fallback = 'Model',
   catalogName?: string
 ): string {
   if (!model?.model_id) return fallback;
-  const modelId = model.model_id;
+  const modelId = bareCatalogId(model.model_id);
   const baseName =
     catalogName?.trim() ||
     KNOWN_MODEL_NAMES[modelId] ||

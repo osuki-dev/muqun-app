@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ComputerIcon } from '@/icons';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,8 +112,6 @@ export function HomeTargetSheet() {
     router.back();
   }
 
-  const contentSized = records.length <= 5;
-
   const rows = records.map((server) => {
     const reachability = reachabilityByServer[server.serverId] ?? 'unknown';
     const lastSeenMs = agentsByServer[server.serverId]?.checkedAtMs;
@@ -163,22 +161,16 @@ export function HomeTargetSheet() {
       testID="home-target-sheet"
       title={t`Choose a computer`}
       caption={selected?.label}
-      contentSized={contentSized}>
-      {contentSized ? (
-        <View style={sheetSceneStyles.scrollerContent}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </View>
-      ) : (
-        <ScrollView
-          nestedScrollEnabled
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          showsVerticalScrollIndicator={false}>
-          {rows}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </ScrollView>
-      )}
+      fitsContent>
+      <ScrollView
+        nestedScrollEnabled
+        style={sheetSceneStyles.fitScroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}>
+        {rows}
+        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+      </ScrollView>
     </SheetScene>
   );
 }

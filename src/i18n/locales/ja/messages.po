@@ -2117,13 +2117,13 @@ msgstr "セッションを作成できませんでした"
 msgid "Could not create that worktree."
 msgstr "そのワークツリーを作成できませんでした"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "削除できませんでした"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "このセッションを削除できませんでした。対応するコンピューターに再接続し、ホームを更新してから再試行してください"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "削除できませんでした: {message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "削除"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "セッションを削除しています…"
@@ -5585,6 +5586,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "現在のスナップショットを読み込むには履歴を更新してください"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "ホームを更新して、このセッションのサービスを確認してから削除してください"
 
@@ -7599,7 +7601,7 @@ msgstr "このPDFはパスワードで保護されています。保存してPDF
 msgid "This project"
 msgstr "このプロジェクト"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "このサービスはセッションの削除に対応していません。セッションを開いて実行中のターンを停止するか、対応するコンピューターで管理してください"
 
@@ -7623,7 +7625,7 @@ msgstr "このセッション"
 msgid "This session has no message to roll back to."
 msgstr "このセッションには戻れるメッセージがありません"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "このセッションは対応するサービスで利用できなくなりました。ホームを更新してから再試行してください"
 
@@ -7991,6 +7993,7 @@ msgid "Update Gateway on this computer first."
 msgstr "先にこのパソコンの Gateway を更新してください"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "このコンピューターの Gateway を更新して再接続すると、ホームからセッションを削除できます"
 

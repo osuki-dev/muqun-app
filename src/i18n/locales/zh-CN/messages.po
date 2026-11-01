@@ -2117,13 +2117,13 @@ msgstr "无法创建会话"
 msgid "Could not create that worktree."
 msgstr "无法创建该工作树"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not delete"
-msgstr "无法删除"
-
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "无法删除此会话。请重新连接对应电脑并刷新首页后重试"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete: {message}"
+msgstr "无法删除：{message}"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not detach"
@@ -2642,6 +2642,7 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "删除"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "Deleting session…"
 msgstr "正在删除会话…"
@@ -5585,6 +5586,7 @@ msgid "Refresh history to load the current snapshot."
 msgstr "刷新历史记录以加载当前快照"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Refresh Home to identify this session’s provider before deleting it."
 msgstr "请刷新首页，确认此会话所属服务后再删除"
 
@@ -7599,7 +7601,7 @@ msgstr "此 PDF 受密码保护。请保存后用 PDF 阅读器打开"
 msgid "This project"
 msgstr "本项目"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This provider cannot delete sessions. Open the session to stop a running turn or manage it on its computer."
 msgstr "此服务不支持删除会话。请打开会话停止正在运行的任务，或在对应电脑上管理它"
 
@@ -7623,7 +7625,7 @@ msgstr "本次会话"
 msgid "This session has no message to roll back to."
 msgstr "这个会话还没有可以回滚到的消息"
 
-#: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "This session is no longer available in this service. Refresh Home before trying again."
 msgstr "此会话在对应服务中已不可用。请刷新首页后重试"
 
@@ -7991,6 +7993,7 @@ msgid "Update Gateway on this computer first."
 msgstr "请先更新这台电脑的 Gateway"
 
 #: src/components/home-recent-sessions.tsx
+#: src/lib/session-delete-failure.ts
 msgid "Update Gateway on this computer, then reconnect to enable deleting sessions from Home."
 msgstr "请更新此电脑上的 Gateway，再重新连接，即可从首页删除会话"
 

@@ -59,6 +59,7 @@ import {
 import { useRememberedAgentDefaults } from '@/hooks/use-remembered-agent-defaults';
 import {
   createAgentSession,
+  catalogModelInfo,
   formatModelName,
   getAgentCatalog,
   peekAgentCatalog,
@@ -733,13 +734,7 @@ export function HomeComposerDock({
   function beginChoice() {
     pendingChoiceRef.current = choiceSignature;
   }
-  const modelInfo = selectedModel
-    ? models.find(
-        (model) =>
-          model.id === selectedModel.model_id &&
-          (!selectedModel.provider_id || model.provider_id === selectedModel.provider_id)
-      )
-    : undefined;
+  const modelInfo = catalogModelInfo(models, selectedModel, catalog?.defaults.model);
   // Nothing to name yet: "Loading…" only while a read is actually under way
   // (the target answering and selected), else the plain word, translated --
   // never the formatter's English fallback.
@@ -2114,13 +2109,11 @@ export function HomeComposerDock({
       ? threadConfiguration
       : undefined;
   const replyModel = replyConfiguration?.model;
-  const replyModelInfo = replyModel
-    ? threadCatalog?.models.find(
-        (model) =>
-          model.id === replyModel.model_id &&
-          (!replyModel.provider_id || model.provider_id === replyModel.provider_id)
-      )
-    : undefined;
+  const replyModelInfo = catalogModelInfo(
+    threadCatalog?.models,
+    replyModel,
+    threadCatalog?.defaults.model
+  );
   const replyFolder = replyConfiguration?.directory ?? threadDirectory;
   const options = (
     <HomeComposerOptions
