@@ -812,7 +812,10 @@ export const AgentComposer = memo(function AgentComposer({
    * the id made readable (`bypassPermissions` → `Bypass permissions`), never
    * the raw id.
    */
-  const modeLabel = (id: string) => catalogChoiceLabel(availableAgentsProp, id);
+  // No mode -- the catalog has not answered, or offers none of the
+  // candidates -- says so rather than naming another agent's default.
+  const modeLabel = (id: string | undefined) =>
+    id ? catalogChoiceLabel(availableAgentsProp, id) : t`Mode`;
   const [sending, setSending] = useState(false);
   const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
   const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
@@ -2052,7 +2055,9 @@ export const AgentComposer = memo(function AgentComposer({
                       lead={
                         sessionLead
                           ? sessionLead(node.session)
-                          : modeLabel(node.session.mode || selectedAgent || 'build')
+                          : node.session.mode || selectedAgent
+                            ? modeLabel(node.session.mode || selectedAgent)
+                            : undefined
                       }
                       onPress={handleSelectSession}
                       onOpenTree={onOpenSessionTree}
@@ -2093,7 +2098,7 @@ export const AgentComposer = memo(function AgentComposer({
                         variant="caption"
                         numberOfLines={1}
                         color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
-                        {modeLabel(selectedAgent ?? 'build')}
+                        {modeLabel(selectedAgent)}
                       </Text>
                       <DisclosureDownIcon size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                     </TextSegment>
@@ -2173,7 +2178,7 @@ export const AgentComposer = memo(function AgentComposer({
                           variant="caption"
                           color={theme.colors.text}
                           style={styles.actionBtnLabel}>
-                          {modeLabel(selectedAgent ?? 'build')}
+                          {modeLabel(selectedAgent)}
                         </Text>
                         <DisclosureDownIcon size={12} color={theme.colors.textMuted} />
                       </PressableScale>

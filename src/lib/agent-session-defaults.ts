@@ -1,4 +1,5 @@
 import {
+  catalogEntry,
   isFreeModel,
   selectableModes,
   type ModeInfo,
@@ -154,6 +155,40 @@ export function catalogModeId(
 ): string | undefined {
   if (!mode) return undefined;
   return selectableModes(modes).some((entry) => entry.id === mode) ? mode : undefined;
+}
+
+/**
+ * The mode a composer's pill names, checked against the agent on screen.
+ *
+ * The screen's selected mode outlives a move to another agent: OpenCode's
+ * `build` stayed selected on a Claude Code session, whose catalog has its own
+ * modes, and the pill fell back to `build` when nothing was selected at all.
+ * So every candidate must be one this agent's catalog lists: the screen's
+ * selection (a pick, the session's own mode, or the remembered one), then the
+ * session's mode, then the catalog's default. None of them -- or a catalog
+ * with no modes -- names nothing. Until the catalog answers only the
+ * session's own mode is shown: it is the one fact that is about this agent.
+ */
+export function shownModeId(input: {
+  selected?: string | null;
+  sessionMode?: string | null;
+  catalogDefault?: string | null;
+  modes: readonly ModeInfo[];
+  catalogRead: boolean;
+}): string | undefined {
+  if (!input.catalogRead) return input.sessionMode || undefined;
+  const offered = selectableModes(input.modes);
+  // By the catalog's own matching (`default[]` is `default`, a bare
+  // `default` the catalog's default), answered with the catalog's id.
+  const listed = (id: string | null | undefined, list: readonly ModeInfo[]) =>
+    id ? catalogEntry(list, id, input.catalogDefault ?? undefined)?.id : undefined;
+  // A session may run a mode the picker does not offer (one set elsewhere);
+  // while the catalog lists it, it is still what the session runs.
+  return (
+    listed(input.selected, offered) ??
+    listed(input.sessionMode, input.modes) ??
+    listed(input.catalogDefault, offered)
+  );
 }
 
 /**
