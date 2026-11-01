@@ -15,7 +15,7 @@ import { agentStatusWord } from '@/i18n/labels';
 import { awayDurationParts, type AwayDigest, type AwayDigestRow } from '@/lib/away-digest';
 import { feedback } from '@/lib/feedback';
 import { agentStatusTone } from '@/lib/herdr-entity';
-import { fadeInDown, fadeOutUp, listLayout } from '@/lib/motion';
+import { fadeInDown, listLayout } from '@/lib/motion';
 
 /**
  * "While you were away": what the server screen says to someone reopening a
@@ -62,12 +62,11 @@ export function AwayDigestCard({
 
   return (
     <Animated.View
-      // The card arrives from above like every other notice in this column and
-      // leaves upward rather than fading in place: it came from the top of the
-      // screen and it goes back there. `listLayout` on top so the notices under
-      // it close the gap instead of jumping when this one leaves.
+      // The card arrives from above like every other notice in this column.
+      // No exit animation: it is a `NoticeDeck` page, and the deck removes the
+      // page's wrapper with it -- an exiting child of a removed view crashes
+      // Fabric on Android.
       entering={fadeInDown('medium')}
-      exiting={fadeOutUp('short')}
       layout={listLayout('short')}
       style={styles.wrapper}>
       {/* `accessible={false}` on the tap target, and that is not an oversight.

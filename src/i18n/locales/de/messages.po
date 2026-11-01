@@ -5834,6 +5834,7 @@ msgstr "Größenprüfung wiederholen"
 msgid "Retry uploading {0}: {reason}"
 msgstr "{0} erneut hochladen: {reason}"
 
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts

@@ -9,10 +9,13 @@ import { PressableScale } from './pressable-scale';
 export function AgentSessionActivationNotice({
   error,
   onRetry,
+  retrying = false,
   title,
 }: {
   error: unknown;
   onRetry: () => void;
+  /** A retry is under way: the same notice says so instead of being replaced. */
+  retrying?: boolean;
   title?: string;
 }) {
   const { t } = useLingui();
@@ -35,10 +38,14 @@ export function AgentSessionActivationNotice({
       </Text>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={t`Retry`}
+        accessibilityLabel={retrying ? t`Retrying…` : t`Retry`}
+        accessibilityState={{ busy: retrying, disabled: retrying }}
+        disabled={retrying}
         onPress={onRetry}
         style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
-        <Text variant="caption" color={theme.colors.primary}>{t`Retry`}</Text>
+        <Text variant="caption" color={retrying ? theme.colors.textMuted : theme.colors.primary}>
+          {retrying ? t`Retrying…` : t`Retry`}
+        </Text>
       </PressableScale>
     </View>
   );

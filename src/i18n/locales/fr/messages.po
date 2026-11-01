@@ -5834,6 +5834,7 @@ msgstr "Revérifier la taille"
 msgid "Retry uploading {0}: {reason}"
 msgstr "Réessayer l'envoi de {0} : {reason}"
 
+#: src/components/agent-session-activation-notice.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/i18n/labels.ts

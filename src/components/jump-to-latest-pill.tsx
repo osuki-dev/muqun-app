@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { DisclosureDownIcon } from '@/icons';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { fadeIn } from '@/lib/motion';
 import type { TranscriptFollow } from '@/lib/transcript-follow';
 
 /**
@@ -35,11 +35,10 @@ export const JumpToLatestPill = memo(function JumpToLatestPill({
   const { t } = useLingui();
   const { visible } = useSyncExternalStore(follow.subscribe, follow.getSnapshot);
   if (!enabled || !visible) return null;
+  // No exit: scrolling at the threshold and every snapshot read (`enabled`)
+  // hide and show this within a second.
   return (
-    <Animated.View
-      entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
-      style={[styles.wrap, { bottom }]}>
+    <Animated.View entering={fadeIn('micro')} style={[styles.wrap, { bottom }]}>
       <GlassChrome surface="navigation" shape="navigationPill" style={styles.pill}>
         <PressableScale
           testID={testID}

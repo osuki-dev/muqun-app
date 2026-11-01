@@ -611,7 +611,9 @@ export function HomeStageLayout({
             <GestureDetector gesture={pull}>
               <View>
                 {typing ? null : (
-                  <Animated.View entering={fadeIn('short')} exiting={fadeOut('short')}>
+                  // No exit: typing hides it on every focus, and the View around
+                  // it leaves with the last panel.
+                  <Animated.View entering={fadeIn('short')}>
                     <StageEntryRise entry={footEntry} slot={FOOT_ENTRY.handle}>
                       <PressableScale
                         testID="home-stage-pull"
