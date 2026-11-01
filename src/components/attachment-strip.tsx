@@ -18,7 +18,7 @@ import { isPdfFile } from '@/lib/session-assets';
 import { videoFileMime } from '@/lib/media-file';
 import { useAppActive } from '@/hooks/use-app-active';
 import { StagedVideoThumbnail } from '@/components/staged-video-thumbnail';
-import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
+import { DURATION, fadeIn, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
 /**
@@ -174,13 +174,15 @@ export function AttachmentStrip({
                   three, a nine-photo pick leaves six tiles that are waiting
                   rather than stalled, and a spinner on all nine would say the
                   opposite. */}
-              {/* Queued, uploading and failed are three states of one thing, so
-                  they hand over rather than cutting: each fades in as the last
-                  fades out, and the tile is never briefly bare between them. */}
+              {/* Queued, uploading and failed are three states of one thing;
+                  each fades in over the last. They never fade out: a state
+                  flips within a frame of the tile, and the tile with the whole
+                  strip, being torn down on send, and an exit still running
+                  when its parent is gone is a Fabric mount crash on Android
+                  ("Unable to find parentView"). */}
               {attachment.status === 'pending' ? (
                 <Animated.View
                   entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.busyOverlay]}>
                   <AppIcon name="time" size={16} color="#FFFFFF" />
                 </Animated.View>
@@ -188,7 +190,6 @@ export function AttachmentStrip({
               {attachment.status === 'uploading' ? (
                 <Animated.View
                   entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.busyOverlay]}>
                   <Spinner size="sm" color="#FFFFFF" />
                 </Animated.View>
@@ -196,7 +197,6 @@ export function AttachmentStrip({
               {failed ? (
                 <Animated.View
                   entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
                   style={[styles.overlay, styles.failedOverlay]}>
                   {!video ? (
                     <AppIcon name={retryable ? 'undo' : 'blocked'} size={17} color="#FFFFFF" />
@@ -208,7 +208,7 @@ export function AttachmentStrip({
                 something was wrong and nothing said what, and a file over the
                 cap stayed red with a retry arrow that could not help. */}
             {reason ? (
-              <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+              <Animated.View entering={fadeIn('micro')}>
                 <Text
                   variant="caption"
                   color={theme.colors.danger}
@@ -234,7 +234,6 @@ export function AttachmentStrip({
             {attachment.status === 'done' ? (
               <Animated.View
                 entering={zoomIn('micro')}
-                exiting={fadeOut('micro')}
                 style={[
                   styles.readyBadge,
                   { backgroundColor: surfaceBackground(theme.colors.success) },

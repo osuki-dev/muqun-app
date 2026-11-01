@@ -3861,10 +3861,6 @@ msgstr "Đang nghe…"
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "Không thể điều khiển trực tiếp lịch sử đã lưu này. Bản nháp của bạn vẫn ở đây"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Tải thêm"

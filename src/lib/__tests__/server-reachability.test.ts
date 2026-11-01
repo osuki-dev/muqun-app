@@ -10,6 +10,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   agentStatusesAreCurrent,
   gatewayConnectionPhase,
+  homeListsComputer,
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
   prewarmGate,
@@ -399,5 +400,22 @@ describe('a fault held against the pairing', () => {
     expect(statusNeedsPairing('unauthorized')).toBe(true);
     expect(statusNeedsPairing('offline')).toBe(false);
     expect(statusNeedsPairing('reconnecting')).toBe(false);
+  });
+});
+
+describe('which computers Home lists', () => {
+  test.each([
+    ['live', false, false, true],
+    ['offline', true, false, false],
+    // A failed answer gone stale reads unknown; it must not flicker back.
+    ['unknown', true, false, false],
+    // Never asked, or last heard answering: not known to be down.
+    ['unknown', false, false, true],
+    ['reconnecting', false, false, true],
+    ['unauthorized', false, false, true],
+    // The selected computer or deck front never vanishes from under the reader.
+    ['offline', true, true, true],
+  ] as const)('%s (last probe down: %p, kept: %p) -> %p', (status, down, kept, listed) => {
+    expect(homeListsComputer(status, down, kept)).toBe(listed);
   });
 });

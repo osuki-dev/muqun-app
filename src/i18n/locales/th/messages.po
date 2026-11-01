@@ -3861,10 +3861,6 @@ msgstr "กำลังฟัง…"
 msgid "Live Activity"
 msgstr "กิจกรรมสด"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "ประวัติที่บันทึกไว้นี้ไม่รองรับการควบคุมแบบสด ร่างข้อความของคุณจะยังอยู่ที่นี่"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "โหลดเพิ่มเติม"

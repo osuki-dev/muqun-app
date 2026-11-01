@@ -8,7 +8,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
@@ -127,9 +127,9 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
             the label always starts where a tool's name does. */}
         <View style={styles.marker}>
           {pending ? (
-            <Animated.View exiting={fadeOut('micro')}>
+            <View>
               <ThinkingIndicator size={12} color={theme.colors.primary} />
-            </Animated.View>
+            </View>
           ) : text ? (
             <Animated.View style={chevronStyle}>
               <DisclosureDownIcon size={12} color={theme.colors.primary} style={styles.chevron} />

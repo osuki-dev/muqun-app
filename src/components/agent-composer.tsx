@@ -391,6 +391,8 @@ export interface AgentComposerProps {
    */
   searchFiles?: (query: string) => Promise<FileMentionHit[]>;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
+  interactionBlocked?: boolean;
+  /** Why sending is blocked, shown above the field; implies `interactionBlocked`. */
   interactionBlockedReason?: string;
   /**
    * Says why sending waits in the field's placeholder instead of a caption row
@@ -670,6 +672,7 @@ export const AgentComposer = memo(function AgentComposer({
   canSteerWhileRunning = true,
   canMentionFiles = true,
   searchFiles,
+  interactionBlocked: interactionBlockedProp = false,
   interactionBlockedReason,
   blockedReasonInField = false,
   sessionStrip = EMPTY_STRIP,
@@ -817,8 +820,8 @@ export const AgentComposer = memo(function AgentComposer({
     token: symbol;
     delivery: 'steer' | 'queue' | undefined;
   } | null>(null);
-  const promptAllowed =
-    !interactionBlockedReason && canSendAgentPrompt(running, canSendWhileRunning);
+  const interactionBlocked = interactionBlockedProp || interactionBlockedReason !== undefined;
+  const promptAllowed = !interactionBlocked && canSendAgentPrompt(running, canSendWhileRunning);
   const fieldBlockedReason =
     blockedReasonInField && !promptAllowed
       ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
@@ -1229,7 +1232,7 @@ export const AgentComposer = memo(function AgentComposer({
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
-    if ((!trimmed && !hasAttachments) || sending || interactionBlockedReason) return;
+    if ((!trimmed && !hasAttachments) || sending || interactionBlocked) return;
 
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
@@ -1357,7 +1360,7 @@ export const AgentComposer = memo(function AgentComposer({
     record,
     sending,
     promptAllowed,
-    interactionBlockedReason,
+    interactionBlocked,
     disabled,
     onSend,
     captureAttachmentSend,
@@ -2506,7 +2509,9 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {!promptAllowed && !fieldBlockedReason ? (
+              {!promptAllowed &&
+              !fieldBlockedReason &&
+              (interactionBlockedReason || !interactionBlocked) ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {interactionBlockedReason ?? (
                     <Trans>
@@ -2597,13 +2602,15 @@ export const AgentComposer = memo(function AgentComposer({
                     style: { fontFamily: interfaceFontFamily },
                   }}
                   send={{
-                    accessibilityLabel: !promptAllowed
-                      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
-                      : running
-                        ? deliveryMode === 'steer'
-                          ? t`Steer running agent`
-                          : t`Queue message for agent`
-                        : t`Send message`,
+                    accessibilityLabel: interactionBlocked
+                      ? (interactionBlockedReason ?? t`Send message`)
+                      : !promptAllowed
+                        ? t`Waiting for the current turn to end`
+                        : running
+                          ? deliveryMode === 'steer'
+                            ? t`Steer running agent`
+                            : t`Queue message for agent`
+                          : t`Send message`,
                     armed:
                       (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
                       !sending &&

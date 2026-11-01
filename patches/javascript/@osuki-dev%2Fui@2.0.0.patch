@@ -1,0 +1,31 @@
+JavaScript-only runtime patch. This directory must contain no native code,
+codegen, native dependencies or config-plugin changes. Native patches stay in
+the existing native fingerprint inputs; verify the official hash is unchanged
+before publishing a JavaScript-only update. Do not edit native build records.
+
+@osuki-dev/ui 2.0.0: ToastViewport returns null as soon as the toast array is
+empty, while the last ToastCard is still running its 140 ms exiting animation.
+Reanimated then finishes the exit on a child whose parent Fabric has already
+deleted, which on Android is a fatal "Unable to find parentView for tag" in
+SurfaceMountingManager.removeViewAt (seen on a physical phone, 2026-10-31 and
+2026-11-01). Keep the absolutely positioned, box-none viewport mounted while
+empty; it paints nothing and takes no touches.
+
+Remove when upstream @osuki-dev/ui keeps the viewport mounted while empty (or
+drops the card's exiting animation).
+
+diff --git a/src/components/toast.tsx b/src/components/toast.tsx
+index f0ddbef34807cf10386145ffc057db1c9ad80bc4..66ac0aecf10a2419bb58ec2aa07fa89c2ab3f61f 100644
+--- a/src/components/toast.tsx
++++ b/src/components/toast.tsx
+@@ -235,7 +235,9 @@ const ToastViewport: React.FC<ToastViewportProps> = ({
+ 		[placement, theme.spacing, verticalOffset],
+ 	);
+ 
+-	if (toasts.length === 0) return null;
++	// Keep the viewport mounted while empty: the last ToastCard is still
++	// running its exiting animation when the array empties, and removing its
++	// parent first crashes Android Fabric ("Unable to find parentView").
+ 
+ 	return (
+ 		<View pointerEvents="box-none" style={viewportStyle}>

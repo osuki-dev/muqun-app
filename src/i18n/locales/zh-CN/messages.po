@@ -3861,10 +3861,6 @@ msgstr "正在聆听…"
 msgid "Live Activity"
 msgstr "实时活动"
 
-#: src/components/agent-workbench.tsx
-msgid "Live control is unavailable for this saved history. Your draft stays here."
-msgstr "此保存的历史记录不支持实时控制。草稿会保留在这里"
-
 #: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "加载更多"
