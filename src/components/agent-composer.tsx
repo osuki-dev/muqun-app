@@ -134,6 +134,7 @@ import {
 import { agentHostCommandDescription } from '@/i18n/labels';
 import {
   agentUsageSummary,
+  catalogChoiceLabel,
   formatModelName,
   hasRealSessionTitle,
   isSessionUnread,
@@ -803,21 +804,12 @@ export const AgentComposer = memo(function AgentComposer({
     draftMemory?.write(text);
   }, [draftMemory, text]);
   /**
-   * One answer to "what is this agent called", for the chip strip and the
-   * action row alike. The catalogue's name when the host publishes one, the id
-   * otherwise -- a reader's own agent under `.opencode/agent` often has no
-   * other name, and an id is still the truth about it.
+   * One answer to "what is this mode called", for the chip strip and the
+   * action row alike: the catalog's name when the host publishes one, else
+   * the id made readable (`bypassPermissions` → `Bypass permissions`), never
+   * the raw id.
    */
-  // The mode as the chips name it: the catalog's display name when it has
-  // one, else the bare id with its first letter raised (`standard` →
-  // `Standard`; ids are ASCII, so no locale is involved).
-  const modeLabel = (id: string) =>
-    availableAgentsProp?.find((agent) => agent.id === id)?.name ||
-    id.charAt(0).toUpperCase() + id.slice(1);
-  const nameOfAgent = useCallback(
-    (id: string) => availableAgentsProp?.find((agent) => agent.id === id)?.name || id,
-    [availableAgentsProp]
-  );
+  const modeLabel = (id: string) => catalogChoiceLabel(availableAgentsProp, id);
   const [sending, setSending] = useState(false);
   const [attachmentSendGuard] = useState(() => new ComposerSendGuard());
   const [pendingAttachmentSend, setPendingAttachmentSend] = useState<{
@@ -2057,7 +2049,7 @@ export const AgentComposer = memo(function AgentComposer({
                       lead={
                         sessionLead
                           ? sessionLead(node.session)
-                          : nameOfAgent(node.session.mode || selectedAgent || 'build')
+                          : modeLabel(node.session.mode || selectedAgent || 'build')
                       }
                       onPress={handleSelectSession}
                       onOpenTree={onOpenSessionTree}

@@ -5,6 +5,8 @@ import {
   contextFillRatio,
   DEFAULT_PERMISSION_DECISIONS,
   contextTokenTotal,
+  catalogChoiceLabel,
+  catalogModelInfo,
   formatModelName,
   hasRealSessionTitle,
   inboxItemText,
@@ -40,6 +42,7 @@ import {
   validateFormField,
   type FormField,
   type MessageGeneration,
+  type ModelRef,
   type TimelineItem,
 } from '../agent-protocol';
 
@@ -1424,6 +1427,38 @@ describe('titles and model names', () => {
     ).toBe('GPT-6 Astra · High');
     expect(formatModelName(null)).toBe('Model');
     expect(formatModelName(undefined, 'Pick one')).toBe('Pick one');
+  });
+
+  test('a chip names the catalog entry, the default, or a readable id, never the raw id', () => {
+    const modes: [{ id: string; name?: string }[], string, string | undefined, string][] = [
+      [[{ id: 'plan', name: 'Plan mode' }], 'plan', undefined, 'Plan mode'],
+      [[{ id: 'default', name: 'Auto' }], 'default[]', undefined, 'Auto'],
+      [[{ id: 'mode-b', name: 'Mode B' }], 'default', 'mode-b', 'Mode B'],
+      [[{ id: 'mode-b', name: 'Mode B' }], 'mode-c', 'mode-b', 'Mode c'],
+      [[], 'bypassPermissions', undefined, 'Bypass permissions'],
+      [[], 'default[]', undefined, 'Default'],
+      [[], 'read_only-MCP', undefined, 'Read only MCP'],
+    ];
+    for (const [entries, id, defaultId, label] of modes)
+      expect(catalogChoiceLabel(entries, id, defaultId)).toBe(label);
+
+    const models = [
+      { id: 'default[]', provider_id: 'provider-a', name: 'Auto', enabled: true },
+      { id: 'model-b', provider_id: 'provider-a', name: 'Model B', enabled: true },
+      { id: 'model-b', provider_id: 'provider-b', name: 'Model B (provider B)', enabled: true },
+    ];
+    const chip = (ref: ModelRef, defaultModel?: ModelRef, listed = models) =>
+      formatModelName(ref, '', catalogModelInfo(listed, ref, defaultModel)?.name);
+    // The session's ref and the catalog disagree on the provider.
+    expect(chip({ provider_id: 'provider-c', model_id: 'default[]' })).toBe('Auto');
+    expect(chip({ provider_id: 'provider-b', model_id: 'model-b' })).toBe('Model B (provider B)');
+    // An id that only says "default" takes the catalog default's name.
+    const defaultModel = { provider_id: 'provider-a', model_id: 'model-b' };
+    const unlistedDefault = models.slice(1);
+    expect(
+      chip({ provider_id: 'provider-a', model_id: 'default' }, defaultModel, unlistedDefault)
+    ).toBe('Model B');
+    expect(chip({ provider_id: 'provider-a', model_id: 'unlisted[]' })).toBe('Unlisted');
   });
 });
 

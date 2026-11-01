@@ -15,6 +15,7 @@ import {
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { getAgentCatalog, selectableModes, type ModeInfo } from '@/lib/agent-session';
+import { readableCatalogId } from '@/lib/agent-protocol';
 import { effectiveAgentId } from '@/lib/agent-session-defaults';
 
 const STAGGERED_ROWS = 8;
@@ -190,7 +191,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
             layout={listLayout('short')}>
             <SheetSceneRow
               testID={`agent-mode-row-${agent.id}`}
-              title={agent.name || agent.id}
+              title={agent.name || readableCatalogId(agent.id)}
               caption={[modeLabel(agent), agent.description].filter(Boolean).join(' · ')}
               selected={isSelected}
               leading={agentIcon(

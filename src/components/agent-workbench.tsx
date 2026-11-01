@@ -136,6 +136,7 @@ import {
   exportAgentSession,
   sendAgentCommand,
   orderKeyAfter,
+  catalogModelInfo,
   formatModelName,
   hasRealSessionTitle,
   sessionTitleOr,
@@ -5616,14 +5617,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           currentSession?.model ??
           sessionInfo?.model ??
           undefined);
-  const activeModelInfo = useMemo(() => {
-    if (!activeModelRef?.model_id) return undefined;
-    return catalogModels.find(
-      (model) =>
-        model.id === activeModelRef.model_id &&
-        (!activeModelRef.provider_id || model.provider_id === activeModelRef.provider_id)
-    );
-  }, [catalogModels, activeModelRef]);
+  const activeModelInfo = useMemo(
+    () => catalogModelInfo(catalogModels, activeModelRef, catalogDefaults.model),
+    [catalogModels, activeModelRef, catalogDefaults.model]
+  );
 
   const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
 
