@@ -4005,6 +4005,7 @@ msgstr "Mensagem não enviada"
 msgid "Mine"
 msgstr "Meus"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Modo"
@@ -7420,10 +7421,6 @@ msgstr "Esta atividade não inclui nenhum resultado"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "Esta atividade não inclui nenhum resultado. Abra a sessão para ler a conversa"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "Este agente aceita mensagens quando termina o seu turno. O seu rascunho fica aqui"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

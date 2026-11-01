@@ -392,7 +392,7 @@ export interface AgentComposerProps {
   searchFiles?: (query: string) => Promise<FileMentionHit[]>;
   /** A session observed elsewhere keeps its draft, but cannot send through this runtime. */
   interactionBlocked?: boolean;
-  /** Why sending is blocked, shown above the field; implies `interactionBlocked`. */
+  /** Where to go instead, shown above the field; implies `interactionBlocked`. */
   interactionBlockedReason?: string;
   /**
    * Says why sending waits in the field's placeholder instead of a caption row
@@ -826,9 +826,7 @@ export const AgentComposer = memo(function AgentComposer({
   const interactionBlocked = interactionBlockedProp || interactionBlockedReason !== undefined;
   const promptAllowed = !interactionBlocked && canSendAgentPrompt(running, canSendWhileRunning);
   const fieldBlockedReason =
-    blockedReasonInField && !promptAllowed
-      ? (interactionBlockedReason ?? t`Waiting for the current turn to end`)
-      : undefined;
+    blockedReasonInField && !promptAllowed ? interactionBlockedReason : undefined;
   const [requestedDeliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const deliveryMode = !canSteerWhileRunning
     ? 'queue'
@@ -2514,15 +2512,12 @@ export const AgentComposer = memo(function AgentComposer({
                 </Animated.View>
               ) : null}
 
-              {!promptAllowed &&
-              !fieldBlockedReason &&
-              (interactionBlockedReason || !interactionBlocked) ? (
+              {/* A turn that cannot take a message says so on the disabled
+                  send button only; a caller's reason (a terminal holding the
+                  session) is where to go instead, so it stays. */}
+              {interactionBlockedReason && !fieldBlockedReason ? (
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  {interactionBlockedReason ?? (
-                    <Trans>
-                      This agent accepts messages after its turn ends. Your draft stays here.
-                    </Trans>
-                  )}
+                  {interactionBlockedReason}
                 </Text>
               ) : null}
 

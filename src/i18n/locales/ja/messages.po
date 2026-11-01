@@ -4005,6 +4005,7 @@ msgstr "メッセージを送信できませんでした"
 msgid "Mine"
 msgstr "マイテーマ"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "モード"
@@ -7420,10 +7421,6 @@ msgstr "この活動記録には結果が含まれていません"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "この活動記録には結果が含まれていません。「セッションを開く」で会話を確認できます"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "このエージェントはターン終了後にメッセージを受け付けます。下書きはここに残ります"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

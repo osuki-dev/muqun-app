@@ -4005,6 +4005,7 @@ msgstr "Сообщение не отправлено"
 msgid "Mine"
 msgstr "Мои"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Режим"
@@ -7420,10 +7421,6 @@ msgstr "К этой записи об активности не приложен
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "К этой записи об активности не приложен результат. Откройте сеанс, чтобы прочитать переписку"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "Этот агент принимает сообщения после завершения своего хода. Ваш черновик останется здесь"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."

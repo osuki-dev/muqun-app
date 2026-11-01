@@ -4005,6 +4005,7 @@ msgstr "Chưa gửi được tin nhắn"
 msgid "Mine"
 msgstr "Của tôi"
 
+#: src/components/agent-composer.tsx
 #: src/components/home-composer-options.tsx
 msgid "Mode"
 msgstr "Chế độ"
@@ -7420,10 +7421,6 @@ msgstr "Hoạt động này không kèm theo kết quả"
 #: src/components/agent-tool-card.tsx
 msgid "This activity has no result attached. Open session to read the conversation."
 msgstr "Hoạt động này không kèm theo kết quả. Mở phiên để đọc cuộc trò chuyện"
-
-#: src/components/agent-composer.tsx
-msgid "This agent accepts messages after its turn ends. Your draft stays here."
-msgstr "Tác tử này nhận tin nhắn sau khi kết thúc lượt. Bản nháp của bạn vẫn ở đây"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
