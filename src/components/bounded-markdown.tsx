@@ -18,8 +18,7 @@ import { DiagramMarkdown } from '@/components/diagram-markdown';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { linkedFilePath } from '@/lib/audio-markdown';
-import { isHostPathSource } from '@/lib/message-images';
+import { LOCAL_FILE_LINK_PATTERN, localFileLinkPath } from '@/lib/audio-markdown';
 import {
   MARKDOWN_CHUNK_CHARS,
   MARKDOWN_NATIVE_CEILING,
@@ -156,6 +155,23 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   const { showToast } = useToast();
   const mono = useMonoFontFamily();
   const [budget, setBudget] = useState(MARKDOWN_CHUNK_CHARS);
+  // A tappable file link is set in the mono face and underlined, so its label
+  // cannot pass for a web link in the same sentence: the tap opens a file on
+  // the session's computer, not a page.
+  const fileLinks = openLinks && onFileLinkPress !== undefined;
+  const linkStyle = useMemo(
+    () =>
+      fileLinks
+        ? {
+            ...markdownStyle,
+            linkVariants: {
+              ...markdownStyle.linkVariants,
+              [LOCAL_FILE_LINK_PATTERN]: { fontFamily: mono, underline: true },
+            },
+          }
+        : markdownStyle,
+    [fileLinks, markdownStyle, mono]
+  );
 
   const capped = useMemo(() => capMarkdown(markdown, budget), [markdown, budget]);
   // The ceiling is measured against what would actually be drawn, not against
@@ -217,7 +233,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
       <DiagramMarkdown
         flavor={flavor}
         markdown={capped.text}
-        markdownStyle={markdownStyle}
+        markdownStyle={linkStyle}
         containerStyle={styles.stretch}
         selectable
         selectionColor={selectionColor ?? theme.colors.primary}
@@ -245,9 +261,12 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         {...(openLinks
           ? {
               onLinkPress: ({ url }: { url: string }) => {
-                if (isSafeExternalLink(url)) void Linking.openURL(url);
-                else if (onFileLinkPress && isHostPathSource(url) && !url.startsWith('#'))
-                  onFileLinkPress(linkedFilePath(url));
+                if (isSafeExternalLink(url)) {
+                  void Linking.openURL(url);
+                  return;
+                }
+                const path = onFileLinkPress ? localFileLinkPath(url) : null;
+                if (path) onFileLinkPress?.(path);
               },
             }
           : {})}
