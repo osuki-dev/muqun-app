@@ -44,6 +44,9 @@ const DECISION_ICON = {
   deny: DismissIcon,
 } as const;
 
+/** Past this many characters a label no longer fits half a card's row on a phone. */
+const STACK_LABEL_CHARS = 18;
+
 /** A decision with nothing but its own order, for a payload that listed none. */
 function asOption(decision: PermissionDecision, index: number): PermissionOption {
   return { index, label: decision, decision };
@@ -129,6 +132,21 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   );
 
   const options = usePermissionOptions(request);
+  /**
+   * Two short answers share a row; anything more is a column of full-width
+   * buttons. Three equal thirds turned Claude's "Yes, and don't ask again for
+   * … commands" into a tall, narrow tower of one or two words a line. Stacked,
+   * the plain "allow" leads, where the eye lands first, and the rest keep the
+   * provider's order beneath it.
+   */
+  const stacked =
+    options.length > 2 || options.some((option) => option.label.length > STACK_LABEL_CHARS);
+  const ordered = stacked
+    ? [
+        ...options.filter((option) => option.decision === 'allow'),
+        ...options.filter((option) => option.decision !== 'allow'),
+      ]
+    : options;
   const permissions = requestedPermissionsText(request);
 
   /** The rule the engine tripped, as a phrase; the key spelled out when it has none. */
@@ -270,13 +288,15 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         </View>
       ) : null}
 
-      <View style={styles.actions}>
-        {options.map((option) => {
+      <View style={stacked ? styles.actionsStacked : styles.actions}>
+        {ordered.map((option) => {
           const Icon = DECISION_ICON[option.decision];
           const color = tone(option.decision);
           const primary = option.decision === 'allow';
           return (
-            <View key={`${option.index}:${option.label}`} style={styles.optionColumn}>
+            <View
+              key={`${option.index}:${option.label}`}
+              style={stacked ? styles.optionRow : styles.optionColumn}>
               <PressableScale
                 testID={`agent-permission-option-${option.decision}`}
                 disabled={submitting !== null}
@@ -285,6 +305,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
                 onPress={() => handleDecision(option.decision)}
                 style={[
                   styles.btn,
+                  stacked ? styles.btnStacked : null,
                   { borderRadius: profile.chrome.control },
                   primary
                     ? { backgroundColor: theme.colors.primary }
@@ -407,6 +428,13 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 3,
   },
+  actionsStacked: {
+    alignItems: 'stretch',
+    gap: 6,
+  },
+  optionRow: {
+    gap: 3,
+  },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -417,6 +445,11 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'transparent',
+  },
+  // A full-width answer is a row of its own: a finger-sized target.
+  btnStacked: {
+    minHeight: 40,
+    paddingHorizontal: 12,
   },
   btnText: {
     fontWeight: '600',
