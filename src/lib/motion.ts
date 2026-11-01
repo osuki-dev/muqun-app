@@ -216,15 +216,18 @@ export const MARQUEE_MOTION = {
 /**
  * The two-step confirm: how long an armed action waits for its second tap.
  *
- * Long enough to read one sentence about what will be lost and decide, short
- * enough that an armed Delete is not still lying in wait when the reader comes
- * back to the list a minute later. The bar that drains across the row is this
- * same number drawn, which is why it lives here and not in the component: a
- * window is a duration the reader watches.
+ * Long enough to read one sentence about what will be lost, decide, and tap
+ * again without hurrying, short enough that an armed Delete is not still lying
+ * in wait when the reader comes back to the list a minute later. At four
+ * seconds a considered second tap often landed after the row had quietly
+ * disarmed, and so armed it again instead of deleting. Tapping anything else
+ * that closes the menu still disarms it at once. The bar that drains across
+ * the row is this same number drawn, which is why it lives here and not in the
+ * component: a window is a duration the reader watches.
  *
  * See `src/components/two-step-action.tsx`.
  */
-export const CONFIRM_WINDOW_MS = 4000;
+export const CONFIRM_WINDOW_MS = 8000;
 
 /**
  * How far a revealing element travels, in points.

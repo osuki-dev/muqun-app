@@ -206,7 +206,11 @@ export const TwoStepAction = memo(function TwoStepAction({
               </Animated.View>
             </Animated.View>
             <Animated.View style={[armed ? null : styles.over, armedStyle]}>
-              <Text variant="bodySmall" color={theme.colors.danger} style={styles.labelArmed}>
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                color={theme.colors.danger}
+                style={styles.labelArmed}>
                 {confirmLabel}
               </Text>
             </Animated.View>
