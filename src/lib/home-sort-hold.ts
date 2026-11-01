@@ -36,3 +36,21 @@ export function nextSortHold(state: SortHoldState, event: SortHoldEvent): SortHo
 export function sortHeld(state: SortHoldState): boolean {
   return state.touching || state.scrolling || state.settling;
 }
+
+/**
+ * Items in the order the reader is looking at (`shownKeys`), while a re-sort
+ * is held: an item keeps its place, one that went is dropped, and one that
+ * arrived joins at the end, so nothing above it moves. With nothing held
+ * `shownKeys` is the sorted order itself and the items come back as given.
+ */
+export function heldOrder<T>(
+  shownKeys: readonly string[],
+  items: readonly T[],
+  keyOf: (item: T) => string
+): T[] {
+  const place = new Map(shownKeys.map((key, position) => [key, position]));
+  const kept = items
+    .filter((item) => place.has(keyOf(item)))
+    .sort((a, b) => place.get(keyOf(a))! - place.get(keyOf(b))!);
+  return [...kept, ...items.filter((item) => !place.has(keyOf(item)))];
+}

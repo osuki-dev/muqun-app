@@ -99,6 +99,9 @@ import { sessionDeleteFailureMessage } from '@/lib/session-delete-failure';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
+import { heldOrder } from '@/lib/home-sort-hold';
+import { sortHoldTouches, useHomeSortHold } from '@/stores/home-sort-hold';
+import { useFrozenValue } from '@/hooks/use-frozen-value';
 import {
   homeContinueComputerLabel,
   homeContinueMetaChars,
@@ -417,7 +420,7 @@ export function HomeRecentSessions({
   const discovery = useAgents((state) => state.index.servers);
   const collapsedLimit = limit ?? HOME_CONTINUE_INITIAL_LIMIT;
   const searching = query.trim().length > 0;
-  const displayed = searchedHomeContinueEntries(
+  const live = searchedHomeContinueEntries(
     available,
     query,
     expanded,
@@ -425,11 +428,28 @@ export function HomeRecentSessions({
     discovery,
     Object.fromEntries(servers.map((server) => [server.serverId, server.label]))
   );
+  // Rows re-sort as sessions report activity. While a finger is on the page
+  // (Home's sort hold, as for its cards) or a row's menu is open they keep the
+  // order the user is looking at, so a long-press cannot land on -- and a menu
+  // cannot slide onto -- another session.
+  const pageHeld = useHomeSortHold((state) => state.held);
+  const [openMenus, setOpenMenus] = useState<readonly string[]>([]);
+  const shownKeys = useFrozenValue(
+    live.map((entry) => entry.key),
+    pageHeld || openMenus.length > 0,
+    null
+  );
+  const displayed = heldOrder(shownKeys, live, (entry) => entry.key);
+  const markMenu = useCallback((key: string, open: boolean) => {
+    setOpenMenus((keys) => [...keys.filter((menuKey) => menuKey !== key), ...(open ? [key] : [])]);
+  }, []);
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       {header}
       <View
         onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}
+        // The Pad rail has no Home page around it to report the finger.
+        {...sortHoldTouches}
         style={[
           styles.list,
           {
@@ -452,6 +472,7 @@ export function HomeRecentSessions({
             metaChars={metaChars}
             onOpen={() => onOpen(homeContinueCommand(entry.destination))}
             onReply={onReply && canReply?.(entry) ? () => onReply(entry) : undefined}
+            onMenuChange={markMenu}
           />
         ))}
       </View>
@@ -515,6 +536,7 @@ function RecentSessionRow({
   selectedAsid,
   onOpen,
   onReply,
+  onMenuChange,
 }: {
   entry: HomeContinueEntry;
   number: number;
@@ -529,6 +551,8 @@ function RecentSessionRow({
   onOpen: () => void;
   /** The menu's "Reply from Home", where the dock can talk to the row. */
   onReply?: () => void;
+  /** The row's menu opened or closed; the list holds its order while one is open. */
+  onMenuChange: (key: string, open: boolean) => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -545,6 +569,14 @@ function RecentSessionRow({
   const [menuError, setMenuError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const deletingRef = useRef(false);
+  const menuOpen = menu !== null;
+  const rowKey = entry.key;
+  // Also on unmount: a row deleted from its own menu must not hold the list.
+  useEffect(() => {
+    if (!menuOpen) return;
+    onMenuChange(rowKey, true);
+    return () => onMenuChange(rowKey, false);
+  }, [menuOpen, rowKey, onMenuChange]);
   const target = homeContinueTarget(entry.destination);
   const selected =
     target?.kind === 'agent-session'
