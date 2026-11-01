@@ -71,7 +71,7 @@ import {
   type HomeContinueEntry,
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
-import { boundTask } from '@/lib/home-in-progress';
+import { rowStatusTask } from '@/lib/home-in-progress';
 import { useHomeTasksStore as useServerTasksStore } from '@/stores/home-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
 import {
@@ -636,11 +636,15 @@ function RecentSessionRow({
   });
   // A session a ledger task runs in says what the task says: its one-line
   // title, as on the card (the newest task, finished too, unless the session
-  // was renamed since), and the open task's state -- the session's own status
-  // lags it (it read "Idle" under a working delegation).
+  // was renamed since), and the task's state -- the session's own status lags
+  // it (it read "Idle" under a working delegation, "Running" after it ended).
   const task = useServerTasksStore((state) =>
     target?.kind === 'agent-session'
-      ? boundTask(state.index[target.serverId]?.tasks, target.asid)
+      ? rowStatusTask(
+          state.index[target.serverId]?.tasks,
+          target.asid,
+          entry.observation?.observedAtMs
+        )
       : undefined
   );
   const taskTitle = useServerTasksStore((state) => {
