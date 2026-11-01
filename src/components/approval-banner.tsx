@@ -15,7 +15,7 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { fadeIn, fadeInDown, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
+import { fadeIn, fadeInDown, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import type { ApprovalDecision, ApprovalOption, PaneApproval } from '@/lib/pane-approval';
 import { approvalContextLines } from '@/lib/pane-approval';
 
@@ -186,10 +186,9 @@ export function ApprovalBanner({
                 ) : null}
               </View>
               {onEscape ? (
-                <Animated.View
-                  entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}>
+                // No exit: this row, and the banner around it, can leave in the
+                // same commit as the button.
+                <Animated.View entering={fadeIn('micro')} layout={listLayout('short')}>
                   <PressableCard
                     variant="flat"
                     radius="sm"

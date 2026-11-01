@@ -6169,10 +6169,12 @@ export function ServerTerminalWorkspace({
               the error bar -- and the bar has no button on it, which used to
               hide the one control that can end the situation. The notice wins
               here, because it is the thing carrying the way out. */}
+                  {/* Deck pages have no exit: the deck removes each page's wrapper
+                    with it, and an exiting child of a removed view crashes
+                    Fabric on Android. */}
                   {error && !connection.needsPairing ? (
                     <Animated.View
                       entering={fadeIn('micro')}
-                      exiting={fadeOut('micro')}
                       layout={listLayout('short')}
                       style={[
                         styles.errorBar,
@@ -6191,10 +6193,7 @@ export function ServerTerminalWorkspace({
                 while it is connecting or down this is the news, and the gateway
                 notice below stays quiet (it would only say "Connecting"). */}
                   {tunnel.tunnelled && tunnel.phase !== 'open' ? (
-                    <Animated.View
-                      entering={fadeIn('micro')}
-                      exiting={fadeOut('micro')}
-                      layout={listLayout('short')}>
+                    <Animated.View entering={fadeIn('micro')} layout={listLayout('short')}>
                       <GatewayTunnelBadge record={record} variant="notice" />
                     </Animated.View>
                   ) : null}

@@ -1316,6 +1316,7 @@ function DrawerSession({
   const recoveryNotice = recoveryError ? (
     <AgentSessionActivationNotice
       error={recoveryError}
+      retrying={sessionActivation.error ? sessionActivation.retrying : false}
       title={
         sessionActivation.error ? t`Could not resume the session` : t`Could not load the session`
       }

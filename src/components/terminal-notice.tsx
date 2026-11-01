@@ -4,9 +4,14 @@ import Animated from 'react-native-reanimated';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { fadeIn, listLayout } from '@/lib/motion';
 
-/** Shared, content-sized shell for terminal connection/status notices. */
+/**
+ * Shared, content-sized shell for terminal connection/status notices.
+ *
+ * No exit animation: these are `NoticeDeck` pages, and the deck removes a
+ * page's wrapper together with the page.
+ */
 export function TerminalNotice({
   children,
   accessibilityLabel,
@@ -23,7 +28,6 @@ export function TerminalNotice({
     <Animated.View
       accessibilityLabel={accessibilityLabel}
       entering={fadeIn('micro')}
-      exiting={fadeOut('short')}
       layout={listLayout('short')}
       style={[
         terminalNoticeStyles.shell,

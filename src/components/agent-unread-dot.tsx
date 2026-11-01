@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import Animated from 'react-native-reanimated';
 
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { fadeIn } from '@/lib/motion';
 
 /**
  * "This one finished while you were somewhere else."
@@ -15,11 +15,11 @@ import { fadeIn, fadeOut } from '@/lib/motion';
  * because this app guessed that something had happened to it, and never marked
  * read because this app decided the reader had probably seen it.
  *
- * Which is also why it fades rather than disappearing: opening a session posts
- * `…/view`, the engine answers with `agent.session.updated` carrying the new
- * `time_viewed`, and the dot goes on that. The round trip is a few hundred
- * milliseconds, and a mark that vanished between two frames at the end of it
- * would read as a glitch rather than as an acknowledgement.
+ * It fades in but has no exit animation. The dot goes when the engine answers
+ * the `…/view` that opening a session posts, which is also when the sessions
+ * sheet closes or the composer's strip changes -- the chip or row holding the
+ * dot often leaves in the same commit, and an exiting child of a removed view
+ * crashes Fabric on Android.
  */
 export const AgentUnreadDot = memo(function AgentUnreadDot({
   tone,
@@ -36,7 +36,6 @@ export const AgentUnreadDot = memo(function AgentUnreadDot({
     <Animated.View
       testID={testID}
       entering={fadeIn('micro')}
-      exiting={fadeOut('short')}
       style={[
         styles.dot,
         {

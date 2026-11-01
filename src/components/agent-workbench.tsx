@@ -5217,6 +5217,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       <View style={styles.footerContainer}>
         <AgentSessionActivationNotice
           error={sessionActivation.error}
+          retrying={sessionActivation.retrying}
           onRetry={sessionActivation.retry}
         />
         {externalRuntime ? (
@@ -5344,6 +5345,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     replyableForms,
     sessionActivation.error,
     sessionActivation.retry,
+    sessionActivation.retrying,
     handleQuestionDraftChange,
     isRunning,
     statusNotice,
@@ -5844,11 +5846,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             The shape of what is coming, which is what every other surface in
             this app answers a wait with. This branch is also the whole of the
             switch: choosing another session or another workspace re-enters
-            `loadSnapshot`, which raises `loading` again, so the transcript
-            that was there fades out under the placeholder and the one that
-            arrives rises through it -- the same cross-fade the terminal
-            workspace does between panes, rather than one transcript being
-            replaced by another between two frames.
+            `loadSnapshot`, which raises `loading` again, so the placeholder
+            fades in over the old transcript and the one that arrives rises in
+            after it. Neither leaves with an exit animation: these branches can
+            swap back and forth within a frame or two when a read fails.
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
         ) : timelineEmpty &&
@@ -5865,6 +5866,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             ]}>
             <AgentSessionActivationNotice
               error={sessionActivation.error || snapshotError}
+              retrying={sessionActivation.retrying}
               title={t`Could not load the session`}
               onRetry={retrySnapshot}
             />
@@ -5885,9 +5887,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               second copy sitting on top of the live one and swallowing every
               tap meant for the pill and the two buttons.
             */}
+            {/*
+              No `exiting` either: this card's wrapper is the branch, and the
+              branch is replaced whenever an error, the placeholder or the
+              transcript takes its place. An exit on a child of a view removed
+              in the same commit is what Fabric on Android crashes on
+              ("Unable to find parentView").
+            */}
             <Animated.View
               entering={riseIn()}
-              exiting={fadeOut('short')}
               style={[
                 styles.emptyContainer,
                 {
@@ -6016,10 +6024,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             from the list doing its job. One rise, of the whole transcript, is
             what the home cards and the terminal workspace do.
           */
-          <Animated.View
-            entering={riseIn()}
-            exiting={fadeOut('short')}
-            style={styles.timelineScroll}>
+          /*
+            No exit: a failed or repeated snapshot read swaps this branch for
+            the placeholder and back within a frame or two, and an exiting copy
+            of the whole list left behind under its replacement is a native
+            tree Fabric cannot reconcile.
+          */
+          <Animated.View entering={riseIn()} style={styles.timelineScroll}>
             {/*
               The list that knows about the keyboard, from Legend List's own
               `keyboard` entry point over keyboard-controller's chat scroll
@@ -6096,7 +6107,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               refreshControl={timelineRefresh}
               ListHeaderComponent={
                 windowStart === 0 && earlierNoticeShown ? (
-                  <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+                  // No exit: the list drops its header wrapper with this element.
+                  <Animated.View entering={fadeInDown('short')}>
                     <Text variant="caption" color={theme.colors.textMuted}>
                       {earlierUnavailableReason === 'gateway-upgrade'
                         ? t`Update the Gateway to load earlier remote history.`
@@ -6128,84 +6140,83 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         first: a folder that is gone outlives whatever the transient one has to
         say about a single action.
       */}
-        {screenNotice || workspaceMissing ? (
-          <View
-            pointerEvents="box-none"
-            onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
-            style={[styles.screenNoticeWrap, { top: topInset + SCREEN_NOTICE_HEADER_GAP }]}>
-            {workspaceMissing ? (
-              <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
-                <View
-                  testID="agent-workspace-missing-notice"
-                  style={[
-                    styles.screenNotice,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: 'transparent',
-                      borderRadius: profile.chrome.noticeBanner,
-                    },
-                  ]}>
-                  <StatusDot color={theme.colors.warning} filled size={7} />
-                  <View style={styles.screenNoticeText}>
-                    <Text
-                      variant="caption"
-                      weight="bold"
-                      color={theme.colors.text}
-                      numberOfLines={2}>
-                      {t`Project folder is missing: ${workspaceMissing.directory}`}
-                    </Text>
-                  </View>
-                  {/*
+        {/*
+          Always mounted, empty when there is nothing to say: the notices below
+          fade out, and an exit inside a column removed in the same commit
+          crashes Fabric on Android.
+        */}
+        <View
+          pointerEvents="box-none"
+          onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
+          style={[styles.screenNoticeWrap, { top: topInset + SCREEN_NOTICE_HEADER_GAP }]}>
+          {workspaceMissing ? (
+            <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+              <View
+                testID="agent-workspace-missing-notice"
+                style={[
+                  styles.screenNotice,
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                    borderColor: 'transparent',
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
+                <StatusDot color={theme.colors.warning} filled size={7} />
+                <View style={styles.screenNoticeText}>
+                  <Text variant="caption" weight="bold" color={theme.colors.text} numberOfLines={2}>
+                    {t`Project folder is missing: ${workspaceMissing.directory}`}
+                  </Text>
+                </View>
+                {/*
                   The one action that changes the fact. Not a dismiss: there is
                   nothing to dismiss -- the folder is still gone afterwards --
                   and not a retry either, because nothing failed.
                 */}
-                  <PressableScale
-                    testID="agent-workspace-missing-choose"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Choose project`}
-                    onPress={openWorkspaceSheet}
-                    style={styles.screenNoticeAction}>
-                    <Text variant="caption" weight="bold" color={theme.colors.primary}>
-                      {t`Choose project`}
-                    </Text>
-                  </PressableScale>
-                </View>
-              </Animated.View>
-            ) : null}
-            {screenNotice ? (
-              <Animated.View
-                key={screenNotice.id}
-                entering={fadeInDown('short')}
-                exiting={fadeOutUp('short')}>
                 <PressableScale
-                  testID="agent-screen-notice"
+                  testID="agent-workspace-missing-choose"
                   accessibilityRole="button"
-                  accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
-                  onPress={() => setScreenNotice(null)}
-                  style={[
-                    styles.screenNotice,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: 'transparent',
-                      borderRadius: profile.chrome.noticeBanner,
-                    },
-                  ]}>
-                  <StatusDot color={theme.colors.primary} filled size={7} />
-                  <View style={styles.screenNoticeText}>
-                    <Text variant="caption" weight="bold" color={theme.colors.text}>
-                      {screenNotice.title}
-                    </Text>
-                    <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-                      {screenNotice.body}
-                    </Text>
-                  </View>
-                  <CloseIcon size={14} color={theme.colors.textMuted} />
+                  accessibilityLabel={t`Choose project`}
+                  onPress={openWorkspaceSheet}
+                  style={styles.screenNoticeAction}>
+                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
+                    {t`Choose project`}
+                  </Text>
                 </PressableScale>
-              </Animated.View>
-            ) : null}
-          </View>
-        ) : null}
+              </View>
+            </Animated.View>
+          ) : null}
+          {screenNotice ? (
+            <Animated.View
+              key={screenNotice.id}
+              entering={fadeInDown('short')}
+              exiting={fadeOutUp('short')}>
+              <PressableScale
+                testID="agent-screen-notice"
+                accessibilityRole="button"
+                accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
+                onPress={() => setScreenNotice(null)}
+                style={[
+                  styles.screenNotice,
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                    borderColor: 'transparent',
+                    borderRadius: profile.chrome.noticeBanner,
+                  },
+                ]}>
+                <StatusDot color={theme.colors.primary} filled size={7} />
+                <View style={styles.screenNoticeText}>
+                  <Text variant="caption" weight="bold" color={theme.colors.text}>
+                    {screenNotice.title}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                    {screenNotice.body}
+                  </Text>
+                </View>
+                <CloseIcon size={14} color={theme.colors.textMuted} />
+              </PressableScale>
+            </Animated.View>
+          ) : null}
+        </View>
 
         {/*
         Offer the way back whenever the reader browses history, even when no
@@ -6221,9 +6232,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         {/* YOLO mode indicator — fixed directly above the Latest action. */}
         {!loading && yoloMode ? (
+          // No exit: `loading` hides and shows this on every snapshot read.
           <Animated.View
             entering={fadeIn('micro')}
-            exiting={fadeOut('micro')}
             style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
             pointerEvents="box-none">
             <PressableScale

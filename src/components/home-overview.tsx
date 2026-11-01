@@ -2605,10 +2605,11 @@ function EmptyState({
   const hasIllustration = useHasThemeArtwork('empty.artwork');
 
   return (
-    // It had an entrance and no exit, so pairing the first server made this
-    // card vanish on one frame while the new one faded in underneath it -- the
-    // one moment in the app where two things are meant to hand over cleanly.
-    <Animated.View entering={fadeIn('medium')} exiting={fadeOut('short')}>
+    // No exit animation. This card is handed to several slots (the stage's
+    // `empty` wrapper, the launches slot, the Pad work column) that are
+    // removed or swapped for another element when the first server pairs, and
+    // an exiting child of a removed view crashes Fabric on Android.
+    <Animated.View entering={fadeIn('medium')}>
       <Card
         slot="cards.plain"
         padding="none"

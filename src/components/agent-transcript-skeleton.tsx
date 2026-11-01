@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import Animated from 'react-native-reanimated';
 
 import { LogoLoader } from '@/components/logo-loader';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { fadeIn } from '@/lib/motion';
 
 /**
  * What the agent screen shows while its first snapshot is on the way.
@@ -14,16 +14,16 @@ import { fadeIn, fadeOut } from '@/lib/motion';
  * a grey skeleton of a transcript, which was the one wait in the app drawn in
  * a material the theme does not own.
  *
- * Fades in on the shortest preset and out on the short one; the transcript
- * rises through it. Choosing another session or workspace re-enters the
- * snapshot load, so the same fade is also the switch.
+ * Fades in on the shortest preset and leaves without an exit animation: it is
+ * often up for less than a second, swapped for the transcript or an error and
+ * sometimes back again, and an exiting copy left in the native tree under
+ * that churn is what crashes Fabric on Android.
  */
 export function AgentTranscriptSkeleton({ paddingTop }: { paddingTop: number }) {
   const { t } = useLingui();
   return (
     <Animated.View
       entering={fadeIn('micro')}
-      exiting={fadeOut('short')}
       style={[styles.root, { paddingTop }]}
       pointerEvents="none"
       testID="agent-transcript-loading">

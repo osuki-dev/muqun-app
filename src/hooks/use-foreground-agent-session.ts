@@ -28,7 +28,11 @@ export function useForegroundAgentSession(options: {
     Boolean(options.agentId && options.asid);
   const [activation] = useState(() => new ForegroundSessionActivation());
   const [attempt, setAttempt] = useState(0);
-  const [failure, setFailure] = useState<{ scope: string; error: unknown } | null>(null);
+  const [failure, setFailure] = useState<{
+    scope: string;
+    error: unknown;
+    retrying: boolean;
+  } | null>(null);
   const read = useLatestReader({
     ...options,
     record,
@@ -52,8 +56,13 @@ export function useForegroundAgentSession(options: {
     const endpoint = owner.record;
     const agentId = owner.agentId;
     const asid = owner.asid;
-    // A fresh foreground intent owns its notice; cached history is never cleared.
-    setFailure(null);
+    // A retry of the same session keeps its notice up and marks it retrying,
+    // rather than clearing it and raising a new one on the next refusal: a
+    // gateway that keeps answering 502 must not remount the notice each time.
+    // Another session's failure is never carried over.
+    setFailure((previous) =>
+      previous?.scope === owner.scope ? { ...previous, retrying: true } : null
+    );
     let active = true;
     const current = () => {
       const latest = read();
@@ -86,20 +95,30 @@ export function useForegroundAgentSession(options: {
           restart: owner.restart,
         }),
       prepared: () => {
-        void (async () => prepared(current))().catch((error) => {
-          if (current()) setFailure({ scope: owner.scope, error });
-        });
+        void (async () => prepared(current))().then(
+          () => {
+            if (current()) setFailure(null);
+          },
+          (error) => {
+            if (current()) setFailure({ scope: owner.scope, error, retrying: false });
+          }
+        );
       },
-      failed: (error) => setFailure({ scope: owner.scope, error }),
+      failed: (error) => setFailure({ scope: owner.scope, error, retrying: false }),
     });
     return () => {
       active = false;
       cancel();
+      // An attempt that will never settle must not leave the notice retrying.
+      setFailure((previous) => (previous?.retrying ? { ...previous, retrying: false } : previous));
     };
   }, [activation, scope, enabled, attempt, read]);
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
+  const shown = enabled && failure?.scope === scope ? failure : null;
   return {
-    error: enabled && failure?.scope === scope ? failure.error : null,
+    error: shown ? shown.error : null,
+    /** The notice's own attempt state, updated in place while a retry runs. */
+    retrying: shown?.retrying === true,
     retry,
   };
 }

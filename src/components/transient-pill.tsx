@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { fadeIn } from '@/lib/motion';
 
 /**
  * A small pill that floats over the pane, says one thing, and goes.
@@ -40,7 +40,8 @@ export function TransientPill({
   const theme = useThemeTokens();
   return (
     <View pointerEvents="none" style={[styles.anchor, { bottom: bottomInset }]}>
-      <Animated.View entering={fadeIn('dropdown')} exiting={fadeOut('short')}>
+      {/* No exit: the anchor above leaves in the same commit. */}
+      <Animated.View entering={fadeIn('dropdown')}>
         <View
           style={[
             styles.indicator,

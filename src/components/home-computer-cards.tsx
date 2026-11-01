@@ -44,7 +44,7 @@ import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { DECK_CARD_ROWS } from '@/lib/home-computer-deck';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
-import { fadeOut, listLayout, riseIn, timing } from '@/lib/motion';
+import { listLayout, riseIn, timing } from '@/lib/motion';
 import { useConnectionStatuses, useHomeReachability } from '@/hooks/use-home-reachability';
 import {
   statusNeedsPairing,
@@ -365,10 +365,11 @@ export function HomeComputerCards({
       {cards.length === 0 ? null : (
         <View testID="home-computer-cards" style={grid ? styles.grid : styles.cards}>
           {cards.map((card) => (
+            // No exit: a second card swaps this whole list for the deck, and
+            // removing the last card removes the list's View with it.
             <Animated.View
               key={card.serverId}
               entering={riseIn()}
-              exiting={fadeOut('micro')}
               layout={listLayout()}
               style={grid ? styles.gridCell : undefined}>
               {renderCard(card)}

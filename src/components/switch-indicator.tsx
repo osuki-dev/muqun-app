@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { fadeIn, listLayout } from '@/lib/motion';
 import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
 
 /**
@@ -40,8 +40,8 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
   return (
     <Animated.View
       pointerEvents="none"
+      // No exit: a `NoticeDeck` page leaves with the deck's wrapper.
       entering={fadeIn('dropdown')}
-      exiting={fadeOut('short')}
       layout={listLayout('short')}
       style={styles.anchor}>
       <View

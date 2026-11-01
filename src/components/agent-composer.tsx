@@ -111,16 +111,7 @@ import {
   describeBlockedSend,
   takePickTruncationNotice,
 } from '@/lib/attachments';
-import {
-  DURATION,
-  RISE_DISTANCE,
-  fadeIn,
-  fadeOut,
-  fadeOutDown,
-  listLayout,
-  riseIn,
-  timing,
-} from '@/lib/motion';
+import { DURATION, RISE_DISTANCE, fadeIn, fadeOut, listLayout, riseIn, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
@@ -1791,11 +1782,8 @@ export const AgentComposer = memo(function AgentComposer({
                     ? t`${plural(files.length, { one: '# attachment', other: '# attachments' })}`
                     : item.type);
                 return (
-                  <Animated.View
-                    key={item.id}
-                    entering={riseIn()}
-                    exiting={fadeOut('micro')}
-                    layout={listLayout('short')}>
+                  // No exit: the last row leaves with the popover around it.
+                  <Animated.View key={item.id} entering={riseIn()} layout={listLayout('short')}>
                     {/* The row is the control: tapping a queued prompt is how its
                       actions are reached, which is the same gesture a session
                       row answers in the sessions sheet. */}
@@ -2460,11 +2448,11 @@ export const AgentComposer = memo(function AgentComposer({
 
               {/* Attachment staged preview strip */}
               {visibleAttachments.length > 0 ? (
+                // No exit: sending swaps this for the submission line and a
+                // refused send brings it back within a second; Home's field
+                // also restores its artwork under where it was.
                 <Animated.View
                   entering={fadeIn('micro')}
-                  // Home restores field artwork on removal; do not leave a native
-                  // exit view painting across that field's newly raised position.
-                  exiting={flushField ? undefined : fadeOutDown('short')}
                   style={[
                     styles.stripWrapper,
                     flushField && {
@@ -2488,8 +2476,8 @@ export const AgentComposer = memo(function AgentComposer({
               {(sending && attachmentUploads.uploading) || submittingAttachments ? (
                 <Animated.View
                   testID="agent-composer-attachment-submission"
+                  // Up for the length of one send: no exit.
                   entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
                   style={[
                     styles.uploadWait,
                     flushField && {
