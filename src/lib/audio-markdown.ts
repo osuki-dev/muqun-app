@@ -33,7 +33,7 @@ function basename(path: string): string {
  * Keep percent-encoded delimiters literal; only explicit local Markdown links
  * use this convention, never arbitrary file APIs or URLs to other hosts.
  */
-function linkedFilePath(uri: string): string {
+export function linkedFilePath(uri: string): string {
   return uri.replace(
     /(?::[1-9]\d*(?::[1-9]\d*)?|#L[1-9]\d*(?:C[1-9]\d*)?(?:-L?[1-9]\d*(?:C[1-9]\d*)?)?)$/,
     ''
@@ -131,14 +131,17 @@ export function splitAudioMarkdown(text: string): AudioMarkdownPart[] {
             continue;
           const uri = linkedFilePath(destination);
           const start = offset + match.index;
+          const kind = mediaKind(uri);
+          // A file link inside a sentence stays a link in the text, so the
+          // sentence is not broken around a block; a player, or a link that is
+          // the whole line, becomes its own block.
+          if (kind === 'file' && line.trim() !== match[0]) {
+            if (isThemeFilePath(uri)) trailing.push({ uri, start });
+            continue;
+          }
           flushTo(start);
           if (isThemeFilePath(uri)) themePaths.add(uri);
-          parts.push({
-            kind: mediaKind(uri),
-            uri,
-            name: match[4]!,
-            start,
-          });
+          parts.push({ kind, uri, name: match[4]!, start });
           cursor = start + match[0].length;
         }
         const fresh = trailing.filter(({ uri }) => !themePaths.has(uri));
