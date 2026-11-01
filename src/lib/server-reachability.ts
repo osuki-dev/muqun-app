@@ -338,6 +338,25 @@ export function authorizationFromProbe(
   return statusRefusesPairing(probe.status) ? 'unauthorized' : 'unknown';
 }
 
+/**
+ * Whether Home lists this computer. Home shows the computers that are up;
+ * offline ones are managed in Settings › Computers.
+ *
+ * A failed answer keeps hiding the computer after it goes stale (the status
+ * reads `unknown` then), so it does not reappear between re-checks; one never
+ * asked, or last heard answering, stays listed until a probe says it is down.
+ * A `kept` computer -- the selected one, the deck's front -- is always listed.
+ */
+export function homeListsComputer(
+  status: ConnectionStatus,
+  lastProbeDown: boolean,
+  kept: boolean
+): boolean {
+  if (kept) return true;
+  if (status === 'offline') return false;
+  return status !== 'unknown' || !lastProbeDown;
+}
+
 /** What the rest of the app decides with: a row's richer word, folded back. */
 export function reachabilityOfStatus(status: ConnectionStatus): ServerReachability {
   if (status === 'reconnecting') return 'unknown';
