@@ -24,6 +24,17 @@ describe('windowStartForSnapshot', () => {
     ).toBe(1);
   });
 
+  test('follows an anchor the replacement re-ids but still draws under its key', () => {
+    expect(
+      windowStartForSnapshot(
+        [item('first'), item('anchor'), item('last')],
+        1,
+        [item('new-first'), { ...item('re-id'), row_key: 'anchor' }, item('last')],
+        40
+      )
+    ).toBe(1);
+  });
+
   test('falls back to the newest page when the anchor is absent', () => {
     expect(
       windowStartForSnapshot(
