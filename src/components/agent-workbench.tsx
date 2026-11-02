@@ -72,7 +72,7 @@ import {
   CloseIcon,
 } from '@/icons';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { JumpToLatestPill } from '@/components/jump-to-latest-pill';
+import { FloatingPill, JumpToLatestPill } from '@/components/jump-to-latest-pill';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -6308,35 +6308,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           onPress={handleJumpToLatest}
         />
 
-        {/* YOLO mode indicator — fixed directly above the Latest action. */}
+        {/*
+        YOLO mode indicator — fixed directly above the Latest action, in the
+        same shell. The pack's warning tone is the accent, as on every other
+        trust chip; the pill itself is the navigation material, not a tint.
+      */}
         {!loading && yoloMode ? (
           // No exit: `loading` hides and shows this on every snapshot read.
           <Animated.View
             entering={fadeIn('micro')}
             style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
             pointerEvents="box-none">
-            <PressableScale
+            <FloatingPill
               testID="agent-yolo-indicator"
-              accessibilityRole="button"
               accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
-              onPress={() => setYoloMode(false)}
-              style={[
-                styles.yoloBanner,
-                {
-                  backgroundColor: surfaceBackground(withAlpha(theme.colors.danger, 0.16)),
-                  borderColor: withAlpha(theme.colors.danger, 0.45),
-                },
-              ]}>
-              <TrustWarningIcon size={13} color={theme.colors.danger} />
+              onPress={() => setYoloMode(false)}>
+              <TrustWarningIcon size={15} color={theme.colors.warning} />
               <Text
                 variant="caption"
-                weight="bold"
-                color={theme.colors.danger}
-                numberOfLines={1}
-                style={styles.yoloBannerHint}>
+                weight="semibold"
+                color={theme.colors.warning}
+                numberOfLines={1}>
                 <Trans>YOLO mode</Trans>
               </Text>
-            </PressableScale>
+            </FloatingPill>
           </Animated.View>
         ) : null}
 
@@ -6750,20 +6745,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 14,
     zIndex: 6,
-  },
-  yoloBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    maxWidth: 220,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  yoloBannerHint: {
-    flexShrink: 1,
-    fontSize: AGENT_TYPE.micro.size,
   },
 });
