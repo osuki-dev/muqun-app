@@ -11,6 +11,7 @@ import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
+  deleteTask,
   fetchTaskDefaultCwd,
   fetchTaskView,
   fetchTaskList,
@@ -23,6 +24,7 @@ import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const NO_TASKS: TaskView[] = [];
@@ -100,6 +102,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   );
   const replace = useServerTasksStore((state) => state.replace);
   const upsert = useServerTasksStore((state) => state.upsert);
+  const remove = useServerTasksStore((state) => state.remove);
   const setDefaultCwd = useServerTasksStore((state) => state.setDefaultCwd);
   const wsEvents = useServerCapabilities((state) =>
     serverId ? state.byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true : false
@@ -190,6 +193,8 @@ export function useServerTasks(serverId: string | null): ServerTasks {
         // Task state does not resolve forms: async questions can remain open
         // while the agent works. Only the form's own resolution clears it.
         onTaskUpdated: (task) => upsert(serverId, task),
+        // Deleted here or on another device: the row goes.
+        onTaskDeleted: (taskId) => remove(serverId, taskId),
         // After every (re)connect: whatever changed while it was down. Not
         // after the first connect on the heels of the mount read, which
         // asked the same list a moment ago.
@@ -203,7 +208,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       },
       { tasksOnly }
     );
-  }, [socket, serverId, upsert, refresh, tasksOnly, setDefaultCwd]);
+  }, [socket, serverId, upsert, remove, refresh, tasksOnly, setDefaultCwd]);
 
   const subscribe = useCallback(
     (onChange: () => void) => {
@@ -277,5 +282,25 @@ export function useTaskAction(
       );
     },
     [serverId, upsert, replace, t]
+  );
+}
+
+/**
+ * Delete an ended task: the row goes once the gateway has removed it, never
+ * before; a refusal throws for the caller to say in the gateway's words.
+ */
+export function useTaskDelete(serverId: string | null): (task: TaskView) => Promise<void> {
+  const { t } = useLingui();
+  const remove = useServerTasksStore((state) => state.remove);
+  return useCallback(
+    async (task: TaskView) => {
+      if (!serverId) return;
+      const route = taskRouteFor(serverId);
+      if (!route) throw new Error(t`Computer unavailable.`);
+      await deleteTask(task.taskId, route.kind === 'endpoint' ? route.endpoint : undefined);
+      remove(serverId, task.taskId);
+      dismissTaskNotices(task);
+    },
+    [serverId, remove, t]
   );
 }

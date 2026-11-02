@@ -105,7 +105,10 @@ export const AgentActionMenu = memo(function AgentActionMenu({
           );
         }
         const danger = item.tone === 'danger';
-        const ink = danger ? theme.colors.danger : theme.colors.text;
+        // A disabled item says why something cannot be done here; it reads muted.
+        const muted = item.disabled ? theme.colors.textMuted : null;
+        const ink = muted ?? (danger ? theme.colors.danger : theme.colors.text);
+        const iconInk = muted ?? (danger ? theme.colors.danger : theme.colors.primary);
         return (
           <PressableScale
             key={item.id}
@@ -117,7 +120,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
             style={styles.option}>
             {item.Icon ? (
               <View style={styles.optionIcon}>
-                <item.Icon size={16} color={danger ? theme.colors.danger : theme.colors.primary} />
+                <item.Icon size={16} color={iconInk} />
               </View>
             ) : null}
             <Text variant="bodySmall" color={ink} style={styles.optionLabel}>

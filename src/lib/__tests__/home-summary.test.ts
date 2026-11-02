@@ -72,6 +72,12 @@ test('Home projections preserve full task details and no-op references without m
   expect(projectHomeTasks(direct, { a: summary }, {}, projection).a).toBe(projection.a);
 });
 
+test('a summary sent before a delete does not bring the deleted task back', () => {
+  const summary = applyHomeFrame(undefined, snapshot(), 100)!;
+  const direct = { a: { tasks: [], fetchedAt: 1, deleted: ['task'] } };
+  expect(projectHomeTasks(direct, { a: summary }, { a: true }, {}).a?.tasks).toEqual([]);
+});
+
 test('collector loss retains newer completion until direct data catches up', () => {
   const frame = snapshot();
   const task = frame.tasks[0]!;

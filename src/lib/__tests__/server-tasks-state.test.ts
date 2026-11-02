@@ -9,6 +9,7 @@ import {
   applyListAnswer,
   createServerTasksState,
   isTaskChannelLive,
+  removeTask,
   replaceTasks,
   taskAgeParts,
   upsertTask,
@@ -174,6 +175,25 @@ describe('replaceTasks', () => {
     const before: ServerTasksIndex = { s1: { tasks: held, fetchedAt: null } };
     const index = replaceTasks(before, 's1', list, 200, 100);
     expect(index.s1?.tasks.map((t) => [t.taskId, t.state])).toEqual(kept);
+  });
+});
+
+describe('removeTask', () => {
+  // After a delete, nothing that left before it brings the task back.
+  test.each<[string, (index: ServerTasksIndex) => ServerTasksIndex]>([
+    ['a late task.updated frame', (index) => upsertTask(index, 's1', task('d', 'done', 99))],
+    [
+      'a list read sent before the delete',
+      (index) => replaceTasks(index, 's1', [task('d', 'done', 10), task('k', 'done', 5)], 300, 100),
+    ],
+  ])('%s does not resurrect a deleted task', (_name, after) => {
+    const held = replaceTasks({}, 's1', [task('d', 'done', 10), task('k', 'done', 5)], 100);
+    const removed = removeTask(held, 's1', 'd');
+    expect(removed.s1?.tasks.map((t) => t.taskId)).toEqual(['k']);
+    expect(removed.s1?.fetchedAt).toBe(100);
+    expect(after(removed).s1?.tasks.map((t) => t.taskId)).toEqual(['k']);
+    // The event arriving after this device's own delete changes nothing.
+    expect(removeTask(removed, 's1', 'd')).toBe(removed);
   });
 });
 

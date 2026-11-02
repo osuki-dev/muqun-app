@@ -1236,6 +1236,10 @@ msgstr "Отменить сообщение в очереди"
 msgid "Cancel task"
 msgstr "Отменить задачу"
 
+#: src/components/task-row.tsx
+msgid "Cancel the task first to delete it"
+msgstr "Чтобы удалить задачу, сначала отмените её"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Отменить это сообщение из очереди"
@@ -1699,6 +1703,7 @@ msgid "Confirm clear cache"
 msgstr "Подтвердить очистку кэша"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
 msgid "Confirm delete"
 msgstr "Подтвердить удаление"
 
@@ -2125,6 +2130,10 @@ msgstr "Не удалось создать этот worktree"
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "Не удалось удалить этот сеанс. Подключитесь к соответствующему компьютеру и обновите главный экран перед повторной попыткой"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete this task. Reconnect to its computer and try again."
+msgstr "Не удалось удалить эту задачу. Подключитесь к соответствующему компьютеру и повторите попытку"
 
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete: {message}"
@@ -2637,6 +2646,10 @@ msgstr "Удалить {name}"
 #: src/components/home-recent-sessions.tsx
 msgid "Delete session"
 msgstr "Удалить сеанс"
+
+#: src/components/task-row.tsx
+msgid "Delete task"
+msgstr "Удалить задачу"
 
 #: src/i18n/labels.ts
 msgid "Delete this line"
@@ -7342,6 +7355,10 @@ msgstr "Сервис распознавания вернул неверную р
 #: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH-туннель переносит только порт Gateway и никакой другой, поэтому симулятор и браузер отсюда недоступны. Подключитесь через локальную сеть или Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task and its history are removed from this computer. Its agent session is kept."
+msgstr "Задача и её история удаляются с этого компьютера. Сеанс агента сохраняется"
 
 #: src/components/home-composer-dock.tsx
 msgid "The task is still starting. Send again in a moment."

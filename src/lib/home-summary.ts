@@ -195,23 +195,27 @@ export function projectHomeTasks(
     if (!live[serverId] && (direct[serverId]?.fetchedAt ?? 0) > summary.receivedAtMs) continue;
     const known = new Map(direct[serverId]?.tasks.map((task) => [task.taskId, task]));
     const old = new Map(previous[serverId]?.tasks.map((task) => [task.taskId, task]));
-    const tasks = summary.tasks.map((task) => {
-      const full = known.get(task.taskId);
-      const merged =
-        full && (full.receivedAtMs ?? 0) > summary.receivedAtMs
-          ? full
-          : {
-              ...full,
-              ...task,
-              goal: full?.goal ?? '',
-              progress: live[serverId] ? task.progress : undefined,
-              receivedAtMs: summary.receivedAtMs,
-            };
-      const held = old.get(task.taskId);
-      return held && sameData({ ...held, receivedAtMs: 0 }, { ...merged, receivedAtMs: 0 })
-        ? held
-        : merged;
-    });
+    // A summary sent before a delete does not bring the task back.
+    const deleted = new Set(direct[serverId]?.deleted);
+    const tasks = summary.tasks
+      .filter((task) => !deleted.has(task.taskId))
+      .map((task) => {
+        const full = known.get(task.taskId);
+        const merged =
+          full && (full.receivedAtMs ?? 0) > summary.receivedAtMs
+            ? full
+            : {
+                ...full,
+                ...task,
+                goal: full?.goal ?? '',
+                progress: live[serverId] ? task.progress : undefined,
+                receivedAtMs: summary.receivedAtMs,
+              };
+        const held = old.get(task.taskId);
+        return held && sameData({ ...held, receivedAtMs: 0 }, { ...merged, receivedAtMs: 0 })
+          ? held
+          : merged;
+      });
     for (const task of known.values()) {
       if (
         !summary.tasks.some((item) => item.taskId === task.taskId) &&

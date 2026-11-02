@@ -1236,6 +1236,10 @@ msgstr "取消排队消息"
 msgid "Cancel task"
 msgstr "取消任务"
 
+#: src/components/task-row.tsx
+msgid "Cancel the task first to delete it"
+msgstr "请先取消任务再删除"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "取消这条排队的消息"
@@ -1699,6 +1703,7 @@ msgid "Confirm clear cache"
 msgstr "确认清除缓存"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
 msgid "Confirm delete"
 msgstr "确认删除"
 
@@ -2125,6 +2130,10 @@ msgstr "无法创建该工作树"
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "无法删除此会话。请重新连接对应电脑并刷新首页后重试"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete this task. Reconnect to its computer and try again."
+msgstr "无法删除此任务。请重新连接对应电脑后重试"
 
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete: {message}"
@@ -2637,6 +2646,10 @@ msgstr "删除 {name}"
 #: src/components/home-recent-sessions.tsx
 msgid "Delete session"
 msgstr "删除会话"
+
+#: src/components/task-row.tsx
+msgid "Delete task"
+msgstr "删除任务"
 
 #: src/i18n/labels.ts
 msgid "Delete this line"
@@ -7342,6 +7355,10 @@ msgstr "语音服务返回了无效的转写结果"
 #: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 隧道只承载 Gateway 这一个端口，不含其他，所以从这里无法访问模拟器和浏览器。请改用本地网络或 Tailscale 连接"
+
+#: src/components/task-row.tsx
+msgid "The task and its history are removed from this computer. Its agent session is kept."
+msgstr "任务及其历史会从这台电脑上移除，它的智能体会话会保留"
 
 #: src/components/home-composer-dock.tsx
 msgid "The task is still starting. Send again in a moment."

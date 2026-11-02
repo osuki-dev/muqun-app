@@ -1236,6 +1236,10 @@ msgstr "Hủy tin nhắn đang chờ"
 msgid "Cancel task"
 msgstr "Hủy tác vụ"
 
+#: src/components/task-row.tsx
+msgid "Cancel the task first to delete it"
+msgstr "Hãy hủy tác vụ trước khi xóa"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Huỷ tin nhắn đang chờ này"
@@ -1699,6 +1703,7 @@ msgid "Confirm clear cache"
 msgstr "Xác nhận xóa bộ nhớ đệm"
 
 #: src/components/home-recent-sessions.tsx
+#: src/components/task-row.tsx
 msgid "Confirm delete"
 msgstr "Xác nhận xóa"
 
@@ -2125,6 +2130,10 @@ msgstr "Không thể tạo worktree đó"
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete this session. Reconnect to its computer and refresh Home before trying again."
 msgstr "Không thể xóa phiên này. Hãy kết nối lại với máy tính tương ứng và làm mới trang chủ trước khi thử lại"
+
+#: src/lib/session-delete-failure.ts
+msgid "Could not delete this task. Reconnect to its computer and try again."
+msgstr "Không thể xóa tác vụ này. Hãy kết nối lại với máy tính của nó rồi thử lại"
 
 #: src/lib/session-delete-failure.ts
 msgid "Could not delete: {message}"
@@ -2637,6 +2646,10 @@ msgstr "Xóa {name}"
 #: src/components/home-recent-sessions.tsx
 msgid "Delete session"
 msgstr "Xóa phiên"
+
+#: src/components/task-row.tsx
+msgid "Delete task"
+msgstr "Xóa tác vụ"
 
 #: src/i18n/labels.ts
 msgid "Delete this line"
@@ -7342,6 +7355,10 @@ msgstr "Dịch vụ giọng nói trả về bản phiên âm không hợp lệ"
 #: src/components/agent-composer.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
+
+#: src/components/task-row.tsx
+msgid "The task and its history are removed from this computer. Its agent session is kept."
+msgstr "Tác vụ và lịch sử của nó sẽ bị xóa khỏi máy tính này. Phiên tác nhân vẫn được giữ lại"
 
 #: src/components/home-composer-dock.tsx
 msgid "The task is still starting. Send again in a moment."
