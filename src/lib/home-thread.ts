@@ -277,9 +277,13 @@ export function homeThreadSendPlan(input: {
 
 /** What is known, right now, about whether the target still exists. */
 export type HomeThreadFacts = {
-  /** The gateway answered "gone" for this session (`useGoneAgentSessions`). */
+  /**
+   * The gateway confirmed this session gone (`useGoneAgentSessions.gone`): a
+   * deletion, a missing folder, or a listing that omits it with authority. A
+   * bare 404 is not that; it only makes the session suspected.
+   */
   goneSession?: boolean;
-  /** A snapshot read answered 404, or the session reported itself deleted. */
+  /** The session reported itself deleted. */
   notFound?: boolean;
   /** The agents this computer lists, when it has listed them. */
   agentIds?: readonly string[];

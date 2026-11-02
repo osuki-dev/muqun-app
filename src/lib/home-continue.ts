@@ -356,7 +356,11 @@ export function homeContinueEntries({
   paneMode: HomeServerPaneMode;
   /** The selected gateway's agent sessions; an offline or unpaired one contributes nothing. */
   gatewaySessions?: GatewayAgentSessionsSnapshot;
-  /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
+  /**
+   * Sessions the gateway answered gone for, or a read answered 404 for and
+   * no listing has settled yet (`goneSessionKey`, `useGoneAgentSessions.hidden`);
+   * they are neither recents nor new rows.
+   */
   goneSessions?: ReadonlySet<string>;
   /**
    * The conversations Home's dock is talking to, one per computer. Each is a

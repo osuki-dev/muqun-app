@@ -107,13 +107,10 @@ type HomeThreadLiveState = {
   /** `homeThreadKey` of the conversation `live` describes. */
   key: string | null;
   live: HomeThreadLive;
-  /** A read answered that the session does not exist. */
-  notFound: boolean;
   /** The first read of `key` has come back: until then the bar holds a placeholder. */
   loaded: boolean;
   publish: (key: string, live: HomeThreadLive) => void;
-  markNotFound: (key: string) => void;
-  /** A read came back and changed nothing (a pane with nothing new on screen). */
+  /** A read came back and changed nothing (a pane with nothing new on screen, a 404). */
   markLoaded: (key: string) => void;
   reset: (key: string | null) => void;
 };
@@ -126,15 +123,10 @@ type HomeThreadLiveState = {
 export const useHomeThreadLive = create<HomeThreadLiveState>((set, get) => ({
   key: null,
   live: EMPTY_HOME_THREAD_LIVE,
-  notFound: false,
   loaded: false,
   publish(key, live) {
     if (get().key !== key) return;
     set({ live, loaded: true });
-  },
-  markNotFound(key) {
-    if (get().key !== key) return;
-    set({ notFound: true, loaded: true });
   },
   markLoaded(key) {
     if (get().key !== key || get().loaded) return;
@@ -142,6 +134,6 @@ export const useHomeThreadLive = create<HomeThreadLiveState>((set, get) => ({
   },
   reset(key) {
     if (get().key === key) return;
-    set({ key, live: EMPTY_HOME_THREAD_LIVE, notFound: false, loaded: false });
+    set({ key, live: EMPTY_HOME_THREAD_LIVE, loaded: false });
   },
 }));
