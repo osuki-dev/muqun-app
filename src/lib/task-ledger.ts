@@ -40,6 +40,12 @@ export const TASK_WS_SUBSCRIPTION_CAPABILITY = 'task_ws_subscription';
 export const TASK_LEDGER_COMPLETE_CAPABILITY = 'task_ledger_complete';
 
 /**
+ * `DELETE /api/tasks/{id}`: the device removes an ended task with its
+ * history, and subscribers hear `task.deleted`.
+ */
+export const TASK_LEDGER_DELETE_CAPABILITY = 'task_ledger_delete';
+
+/**
  * The gateway reports where a task this device opens without a folder runs:
  * the `defaults` frame and `GET /api/tasks/defaults` (Gateway Task 20).
  */
@@ -320,6 +326,22 @@ export function canMarkTaskDone(
   );
 }
 
+/**
+ * What the reader can do about deleting a task: `delete` an ended one --
+ * finished, or paused without saying so (`idle_unconfirmed`) -- or be told to
+ * cancel a running one first. Null on a gateway that cannot delete. A running
+ * sub-task under an ended task is the gateway's to refuse, in its own words.
+ */
+export function taskDeletion(
+  task: TaskView,
+  capabilities: readonly string[] | undefined
+): 'delete' | 'cancelFirst' | null {
+  if (capabilities?.includes(TASK_LEDGER_DELETE_CAPABILITY) !== true) return null;
+  return isTerminalTaskState(task.state) || task.state === 'idle_unconfirmed'
+    ? 'delete'
+    : 'cancelFirst';
+}
+
 /** What `POST /api/tasks` takes. `model` is a catalog id or `provider_id/model_id`. */
 export interface LedgerTaskRequest {
   goal: string;
@@ -586,7 +608,7 @@ export async function fetchTaskView(
 async function endpointRequest(
   endpoint: TaskEndpoint,
   path: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   body?: unknown
 ): Promise<Response> {
   const { gatewayEndpointFetch } = await import('./gateway-client');
@@ -625,6 +647,25 @@ export async function completeTask(
   endpoint?: TaskEndpoint
 ): Promise<TaskView | null> {
   return postTaskAction(taskId, 'complete', 'Complete task', endpoint);
+}
+
+/**
+ * Delete an ended task (`task_ledger_delete`). Resolves once the gateway has
+ * removed it, or no longer knows it (404: gone either way); a refusal
+ * (`409 task_active`) throws with the gateway's body for the caller to word.
+ */
+export async function deleteTask(taskId: string, endpoint?: TaskEndpoint): Promise<void> {
+  const path = `/api/tasks/${encodeURIComponent(taskId)}`;
+  if (endpoint) {
+    const response = await endpointRequest(endpoint, path, 'DELETE');
+    if (response.ok || response.status === 404) return;
+    throw new Error(`Delete task: ${response.status} ${await response.text()}`);
+  }
+  const { writeJson } = await import('./agent-session');
+  await writeJson(path, 'Delete task', undefined, 'DELETE').catch((error: unknown) => {
+    if (error instanceof Error && /: 404\b/.test(error.message)) return;
+    throw error;
+  });
 }
 
 async function postTaskAction(

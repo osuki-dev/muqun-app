@@ -28,7 +28,7 @@ import Animated, {
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
-import { useTaskAction } from '@/hooks/use-server-tasks';
+import { useTaskAction, useTaskDelete } from '@/hooks/use-server-tasks';
 import { useRowMarkdownStyle } from '@/hooks/use-markdown-style';
 import { useTaskAge, useTaskElapsed } from '@/hooks/use-task-age';
 import { taskStateWord } from '@/i18n/labels';
@@ -52,7 +52,8 @@ import { isDemoRecord } from '@/lib/demo-gateway';
 import { peerServerIdOf } from '@/lib/fleet-peers';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { describeGatewayFailure } from '@/lib/network-error';
-import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
+import { taskDeleteFailureMessage } from '@/lib/session-delete-failure';
+import { canMarkTaskDone, taskDeletion, type TaskView } from '@/lib/task-ledger';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
@@ -477,6 +478,7 @@ function useTaskRowModel({
   const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
   const hide = useHomeTaskCards((cards) => cards.hide);
   const act = useTaskAction(serverId);
+  const deleteTask = useTaskDelete(serverId);
   const peerName = usePeerName();
   const pairedHere = useIsPairedHere();
   const requesterName = useRequesterName();
@@ -586,6 +588,39 @@ function useTaskRowModel({
           showToast({ variant: 'info', title: t`Copied`, message: details })
         );
       }),
+    });
+  }
+  // Deleting is for ended work; a running task is cancelled first, and the
+  // menu says so where Delete would be.
+  const deletion = taskDeletion(task, capabilities);
+  if (deletion === 'cancelFirst') {
+    menuItems.push({
+      id: 'delete-blocked',
+      label: t`Cancel the task first to delete it`,
+      Icon: DeleteIcon,
+      disabled: true,
+      testID: `task-row-delete-blocked-${task.taskId}`,
+      onPress: () => {},
+    });
+  } else if (deletion === 'delete') {
+    menuItems.push({
+      id: 'delete',
+      label: t`Delete task`,
+      Icon: DeleteIcon,
+      tone: 'danger',
+      confirm: {
+        label: t`Confirm delete`,
+        detail: t`The task and its history are removed from this computer. Its agent session is kept.`,
+        persist: true,
+      },
+      testID: `task-row-delete-${task.taskId}`,
+      onPress: () => {
+        setMenuError(null);
+        void deleteTask(task).then(
+          () => setMenuOpen(false),
+          (failure: unknown) => setMenuError(taskDeleteFailureMessage(failure))
+        );
+      },
     });
   }
   if (inComputerCard) {

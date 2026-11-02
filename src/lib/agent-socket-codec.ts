@@ -226,6 +226,8 @@ export type AgentSocketServerFrame =
    * with no `asid` under `subscribe_all`, as a `task` frame under `subscribe_tasks`.
    */
   | { t: 'task'; seq: number; task: TaskView }
+  /** `task.deleted` (`task_ledger_delete`), carried the same two ways as `task.updated`. */
+  | { t: 'task_deleted'; seq: number; taskId: string }
   /**
    * `asid` "" means every session. `tasks` with an empty `asid` is the task
    * channel alone falling behind: refresh the task list, not every timeline.
@@ -267,6 +269,17 @@ export type AgentSocketClientFrame =
 
 function str(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
+}
+
+/** `task.updated` or `task.deleted`; null for any other task-channel event. */
+function taskFrame(name: string | null, seq: number, data: unknown): AgentSocketServerFrame | null {
+  if (name === 'task.deleted') {
+    const taskId = str((data as { task_id?: unknown } | null)?.task_id);
+    return taskId ? { t: 'task_deleted', seq, taskId } : null;
+  }
+  if (name !== 'task.updated') return null;
+  const task = parseTaskView(data);
+  return task ? { t: 'task', seq, task } : null;
 }
 
 /**
@@ -332,21 +345,15 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
       const name = str(rec.event);
       if (name === null) return null;
       const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
-      if (asid === null) {
-        // Not about a session. The one event this build reads is a task's.
-        if (name !== 'task.updated') return null;
-        const task = parseTaskView(rec.data);
-        return task ? { t: 'task', seq, task } : null;
-      }
+      // Not about a session. The events this build reads there are a task's.
+      if (asid === null) return taskFrame(name, seq, rec.data);
       // `data` is the SSE `data:` payload embedded as JSON; the parser the SSE
       // path uses takes it from here unchanged.
       return { t: 'event', asid, seq, event: parseAgentDomainEvent(name, rec.data) };
     }
     case 'task': {
-      if (rec.event !== 'task.updated') return null;
       const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
-      const task = parseTaskView(rec.data);
-      return task ? { t: 'task', seq, task } : null;
+      return taskFrame(str(rec.event), seq, rec.data);
     }
     case 'resync': {
       const asid = str(rec.asid);

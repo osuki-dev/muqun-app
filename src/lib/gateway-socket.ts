@@ -85,6 +85,8 @@ export interface GatewaySocketListener {
   onEvent?: (event: AgentDomainEvent) => void;
   /** A task changed. Only `watchTasks` listeners hear it. */
   onTaskUpdated?: (task: TaskView, seq: number) => void;
+  /** A task was deleted (`task.deleted`). Only `watchTasks` listeners hear it. */
+  onTaskDeleted?: (taskId: string) => void;
   /** The gateway dropped events for this session; refetch it. */
   onResync?: () => void;
   /** Where this device's next task runs by default (`defaults` frame). Task listeners only. */
@@ -778,6 +780,9 @@ export class GatewaySocket {
         return;
       case 'task':
         for (const l of [...this.taskListeners.keys()]) l.onTaskUpdated?.(frame.task, frame.seq);
+        return;
+      case 'task_deleted':
+        for (const l of [...this.taskListeners.keys()]) l.onTaskDeleted?.(frame.taskId);
         return;
       case 'resync':
         // Only task events lagged: the session timelines are intact.

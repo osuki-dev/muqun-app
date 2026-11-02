@@ -27,3 +27,17 @@ export function sessionDeleteFailureMessage(failure: unknown): string {
     ? described.message
     : t`Could not delete this session. Reconnect to its computer and refresh Home before trying again.`;
 }
+
+/**
+ * The same rule for a task: the gateway's own sentence for a refusal
+ * (`409 task_active`: "cancel it first"), the app's otherwise.
+ */
+export function taskDeleteFailureMessage(failure: unknown): string {
+  const { status, message } = agentRequestErrorDetail(failure);
+  if (message && status >= 400 && status !== 401 && status !== 403)
+    return t`Could not delete: ${message}`;
+  const described = describeGatewayFailure(failure);
+  return ['auth', 'network', 'timeout', 'backend'].includes(described.kind)
+    ? described.message
+    : t`Could not delete this task. Reconnect to its computer and try again.`;
+}

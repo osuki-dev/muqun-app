@@ -11,7 +11,16 @@ import { isTerminalTaskState, type TaskView } from './task-ledger';
  * Kept free of React Native so the rules below run under `bun test`: the hook
  * and the sheet decide when to ask, this file decides what the answer means.
  */
-export type ServerTasksEntry = { tasks: TaskView[]; fetchedAt: number | null };
+export type ServerTasksEntry = {
+  tasks: TaskView[];
+  fetchedAt: number | null;
+  /**
+   * Tasks deleted while this launch watched (`task.deleted`, or this device's
+   * own delete). The gateway never reuses a task id, so a list read or a frame
+   * that left before the delete cannot bring one back.
+   */
+  deleted?: readonly string[];
+};
 export type ServerTasksIndex = Record<string, ServerTasksEntry>;
 
 /** How many finished tasks the sheet keeps; the ledger itself keeps more. */
@@ -35,12 +44,35 @@ export function upsertTask(
   task: TaskView
 ): ServerTasksIndex {
   const entry = index[serverId];
+  if (entry?.deleted?.includes(task.taskId)) return index;
   const known = entry?.tasks.find((candidate) => candidate.taskId === task.taskId);
   if (known && known.updatedMs > task.updatedMs) return index;
   const others = (entry?.tasks ?? []).filter((known) => known.taskId !== task.taskId);
   return {
     ...index,
-    [serverId]: { tasks: newestFirst([...others, task]), fetchedAt: entry?.fetchedAt ?? null },
+    [serverId]: {
+      ...entry,
+      tasks: newestFirst([...others, task]),
+      fetchedAt: entry?.fetchedAt ?? null,
+    },
+  };
+}
+
+/** A task the gateway deleted: gone from the ledger, and kept out of it. */
+export function removeTask(
+  index: ServerTasksIndex,
+  serverId: string,
+  taskId: string
+): ServerTasksIndex {
+  const entry = index[serverId];
+  if (entry?.deleted?.includes(taskId)) return index;
+  return {
+    ...index,
+    [serverId]: {
+      tasks: (entry?.tasks ?? []).filter((task) => task.taskId !== taskId),
+      fetchedAt: entry?.fetchedAt ?? null,
+      deleted: [...(entry?.deleted ?? []), taskId],
+    },
   };
 }
 
@@ -64,13 +96,16 @@ export function replaceTasks(
 ): ServerTasksIndex {
   const entry = index[serverId];
   const held = new Map((entry?.tasks ?? []).map((task) => [task.taskId, task]));
-  const listed = tasks.map((task) => {
-    const known = held.get(task.taskId);
-    if (!known) return task;
-    if (known.updatedMs > task.updatedMs) return known;
-    // The same view the last read gave: keep it, so the rows built from it stay still.
-    return sameData(known, task) ? known : task;
-  });
+  const deleted = new Set(entry?.deleted);
+  const listed = tasks
+    .filter((task) => !deleted.has(task.taskId))
+    .map((task) => {
+      const known = held.get(task.taskId);
+      if (!known) return task;
+      if (known.updatedMs > task.updatedMs) return known;
+      // The same view the last read gave: keep it, so the rows built from it stay still.
+      return sameData(known, task) ? known : task;
+    });
   const named = new Set(tasks.map((task) => task.taskId));
   const arrived = [...held.values()].filter(
     (task) => !named.has(task.taskId) && (task.receivedAtMs ?? -Infinity) >= requestedAtMs
@@ -88,7 +123,7 @@ export function replaceTasks(
     return index;
   return {
     ...index,
-    [serverId]: { tasks: next, fetchedAt: nowMs },
+    [serverId]: { ...entry, tasks: next, fetchedAt: nowMs },
   };
 }
 
@@ -142,6 +177,8 @@ export type ServerTasksState = {
   /** A list answer to a request sent at `requestedAtMs` (see `replaceTasks`). */
   replace: (serverId: string, tasks: readonly TaskView[], requestedAtMs: number) => void;
   upsert: (serverId: string, task: TaskView) => void;
+  /** The gateway deleted the task (see `removeTask`). */
+  remove: (serverId: string, taskId: string) => void;
 };
 
 export function createServerTasksState(
@@ -174,6 +211,11 @@ export function createServerTasksState(
       set((state) => ({
         index: upsertTask(state.index, serverId, { ...task, receivedAtMs: now() }),
       })),
+    remove: (serverId, taskId) =>
+      set((state) => {
+        const index = removeTask(state.index, serverId, taskId);
+        return index === state.index ? state : { index };
+      }),
   });
 }
 

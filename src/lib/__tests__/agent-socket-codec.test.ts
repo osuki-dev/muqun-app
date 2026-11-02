@@ -238,6 +238,23 @@ describe('frames', () => {
     });
   });
 
+  test.each([
+    [
+      'subscribe_all',
+      { t: 'event', asid: null, seq: 4, event: 'task.deleted', data: { task_id: 't1' } },
+    ],
+    [
+      'subscribe_tasks',
+      { t: 'task', asid: null, seq: 4, event: 'task.deleted', data: { task_id: 't1' } },
+    ],
+  ])('task.deleted under %s becomes a task_deleted frame', (_name, wire) => {
+    expect(parseAgentSocketFrame(JSON.stringify(wire))).toEqual({
+      t: 'task_deleted',
+      seq: 4,
+      taskId: 't1',
+    });
+  });
+
   test('any other event on no session, or a task with an unknown state, is ignored', () => {
     expect(
       parseAgentSocketFrame('{"t":"event","asid":null,"seq":1,"event":"fleet.changed","data":{}}')
