@@ -2527,7 +2527,6 @@ export const AgentComposer = memo(function AgentComposer({
                   fieldTextTopInset={fieldTextTopInset}
                   fieldBottomInset={fieldBottomInset}
                   fieldShadow={fieldShadow}
-                  onVoiceActiveChange={setVoiceActive}
                   spans={spans}
                   compact={compact}
                   minLines={fieldLines}
