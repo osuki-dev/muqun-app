@@ -598,6 +598,7 @@ export interface AgentComposerProps {
   /** Optional bounded artwork overflow; the field and its controls remain clipped. */
   fieldBackgroundOutset?: HomeComposerOutset;
   fieldDecoration?: React.ReactNode;
+  /** How far the decoration reaches above the field: reported in `onDockHeight` even while it is hidden. */
   fieldDecorationOverhang?: number;
   /** The shadow the field's own plate casts; see `TerminalComposer`. */
   fieldShadow?: string;
@@ -1563,8 +1564,12 @@ export const AgentComposer = memo(function AgentComposer({
     slashPopup.open ||
     skillPopup.open ||
     Boolean(mentionTrigger);
-  const decorationClearance =
-    fieldDecoration && !decorationHidden && !voiceActive ? fieldDecorationOverhang : 0;
+  // The clearance is the theme's, not the moment's: while a menu or a reply
+  // hid the decoration, a shorter dock dropped the Stage's session strip onto
+  // the composer, and the returning decoration was drawn over its cards until
+  // the strip jumped back up. Only the voice panel, which replaces the field
+  // itself, gives the room back.
+  const decorationClearance = fieldDecoration && !voiceActive ? fieldDecorationOverhang : 0;
   const dockHeight = surfaceHeight + dockFoot;
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
