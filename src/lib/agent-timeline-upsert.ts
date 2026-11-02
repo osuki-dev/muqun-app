@@ -184,6 +184,71 @@ export function upsertTimelineItems(
   return reordered ? sortTimeline(next) : next;
 }
 
+/** The key a row is drawn under: see `TimelineItem.row_key`. */
+export function drawnRowKey(item: TimelineItem): string {
+  return item.row_key ?? item.id;
+}
+
+/** What a row says, for telling the same row apart from a changed one. */
+function rowSignature(item: TimelineItem): string | undefined {
+  const { part } = item;
+  if (part.type !== 'text' && part.type !== 'reasoning') return undefined;
+  return JSON.stringify([item.role, part.type, part.text]);
+}
+
+/**
+ * A replacement snapshot can bring the same conversation back under new ids.
+ * An ACP runtime re-ids every replayed turn when it loads a session, and it
+ * loads one on the first send after its process is gone -- so the resync
+ * that send provokes re-keyed every row at once, the list discarded every
+ * height it had measured and remounted every row, and the transcript went
+ * blank until it had measured again.
+ *
+ * Rows the previous timeline already drew keep their drawn key: matched by
+ * id, or else in order by what they say. Everything else is keyed by its own
+ * id, as before. Optimistic rows are left to `upsertTimelineItems`, which
+ * already hands their key to the acknowledged row.
+ */
+export function carryDrawnRowKeys(
+  previous: readonly TimelineItem[],
+  snapshot: readonly TimelineItem[]
+): TimelineItem[] {
+  const byId = new Map(previous.map((item, index) => [item.id, index] as const));
+  // Rows the snapshot still carries under their id are matched first, so a
+  // row that only says the same thing can never take their key.
+  const consumed = new Set<number>();
+  const matchedById = snapshot.map((item) => {
+    const index = byId.get(item.id);
+    if (index === undefined || consumed.has(index)) return undefined;
+    consumed.add(index);
+    return index;
+  });
+  const taken = new Set(snapshot.map(drawnRowKey));
+  let cursor = 0;
+  return snapshot.map((item, at) => {
+    let index = matchedById[at];
+    if (index === undefined) {
+      const signature = rowSignature(item);
+      if (signature === undefined) return item;
+      for (let candidate = cursor; candidate < previous.length; candidate++) {
+        if (
+          consumed.has(candidate) ||
+          previous[candidate].id.startsWith('temp_') ||
+          rowSignature(previous[candidate]) !== signature
+        )
+          continue;
+        index = candidate;
+        break;
+      }
+      if (index === undefined) return item;
+      consumed.add(index);
+    }
+    cursor = Math.max(cursor, index + 1);
+    const key = drawnRowKey(previous[index]);
+    return drawnRowKey(item) === key || taken.has(key) ? item : { ...item, row_key: key };
+  });
+}
+
 /** Replace canonical history without losing a send that raced a stale snapshot. */
 export function reconcileAgentSnapshotPending(
   previous: readonly TimelineItem[],
@@ -197,5 +262,5 @@ export function reconcileAgentSnapshotPending(
   // deliberately remove it. The normal upsert preserves an acknowledged row's key.
   // ACK can precede the user-message event, and unrelated events advance the
   // snapshot sequence. Neither absence nor idle status proves send failure.
-  return upsertTimelineItems(pending, snapshot);
+  return upsertTimelineItems(pending, carryDrawnRowKeys(previous, snapshot));
 }
