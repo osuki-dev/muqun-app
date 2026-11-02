@@ -1,11 +1,35 @@
 import { HOME_AGENT_SESSION_ID } from './home-composer';
+import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeSummary } from '@/stores/home-summary';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerSession } from '@/stores/server-session';
 import { hasRealSessionTitle } from './agent-protocol';
+import type { AgentSessionListing } from './gone-agent-sessions';
 import { HOME_CONTINUE_GATEWAY_SESSION_LIMIT } from './home-continue';
+import { HOME_OVERVIEW_MAX_SESSIONS } from './home-overview';
+import { homeTargetAgentId } from './home-recents';
+
+/**
+ * A listing settles the sessions a read answered 404 for: one it carries is
+ * back, and one it omits with authority is gone -- its recent with it
+ * (`lib/gone-agent-sessions`).
+ */
+export function settleGoneSessions(listing: AgentSessionListing) {
+  const gone = useGoneAgentSessions.getState().resolve(listing);
+  const recents = useHomeRecentsStore.getState();
+  for (const session of gone) {
+    const entry = recents.entries.find(
+      ({ target }) =>
+        target.kind === 'agent-session' &&
+        target.serverId === session.serverId &&
+        target.asid === session.asid &&
+        (!session.agentId || homeTargetAgentId(target) === session.agentId)
+    );
+    if (entry) void recents.remove(entry.target);
+  }
+}
 
 /** A dead collector or missing source immediately restores direct discovery. */
 export function freshHomeOverview(serverId: string, nowMs = Date.now()) {
@@ -46,6 +70,14 @@ export function publishHomeOverview(serverId: string) {
         .filter((row) => overview.unavailableProviders?.includes(row.agentId))
         .map((row) => (row.status === 'unknown' ? row : { ...row, status: 'unknown' as const })),
     ].slice(0, HOME_CONTINUE_GATEWAY_SESSION_LIMIT),
+  });
+  // An unavailable provider has no rows here, so nothing of its is settled.
+  settleGoneSessions({
+    serverId,
+    observedAtMs,
+    seen: overview.sessions,
+    complete: overview.sessions.length < HOME_OVERVIEW_MAX_SESSIONS,
+    searched: [],
   });
   const recent = useHomeRecentsStore.getState();
   for (const entry of recent.entries) {

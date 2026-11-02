@@ -2332,13 +2332,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   activeDirectoryRef.current ??
                   (gone.kind === 'workspace-missing' ? gone.directory : undefined);
                 const target = homeTargetFor(asid, directory);
-                // Forget it on Home, and keep the gateway's own listing from
-                // bringing the row back to open the same dead session again.
-                if (target) {
-                  void useHomeRecentsStore.getState().remove(target);
+                if (target)
                   useHomeAttention.getState().observe(target, [], Date.now(), snapshotTicket);
+                if (gone.kind === 'workspace-missing') {
+                  // The folder is gone for good: forget it on Home, and keep the
+                  // gateway's own listing from bringing the row back to open the
+                  // same dead session again.
+                  if (target) void useHomeRecentsStore.getState().remove(target);
+                  useGoneAgentSessions.getState().markGone(serverId, asid);
+                } else {
+                  // A 404 alone is not a deletion: the gateway answers it for a
+                  // session whose agent is still attaching after a restart. The
+                  // row is hidden until Home's next listing decides, and the
+                  // recent is kept (`lib/gone-agent-sessions`).
+                  const agentId =
+                    target?.agentId ??
+                    recentSessionAgentId(asid, readSessionInfo(), sessionsRef.current);
+                  useGoneAgentSessions
+                    .getState()
+                    .suspect({ serverId, asid, ...(agentId ? { agentId } : {}) });
                 }
-                useGoneAgentSessions.getState().markGone(serverId, asid);
                 setLoading(false);
                 setSessionInfo(null);
                 setTimeline([]);
@@ -2408,6 +2421,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       permissionReplies,
       readAutoPermission,
       homeTargetFor,
+      readSessionInfo,
       noteWorkspaceMissing,
       syncHomeRecentTitle,
       syncHomeRecentObservation,

@@ -86,7 +86,11 @@ import { selectServerAgentsContent, useServerAgents } from '@/stores/server-agen
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
-import { freshHomeOverview, publishHomeOverview } from '@/lib/home-overview-sync';
+import {
+  freshHomeOverview,
+  publishHomeOverview,
+  settleGoneSessions,
+} from '@/lib/home-overview-sync';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { homeTargetAgentId } from '@/lib/home-recents';
@@ -203,7 +207,7 @@ export function useHomeRecentEntries({
 }) {
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
-  const goneSessions = useGoneAgentSessions((state) => state.keys);
+  const goneSessions = useGoneAgentSessions((state) => state.hidden);
   // The dock's conversations are rows before any read names them.
   const threads = useHomeThreads((state) => state.byServer);
   // Rows, not ages: a pass that only re-confirms the panes leaves this alone.
@@ -266,6 +270,7 @@ export function useHomeRecentEntries({
           // device never opened; every other gateway keeps its recents.
           recordAgentSessions:
             record.serverId === targetId ? useHomeAgentSessions.getState().record : undefined,
+          confirmSessions: settleGoneSessions,
           servesSnapshot: snapshotServesAgents({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],
           }),

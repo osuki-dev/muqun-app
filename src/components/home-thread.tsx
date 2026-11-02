@@ -226,6 +226,7 @@ export function HomeThreadFeed({
 
   const sessionId = target.kind === 'session' ? target.sessionId : undefined;
   const asid = target.kind === 'session' ? target.asid : undefined;
+  const agentId = target.kind === 'session' ? target.agentId : undefined;
   useEffect(() => {
     if (!enabled || !sessionId || !asid) return;
     const current = useHomeThreadLive.getState();
@@ -249,14 +250,23 @@ export function HomeThreadFeed({
         live = applyHomeThreadEvent(live, event);
         if (!publishTimer) publishTimer = setTimeout(publish, HOME_THREAD_PUBLISH_MS);
       },
-      onNotFound: () => useHomeThreadLive.getState().markNotFound(key),
+      // A 404 does not end the conversation by itself: the gateway answers it
+      // for a session whose agent is still attaching after a restart. Home's
+      // next listing decides (`lib/gone-agent-sessions`), and `goneSession`
+      // below ends the conversation once it has.
+      onNotFound: () => {
+        useHomeThreadLive.getState().markLoaded(key);
+        useGoneAgentSessions
+          .getState()
+          .suspect({ serverId, asid, ...(agentId ? { agentId } : {}) });
+      },
     });
     return () => {
       active = false;
       if (publishTimer) clearTimeout(publishTimer);
       release();
     };
-  }, [enabled, key, serverId, sessionId, asid]);
+  }, [enabled, key, serverId, sessionId, asid, agentId]);
 
   // A pane has no transcript: whether its agent is at work is read off its
   // screen (the terminal screen's own read) when it becomes the target, when
@@ -339,13 +349,11 @@ export function HomeThreadFeed({
   const task = useServerTasksStore((state) => homeThreadTask(target, state.index[serverId]?.tasks));
   const goneSession = useGoneAgentSessions((state) =>
     target.kind === 'session'
-      ? state.keys.has(goneSessionKey(serverId, target.asid, target.agentId)) ||
-        state.keys.has(goneSessionKey(serverId, target.asid))
+      ? state.gone.has(goneSessionKey(serverId, target.asid, target.agentId)) ||
+        state.gone.has(goneSessionKey(serverId, target.asid))
       : false
   );
-  const notFound = useHomeThreadLive(
-    (state) => state.key === key && (state.notFound || state.live.deleted === true)
-  );
+  const notFound = useHomeThreadLive((state) => state.key === key && state.live.deleted === true);
   const agentIds = useAgents((state) =>
     state.index.servers[serverId]?.agents?.agents
       .flatMap((agent) => [agent.id, agent.kind])
@@ -381,7 +389,7 @@ export function HomeThreadFeed({
 export function homeThreadFactsNow(target: HomeThreadTarget): HomeThreadFacts {
   const { serverId } = target;
   const task = homeThreadTask(target, useServerTasksStore.getState().index[serverId]?.tasks);
-  const gone = useGoneAgentSessions.getState().keys;
+  const gone = useGoneAgentSessions.getState().gone;
   const agents = useAgents.getState().index.servers[serverId]?.agents?.agents;
   const panes = useServerAgents.getState().byServer[serverId];
   return {

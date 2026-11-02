@@ -3,6 +3,8 @@ import { asRecord } from './record';
 import type { ServerAgent } from './server-agents';
 
 export const HOME_OVERVIEW_CAPABILITY = 'home_overview_v1';
+/** The gateway's cap on the sessions one overview carries; fewer is the whole listing. */
+export const HOME_OVERVIEW_MAX_SESSIONS = 50;
 export type HomeOverview = {
   unavailableProviders?: string[];
   unavailableWorkspaces?: string[];
@@ -25,7 +27,7 @@ export function parseHomeOverview(value: unknown): HomeOverview | null {
     !Array.isArray(row.workspaces) ||
     row.workspaces.length > 16 ||
     !Array.isArray(row.sessions) ||
-    row.sessions.length > 50
+    row.sessions.length > HOME_OVERVIEW_MAX_SESSIONS
   )
     return null;
   for (const key of ['unavailableProviders', 'unavailableWorkspaces']) {

@@ -1,5 +1,6 @@
 import { hasRealSessionTitle, parseAgentSessionList } from './agent-protocol';
 import { normalizeGatewayEntities } from './gateway-entities';
+import type { AgentSessionListing } from './gone-agent-sessions';
 import {
   gatewayAgentSessions,
   HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
@@ -52,6 +53,7 @@ export async function refreshHomeContinue({
   updateTitle,
   repairAgent,
   recordAgentSessions,
+  confirmSessions,
   servesSnapshot = false,
   capabilities,
   agentSessionLimit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
@@ -72,6 +74,12 @@ export async function refreshHomeContinue({
    * goes here, so Continue shows sessions this device never opened.
    */
   recordAgentSessions?: (snapshot: GatewayAgentSessionsSnapshot) => void;
+  /**
+   * Everything this refresh saw of the gateway's sessions, once the listing
+   * and the folder reads have answered: what settles a session a read
+   * answered 404 for (`lib/gone-agent-sessions`).
+   */
+  confirmSessions?: (listing: AgentSessionListing) => void;
   /** The gateway announces `session_snapshot`: its `/snapshot` carries the real agents. */
   servesSnapshot?: boolean;
   capabilities?: readonly string[];
@@ -144,11 +152,23 @@ export async function refreshHomeContinue({
             // list to one folder -- is read in its own folder, as it used to
             // be: one read per folder that has such a session, never more than
             // the per-folder reads this replaced.
-            const unlisted = new Map<string, { sessionId: string; directory: string }>();
+            const unlisted = new Map<
+              string,
+              { sessionId: string; directory: string; asids: string[] }
+            >();
             for (const { target } of remembered) {
-              if (target.kind === 'agent-session' && !sessionFor(target))
-                unlisted.set(JSON.stringify([target.sessionId, target.directory]), target);
+              if (target.kind !== 'agent-session' || sessionFor(target)) continue;
+              const folderKey = JSON.stringify([target.sessionId, target.directory]);
+              const folder = unlisted.get(folderKey) ?? {
+                sessionId: target.sessionId,
+                directory: target.directory,
+                asids: [],
+              };
+              folder.asids.push(target.asid);
+              unlisted.set(folderKey, folder);
             }
+            // The sessions whose folder answered: their absence is not paging.
+            const searched: string[] = [];
             await Promise.all(
               [...unlisted.values()].map(async (folder) => {
                 const scoped = new URLSearchParams({
@@ -159,13 +179,27 @@ export async function refreshHomeContinue({
                 });
                 const found = await read(
                   `/api/sessions/${encodeURIComponent(folder.sessionId)}/agent-sessions?${scoped}`
-                ).then(listedSessions, () => []);
+                ).then(listedSessions, () => null);
+                if (!found) return;
+                searched.push(...folder.asids);
                 for (const info of found) {
                   const key = sessionKey(info.agent_id, info.asid);
                   if (!byOwner.has(key)) byOwner.set(key, info);
                 }
               })
             );
+            if (!isCurrent()) return;
+            confirmSessions?.({
+              serverId,
+              observedAtMs,
+              seen: [...byOwner.values()].map((info) => ({
+                asid: info.asid,
+                agentId: info.agent_id,
+                ...(info.deleted ? { deleted: true } : {}),
+              })),
+              complete: list.length < Math.max(AGENT_SESSION_LIST_LIMIT, agentSessionLimit),
+              searched,
+            });
             for (const { target } of remembered) {
               if (!isCurrent()) return;
               if (target.kind !== 'agent-session') continue;
