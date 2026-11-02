@@ -51,11 +51,23 @@ if (process.env.EXPO_PUBLIC_HOT_UPDATER_ENABLED !== '1')
 if (process.env.HOT_UPDATER_CHANNEL !== channel)
   throw new Error('Build and deployment channels must match');
 readHotUpdaterAppConfig(process.env, process.cwd());
-// Reject missing or stale source catalogs, then bundle their compiled translations.
-for (const script of ['i18n:check', 'i18n:compile']) {
-  const result = spawnSync('bun', ['run', script], { stdio: 'inherit' });
+// Publish gate. A device keeps the bundle it has until a newer one is offered,
+// so a bundle that does not type-check, lint or pass its tests must never
+// leave this machine. Each command's own exit code decides, never a pipe's.
+// Then the localization preflight: reject missing or stale source catalogs
+// and bundle their compiled translations.
+const preflight: [label: string, command: string, args: string[]][] = [
+  ['typecheck', 'bun', ['run', 'typecheck']],
+  ['lint', 'bun', ['run', 'lint']],
+  ['unit tests', 'bun', ['test', 'src']],
+  ['i18n:check', 'bun', ['run', 'i18n:check']],
+  ['i18n:compile', 'bun', ['run', 'i18n:compile']],
+];
+for (const [label, command, args] of preflight) {
+  const result = spawnSync(command, args, { stdio: 'inherit' });
   if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`OTA localization preflight failed: ${script}`);
+  if (result.status !== 0)
+    throw new Error(`OTA preflight failed: ${label} (exit ${result.status ?? 'signal'})`);
 }
 const deployment = nativeUpdateDeployment(process.cwd(), channel ?? '', selectedPlatform);
 for (const target of deployment.targets) {
