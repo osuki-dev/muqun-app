@@ -110,7 +110,9 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const [yoloConfirmation, setYoloConfirmation] = useState<{ toggle: () => void } | null>(null);
-  const confirmingYolo = yoloConfirmation?.toggle === onToggleYolo;
+  // A row without a switch has nothing to confirm: `undefined === undefined`
+  // must not open the confirmation.
+  const confirmingYolo = Boolean(onToggleYolo) && yoloConfirmation?.toggle === onToggleYolo;
   // The switch is the agent's own bypass mode, so the row says which, and
   // for an agent that only takes it at launch, why the switch is off.
   const agentName = agentDisplayName(undefined, agentId);
