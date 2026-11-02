@@ -115,6 +115,29 @@ describe('dangerousPermissionRequest', () => {
     expect(yoloDecision({ ...shellRequest(['read /tmp/x']), action: '' })).toBeUndefined();
   });
 
+  /**
+   * The requests the gateway builds from each agent's own vocabulary: ACP
+   * kinds (Antigravity, Claude Code, Cursor, Qoder, FX) name a file only
+   * when they have one, T3's `file-change` arrives as `edit` with none, and
+   * the words for a shell without its command, a sandbox grant or a tool
+   * nobody has a word for are not an operation YOLO may answer.
+   */
+  test.each<[string, string, string[], 'allow' | undefined]>([
+    ['an ACP read with its file', 'read', ['/w/notes.md'], 'allow'],
+    ['an ACP edit that named no file', 'edit', [], 'allow'],
+    ['an ACP delete', 'delete', [], 'allow'],
+    ['an ACP move', 'move', [], 'allow'],
+    ['an ACP search', 'search', [], 'allow'],
+    ['an ACP fetch, as webfetch', 'webfetch', [], 'allow'],
+    ["T3's file-change, as edit", 'edit', [], 'allow'],
+    ['a T3 command with no command text', 'command', [], undefined],
+    ['a Codex sandbox grant', 'permissions', [], undefined],
+    ['a tool nobody has a word for', 'NotebookEdit', ['/w/a.ipynb'], undefined],
+    ['a blank resource on a known operation', 'read', [' '], undefined],
+  ])('%s', (_name, action, resources, expected) => {
+    expect(yoloDecision({ ...shellRequest(resources), action })).toBe(expected);
+  });
+
   test('missing or ambiguous choices never silently widen the approval scope', () => {
     const req = shellRequest(['bun test src']);
     expect(yoloDecision({ ...req, options: [] })).toBeUndefined();

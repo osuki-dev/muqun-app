@@ -107,6 +107,13 @@ export interface AgentSheetSnapshot {
    */
   savedPermissionsRevision: number;
   /**
+   * Whether the gateway can list what "Always allow" agreed to for this
+   * agent (`features.savedPermissions`). Only OpenCode keeps those rules
+   * where the gateway can read them; Claude Code, Antigravity and the rest
+   * keep their own, so the sheet shows no list rather than an empty one.
+   */
+  savedPermissionsListed: boolean;
+  /**
    * Bumped whenever `agent.worktree.changed` says a project's inventory moved.
    *
    * The event carries no `asid` and is not replayable, and a route cannot
@@ -208,6 +215,7 @@ const INITIAL: AgentSheetSnapshot = {
   contextUsage: null,
   commands: EMPTY_COMMANDS,
   savedPermissionsRevision: 0,
+  savedPermissionsListed: true,
   worktreeRevision: 0,
   models: EMPTY_MODELS,
 };

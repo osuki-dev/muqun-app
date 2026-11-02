@@ -68,6 +68,12 @@ export interface AgentContextSheetProps {
    * and opening it again.
    */
   savedPermissionsRevision?: number;
+  /**
+   * Whether the gateway can list those rules for this agent at all. Where it
+   * cannot -- the agent keeps them itself -- the list is not drawn, as an
+   * empty one would say the reader's "Always allow" went nowhere.
+   */
+  savedPermissionsListed?: boolean;
   onClose: () => void;
   onCompact?: () => void;
   onClear?: () => void;
@@ -91,6 +97,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   yoloMode = false,
   onToggleYolo,
   savedPermissionsRevision = 0,
+  savedPermissionsListed = true,
   onClose,
   onCompact,
   onClear,
@@ -115,7 +122,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const [loadingRules, setLoadingRules] = useState(false);
 
   useEffect(() => {
-    if (!asid) {
+    if (!asid || !savedPermissionsListed) {
       setSavedRules([]);
       return;
     }
@@ -131,7 +138,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
     return () => {
       active = false;
     };
-  }, [asid, savedPermissionsRevision]);
+  }, [asid, savedPermissionsListed, savedPermissionsRevision]);
 
   /**
    * Take one back.
@@ -455,54 +462,58 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           outlives the prompt, and until now there was nowhere in the app to see
           what had been agreed to -- the reader had to go to the host.
         */}
-        <SheetSceneGroupRule />
-        <SheetSceneGroupHeading
-          title={t`Always allowed`}
-          meta={
-            loadingRules ? (
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            ) : savedRules.length > 0 ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {savedRules.length}
+        {savedPermissionsListed ? (
+          <>
+            <SheetSceneGroupRule />
+            <SheetSceneGroupHeading
+              title={t`Always allowed`}
+              meta={
+                loadingRules ? (
+                  <ActivityIndicator size="small" color={theme.colors.textMuted} />
+                ) : savedRules.length > 0 ? (
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {savedRules.length}
+                  </Text>
+                ) : null
+              }
+            />
+            {savedRules.length === 0 ? (
+              <Text variant="caption" color={theme.colors.textMuted} style={styles.rulesEmpty}>
+                {loadingRules
+                  ? t`Reading the rules on the host…`
+                  : t`Nothing yet — an “Always allow” reply lands here, for this project.`}
               </Text>
-            ) : null
-          }
-        />
-        {savedRules.length === 0 ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.rulesEmpty}>
-            {loadingRules
-              ? t`Reading the rules on the host…`
-              : t`Nothing yet — an “Always allow” reply lands here, for this project.`}
-          </Text>
-        ) : (
-          savedRules.map((rule) => (
-            <Animated.View
-              key={rule.id}
-              entering={fadeIn('short')}
-              exiting={fadeOut('micro')}
-              layout={listLayout('short')}>
-              <SheetSceneRow
-                testID={`agent-saved-permission-${rule.id}`}
-                title={rule.action || t`Permission`}
-                caption={rule.resource}
-                accessibilityLabel={[rule.action, rule.resource].filter(Boolean).join(' · ')}
-                meta={
-                  <PressableScale
-                    testID={`agent-saved-permission-revoke-${rule.id}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Revoke ${rule.action || t`this rule`}`}
-                    hitSlop={8}
-                    onPress={() => revokeRule(rule)}
-                    style={styles.revoke}>
-                    <Text variant="caption" weight="semibold" color={theme.colors.danger}>
-                      {t`Revoke`}
-                    </Text>
-                  </PressableScale>
-                }
-              />
-            </Animated.View>
-          ))
-        )}
+            ) : (
+              savedRules.map((rule) => (
+                <Animated.View
+                  key={rule.id}
+                  entering={fadeIn('short')}
+                  exiting={fadeOut('micro')}
+                  layout={listLayout('short')}>
+                  <SheetSceneRow
+                    testID={`agent-saved-permission-${rule.id}`}
+                    title={rule.action || t`Permission`}
+                    caption={rule.resource}
+                    accessibilityLabel={[rule.action, rule.resource].filter(Boolean).join(' · ')}
+                    meta={
+                      <PressableScale
+                        testID={`agent-saved-permission-revoke-${rule.id}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Revoke ${rule.action || t`this rule`}`}
+                        hitSlop={8}
+                        onPress={() => revokeRule(rule)}
+                        style={styles.revoke}>
+                        <Text variant="caption" weight="semibold" color={theme.colors.danger}>
+                          {t`Revoke`}
+                        </Text>
+                      </PressableScale>
+                    }
+                  />
+                </Animated.View>
+              ))
+            )}
+          </>
+        ) : null}
 
         {onCompact || onClear ? (
           <View style={styles.actions}>
