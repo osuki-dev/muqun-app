@@ -1552,7 +1552,6 @@ export const AgentComposer = memo(function AgentComposer({
   const fieldLeft = surfaceLeft + inputRowLeft;
   const [compactionRowHeight, setCompactionRowHeight] = useState(0);
   const compactionClearance = compaction ? compactionRowHeight : 0;
-  const [voiceActive, setVoiceActive] = useState(false);
   const decorationHidden =
     hideFieldDecoration ||
     attachmentUploads.attachments.length > 0 ||
@@ -1564,12 +1563,9 @@ export const AgentComposer = memo(function AgentComposer({
     slashPopup.open ||
     skillPopup.open ||
     Boolean(mentionTrigger);
-  // The clearance is the theme's, not the moment's: while a menu or a reply
-  // hid the decoration, a shorter dock dropped the Stage's session strip onto
-  // the composer, and the returning decoration was drawn over its cards until
-  // the strip jumped back up. Only the voice panel, which replaces the field
-  // itself, gives the room back.
-  const decorationClearance = fieldDecoration && !voiceActive ? fieldDecorationOverhang : 0;
+  // The decoration is absolutely positioned and draws above the session strip,
+  // so it reserves no room: the strip stays where the dock's own height puts it,
+  // and the artwork simply sits on top of its cards.
   const dockHeight = surfaceHeight + dockFoot;
   // Home paints only the input plate. Its options/notice overlays must not
   // erase the foreground behind their transparent or rounded edges.
@@ -1579,8 +1575,8 @@ export const AgentComposer = memo(function AgentComposer({
     onDockHeight?.(height + compactionClearance, clipHeight)
   );
   useEffect(() => {
-    if (surfaceHeight > 0) reportDockHeight(dockHeight + decorationClearance, dockClipHeight);
-  }, [surfaceHeight, dockHeight, dockClipHeight, decorationClearance, compactionClearance]);
+    if (surfaceHeight > 0) reportDockHeight(dockHeight, dockClipHeight);
+  }, [surfaceHeight, dockHeight, dockClipHeight, compactionClearance]);
   const popupMaxHeight = Math.max(
     0,
     windowHeight - keyboardHeight - dockHeight - compactionClearance - topInset - POPUP_HEADER_GAP
