@@ -3798,6 +3798,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setYoloMode(!environment.enabled);
   }, [permissionOwner, setYoloMode, readAutoPermission]);
 
+  /**
+   * Switching auto-approval on answers what is already waiting.
+   *
+   * The switch used to apply only to the next request: a reader who turned
+   * it on because a prompt was in the way found that prompt still there, and
+   * the badge saying the opposite. `handleAutoPermission` keeps every check
+   * of its own -- owner, session, native interaction, the decision -- so
+   * what it leaves alone here it would have left alone on arrival too.
+   */
+  const answerWaitingPermissions = useEffectEvent(() => {
+    for (const permission of permissions) handleAutoPermission(permission);
+  });
+  useEffect(() => {
+    if (yoloMode) answerWaitingPermissions();
+  }, [yoloMode]);
+
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
       const request = forms.find((form) => form.id === formId);
@@ -5736,6 +5752,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       contextUsage,
       commands,
       savedPermissionsRevision,
+      // Absent on an older gateway, which drove only OpenCode: listed.
+      savedPermissionsListed: agentFeatures.extra.savedPermissions !== false,
       worktreeRevision,
       models: catalogModels,
     };
@@ -5766,6 +5784,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     contextUsage,
     commands,
     savedPermissionsRevision,
+    agentFeatures,
     worktreeRevision,
     catalogModels,
     globalOwnerEpoch,

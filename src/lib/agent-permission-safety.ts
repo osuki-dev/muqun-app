@@ -129,26 +129,39 @@ export function isDangerousPermission(request: PermissionRequest): boolean {
   return dangerousPermissionReason(request) !== undefined;
 }
 
-/** Unknown operation inputs or ambiguous choices remain pending for a human. */
+/**
+ * The operations YOLO answers by itself, in the words the gateway states them:
+ * OpenCode's permission names, and the ACP tool kinds the gateway maps onto
+ * them (`delete`, `move` and `search` have no OpenCode name of their own).
+ *
+ * These need no resource. A host asking "Edit a file?" without naming the
+ * file is still asking to edit a file, and an ACP agent lists a file in
+ * `locations` only when it has one -- requiring the path kept every such
+ * request waiting for a tap with the switch on. A shell is different: its
+ * command is what the safety scanner reads, so one without the command text
+ * stays a tap.
+ */
+const FILE_OR_READ_ACTIONS: ReadonlySet<string> = new Set([
+  'read',
+  'edit',
+  'write',
+  'patch',
+  'glob',
+  'grep',
+  'list',
+  'delete',
+  'move',
+  'search',
+  'webfetch',
+  'websearch',
+  'external_directory',
+]);
+
+/** Unknown operations, shells without a command and ambiguous choices stay for a human. */
 export function yoloDecision(request: PermissionRequest): PermissionDecision | undefined {
   const shell = request.action === 'shell' || request.action === 'bash';
-  const fileOrRead = [
-    'read',
-    'edit',
-    'write',
-    'patch',
-    'glob',
-    'grep',
-    'list',
-    'webfetch',
-    'websearch',
-    'external_directory',
-  ].includes(request.action);
-  if (
-    (!shell && !fileOrRead) ||
-    !request.resources.length ||
-    request.resources.some((value) => !value.trim())
-  )
+  if (!shell && !FILE_OR_READ_ACTIONS.has(request.action)) return undefined;
+  if ((shell && !request.resources.length) || request.resources.some((value) => !value.trim()))
     return undefined;
   if (request.options.filter((option) => option.decision === 'allow').length !== 1)
     return undefined;
