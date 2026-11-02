@@ -234,6 +234,14 @@ msgstr "{0} phút"
 msgid "{0}m ago"
 msgstr "{0} phút trước"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} trả lời từng yêu cầu; không có chế độ bỏ qua phê duyệt"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} chỉ tự phê duyệt khi được khởi chạy với {native}; phiên đang chạy không thể chuyển"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
@@ -290,6 +298,10 @@ msgstr "Không tìm thấy {agentName} trên máy chủ này. Hãy cài đặt r
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "Không tìm thấy {agentName}. Chạm để xem hướng dẫn cài đặt"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} sẽ chạy công cụ mà không hỏi, trong chế độ {native} của chính nó. Không có gì được kiểm tra trên đường đi"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "Sau khi ghi âm"
 msgid "Agent"
 msgstr "Tác nhân"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "Agent tự phê duyệt"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "Xác thực thất bại. Hãy thử lại"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt hệ thống"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "Tự động phê duyệt yêu cầu được hỗ trợ"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "Không thể đổi tác nhân"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "Không thể chuyển tự phê duyệt"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "Không thể chuyển đổi mô hình"
 
@@ -3714,10 +3730,6 @@ msgstr "Phím"
 msgid "Know what is coming next."
 msgstr "Biết trước những gì sắp thay đổi"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "Các lệnh nguy hiểm đã biết vẫn bị chặn. Yêu cầu có dữ liệu đầu vào hoặc lựa chọn chưa rõ vẫn cần bạn phê duyệt"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "Tên"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "Cần gateway mới hơn, có thể chuyển chế độ bỏ qua phê duyệt của chính agent"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "Chỉ {MAX_ATTACHMENTS_PER_PICK} tệp đầu được thêm; {dropped} 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Chỉ ẩn hàng này trên trang chủ. Tác vụ và lịch sử của nó vẫn còn. Công việc đang chạy sẽ không dừng"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "Chỉ phiên này. Yêu cầu chưa rõ vẫn cần bạn phê duyệt"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "Chuyển sang chế độ xem trò chuyện"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Chuyển sang chế độ xem terminal"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "Chuyển chính {agentName} sang {native}. Chỉ phiên này"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

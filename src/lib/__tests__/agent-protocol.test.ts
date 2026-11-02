@@ -16,7 +16,10 @@ import {
   isNoticePart,
   isSessionUnread,
   isSlashSkill,
+  nativeAutoApprove,
   parseAgentCatalog,
+  parseAutoApproveState,
+  parseAgentFeatures,
   parseAgentContextUsage,
   parseAgentDomainEvent,
   parseAgentStatusInfo,
@@ -1533,4 +1536,30 @@ test('reported tool duration works without invented absolute timestamps', () => 
   expect(toolDurationMs(undefined, { durationMs: -1 })).toBeUndefined();
   expect(toolDurationMs(undefined, { durationMs: Number.NaN })).toBeUndefined();
   expect(toolDurationMs({ ran: 100, completed: 120 }, { durationMs: 321 })).toBe(20);
+});
+
+test("the agent's own bypass control is read from discovery, never assumed", () => {
+  for (const [features, want] of [
+    [
+      { autoApprove: { scope: 'session', native: 'bypassPermissions' } },
+      { scope: 'session', native: 'bypassPermissions' },
+    ],
+    [
+      { autoApprove: { scope: 'launch', native: '--force' } },
+      { scope: 'launch', native: '--force' },
+    ],
+    [{ autoApprove: { scope: 'none' } }, { scope: 'none' }],
+    // A gateway that predates the flag, or a value it never defined.
+    [{}, { scope: 'unknown' }],
+    [{ autoApprove: { scope: 'everything' } }, { scope: 'unknown' }],
+    [{ autoApprove: 'session' }, { scope: 'unknown' }],
+  ] as const) {
+    expect(nativeAutoApprove(parseAgentFeatures(features))).toEqual(want);
+  }
+  expect(parseAutoApproveState({ enabled: true, native: 'yolo' })).toEqual({
+    enabled: true,
+    native: 'yolo',
+  });
+  expect(parseAutoApproveState({ enabled: 'yes' })).toEqual({ enabled: null, native: null });
+  expect(parseAutoApproveState(null)).toEqual({ enabled: null, native: null });
 });

@@ -2235,6 +2235,47 @@ export function parseAgentFeatures(value: unknown): AgentFeatures {
   };
 }
 
+/**
+ * The agent's own "approve everything" control, as discovery states it in
+ * `features.autoApprove`.
+ *
+ * `session`: switchable on a live session through the agent's own protocol
+ * (`POST …/auto-approve`). `launch`: a process flag or environment of the
+ * agent, so a running session cannot be switched. `none`: the agent answers
+ * each request and has no such mode. `unknown`: a gateway that predates the
+ * flag, which can switch nothing either.
+ */
+export interface NativeAutoApprove {
+  scope: 'session' | 'launch' | 'none' | 'unknown';
+  /** The agent's own name for the control: a mode id, flag or setting. */
+  native?: string;
+}
+
+export function nativeAutoApprove(features: Pick<AgentFeatures, 'extra'>): NativeAutoApprove {
+  const rec = asRecord(features.extra.autoApprove);
+  const scope = asString(rec?.scope);
+  if (scope !== 'session' && scope !== 'launch' && scope !== 'none') return { scope: 'unknown' };
+  const found: NativeAutoApprove = { scope };
+  const native = asString(rec?.native);
+  if (native) found.native = native;
+  return found;
+}
+
+/** `GET`/`POST …/auto-approve`: whether the session runs in the agent's own bypass mode. */
+export interface AutoApproveState {
+  /** `null` where the agent has no session-scoped control. */
+  enabled: boolean | null;
+  native: string | null;
+}
+
+export function parseAutoApproveState(value: unknown): AutoApproveState {
+  const rec = asRecord(value);
+  return {
+    enabled: typeof rec?.enabled === 'boolean' ? rec.enabled : null,
+    native: asString(rec?.native) ?? null,
+  };
+}
+
 /** One model an agent lists in discovery. */
 export interface AgentModelSummary {
   id: string;

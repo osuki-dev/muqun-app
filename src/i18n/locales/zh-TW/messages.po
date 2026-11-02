@@ -234,6 +234,14 @@ msgstr "{0} 分鐘"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} 逐條回應請求，沒有略過模式"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} 只有以 {native} 啟動時才會自動核准；執行中的工作階段無法切換"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
@@ -290,6 +298,10 @@ msgstr "在此主機上找不到 {agentName}。請先安裝，然後重新檢查
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "找不到 {agentName}。點一下查看安裝說明"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} 將在它自己的 {native} 模式下不經詢問執行工具，過程中不做任何檢查"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "錄完轉錄"
 msgid "Agent"
 msgstr "Agent"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "代理自動核准"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "驗證失敗。請再試一次"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "目前無法驗證。請再試一次，或檢查系統設定"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "自動核准支援的請求"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "無法切換 Agent"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "無法切換自動核准"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "無法切換模型"
 
@@ -3714,10 +3730,6 @@ msgstr "按鍵"
 msgid "Know what is coming next."
 msgstr "更新之前，先了解新變化"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "已知的危險命令仍會遭到封鎖。輸入或選項不明確的請求仍需你核准"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "名稱"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "需要較新的閘道，由它切換代理自己的略過模式"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "僅加入了前 {MAX_ATTACHMENTS_PER_PICK} 個檔案，{dropped} 個未�
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "僅隱藏此首頁項目。任務及其記錄仍然保留，正在執行的工作不會停止"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "僅限此工作階段。不明確的請求仍需你核准"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "切換到對話檢視"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "切換到終端機檢視"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "把 {agentName} 本身切換到 {native}。僅限本工作階段"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

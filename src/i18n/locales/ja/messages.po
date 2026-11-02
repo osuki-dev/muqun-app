@@ -234,6 +234,14 @@ msgstr "{0}分"
 msgid "{0}m ago"
 msgstr "{0}分前"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} は要求ごとに応答し、バイパスモードはありません"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} は {native} 付きで起動したときだけ自動承認します。実行中のセッションは切り替えられません"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} はロールバックをプレビューできません。このメッセージ以降、ターン全体が削除され、元に戻せません"
@@ -290,6 +298,10 @@ msgstr "このホストで {agentName} が見つかりませんでした。イ�
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName} が見つかりませんでした。タップしてインストール手順を表示"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} は自身の {native} モードで、確認なしにツールを実行します。途中で何も検査されません"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "録音後に変換"
 msgid "Agent"
 msgstr "エージェント"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "エージェントの自動承認"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "認証に失敗しました。もう一度お試しください"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "対応するリクエストを自動承認"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "エージェントを切り替えられませんでした"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "自動承認を切り替えられませんでした"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "モデルを切り替えられませんでした"
 
@@ -3714,10 +3730,6 @@ msgstr "キー"
 msgid "Know what is coming next."
 msgstr "更新の内容を、先に確認"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "既知の危険なコマンドは引き続きブロックされます。入力や選択肢が不明確なリクエストには承認が必要です"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "名前"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "名前を付けて、Gateway に表示されたコードを入力してください"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "エージェント自身のバイパスモードを切り替えるには、新しいゲートウェイが必要です"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "最初の{MAX_ATTACHMENTS_PER_PICK}件のみ追加しました。{droppe
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "ホームのこの行だけを非表示にします。タスクとその履歴は引き続き利用でき、実行中の作業は停止しません"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "このセッションのみ。不明確なリクエストには引き続き承認が必要です"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "チャット表示に切り替える"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "ターミナル表示に切り替える"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "{agentName} 自体を {native} に切り替えます。このセッションのみ"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

@@ -28,9 +28,11 @@ import {
   revokeSavedPermission,
   type AgentContextUsage,
   type AgentSessionInfo,
+  type NativeAutoApprove,
   type SavedPermission,
   type TokensUsage,
 } from '@/lib/agent-session';
+import { agentDisplayName } from '@/lib/home-launch-model';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { TwoStepAction } from '@/components/two-step-action';
 
@@ -61,7 +63,13 @@ export interface AgentContextSheetProps {
   showReasoning?: boolean;
   onToggleReasoning?: () => void;
   yoloMode?: boolean;
+  /**
+   * Present only when the agent's bypass is a session-scoped control the
+   * gateway can switch; the row then switches the agent itself.
+   */
   onToggleYolo?: () => void;
+  /** The agent's own bypass control, as discovery states it, for the row's caption. */
+  autoApprove?: NativeAutoApprove;
   /**
    * Bumped by the workbench whenever an "Always allow" reply lands, so a rule
    * agreed to a moment ago is in the list without the reader closing the sheet
@@ -90,6 +98,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   onToggleReasoning,
   yoloMode = false,
   onToggleYolo,
+  autoApprove,
   savedPermissionsRevision = 0,
   onClose,
   onCompact,
@@ -102,6 +111,19 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const { showToast } = useToast();
   const [yoloConfirmation, setYoloConfirmation] = useState<{ toggle: () => void } | null>(null);
   const confirmingYolo = yoloConfirmation?.toggle === onToggleYolo;
+  // The switch is the agent's own bypass mode, so the row says which, and
+  // for an agent that only takes it at launch, why the switch is off.
+  const agentName = agentDisplayName(undefined, agentId);
+  const native = autoApprove?.native ?? '';
+  const autoApproveCaption = !autoApprove
+    ? undefined
+    : autoApprove.scope === 'session'
+      ? t`Switches ${agentName} itself into ${native}. Only this session.`
+      : autoApprove.scope === 'launch'
+        ? t`${agentName} auto-approves only when started with ${native}; a running session cannot be switched.`
+        : autoApprove.scope === 'none'
+          ? t`${agentName} answers each request; it has no bypass mode.`
+          : t`Needs a newer gateway, which switches the agent's own bypass mode.`;
 
   /**
    * What "Always allow" has agreed to, for this session's project.
@@ -376,7 +398,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           </>
         ) : null}
 
-        {onToggleReasoning || onToggleYolo ? (
+        {onToggleReasoning || onToggleYolo || autoApprove ? (
           <>
             <SheetSceneGroupRule />
             <SheetSceneGroupHeading title={t`Behaviour`} />
@@ -393,15 +415,17 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                 }
               />
             ) : null}
-            {onToggleYolo ? (
+            {onToggleYolo || autoApprove ? (
               <>
                 <SheetSceneRow
-                  title={t`Auto-approve supported requests`}
-                  caption={t`Only this session. Unclear requests still need your approval.`}
+                  title={t`Agent auto-approve`}
+                  caption={autoApproveCaption}
                   meta={
                     <Toggle
                       value={yoloMode}
+                      disabled={!onToggleYolo}
                       onValueChange={(next) => {
+                        if (!onToggleYolo) return;
                         if (next) {
                           setYoloConfirmation({ toggle: onToggleYolo });
                         } else {
@@ -409,14 +433,14 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                           onToggleYolo();
                         }
                       }}
-                      accessibilityLabel={t`Auto-approve supported requests`}
+                      accessibilityLabel={t`Agent auto-approve`}
                     />
                   }
                 />
                 {confirmingYolo ? (
                   <View style={styles.confirm}>
                     <Text variant="caption" color={theme.colors.text} style={styles.confirmText}>
-                      {t`Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval.`}
+                      {t`${agentName} will run tools without asking, in its own ${native} mode. Nothing is checked on the way.`}
                     </Text>
                     <View style={styles.confirmActions}>
                       <PressableScale

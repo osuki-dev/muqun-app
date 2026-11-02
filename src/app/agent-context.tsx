@@ -19,6 +19,7 @@ export default function AgentContextScreen() {
   const cost = useAgentSheetBridge((state) => state.cost);
   const showReasoning = useAgentSheetBridge((state) => state.showReasoning);
   const yoloMode = useAgentSheetBridge((state) => state.yoloMode);
+  const autoApprove = useAgentSheetBridge((state) => state.autoApprove);
   const savedPermissionsRevision = useAgentSheetBridge((state) => state.savedPermissionsRevision);
   const actions = useAgentSheetBridge((state) => state.actions);
 
@@ -35,6 +36,7 @@ export default function AgentContextScreen() {
       showReasoning={showReasoning}
       onToggleReasoning={actions.toggleReasoning}
       yoloMode={yoloMode}
+      autoApprove={autoApprove}
       savedPermissionsRevision={savedPermissionsRevision}
       onToggleYolo={actions.toggleYolo}
       onClose={() => router.back()}

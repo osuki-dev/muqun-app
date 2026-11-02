@@ -234,6 +234,14 @@ msgstr "{0} мин"
 msgid "{0}m ago"
 msgstr "{0} мин. назад"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} отвечает на каждый запрос; режима обхода у него нет"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} одобряет автоматически только при запуске с {native}; запущенную сессию переключить нельзя"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} не может показать откат заранее. Будет удалено это сообщение и всё после него — весь ход, и это нельзя отменить"
@@ -290,6 +298,10 @@ msgstr "{agentName} не найден на этом хосте. Установи
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName} не найден. Нажмите, чтобы открыть инструкции по установке"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} будет выполнять инструменты без запроса, в своём режиме {native}. По пути ничего не проверяется"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "После записи"
 msgid "Agent"
 msgstr "Агент"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "Автоодобрение агента"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "Проверка не пройдена. Попробуйте ещё ра
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Проверка недоступна. Попробуйте ещё раз или проверьте системные настройки"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "Автоматически одобрять поддерживаемые запросы"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "Не удалось сменить агента"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "Не удалось переключить автоодобрение"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "Не удалось переключить модель"
 
@@ -3714,10 +3730,6 @@ msgstr "Клавиши"
 msgid "Know what is coming next."
 msgstr "Узнайте о новом до обновления"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "Известные опасные команды остаются заблокированными. Запросы с неясными входными данными или вариантами ответа по-прежнему требуют вашего одобрения"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "Имя"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Назовите его, затем введите код, который показывает Gateway"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "Нужен более новый шлюз, который переключает собственный режим обхода агента"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "Добавлены только первые {MAX_ATTACHMENTS_PER_PICK} 
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Будет скрыта только эта строка на главном экране. Задача и её история останутся доступны. Выполняемая работа не остановится"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "Только в этом сеансе. Неясные запросы по-прежнему требуют вашего одобрения"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "Переключиться на чат"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Переключиться на терминал"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "Переводит сам {agentName} в режим {native}. Только для этой сессии"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

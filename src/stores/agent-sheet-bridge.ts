@@ -12,6 +12,7 @@ import type {
   InboxItem,
   ModelInfo,
   ModelRef,
+  NativeAutoApprove,
   TodoItem,
   TokensUsage,
 } from '@/lib/agent-session';
@@ -84,6 +85,8 @@ export interface AgentSheetSnapshot {
   selectedAgent?: string;
   showReasoning: boolean;
   yoloMode: boolean;
+  /** The agent's own bypass control, as discovery states it. */
+  autoApprove?: NativeAutoApprove;
   todos: readonly TodoItem[];
   /** What is waiting behind the current turn, as the gateway last stated it. */
   inbox: readonly InboxItem[];
@@ -202,6 +205,7 @@ const INITIAL: AgentSheetSnapshot = {
   selectedAgent: undefined,
   showReasoning: true,
   yoloMode: false,
+  autoApprove: undefined,
   todos: EMPTY_TODOS,
   inbox: EMPTY_INBOX,
   compaction: null,

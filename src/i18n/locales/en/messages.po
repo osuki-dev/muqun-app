@@ -234,6 +234,14 @@ msgstr "{0}m"
 msgid "{0}m ago"
 msgstr "{0}m ago"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} answers each request; it has no bypass mode"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} auto-approves only when started with {native}; a running session cannot be switched"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone"
@@ -290,6 +298,10 @@ msgstr "{agentName} was not found on this host. Install it, then check again"
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName} was not found. Tap for installation instructions"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "After recording"
 msgid "Agent"
 msgstr "Agent"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "Agent auto-approve"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "Authentication failed. Try again"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Authentication is unavailable. Try again or check system settings"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "Auto-approve supported requests"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "Could not switch agent"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "Could not switch auto-approve"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "Could not switch model"
 
@@ -3714,10 +3730,6 @@ msgstr "Keys"
 msgid "Know what is coming next."
 msgstr "Know what is coming next"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "Name"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Name it, then enter the code shown by the Gateway"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "Needs a newer gateway, which switches the agent's own bypass mode"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "Only the first {MAX_ATTACHMENTS_PER_PICK} files were added; {dropped} le
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Only this Home row is hidden. The task and its history remain available. Running work is not stopped"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "Only this session. Unclear requests still need your approval"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "Switch to the chat view"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Switch to the terminal view"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "Switches {agentName} itself into {native}. Only this session"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
