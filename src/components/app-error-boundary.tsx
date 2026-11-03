@@ -8,6 +8,7 @@ import { SplashScreen } from '@osuki-dev/react-native-splash';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { i18n } from '@/i18n';
+import { reportLaunchRenderFailure } from '@/lib/app-updates';
 
 /**
  * A last-resort guard around the whole app. A JS render error anywhere in the
@@ -39,6 +40,9 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
 
   componentDidCatch(error: Error) {
     console.error('App error boundary caught:', error);
+    // An over-the-air bundle that cannot launch is rolled back from here:
+    // native crash recovery never sees a caught error (`launch-health.ts`).
+    void reportLaunchRenderFailure();
   }
 
   render() {

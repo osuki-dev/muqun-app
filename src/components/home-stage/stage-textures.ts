@@ -9,6 +9,7 @@ import {
 import { useEffect, useEffectEvent, useState } from 'react';
 
 import { hasTransparentArtworkUpperEdges } from '@/lib/artwork-edge-alpha';
+import { alphaAt, readAlphaPlane } from '@/lib/artwork-alpha';
 import {
   stageAlphaContent,
   stageClearFraction,
@@ -85,7 +86,7 @@ function useStageArtRetry(uri: string | undefined) {
  * alpha only. An opaque picture is not read at all. Null when it could not be
  * read back.
  */
-function measureAlpha(image: SkImage): Omit<StagePictureFacts, 'aspect'> | null {
+async function measureAlpha(image: SkImage): Promise<Omit<StagePictureFacts, 'aspect'> | null> {
   if (image.getImageInfo().alphaType === AlphaType.Opaque) return { clear: 0 };
   const width = image.width();
   const height = image.height();
@@ -108,7 +109,7 @@ function measureAlpha(image: SkImage): Omit<StagePictureFacts, 'aspect'> | null 
     surface.flush();
     const snapshot = surface.makeImageSnapshot();
     try {
-      const alpha = snapshot.readPixels(0, 0, {
+      const alpha = await snapshot.readPixels(0, 0, {
         width: targetWidth,
         height: targetHeight,
         colorType: ColorType.Alpha_8,
@@ -133,33 +134,26 @@ function measureAlpha(image: SkImage): Omit<StagePictureFacts, 'aspect'> | null 
  * Home's rule for artwork (clear upper edges make a cut-out) and to a whole
  * scene for anything else, so the picture is still drawn. `fallback` says why.
  */
-function measurePicture(
+async function measurePicture(
   image: SkImage,
   slot: 'artwork' | 'wallpaper'
-): { facts: StagePictureFacts; fallback?: string } {
+): Promise<{ facts: StagePictureFacts; fallback?: string }> {
   const height = image.height();
   const aspect = height > 0 ? image.width() / height : 1;
   let reason = 'The alpha readback returned nothing';
   try {
-    const alpha = measureAlpha(image);
+    const alpha = await measureAlpha(image);
     if (alpha !== null) return { facts: { ...alpha, aspect } };
   } catch (error) {
     reason = stageArtErrorText(error) ?? reason;
   }
   if (slot === 'artwork') {
     try {
-      const cutout = hasTransparentArtworkUpperEdges(
-        image.width(),
-        height,
-        (x, y) =>
-          image.readPixels(x, y, {
-            width: 1,
-            height: 1,
-            colorType: ColorType.Alpha_8,
-            alphaType: AlphaType.Unpremul,
-          })?.[0]
-      );
-      return { facts: { clear: cutout ? 1 : 0, aspect }, fallback: reason };
+      const plane = await readAlphaPlane(image);
+      if (plane) {
+        const cutout = hasTransparentArtworkUpperEdges(plane.width, plane.height, alphaAt(plane));
+        return { facts: { clear: cutout ? 1 : 0, aspect }, fallback: reason };
+      }
     } catch {
       // A scene, below.
     }
@@ -188,18 +182,26 @@ export function useStagePictureFacts(
   const [measured, setMeasured] = useState<{ uri: string; facts: StagePictureFacts } | null>(null);
   useEffect(() => {
     if (!uri || !image || measuredFacts.has(uri)) return;
-    const { facts, fallback } = measurePicture(image, slot);
-    if (!fallback) measuredFacts.set(uri, facts);
-    recordStageArtEvent({
-      slot,
-      step: 'measure',
-      status: fallback ? 'fallback' : 'ok',
-      uri,
-      width: image.width(),
-      height: image.height(),
-      error: fallback,
+    const width = image.width();
+    const height = image.height();
+    let live = true;
+    void measurePicture(image, slot).then(({ facts, fallback }) => {
+      if (!live) return;
+      if (!fallback) measuredFacts.set(uri, facts);
+      recordStageArtEvent({
+        slot,
+        step: 'measure',
+        status: fallback ? 'fallback' : 'ok',
+        uri,
+        width,
+        height,
+        error: fallback,
+      });
+      setMeasured({ uri, facts });
     });
-    setMeasured({ uri, facts });
+    return () => {
+      live = false;
+    };
   }, [image, uri, slot]);
   if (!uri) return undefined;
   if (retry.failed) return FAILED_PICTURE;
@@ -233,7 +235,7 @@ const cache = createRefCountedCache<StageTextureSource>({
     if (!image) return null;
     const maxEdge = Number(key.slice(0, key.indexOf('|')));
     try {
-      const source = downsample(image, maxEdge);
+      const source = await downsample(image, maxEdge);
       if (source) textureFailures.delete(key);
       else textureFailures.set(key, 'The pixel readback returned nothing');
       return source;
@@ -245,7 +247,7 @@ const cache = createRefCountedCache<StageTextureSource>({
   dispose: (source) => source.texture.dispose(),
 });
 
-function downsample(image: SkImage, maxEdge: number): StageTextureSource | null {
+async function downsample(image: SkImage, maxEdge: number): Promise<StageTextureSource | null> {
   const width = image.width();
   const height = image.height();
   if (width <= 0 || height <= 0) return null;
@@ -268,7 +270,7 @@ function downsample(image: SkImage, maxEdge: number): StageTextureSource | null 
     surface.flush();
     const snapshot = surface.makeImageSnapshot();
     try {
-      const pixels = snapshot.readPixels(0, 0, {
+      const pixels = await snapshot.readPixels(0, 0, {
         width: targetWidth,
         height: targetHeight,
         colorType: ColorType.RGBA_8888,

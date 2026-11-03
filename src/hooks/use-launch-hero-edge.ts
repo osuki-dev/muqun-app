@@ -142,8 +142,8 @@ type Alpha = { data: ArrayLike<number>; stride: number; offset: number; scale: n
  * that the byte read is the artwork's own coverage rather than a coverage that
  * has already been folded into the colour channels.
  */
-function readAlpha(image: SkImage, width: number, height: number): Alpha | null {
-  const single = image.readPixels(0, 0, {
+async function readAlpha(image: SkImage, width: number, height: number): Promise<Alpha | null> {
+  const single = await image.readPixels(0, 0, {
     width,
     height,
     colorType: ColorType.Alpha_8,
@@ -152,7 +152,7 @@ function readAlpha(image: SkImage, width: number, height: number): Alpha | null 
   if (single instanceof Uint8Array && single.length >= width * height) {
     return { data: single, stride: 1, offset: 0, scale: 1 };
   }
-  const quad = image.readPixels(0, 0, {
+  const quad = await image.readPixels(0, 0, {
     width,
     height,
     colorType: ColorType.RGBA_8888,
@@ -208,7 +208,7 @@ async function measureHeroEdge(
     const width = image.width();
     const height = image.height();
     if (!(width > 0) || !(height > 0) || width * height > MAX_PIXELS) return null;
-    const alpha = readAlpha(image, width, height);
+    const alpha = await readAlpha(image, width, height);
     if (!alpha) return null;
     const drawn = containedImageRect(box, { width, height });
     return heroAlphaEdge(downsample(alpha, width, height), drawn, box);

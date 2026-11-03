@@ -3,7 +3,6 @@ import {
   Blur,
   Canvas,
   useCanvasRef,
-  ColorType,
   LinearGradient,
   Mask,
   Rect,
@@ -34,6 +33,8 @@ import {
   heroFeatherGeometry,
 } from '@/lib/hero-feather';
 import { hasTransparentArtworkEdges } from '@/lib/artwork-edge-alpha';
+import { alphaAt } from '@/lib/artwork-alpha';
+import { useArtworkAlphaPlane } from '@/hooks/use-artwork-alpha-plane';
 import { useHomeArtworkForeground } from '@/hooks/use-home-artwork-foreground';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { fadeIn, listLayout } from '@/lib/motion';
@@ -180,20 +181,11 @@ function HomeArtworkImage({
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange, source]);
   const image = useSharedSkiaImage(source, onError);
+  const alpha = useArtworkAlphaPlane(image);
   const foreground = useMemo(() => {
-    if (!image || image.getImageInfo().alphaType === AlphaType.Opaque) return false;
-    return hasTransparentArtworkEdges(
-      image.width(),
-      image.height(),
-      (x, y) =>
-        image.readPixels(x, y, {
-          width: 1,
-          height: 1,
-          colorType: ColorType.Alpha_8,
-          alphaType: AlphaType.Unpremul,
-        })?.[0]
-    );
-  }, [image]);
+    if (!image || !alpha || image.getImageInfo().alphaType === AlphaType.Opaque) return false;
+    return hasTransparentArtworkEdges(alpha.width, alpha.height, alphaAt(alpha));
+  }, [image, alpha]);
   const coverForeground = useHomeArtworkForeground(image);
   useEffect(() => {
     if (image) onForegroundChange?.(source, coverForeground);

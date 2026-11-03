@@ -1,6 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { PressableScale, Text, useThemeTokens } from '@osuki-dev/ui';
-import { memo, useSyncExternalStore } from 'react';
+import { memo, useSyncExternalStore, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -8,6 +8,38 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { DisclosureDownIcon } from '@/icons';
 import { fadeIn } from '@/lib/motion';
 import type { TranscriptFollow } from '@/lib/transcript-follow';
+
+/**
+ * One tappable pill floating over the transcript, in the navigation material.
+ *
+ * The Latest action and the YOLO indicator stack at the same edge, so they
+ * share one shell: the same chrome, height, radius and padding, drawn from the
+ * active pack rather than restated by each caller.
+ */
+export function FloatingPill({
+  testID,
+  accessibilityLabel,
+  onPress,
+  children,
+}: {
+  testID: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <GlassChrome surface="navigation" shape="navigationPill" style={styles.pill}>
+      <PressableScale
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={onPress}
+        style={styles.inner}>
+        {children}
+      </PressableScale>
+    </GlassChrome>
+  );
+}
 
 /**
  * The way back to the newest row, and the only view that reads the scroll.
@@ -39,19 +71,15 @@ export const JumpToLatestPill = memo(function JumpToLatestPill({
   // hide and show this within a second.
   return (
     <Animated.View entering={fadeIn('micro')} style={[styles.wrap, { bottom }]}>
-      <GlassChrome surface="navigation" shape="navigationPill" style={styles.pill}>
-        <PressableScale
-          testID={testID}
-          accessibilityRole="button"
-          accessibilityLabel={t`Scroll to latest message`}
-          onPress={onPress}
-          style={styles.inner}>
-          <DisclosureDownIcon size={15} color={theme.colors.text} />
-          <Text variant="caption" weight="semibold" color={theme.colors.text}>
-            <Trans>Latest</Trans>
-          </Text>
-        </PressableScale>
-      </GlassChrome>
+      <FloatingPill
+        testID={testID}
+        accessibilityLabel={t`Scroll to latest message`}
+        onPress={onPress}>
+        <DisclosureDownIcon size={15} color={theme.colors.text} />
+        <Text variant="caption" weight="semibold" color={theme.colors.text}>
+          <Trans>Latest</Trans>
+        </Text>
+      </FloatingPill>
     </Animated.View>
   );
 });

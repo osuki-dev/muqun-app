@@ -22,8 +22,8 @@ No Muqun account, hosted relay, analytics or advertising.
 - **Move between tasks.** Keep multiple conversations at hand and inspect
   their status without taking over the terminal you are using on your computer.
 
-Native conversation integrations include **Codex, OpenCode, DeepSeek, T3 Code,
-FX, Qoder CLI, Claude Code and Pi**. Availability and controls depend on the integrations
+Native conversation integrations include **Antigravity, Claude Code, Codex, Cursor,
+DeepSeek, FX, OpenCode, Pi, Qoder CLI and T3 Code**. Availability and controls depend on the integrations
 included in your installed Gateway and the capabilities of each agent. Models,
 reasoning levels, commands, attachments and usage appear when they are provided.
 

@@ -50,7 +50,8 @@ import { AppLockGate } from '@/components/app-lock-gate';
 import { KitProviders } from '@/components/kit-providers';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
-import { checkForAppUpdate, checkForAppUpdateOnLaunch } from '@/lib/app-updates';
+import { checkForAppUpdate, checkForAppUpdateOnLaunch, markLaunchHealthy } from '@/lib/app-updates';
+import { LAUNCH_SETTLE_MS } from '@/lib/launch-health';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -374,6 +375,16 @@ function RootContent() {
   // The applied pack's picture becomes the native launch screen's, from the
   // next cold start on. See the hook for why this is not JavaScript's job.
   useLaunchImageSync();
+
+  // The launch is healthy once the router and its first route have stayed
+  // mounted for a moment. A render throw in that first pass never commits
+  // this effect, and the boundary's fallback unmounts this tree, which
+  // cancels the timer, so a bundle that cannot launch never passes. A throw
+  // from a mount effect below is caught in the same window (`launch-health.ts`).
+  useEffect(() => {
+    const timer = setTimeout(markLaunchHealthy, LAUNCH_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   // A backgrounded app with an idle gateway session has its SSH tunnel
   // forwards closed, shrinking the window the loopback port exists in; coming
