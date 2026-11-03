@@ -101,9 +101,12 @@ export function matchesRuntimeTerminal(
   agents: readonly unknown[]
 ): boolean {
   const candidates = agents.map(asRecord).filter((agent) => agent?.pane_id === terminal.pane_id);
-  return (
-    candidates.length === 1 &&
-    candidates[0]?.instance_id === terminal.instance_id &&
-    (candidates[0].session_id === undefined || candidates[0].session_id === terminal.session_id)
-  );
+  const agent = candidates.length === 1 ? candidates[0] : undefined;
+  if (!agent) return false;
+  if (agent.session_id !== undefined && agent.session_id !== terminal.session_id) return false;
+  // Herdr names an identity only for agents the gateway launched. A session
+  // started by hand in a pane has none, so its pane is the identity it has;
+  // an identity that is present must still match exactly.
+  if (agent.instance_id === undefined || agent.instance_id === null) return true;
+  return agent.instance_id === terminal.instance_id;
 }

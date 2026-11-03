@@ -119,6 +119,13 @@ describe('opening the linked terminal', () => {
     expect(matchesRuntimeTerminal(terminal, [{ ...agent, pane_id: 'other-pane' }])).toBe(false);
     expect(matchesRuntimeTerminal(terminal, [])).toBe(false);
   });
+  test('a pane with no identity of its own opens when it is the only one for the session', () => {
+    expect(matchesRuntimeTerminal(terminal, [{ pane_id: 'pane', instance_id: null }])).toBe(true);
+    expect(matchesRuntimeTerminal(terminal, [{ pane_id: 'pane' }])).toBe(true);
+    expect(
+      matchesRuntimeTerminal(terminal, [{ pane_id: 'pane', session_id: 'other-session' }])
+    ).toBe(false);
+  });
   test('ambiguous same-pane observations do not choose a target', () => {
     expect(matchesRuntimeTerminal(terminal, [agent, agent])).toBe(false);
     expect(
