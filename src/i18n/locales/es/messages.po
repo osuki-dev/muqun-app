@@ -234,6 +234,14 @@ msgstr "{0} min"
 msgid "{0}m ago"
 msgstr "hace {0} min"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName} responde a cada solicitud; no tiene modo de omisión"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName} solo aprueba automáticamente si se inicia con {native}; una sesión en curso no se puede cambiar"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} no puede mostrar una vista previa de la reversión. Esto elimina el mensaje y todo lo posterior, el turno completo, y no se puede deshacer"
@@ -290,6 +298,10 @@ msgstr "No se encontró {agentName} en este host. Instálalo y vuelve a comproba
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "No se encontró {agentName}. Toca para ver las instrucciones de instalación"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName} ejecutará herramientas sin preguntar, en su propio modo {native}. No se comprueba nada por el camino"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "Tras grabar"
 msgid "Agent"
 msgstr "Agente"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "Aprobación automática del agente"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "Falló la autenticación. Inténtalo de nuevo"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "La autenticación no está disponible. Inténtalo de nuevo o revisa los ajustes del sistema"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "Aprobar automáticamente las solicitudes compatibles"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "No se pudo cambiar de agente"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "No se pudo cambiar la aprobación automática"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "No se pudo cambiar el modelo"
 
@@ -3714,10 +3730,6 @@ msgstr "Teclas"
 msgid "Know what is coming next."
 msgstr "Conoce lo que viene antes de actualizar"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "Los comandos peligrosos conocidos siguen bloqueados. Las solicitudes con entradas u opciones poco claras siguen necesitando tu aprobación"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "Nombre"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Ponle un nombre y luego introduce el código que muestra el Gateway"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "Necesita un gateway más reciente, que cambia el modo de omisión propio del agente"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "Solo se añadieron los primeros {MAX_ATTACHMENTS_PER_PICK} archivos; {dr
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "Solo se oculta esta fila de Inicio. La tarea y su historial siguen disponibles. El trabajo en curso no se detiene"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "Solo esta sesión. Las solicitudes poco claras siguen necesitando tu aprobación"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "Cambiar a la vista de chat"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Cambiar a la vista de terminal"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "Pone a {agentName} en su propio modo {native}. Solo esta sesión"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

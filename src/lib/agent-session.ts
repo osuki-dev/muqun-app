@@ -124,6 +124,8 @@ import {
   type InboxItem,
   type ModelRef,
   type PermissionDecision,
+  parseAutoApproveState,
+  type AutoApproveState,
   type SavedPermission,
   type ShellInfo,
   type ShellOutputPage,
@@ -945,6 +947,33 @@ export async function switchAgentMode(asid: string, mode: string): Promise<void>
   await writeJson(sessionRoute(asid, '/mode'), 'Failed to switch mode', {
     mode: mode.toLowerCase(),
   });
+}
+
+const AUTO_APPROVE_UNKNOWN: AutoApproveState = { enabled: null, native: null };
+
+/** Whether the session runs in the agent's own bypass mode, read from the agent. */
+export async function getAgentAutoApprove(asid: string): Promise<AutoApproveState> {
+  return readJson(sessionRoute(asid, '/auto-approve'), parseAutoApproveState, AUTO_APPROVE_UNKNOWN);
+}
+
+/**
+ * Put the session into the agent's own bypass mode, or take it back out.
+ * The gateway switches the agent itself (Claude Code `bypassPermissions`,
+ * Codex `approvalPolicy: never`, ...); the answer is what the agent then
+ * reports, not what was asked for.
+ */
+export async function setAgentAutoApprove(
+  asid: string,
+  enabled: boolean
+): Promise<AutoApproveState> {
+  const data = await writeJson(
+    sessionRoute(asid, '/auto-approve'),
+    'Failed to switch auto-approve',
+    {
+      enabled,
+    }
+  );
+  return parseAutoApproveState(data);
 }
 
 /**

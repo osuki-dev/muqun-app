@@ -234,6 +234,14 @@ msgstr "{0}분"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} answers each request; it has no bypass mode."
+msgstr "{agentName}은(는) 요청마다 응답하며 바이패스 모드가 없습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} auto-approves only when started with {native}; a running session cannot be switched."
+msgstr "{agentName}은(는) {native}(으)로 시작했을 때만 자동 승인합니다. 실행 중인 세션은 전환할 수 없습니다"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName}은(는) 롤백을 미리 볼 수 없습니다. 이 메시지와 그 이후의 모든 내용, 즉 턴 전체가 삭제되며 되돌릴 수 없습니다"
@@ -290,6 +298,10 @@ msgstr "이 호스트에서 {agentName}을(를) 찾을 수 없습니다. 설치�
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName}을(를) 찾을 수 없습니다. 탭하여 설치 방법 보기"
+
+#: src/components/agent-context-sheet.tsx
+msgid "{agentName} will run tools without asking, in its own {native} mode. Nothing is checked on the way."
+msgstr "{agentName}이(가) 자체 {native} 모드에서 묻지 않고 도구를 실행합니다. 도중에 아무것도 검사하지 않습니다"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -673,6 +685,10 @@ msgstr "녹음 후 변환"
 msgid "Agent"
 msgstr "에이전트"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Agent auto-approve"
+msgstr "에이전트 자동 승인"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -1014,10 +1030,6 @@ msgstr "인증에 실패했습니다. 다시 시도하세요"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve supported requests"
-msgstr "지원되는 요청 자동 승인"
 
 #: src/app/settings-voice.tsx
 msgid "Auto-detect"
@@ -2517,6 +2529,10 @@ msgid "Could not switch agent"
 msgstr "에이전트를 전환하지 못했습니다"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch auto-approve"
+msgstr "자동 승인을 전환하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not switch model"
 msgstr "모델을 전환할 수 없습니다"
 
@@ -3714,10 +3730,6 @@ msgstr "키"
 msgid "Know what is coming next."
 msgstr "업데이트 내용을 미리 확인하세요"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Known dangerous commands stay blocked. Requests with unclear inputs or choices still need your approval."
-msgstr "알려진 위험 명령은 계속 차단됩니다. 입력이나 선택지가 불명확한 요청은 여전히 승인이 필요합니다"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -4171,6 +4183,10 @@ msgstr "이름"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Needs a newer gateway, which switches the agent's own bypass mode."
+msgstr "에이전트 자체의 바이패스 모드를 전환하려면 더 새로운 게이트웨이가 필요합니다"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
@@ -4760,10 +4776,6 @@ msgstr "처음 {MAX_ATTACHMENTS_PER_PICK}개 파일만 추가되었고 {dropped}
 #: src/components/task-row.tsx
 msgid "Only this Home row is hidden. The task and its history remain available. Running work is not stopped."
 msgstr "홈의 이 항목만 숨깁니다. 작업과 해당 기록은 계속 사용할 수 있습니다. 실행 중인 작업은 중지되지 않습니다"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Only this session. Unclear requests still need your approval."
-msgstr "이 세션에만 적용됩니다. 불명확한 요청은 여전히 승인이 필요합니다"
 
 #: src/components/home-connections.tsx
 #: src/components/home-stage/home-stage-layout.tsx
@@ -6957,6 +6969,10 @@ msgstr "대화 보기로 전환"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "터미널 보기로 전환"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Switches {agentName} itself into {native}. Only this session."
+msgstr "{agentName} 자체를 {native}(으)로 전환합니다. 이 세션만"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"

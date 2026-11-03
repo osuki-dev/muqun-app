@@ -105,6 +105,9 @@ import {
   abortAgentSession,
   switchAgentModel,
   switchAgentMode,
+  getAgentAutoApprove,
+  setAgentAutoApprove,
+  nativeAutoApprove,
   replyAgentPermission,
   replyAgentForm,
   getAgentVcsDiff,
@@ -1249,11 +1252,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [serverId, sessionId, activeAgentId, activeAsid, gatewayGeneration, permissionRecord]
   );
+  // The auto-approve switch is the agent's own bypass mode, switched by the
+  // gateway for this session; it exists only where the agent has such a
+  // session-scoped control (`features.autoApprove`).
+  const autoApprove = useMemo(() => nativeAutoApprove(agentFeatures), [agentFeatures]);
   const canAutoApprove = Boolean(
     activeAsid &&
     permissionRecord?.serverId === serverId &&
     canInteractNatively &&
-    agentFeatures.toolApprovals
+    agentFeatures.toolApprovals &&
+    autoApprove.scope === 'session'
   );
   const [permissionReplies] = useState(() => new PermissionReplyGate());
   const [yoloOwner, setYoloOwner] = useState<PermissionReplyOwner | null>(null);
@@ -1270,6 +1278,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!canAutoApprove || !samePermissionReplyOwner(yoloOwner, permissionOwner))
       setYoloOwner(null);
   }, [permissionReplies, permissionOwner, canAutoApprove, yoloOwner]);
+  // The switch shows what the agent reports for this session, read on open;
+  // it is never assumed from what was last tapped.
+  useEffect(() => {
+    if (!canAutoApprove || !activeAsid) return;
+    let cancelled = false;
+    const owner = permissionOwner;
+    getAgentAutoApprove(activeAsid)
+      .then((state) => {
+        if (!cancelled) setYoloOwner(state.enabled === true ? owner : null);
+      })
+      .catch((err) => console.warn('Could not read auto-approve state:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [canAutoApprove, activeAsid, permissionOwner]);
   const setYoloMode = useCallback(
     (next: boolean) => {
       const environment = readAutoPermission();
@@ -3788,15 +3811,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
+  // One switch in flight at a time: the agent answers, then the switch moves.
+  const yoloSwitchingRef = useRef(false);
   const handleToggleYoloMode = useCallback(() => {
     const environment = readAutoPermission();
     if (
       !samePermissionReplyOwner(permissionOwner, environment.owner) ||
-      useGatewayConnectionStore.getState().record !== permissionOwner.connection
+      useGatewayConnectionStore.getState().record !== permissionOwner.connection ||
+      !environment.asid ||
+      yoloSwitchingRef.current
     )
       return;
-    setYoloMode(!environment.enabled);
-  }, [permissionOwner, setYoloMode, readAutoPermission]);
+    yoloSwitchingRef.current = true;
+    const next = !environment.enabled;
+    setAgentAutoApprove(environment.asid, next)
+      .then((state) => {
+        if (samePermissionReplyOwner(readAutoPermission().owner, environment.owner))
+          setYoloMode(state.enabled === true);
+      })
+      .catch((err) => {
+        showToast({
+          variant: 'danger',
+          title: t`Could not switch auto-approve`,
+          message: agentErrorRef.current(err),
+        });
+      })
+      .finally(() => {
+        yoloSwitchingRef.current = false;
+      });
+  }, [permissionOwner, setYoloMode, readAutoPermission, showToast, t]);
 
   /**
    * Switching auto-approval on answers what is already waiting.
@@ -5743,6 +5786,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       selectedAgent: activeAgent,
       showReasoning,
       yoloMode,
+      autoApprove,
       todos: activeTodos ?? EMPTY_TODOS,
       inbox,
       compaction:
@@ -5778,6 +5822,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeAgent,
     showReasoning,
     yoloMode,
+    autoApprove,
     activeTodos,
     inbox,
     compaction,
