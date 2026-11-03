@@ -5088,6 +5088,10 @@ msgstr "EMPARELHAR NOVAMENTE"
 msgid "Pair computer"
 msgstr "Emparelhar computador"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Emparelhe-o novamente para abrir os seus agentes"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Emparelhe um abaixo"
@@ -7532,6 +7536,10 @@ msgstr "Este computador não tem nenhuma sessão onde iniciar um agente"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Este computador não listou nenhum dispositivo emparelhado"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Este computador já não está emparelhado"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

@@ -5088,6 +5088,10 @@ msgstr "다시 페어링 필요"
 msgid "Pair computer"
 msgstr "컴퓨터 페어링"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "에이전트를 열려면 다시 페어링하세요"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "아래에서 페어링하세요"
@@ -7532,6 +7536,10 @@ msgstr "이 컴퓨터에는 에이전트를 시작할 세션이 없습니다"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "이 컴퓨터는 페어링된 기기를 나열하지 않았습니다"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "이 컴퓨터는 더 이상 페어링되어 있지 않습니다"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

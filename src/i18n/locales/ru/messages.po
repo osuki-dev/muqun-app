@@ -5088,6 +5088,10 @@ msgstr "ПРИВЯЖИТЕ СНОВА"
 msgid "Pair computer"
 msgstr "Привязать компьютер"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Привяжите его снова, чтобы открыть его агентов"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Подключите сервер ниже"
@@ -7532,6 +7536,10 @@ msgstr "На этом компьютере нет сеанса, в которо�
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Этот компьютер не вернул ни одного привязанного устройства"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Этот компьютер больше не привязан"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

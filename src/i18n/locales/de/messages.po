@@ -5088,6 +5088,10 @@ msgstr "ERNEUT KOPPELN"
 msgid "Pair computer"
 msgstr "Computer koppeln"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Erneut koppeln, um seine Agenten zu öffnen"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Kopple unten einen"
@@ -7532,6 +7536,10 @@ msgstr "Dieser Computer hat keine Session, in der ein Agent starten könnte"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Dieser Computer hat keine gekoppelten Geräte aufgelistet"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Dieser Computer ist nicht mehr gekoppelt"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

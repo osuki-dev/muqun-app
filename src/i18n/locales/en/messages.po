@@ -5088,6 +5088,10 @@ msgstr "PAIR AGAIN"
 msgid "Pair computer"
 msgstr "Pair computer"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Pair it again to open its agents"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Pair one below"
@@ -7532,6 +7536,10 @@ msgstr "This computer has no session to start an agent in"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "This computer has not listed any paired devices"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "This computer is no longer paired"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

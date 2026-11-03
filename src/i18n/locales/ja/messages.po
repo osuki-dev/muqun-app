@@ -5088,6 +5088,10 @@ msgstr "再ペアリングが必要"
 msgid "Pair computer"
 msgstr "コンピュータをペアリング"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "エージェントを開くには再度ペアリングしてください"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "下でペアリングしてください"
@@ -7532,6 +7536,10 @@ msgstr "このコンピュータにはエージェントを起動できるセッ
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "このコンピュータはペアリング済みのデバイスを一覧にしていません"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "このコンピュータはペアリングされていません"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
