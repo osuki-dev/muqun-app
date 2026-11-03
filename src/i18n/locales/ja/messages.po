@@ -473,6 +473,10 @@ msgstr "残り {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running} running"
+msgstr "{running} 件実行中"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -737,7 +741,6 @@ msgstr "アラート"
 msgid "Align the QR inside the frame"
 msgstr "QR コードを枠に合わせてください"
 
-#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-gallery.tsx
 msgid "All"
@@ -765,9 +768,23 @@ msgstr "すべてのプロジェクト"
 msgid "All sessions"
 msgstr "すべてのセッション"
 
+#. placeholder {0}: available.length
+#: src/components/home-recent-sessions.tsx
+msgid "All sessions ({0})"
+msgstr "すべてのセッション（{0}）"
+
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions, needs you"
 msgstr "すべてのセッション、対応が必要です"
+
+#: src/components/home-computer-cards.tsx
+msgid "All tasks"
+msgstr "すべてのタスク"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "All tasks on {0}"
+msgstr "{0} のすべてのタスク"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -4201,6 +4218,10 @@ msgstr "要セットアップ"
 msgid "Needs update"
 msgstr "アップデートが必要"
 
+#: src/components/home-computer-deck.tsx
+msgid "needs you"
+msgstr "対応が必要"
+
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -6192,6 +6213,10 @@ msgstr "セッションを検索"
 #: src/i18n/labels.ts
 msgid "Search the whole project"
 msgstr "プロジェクト全体を検索"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Search this computer’s sessions"
+msgstr "このコンピュータのセッションを検索"
 
 #: src/app/settings.tsx
 msgid "Security"

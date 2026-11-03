@@ -16,8 +16,14 @@ export function HomeFoldLink({
   onPress,
   testID,
   style,
+  label,
+  onCard = false,
 }: {
   expanded: boolean;
+  /** What the collapsed link says instead of "Show more". */
+  label?: string;
+  /** On a card's own fill: no scene plate behind the label. */
+  onCard?: boolean;
   onPress: () => void;
   testID: string;
   style?: StyleProp<ViewStyle>;
@@ -32,9 +38,9 @@ export function HomeFoldLink({
       accessibilityState={{ expanded }}
       onPress={onPress}
       style={[styles.more, style]}>
-      <View style={plate}>
+      <View style={onCard ? undefined : plate}>
         <Text variant="bodySmall" color={theme.colors.primary}>
-          {expanded ? t`Show less` : t`Show more`}
+          {expanded ? t`Show less` : (label ?? t`Show more`)}
         </Text>
       </View>
     </PressableScale>

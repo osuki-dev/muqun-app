@@ -473,6 +473,10 @@ msgstr "{remaining} restantes"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running} running"
+msgstr "{running} em execução"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -737,7 +741,6 @@ msgstr "Alertas"
 msgid "Align the QR inside the frame"
 msgstr "Alinhe o código QR dentro da moldura"
 
-#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-gallery.tsx
 msgid "All"
@@ -765,9 +768,23 @@ msgstr "Todos os projetos"
 msgid "All sessions"
 msgstr "Todas as sessões"
 
+#. placeholder {0}: available.length
+#: src/components/home-recent-sessions.tsx
+msgid "All sessions ({0})"
+msgstr "Todas as sessões ({0})"
+
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions, needs you"
 msgstr "Todas as sessões, precisa de você"
+
+#: src/components/home-computer-cards.tsx
+msgid "All tasks"
+msgstr "Todas as tarefas"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "All tasks on {0}"
+msgstr "Todas as tarefas em {0}"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -4201,6 +4218,10 @@ msgstr "Requer configuração"
 msgid "Needs update"
 msgstr "Precisa de atualização"
 
+#: src/components/home-computer-deck.tsx
+msgid "needs you"
+msgstr "precisa de você"
+
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -6192,6 +6213,10 @@ msgstr "Pesquisar sessões"
 #: src/i18n/labels.ts
 msgid "Search the whole project"
 msgstr "Procurar em todo o projeto"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Search this computer’s sessions"
+msgstr "Pesquisar sessões deste computador"
 
 #: src/app/settings.tsx
 msgid "Security"

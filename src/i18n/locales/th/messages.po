@@ -473,6 +473,10 @@ msgstr "เหลือ {remaining}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running} running"
+msgstr "กำลังทำงาน {running}"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -737,7 +741,6 @@ msgstr "การแจ้งเตือน"
 msgid "Align the QR inside the frame"
 msgstr "จัด QR ให้อยู่ในกรอบ"
 
-#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-gallery.tsx
 msgid "All"
@@ -765,9 +768,23 @@ msgstr "ทุกโปรเจกต์"
 msgid "All sessions"
 msgstr "เซสชันทั้งหมด"
 
+#. placeholder {0}: available.length
+#: src/components/home-recent-sessions.tsx
+msgid "All sessions ({0})"
+msgstr "เซสชันทั้งหมด ({0})"
+
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions, needs you"
 msgstr "เซสชันทั้งหมด ต้องการคุณ"
+
+#: src/components/home-computer-cards.tsx
+msgid "All tasks"
+msgstr "งานทั้งหมด"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "All tasks on {0}"
+msgstr "งานทั้งหมดบน {0}"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -4201,6 +4218,10 @@ msgstr "ต้องตั้งค่า"
 msgid "Needs update"
 msgstr "ต้องอัปเดต"
 
+#: src/components/home-computer-deck.tsx
+msgid "needs you"
+msgstr "รอคุณอยู่"
+
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -6192,6 +6213,10 @@ msgstr "ค้นหาเซสชัน"
 #: src/i18n/labels.ts
 msgid "Search the whole project"
 msgstr "ค้นหาทั้งโปรเจกต์"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Search this computer’s sessions"
+msgstr "ค้นหาเซสชันของคอมพิวเตอร์นี้"
 
 #: src/app/settings.tsx
 msgid "Security"

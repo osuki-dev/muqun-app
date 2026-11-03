@@ -99,14 +99,9 @@ import {
   ComputerCardsPresence,
   hasComputerCardsAt,
 } from '@/components/home-computer-cards';
-import { HomeRecentChips } from '@/components/home-recent-chips';
 import { HomeStage, STAGE_STRIP_LIMIT } from '@/components/home-stage/home-stage-layout';
-import {
-  filterHomeRecent,
-  homeContinueCommand,
-  homeRecentFilterIds,
-  type HomeContinueEntry,
-} from '@/lib/home-continue';
+import { filterHomeRecent, homeContinueCommand, type HomeContinueEntry } from '@/lib/home-continue';
+import { sessionsOutsideCards } from '@/lib/home-computer-sessions';
 import {
   HOME_CARD_INSET,
   openTaskWork,
@@ -114,6 +109,7 @@ import {
 } from '@/lib/home-computer-cards';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import {
+  HomeComputerSessions,
   HomeContinueSearch,
   HomeRecentSessions,
   useHomeRecentEntries,
@@ -188,7 +184,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useFleetLink } from '@/hooks/use-fleet-link';
 import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
-import type { HomeServerEntry } from '@/lib/home-commands';
+import type { HomeCommand, HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
@@ -334,7 +330,6 @@ export function HomeOverview({
     record?.serverId,
     deckFront,
   ]);
-  const [recentServerId, setRecentServerId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
@@ -964,25 +959,26 @@ export function HomeOverview({
     servers: visibleServers,
     taskServerIds: visibleTaskServerIds,
   });
-  const [continueQuery, setContinueQuery] = useState('');
-  const searchContinue = stageLayout || homeContinueSearchEnabled(recentEntries.length);
-  const recentHeading = searchContinue ? (
-    <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
-  ) : undefined;
-  const recentQuery = searchContinue ? continueQuery : '';
-  // Recent narrowed to one computer by its chip; a chip whose computer has no
-  // rows any more is let go of.
-  const recentFilterIds = homeRecentFilterIds(
-    recentEntries,
-    records.map((server) => server.serverId)
-  );
-  const recentFilter =
-    recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
+  // Overview layouts list each computer's sessions in its card; the list
+  // below the cards keeps only what no card holds (SSH hosts, a computer Home
+  // does not list, the demo). Stage follows its selected computer.
+  const sessionsInCards = !stageLayout && hasComputerCards && !loading && !hydrationError;
   const recentShown = stageLayout
     ? launchController.chosen
       ? filterHomeRecent(recentEntries, launchController.chosen.serverId)
       : []
-    : filterHomeRecent(recentEntries, recentFilter);
+    : sessionsInCards
+      ? sessionsOutsideCards(
+          recentEntries,
+          listedCardServers.map((server) => server.serverId)
+        )
+      : recentEntries;
+  const [continueQuery, setContinueQuery] = useState('');
+  const searchContinue = stageLayout || homeContinueSearchEnabled(recentShown.length);
+  const recentHeading = searchContinue ? (
+    <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
+  ) : undefined;
+  const recentQuery = searchContinue ? continueQuery : '';
 
   function openServer(serverId: string, paneId?: string, sessionId?: string) {
     retryHomeRefresh(serverId);
@@ -1230,6 +1226,18 @@ export function HomeOverview({
     launchController.pinTarget();
     showOpeningWhile(taskOpeningKey(serverId, task.taskId), openTaskWork(commands, serverId, task));
   };
+  const openRecentCommand = (command: HomeCommand) => {
+    // QA-only leaves already have read-only snapshots in the demo
+    // detail sheet; never send them to a live agent workbench.
+    if (demoSearchEntries && command.type === 'open-agent') {
+      router.push({
+        pathname: '/agent-subagent-detail',
+        params: { asid: command.target.asid, sessionId: 'demo' },
+      });
+      return;
+    }
+    void commands.dispatch(command);
+  };
   const attentionSection =
     !loading && !hydrationError ? (
       <HomeAttention
@@ -1252,6 +1260,21 @@ export function HomeOverview({
         onOpenHistory={(serverId) =>
           router.push({ pathname: '/server-tasks', params: { serverId } })
         }
+        sessionEntries={sessionsInCards ? recentEntries : undefined}
+        renderSessions={(serverId, entries) => (
+          <HomeComputerSessions
+            key={serverId}
+            serverId={serverId}
+            entries={entries}
+            pad={isPad}
+            selectedServerId={launchController.chosen?.serverId}
+            servers={homeServers}
+            hosts={sshRows}
+            canReply={canReply}
+            onReply={replyFromHome}
+            onOpen={openRecentCommand}
+          />
+        )}
         onOpenTask={({ serverId, task, tree }) => {
           // A row opens the session or pane the task runs in; only
           // the sub-task count opens the list of the work under it.
@@ -1275,7 +1298,7 @@ export function HomeOverview({
   // Stage follows its selected computer; overview layouts keep their explicit filter.
   // All layouts render the same session rows and actions.
   const recentSection =
-    !loading && !hydrationError && (stageLayout || recentEntries.length > 0) ? (
+    !loading && !hydrationError && (stageLayout || recentShown.length > 0) ? (
       <HomeRecentSessions
         key={stageLayout ? launchController.chosen?.serverId : 'overview'}
         compact={classicLayout}
@@ -1287,30 +1310,9 @@ export function HomeOverview({
         hosts={sshRows}
         available={recentShown}
         query={recentQuery}
-        header={
-          !stageLayout && recentFilterIds.length > 0 ? (
-            <HomeRecentChips
-              servers={records}
-              serverIds={recentFilterIds}
-              value={recentFilter}
-              onChange={setRecentServerId}
-            />
-          ) : undefined
-        }
         canReply={canReply}
         onReply={replyFromHome}
-        onOpen={(command) => {
-          // QA-only leaves already have read-only snapshots in the demo
-          // detail sheet; never send them to a live agent workbench.
-          if (demoSearchEntries && command.type === 'open-agent') {
-            router.push({
-              pathname: '/agent-subagent-detail',
-              params: { asid: command.target.asid, sessionId: 'demo' },
-            });
-            return;
-          }
-          void commands.dispatch(command);
-        }}
+        onOpen={openRecentCommand}
       />
     ) : undefined;
   // The phone toolbar's two doors, shared by Editorial and Stage; Stage's
