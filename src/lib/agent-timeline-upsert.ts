@@ -245,6 +245,15 @@ export function carryDrawnRowKeys(
     }
     cursor = Math.max(cursor, index + 1);
     const key = drawnRowKey(previous[index]);
+    // An unchanged row keeps the object it was drawn from: a fresh parse of the
+    // same revision would re-render every visible row on each snapshot.
+    if (
+      previous[index].id === item.id &&
+      previous[index].seq === item.seq &&
+      previous[index].updated_ms === item.updated_ms &&
+      drawnRowKey(item) === key
+    )
+      return previous[index];
     return drawnRowKey(item) === key || taken.has(key) ? item : { ...item, row_key: key };
   });
 }

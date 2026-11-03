@@ -73,6 +73,14 @@ describe('reconcileAgentSnapshotPending', () => {
     expect(new Set(next.map(drawnRowKey)).size).toBe(next.length);
   });
 
+  test('an unchanged row keeps the object it was drawn from across a snapshot', () => {
+    const drawn = ordered([row('u1', 'hi'), row('a1', 'hello', 'assistant')]);
+    const fresh = ordered([row('u1', 'hi'), row('a1', 'hello', 'assistant')]);
+    const next = reconcileAgentSnapshotPending(drawn, fresh);
+    expect(next[0]).toBe(drawn[0]);
+    expect(next[1]).toBe(drawn[1]);
+  });
+
   test('returns the snapshot rows themselves when nothing is re-keyed', () => {
     const snapshot = ordered([row('u1', 'hi'), row('a1', 'hello', 'assistant')]);
     const next = reconcileAgentSnapshotPending(ordered([row('u1', 'hi')]), snapshot);
