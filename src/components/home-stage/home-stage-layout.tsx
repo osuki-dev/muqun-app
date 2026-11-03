@@ -33,6 +33,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
 import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useStructuralValue } from '@/hooks/use-structural-value';
@@ -46,7 +47,13 @@ import type { HomeTarget } from '@/lib/home-recents';
 import { wrapStageIndex, type StageOverlayBand } from '@/lib/home-stage-geometry';
 import { stageProgressSession } from '@/lib/stage-progress-session';
 import type { StageProgress } from '@/lib/stage-overlay';
-import { stagePanels, stageSelectedIndex, type StagePanel } from '@/lib/home-stage-panels';
+import {
+  stagePanels,
+  stageSelectedIndex,
+  stageStripSessions,
+  type StagePanel,
+} from '@/lib/home-stage-panels';
+import { homeThreadKey, homeThreadTargetFromEntry } from '@/lib/home-thread';
 import { HOME_DOCK_OUTER_INSET } from '@/lib/home-pad-geometry';
 import { fadeIn, fadeOut, SETTLE, timing } from '@/lib/motion';
 import type { ConnectionStatus } from '@/lib/server-reachability';
@@ -92,6 +99,8 @@ export type HomeStageLayoutProps = {
   headerAction: ReactNode;
   /** The selected computer's sessions, newest first. */
   sessions: readonly HomeContinueEntry[];
+  /** The strip's cards: native sessions first, then terminals (`stageStripSessions`). */
+  stripSessions: readonly HomeContinueEntry[];
   /** The session the dock is talking to, by `HomeContinueEntry.key`. */
   threadKey?: string;
   /** The × on that session's card: the dock's next message starts a new conversation. */
@@ -142,6 +151,8 @@ export type HomeStageProps = Omit<
   | 'panels'
   | 'selectedIndex'
   | 'sessions'
+  | 'stripSessions'
+  | 'threadKey'
   | 'burst'
   | 'onSelect'
   | 'onOpen'
@@ -153,6 +164,8 @@ export type HomeStageProps = Omit<
   chosenServerId?: string;
   connectionStatuses: Readonly<Record<string, ConnectionStatus | undefined>>;
   recentEntries: readonly HomeContinueEntry[];
+  /** The dock's conversation on the chosen computer (`homeThreadKey`); its strip card is marked. */
+  chosenThreadKey?: string;
   onSelectServer: (serverId: string) => void;
   /** Open a computer; at `paneId` when an agent's chip was tapped. */
   onOpenServer: (serverId: string, paneId?: string, sessionId?: string) => void;
@@ -171,6 +184,7 @@ export function HomeStage({
   chosenServerId,
   connectionStatuses,
   recentEntries,
+  chosenThreadKey,
   onSelectServer,
   onOpenServer,
   onOpenTasks,
@@ -180,6 +194,8 @@ export function HomeStage({
   const agentsByServer = useServerAgents((state) => state.byServer);
   const attention = useHomeAttention((state) => state.byTarget);
   const tasks = useServerTasksStore((state) => state.index);
+  const agentSessions = useHomeAgentSessions((state) => state.byServer);
+  const agentSessionsSeenAtMs = useHomeAgentSessions((state) => state.seenAtMs);
   const nowMs = useMinuteNow();
   // The newest finished task across the ledgers Home keeps: a later one is a completion.
   const latestDoneMs = useServerTasksStore((state) => {
@@ -216,10 +232,22 @@ export function HomeStage({
         agentsByServer,
         attention,
         tasks,
+        agentSessions,
+        agentSessionsSeenAtMs,
         recentEntries,
         nowMs,
       }),
-    [servers, connectionStatuses, agentsByServer, attention, tasks, recentEntries, nowMs]
+    [
+      servers,
+      connectionStatuses,
+      agentsByServer,
+      attention,
+      tasks,
+      agentSessions,
+      agentSessionsSeenAtMs,
+      recentEntries,
+      nowMs,
+    ]
   );
   const panels = useStructuralValue(built);
   const selectedIndex = stageSelectedIndex(panels, chosenServerId);
@@ -227,6 +255,24 @@ export function HomeStage({
     () => (chosenServerId ? filterHomeRecent(recentEntries, chosenServerId) : []),
     [recentEntries, chosenServerId]
   );
+  const stripSessions = useMemo(
+    () =>
+      stageStripSessions({
+        entries: sessions,
+        listed: chosenServerId ? agentSessions[chosenServerId] : undefined,
+        panes: chosenServerId ? agentsByServer[chosenServerId] : undefined,
+        limit: STAGE_STRIP_LIMIT,
+      }),
+    [sessions, chosenServerId, agentSessions, agentsByServer]
+  );
+  // The strip outlines the card the dock is talking to, and that card names
+  // and clears it: only when the card is among the strip's own.
+  const threadKey = chosenThreadKey
+    ? stripSessions.find((entry) => {
+        const target = homeThreadTargetFromEntry(entry, 0);
+        return target !== null && homeThreadKey(target) === chosenThreadKey;
+      })?.key
+    : undefined;
   // Stable across renders, so a store update here does not re-render the GPU
   // scene through fresh callbacks; each reads the panels as last rendered.
   const readPanels = useLatestReader(panels);
@@ -260,6 +306,8 @@ export function HomeStage({
       panels={panels}
       selectedIndex={selectedIndex}
       sessions={sessions}
+      stripSessions={stripSessions}
+      threadKey={threadKey}
       burst={burst}
       onSelect={select}
       onOpen={open}
@@ -290,6 +338,7 @@ export function HomeStageLayout({
   dockHeight,
   headerAction,
   sessions,
+  stripSessions,
   threadKey,
   onClearThread,
   onOpenSession,
@@ -354,7 +403,6 @@ export function HomeStageLayout({
   );
   // Resolve against all sessions, not only the six cards in the strip.
   // A gateway-reported terminal association opens its conversation first.
-  const stripSessions = useMemo(() => sessions.slice(0, STAGE_STRIP_LIMIT), [sessions]);
   const openProgress = useStableHandler((line: StageProgress) => {
     if (!selected) return;
     const serverId = selected.serverId;
@@ -405,6 +453,9 @@ export function HomeStageLayout({
     }),
     [openRequest, openWaitingTask, openPane, openList]
   );
+  // Back closes the pulled-up list, or the computer's actions, before it leaves Home.
+  useBackToClose(listOpen, () => openList(false));
+  useBackToClose(actionsFor !== null, () => setActionsFor(null));
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - sheet.get()) * windowHeight }],
   }));
@@ -598,9 +649,21 @@ export function HomeStageLayout({
                       panel={selected}
                       paused={paused || listOpen}
                       hidden={hidden}
-                      onOpenAgent={(chip) =>
-                        opener.open(() => onOpenAgent(selectedIndex, chip.paneId))
-                      }
+                      onOpenAgent={(chip) => {
+                        // A native session's chip opens its conversation; a
+                        // terminal agent's opens its pane.
+                        const session = chip.session;
+                        opener.open(() =>
+                          session
+                            ? onOpenSession({
+                                key: chip.key,
+                                title: chip.name,
+                                atMs: 0,
+                                destination: { type: 'agent-session', target: session },
+                              })
+                            : onOpenAgent(selectedIndex, chip.paneId)
+                        );
+                      }}
                     />
                   )}
                 </StageFootLine>

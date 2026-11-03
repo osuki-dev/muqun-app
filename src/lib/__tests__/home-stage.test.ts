@@ -50,6 +50,7 @@ import {
   stageAgentRow,
   stagePanels,
   stageSelectedIndex,
+  stageStripSessions,
   type StageAgentLine,
 } from '../home-stage-panels';
 
@@ -975,6 +976,86 @@ describe('stage panels', () => {
     expect(panels[1]!.lastSeenMs).toBe(now - 7000);
   });
 
+  test('chips are conversations: live sessions, then each idle agent latest, then unlinked terminals', () => {
+    const listing = (sessions: Record<string, unknown>[]) =>
+      ({
+        a: {
+          serverId: 'a',
+          sessionId: 'herdr',
+          observedAtMs: now,
+          sessions: sessions.map((extra) => ({
+            agentId: 'claude',
+            title: 'Fix the crash',
+            directory: '/repo',
+            updatedMs: now,
+            ...extra,
+          })),
+        },
+      }) as never;
+    const [panel] = stagePanels({
+      ...base,
+      agentsByServer: {
+        a: {
+          serverId: 'a',
+          sessionId: 'herdr',
+          checkedAtMs: now,
+          agents: [
+            agent('1', 'working', { paneId: 'p1', instanceId: 'i1' }),
+            agent('2', 'blocked', { paneId: 'p2', instanceId: 'i2' }),
+            // Same pane id, another incarnation: not the session's terminal.
+            agent('3', 'working', { paneId: 'p3', instanceId: 'new' }),
+            // Idle, but the gateway says an idle session runs in it.
+            agent('4', 'idle', { paneId: 'p4', instanceId: 'i4' }),
+          ],
+        },
+      } as never,
+      agentSessions: listing([
+        // Idle by its listing, but its own terminal waits on the reader.
+        {
+          asid: 's1',
+          status: 'idle',
+          terminal: { sessionId: 'herdr', paneId: 'p2', instanceId: 'i2' },
+        },
+        {
+          asid: 's2',
+          status: 'busy',
+          terminal: { sessionId: 'herdr', paneId: 'p3', instanceId: 'old' },
+        },
+        // Idle history: Claude is live already; Cursor's newest stands for it.
+        { asid: 's3', status: 'idle' },
+        { asid: 's4', agentId: 'codex', status: 'idle' },
+        { asid: 's5', agentId: 'cursor', status: 'unknown' },
+        { asid: 's6', agentId: 'cursor', status: 'idle' },
+        {
+          asid: 's7',
+          agentId: 'opencode',
+          status: 'idle',
+          terminal: { sessionId: 'herdr', paneId: 'p4', instanceId: 'i4' },
+        },
+      ]),
+      attention: {
+        k: {
+          target: { serverId: 'a', asid: 's4', agentId: 'codex' } as never,
+          requestIds: ['r'],
+          observedAt: now,
+        },
+      },
+    });
+    expect(panel!.agents.map((line) => [line.key, line.mark])).toEqual([
+      ['session:claude:s1', 'needs-you'],
+      ['session:codex:s4', 'needs-you'],
+      ['session:claude:s2', 'working'],
+      ['session:opencode:s7', 'idle'],
+      ['session:cursor:s5', 'idle'],
+      ['1', 'working'],
+      ['3', 'working'],
+    ]);
+    expect(panel!.agents[0]!.session).toMatchObject({ asid: 's1', sessionId: 'herdr' });
+    const row = stageAgentRow(panel!);
+    if (row.kind !== 'agents') throw new Error('expected chips');
+    expect(row.chips.map((chip) => chip.key)).toEqual(panel!.agents.map((line) => line.key));
+  });
+
   test('selection falls back to the first card when the target is gone', () => {
     expect(stageSelectedIndex(servers, 'b')).toBe(1);
     expect(stageSelectedIndex(servers, 'gone')).toBe(0);
@@ -1032,6 +1113,100 @@ describe("the HUD's agents' row", () => {
     expect(stageAgentRow({ tone: 'offline', agents: [] })).toEqual({ kind: 'offline' });
     // Unknown reachability is not offline: what is known shows.
     expect(stageAgentRow({ tone: 'unknown', agents: [line('a', 'idle')] }).kind).toBe('agents');
+  });
+});
+
+describe("the Stage's session strip", () => {
+  const session = (asid: string) => ({
+    key: asid,
+    title: asid,
+    atMs: 0,
+    destination: {
+      type: 'agent-session',
+      target: {
+        kind: 'agent-session',
+        serverId: 'a',
+        sessionId: 'h',
+        directory: '',
+        asid,
+        agentId: 'claude',
+      },
+    },
+  });
+  const pane = (paneId: string, status?: string) => ({
+    key: paneId,
+    title: paneId,
+    atMs: 0,
+    ...(status
+      ? { observation: { kind: 'gateway-agent', status, observedAtMs: 0, seen: {} } }
+      : {}),
+    destination: { type: 'pane', serverId: 'a', sessionId: 'h', paneId },
+  });
+  const listed = {
+    serverId: 'a',
+    sessionId: 'h',
+    observedAtMs: 0,
+    sessions: [
+      {
+        asid: 's1',
+        agentId: 'claude',
+        title: '',
+        directory: '',
+        status: 'busy' as const,
+        updatedMs: 0,
+        terminal: { sessionId: 'h', paneId: 'hosting', instanceId: 'i1' },
+      },
+    ],
+  };
+  const panes = {
+    serverId: 'a',
+    sessionId: 'h',
+    checkedAtMs: 1,
+    agents: [
+      {
+        id: 'x',
+        name: 'x',
+        status: 'working' as const,
+        hasAgent: true,
+        paneId: 'hosting',
+        instanceId: 'i1',
+      },
+    ],
+  };
+  const keys = (entries: readonly { key: string }[]) => entries.map((entry) => entry.key);
+
+  test.each([
+    {
+      name: 'native sessions first, each group in recency order',
+      entries: [pane('t1'), session('s1'), pane('t2'), session('s2')],
+      limit: 6,
+      expected: ['s1', 's2', 't1', 't2'],
+    },
+    {
+      name: "a pane hosting a listed session's incarnation is dropped",
+      entries: [pane('hosting', 'working'), session('s1'), pane('t1')],
+      limit: 6,
+      expected: ['s1', 't1'],
+    },
+    {
+      name: 'a needs-you or running terminal stays within the limit',
+      entries: [pane('t1', 'blocked'), session('s1'), session('s2'), session('s3'), pane('t2')],
+      limit: 3,
+      expected: ['s1', 's2', 't1'],
+    },
+  ])('$name', ({ entries, limit, expected }) => {
+    expect(keys(stageStripSessions({ entries: entries as never, listed, panes, limit }))).toEqual(
+      expected
+    );
+  });
+
+  test('without a matching incarnation the hosting pane stays', () => {
+    const entries = [pane('hosting'), session('s1')] as never;
+    const other = { ...panes, agents: [{ ...panes.agents[0]!, instanceId: 'i2' }] };
+    expect(keys(stageStripSessions({ entries, listed, panes: other, limit: 6 }))).toEqual([
+      's1',
+      'hosting',
+    ]);
   });
 });
 

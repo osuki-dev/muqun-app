@@ -8406,11 +8406,11 @@ msgstr "複製這一行"
 msgid "Yesterday"
 msgstr "昨天"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode"
 msgstr "YOLO 模式"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode is on — tap to turn it off"
 msgstr "YOLO 模式已開啟 — 點按即可關閉"
 

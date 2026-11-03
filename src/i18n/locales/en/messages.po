@@ -8406,11 +8406,11 @@ msgstr "Yank this line"
 msgid "Yesterday"
 msgstr "Yesterday"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode"
 msgstr "YOLO mode"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode is on — tap to turn it off"
 msgstr "YOLO mode is on — tap to turn it off"
 

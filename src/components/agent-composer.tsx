@@ -46,6 +46,7 @@ import {
   QuickActionIcon,
   DevicesIcon,
   NetworkIcon,
+  TrustWarningIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -78,6 +79,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { composerChipIds } from '@/lib/agent-composer-chips';
@@ -514,6 +516,11 @@ export interface AgentComposerProps {
   onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
+  /**
+   * YOLO mode is on: a chip after Command says so, and a tap on it turns
+   * YOLO off. Absent while it is off.
+   */
+  onTurnOffYolo?: () => void;
   /** The app's own commands the session's agent cannot answer; not listed. */
   hiddenClientCommands?: readonly AgentClientCommandId[];
   /** What is waiting behind the current turn. */
@@ -723,6 +730,7 @@ export const AgentComposer = memo(function AgentComposer({
   commands = EMPTY_COMMANDS,
   onRunCommand,
   onInvokeSkill,
+  onTurnOffYolo,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -848,6 +856,19 @@ export const AgentComposer = memo(function AgentComposer({
   const [inboxOpen, setInboxOpen] = useState(false);
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
+  const closePopups = () => {
+    setAttachmentMenuOpen(false);
+    setCommandMenuServer(null);
+    closeToolbarMenu();
+    setModeMenuOpen(false);
+    setInboxOpen(false);
+    setInboxMenuId(null);
+  };
+  // Back closes an open menu before it leaves the screen.
+  useBackToClose(
+    attachmentMenuOpen || modeMenuOpen || inboxOpen || commandMenuOpen || toolbarMenuOpen,
+    closePopups
+  );
 
   // A provider may report session spend without reporting context occupancy.
   const contextPill = useMemo(() => {
@@ -1719,14 +1740,7 @@ export const AgentComposer = memo(function AgentComposer({
           <Pressable
             testID="agent-composer-popup-scrim"
             style={[styles.backdrop, { top: -windowHeight }]}
-            onPress={() => {
-              setAttachmentMenuOpen(false);
-              setCommandMenuServer(null);
-              closeToolbarMenu();
-              setModeMenuOpen(false);
-              setInboxOpen(false);
-              setInboxMenuId(null);
-            }}
+            onPress={closePopups}
           />
         ) : null}
 
@@ -2423,6 +2437,28 @@ export const AgentComposer = memo(function AgentComposer({
                     ) : null}
 
                     {sessionCommandButton}
+                    {/* YOLO mode: the pack's warning tone on the icon and label only. */}
+                    {onTurnOffYolo ? (
+                      <PressableScale
+                        testID="agent-yolo-indicator"
+                        onPress={onTurnOffYolo}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <TrustWarningIcon size={14} color={theme.colors.warning} />
+                        <Text
+                          variant="caption"
+                          color={theme.colors.warning}
+                          numberOfLines={1}
+                          style={styles.actionBtnLabel}>
+                          <Trans>YOLO mode</Trans>
+                        </Text>
+                      </PressableScale>
+                    ) : null}
                     {chipIds.has('stop') ? (
                       <PressableScale
                         onPress={onAbort}

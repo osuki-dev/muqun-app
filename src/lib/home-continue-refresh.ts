@@ -53,6 +53,7 @@ export async function refreshHomeContinue({
   updateTitle,
   repairAgent,
   recordAgentSessions,
+  previousAgentSessions,
   confirmSessions,
   servesSnapshot = false,
   capabilities,
@@ -74,6 +75,8 @@ export async function refreshHomeContinue({
    * goes here, so Continue shows sessions this device never opened.
    */
   recordAgentSessions?: (snapshot: GatewayAgentSessionsSnapshot) => void;
+  /** The listing last recorded for this gateway: its terminal links outlive a sampling gap. */
+  previousAgentSessions?: GatewayAgentSessionsSnapshot;
   /**
    * Everything this refresh saw of the gateway's sessions, once the listing
    * and the folder reads have answered: what settles a session a read
@@ -135,7 +138,12 @@ export async function refreshHomeContinue({
             if (!isCurrent()) return;
             const observedAtMs = Date.now();
             if (recordAgentSessions) {
-              const sessions = gatewayAgentSessions(list, agentSessionLimit);
+              const previous =
+                previousAgentSessions?.serverId === serverId &&
+                previousAgentSessions.sessionId === sessionId
+                  ? previousAgentSessions.sessions
+                  : [];
+              const sessions = gatewayAgentSessions(list, agentSessionLimit, previous);
               recordAgentSessions({ serverId, sessionId, observedAtMs, sessions });
             }
             const sessionKey = (agentId: string, asid: string) => JSON.stringify([agentId, asid]);

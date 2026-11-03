@@ -156,37 +156,55 @@ export type GatewayAgentSessionsSnapshot = {
 
 /**
  * The `limit` most recently updated root sessions of a merged listing, newest
- * first. Subagent and deleted sessions are not something to continue.
+ * first, plus any older one the gateway says runs in a terminal pane now
+ * (`runtime.terminal`): that pane is this session, so it is kept to stand for
+ * it however long ago its transcript last changed. Subagent and deleted
+ * sessions are not something to continue.
+ *
+ * The gateway's terminal observation is sampled, and a listing read while it
+ * has none to hand omits the link. A link the `previous` snapshot had is
+ * kept then, unless the gateway now says the session runs natively: readers
+ * still check the link's pane incarnation against the live mirror.
  */
 export function gatewayAgentSessions(
   list: readonly AgentSessionInfo[],
-  limit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT
+  limit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
+  previous: readonly GatewayAgentSession[] = []
 ): GatewayAgentSession[] {
+  const linked = new Map(
+    previous.flatMap((session) =>
+      session.terminal ? [[JSON.stringify([session.agentId, session.asid]), session.terminal]] : []
+    )
+  );
   return list
     .filter((info) => info.asid && !info.parent_id && !info.deleted)
     .sort((a, b) => b.updated_ms - a.updated_ms)
-    .slice(0, Math.max(0, limit))
-    .map((info) => ({
+    .map((info) => {
+      const terminal = info.runtime?.terminal
+        ? {
+            sessionId: info.runtime.terminal.session_id,
+            paneId: info.runtime.terminal.pane_id,
+            instanceId: info.runtime.terminal.instance_id,
+          }
+        : info.runtime?.source !== 'native'
+          ? linked.get(JSON.stringify([info.agent_id, info.asid]))
+          : undefined;
+      return { info, terminal };
+    })
+    .filter(({ terminal }, index) => index < limit || terminal)
+    .map(({ info, terminal }) => ({
       asid: info.asid,
       agentId: info.agent_id,
       title: info.title,
       directory: info.directory ?? '',
       status: info.status,
       updatedMs: info.updated_ms,
-      ...(info.runtime?.terminal
-        ? {
-            terminal: {
-              sessionId: info.runtime.terminal.session_id,
-              paneId: info.runtime.terminal.pane_id,
-              instanceId: info.runtime.terminal.instance_id,
-            },
-          }
-        : {}),
+      ...(terminal ? { terminal } : {}),
     }));
 }
 
 /** The pane a Continue row stands for, when it is a pane or a remembered terminal. */
-function continueRowPane(
+export function homeContinueRowPane(
   entry: HomeContinueEntry
 ): { serverId: string; sessionId?: string; paneId: string } | null {
   if (entry.destination.type === 'pane') {
@@ -543,7 +561,7 @@ export function homeContinueEntries({
   }
   return rows
     .filter((row) => {
-      const pane = continueRowPane(row);
+      const pane = homeContinueRowPane(row);
       if (
         !pane?.sessionId ||
         !claimedPanes.has(paneKey(pane.serverId, pane.sessionId, pane.paneId))
@@ -602,7 +620,7 @@ function withHomeThreadRows(
     if (thread.kind === 'task') continue;
     const index = rows.findIndex((row) => {
       if (thread.kind === 'pane') {
-        const pane = continueRowPane(row);
+        const pane = homeContinueRowPane(row);
         return (
           pane?.serverId === serverId &&
           pane.paneId === thread.paneId &&

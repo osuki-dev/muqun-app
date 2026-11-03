@@ -64,12 +64,13 @@ export function publishHomeOverview(serverId: string) {
     serverId,
     sessionId: workspace?.sessionId ?? preferred ?? HOME_AGENT_SESSION_ID,
     observedAtMs,
+    // As `gatewayAgentSessions`: an older session running in a terminal pane stays.
     sessions: [
       ...overview.sessions,
       ...(useHomeAgentSessions.getState().byServer[serverId]?.sessions ?? [])
         .filter((row) => overview.unavailableProviders?.includes(row.agentId))
         .map((row) => (row.status === 'unknown' ? row : { ...row, status: 'unknown' as const })),
-    ].slice(0, HOME_CONTINUE_GATEWAY_SESSION_LIMIT),
+    ].filter((row, index) => index < HOME_CONTINUE_GATEWAY_SESSION_LIMIT || row.terminal),
   });
   // An unavailable provider has no rows here, so nothing of its is settled.
   settleGoneSessions({
