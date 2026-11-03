@@ -46,6 +46,7 @@ import {
   QuickActionIcon,
   DevicesIcon,
   NetworkIcon,
+  TrustWarningIcon,
 } from '@/icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -514,6 +515,11 @@ export interface AgentComposerProps {
   onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
+  /**
+   * YOLO mode is on: a chip after Command says so, and a tap on it turns
+   * YOLO off. Absent while it is off.
+   */
+  onTurnOffYolo?: () => void;
   /** The app's own commands the session's agent cannot answer; not listed. */
   hiddenClientCommands?: readonly AgentClientCommandId[];
   /** What is waiting behind the current turn. */
@@ -723,6 +729,7 @@ export const AgentComposer = memo(function AgentComposer({
   commands = EMPTY_COMMANDS,
   onRunCommand,
   onInvokeSkill,
+  onTurnOffYolo,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -2423,6 +2430,28 @@ export const AgentComposer = memo(function AgentComposer({
                     ) : null}
 
                     {sessionCommandButton}
+                    {/* YOLO mode: the pack's warning tone on the icon and label only. */}
+                    {onTurnOffYolo ? (
+                      <PressableScale
+                        testID="agent-yolo-indicator"
+                        onPress={onTurnOffYolo}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
+                        style={[
+                          styles.actionBtnWithLabel,
+                          { borderRadius: profile.chrome.roundControl },
+                          { backgroundColor: surfaceBackground(chromeGlass) },
+                        ]}>
+                        <TrustWarningIcon size={14} color={theme.colors.warning} />
+                        <Text
+                          variant="caption"
+                          color={theme.colors.warning}
+                          numberOfLines={1}
+                          style={styles.actionBtnLabel}>
+                          <Trans>YOLO mode</Trans>
+                        </Text>
+                      </PressableScale>
+                    ) : null}
                     {chipIds.has('stop') ? (
                       <PressableScale
                         onPress={onAbort}

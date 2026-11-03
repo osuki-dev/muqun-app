@@ -8406,11 +8406,11 @@ msgstr "Diese Zeile kopieren"
 msgid "Yesterday"
 msgstr "Gestern"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode"
 msgstr "YOLO-Modus"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-composer.tsx
 msgid "YOLO mode is on — tap to turn it off"
 msgstr "YOLO-Modus ist aktiviert — tippen, um ihn auszuschalten"
 

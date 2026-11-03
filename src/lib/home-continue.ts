@@ -186,7 +186,7 @@ export function gatewayAgentSessions(
 }
 
 /** The pane a Continue row stands for, when it is a pane or a remembered terminal. */
-function continueRowPane(
+export function homeContinueRowPane(
   entry: HomeContinueEntry
 ): { serverId: string; sessionId?: string; paneId: string } | null {
   if (entry.destination.type === 'pane') {
@@ -543,7 +543,7 @@ export function homeContinueEntries({
   }
   return rows
     .filter((row) => {
-      const pane = continueRowPane(row);
+      const pane = homeContinueRowPane(row);
       if (
         !pane?.sessionId ||
         !claimedPanes.has(paneKey(pane.serverId, pane.sessionId, pane.paneId))
@@ -602,7 +602,7 @@ function withHomeThreadRows(
     if (thread.kind === 'task') continue;
     const index = rows.findIndex((row) => {
       if (thread.kind === 'pane') {
-        const pane = continueRowPane(row);
+        const pane = homeContinueRowPane(row);
         return (
           pane?.serverId === serverId &&
           pane.paneId === thread.paneId &&

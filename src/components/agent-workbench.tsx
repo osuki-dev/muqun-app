@@ -63,16 +63,9 @@ import * as Haptics from 'expo-haptics';
 import { Dialog, useThemeTokens, useToast, PressableScale, Text } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import {
-  AgentIcon,
-  RepositoryIcon,
-  AddItemIcon,
-  RefreshIcon,
-  TrustWarningIcon,
-  CloseIcon,
-} from '@/icons';
+import { AgentIcon, RepositoryIcon, AddItemIcon, RefreshIcon, CloseIcon } from '@/icons';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { FloatingPill, JumpToLatestPill } from '@/components/jump-to-latest-pill';
+import { JumpToLatestPill } from '@/components/jump-to-latest-pill';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
@@ -6329,33 +6322,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
 
         {/*
-        YOLO mode indicator — fixed directly above the Latest action, in the
-        same shell. The pack's warning tone is the accent, as on every other
-        trust chip; the pill itself is the navigation material, not a tint.
-      */}
-        {!loading && yoloMode ? (
-          // No exit: `loading` hides and shows this on every snapshot read.
-          <Animated.View
-            entering={fadeIn('micro')}
-            style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
-            pointerEvents="box-none">
-            <FloatingPill
-              testID="agent-yolo-indicator"
-              accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
-              onPress={() => setYoloMode(false)}>
-              <TrustWarningIcon size={15} color={theme.colors.warning} />
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={theme.colors.warning}
-                numberOfLines={1}>
-                <Trans>YOLO mode</Trans>
-              </Text>
-            </FloatingPill>
-          </Animated.View>
-        ) : null}
-
-        {/*
         Which agent the new session goes to, asked only when the gateway has
         more than one ready. One row per agent, in the gateway's order, and
         the pick is remembered for this server. Drawn with the row menu the
@@ -6392,6 +6358,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canQueueWhileRunning={agentFeatures.inbox}
         canSteerWhileRunning={agentFeatures.extra.promptSteering === true}
         canMentionFiles={agentFeatures.extra.fileMentions !== false}
+        onTurnOffYolo={!loading && yoloMode ? () => setYoloMode(false) : undefined}
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
@@ -6755,11 +6722,6 @@ const styles = StyleSheet.create({
   screenNoticeAction: {
     paddingVertical: 2,
     paddingLeft: 4,
-  },
-  yoloBannerWrap: {
-    position: 'absolute',
-    right: 14,
-    zIndex: 5,
   },
   agentPickerWrap: {
     position: 'absolute',

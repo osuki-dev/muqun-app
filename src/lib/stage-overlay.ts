@@ -294,7 +294,11 @@ type StageProgressInput = {
   nowMs: number;
 };
 
-/** Working conversations, once each, in stable identity order rather than update order. */
+/**
+ * Working conversations, once each -- a terminal the gateway links to a
+ * conversation speaks as that conversation -- native sessions first, then in
+ * stable identity order rather than update order.
+ */
 export function stageProgressLines(input: StageProgressInput): StageProgress[] {
   const serverId = input.serverId ?? input.panes?.serverId ?? input.sessions?.serverId;
   const panes = input.panes?.serverId === serverId ? input.panes : undefined;
@@ -463,7 +467,15 @@ export function stageProgressLines(input: StageProgressInput): StageProgress[] {
         atMs: activity.atMs,
       });
   }
-  return [...lines.values()].sort((a, b) => a.key.localeCompare(b.key));
+  // Native conversations speak first, then terminal panes, then other tasks,
+  // each in stable key order.
+  return [...lines.values()].sort(
+    (a, b) => stageLineRank(a.key) - stageLineRank(b.key) || a.key.localeCompare(b.key)
+  );
+}
+
+function stageLineRank(key: string): number {
+  return key.startsWith('session:') ? 0 : key.startsWith('pane:') ? 1 : 2;
 }
 
 /** The same subtitle line: what it shows and routes by, whenever it was read. */

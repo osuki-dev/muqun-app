@@ -99,7 +99,7 @@ import {
   ComputerCardsPresence,
   hasComputerCardsAt,
 } from '@/components/home-computer-cards';
-import { HomeStage, STAGE_STRIP_LIMIT } from '@/components/home-stage/home-stage-layout';
+import { HomeStage } from '@/components/home-stage/home-stage-layout';
 import { filterHomeRecent, homeContinueCommand, type HomeContinueEntry } from '@/lib/home-continue';
 import { sessionsOutsideCards } from '@/lib/home-computer-sessions';
 import {
@@ -1093,21 +1093,11 @@ export function HomeOverview({
         onDemo={openDemo}
       />
     ) : undefined;
-  // The Stage strip outlines the card the dock is talking to, and that card
-  // names and clears it: only when the card is among the strip's own.
+  // The dock's conversation: the Stage strip marks its card when it shows one.
   const chosenThread = useHomeThreads((state) =>
     launchController.chosen ? state.byServer[launchController.chosen.serverId] : undefined
   );
   const chosenThreadKey = chosenThread ? homeThreadKey(chosenThread) : undefined;
-  const stageThreadKey =
-    chosenThreadKey && launchController.chosen
-      ? filterHomeRecent(recentEntries, launchController.chosen.serverId)
-          .slice(0, STAGE_STRIP_LIMIT)
-          .find((entry) => {
-            const target = homeThreadTargetFromEntry(entry, 0);
-            return target !== null && homeThreadKey(target) === chosenThreadKey;
-          })?.key
-      : undefined;
   const dock = showDock ? (
     <HomeComposerDock
       revealed={composerRevealed}
@@ -1427,7 +1417,7 @@ export function HomeOverview({
             }
             onOpenRequest={openAttentionTarget}
             onOpenWaitingTask={openWaitingTask}
-            threadKey={stageThreadKey}
+            chosenThreadKey={chosenThreadKey}
             onClearThread={() => {
               if (chosenThread)
                 useHomeThreads.getState().clear(chosenThread.serverId, chosenThread);

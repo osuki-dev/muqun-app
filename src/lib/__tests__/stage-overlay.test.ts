@@ -651,7 +651,12 @@ describe('stageProgressLines', () => {
     });
     expect(lines).toHaveLength(6);
     expect(lines.filter((line) => line.asid === 'a1')).toHaveLength(1);
-    expect(lines.some((line) => line.key === 'pane:independent')).toBe(true);
+    // Native conversations speak first; the unassociated terminal after them.
+    expect(lines.map((line) => line.key.split(':')[0])).toEqual([
+      ...Array(5).fill('session'),
+      'pane',
+    ]);
+    expect(lines.at(-1)?.key).toBe('pane:independent');
     expect(
       stageActivitySubjects({
         serverId: SERVER,
