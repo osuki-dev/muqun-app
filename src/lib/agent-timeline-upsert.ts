@@ -273,3 +273,17 @@ export function reconcileAgentSnapshotPending(
   // snapshot sequence. Neither absence nor idle status proves send failure.
   return upsertTimelineItems(pending, carryDrawnRowKeys(previous, snapshot));
 }
+
+/**
+ * Whether storing `next` would change nothing on screen: the same rows, in the
+ * same order, as the very same objects. A snapshot that repeats the timeline
+ * must not replace it, or every visible row re-renders on each send.
+ */
+export function sameTimeline(
+  previous: readonly TimelineItem[],
+  next: readonly TimelineItem[]
+): boolean {
+  if (previous === next) return true;
+  if (previous.length !== next.length) return false;
+  return previous.every((item, index) => item === next[index]);
+}

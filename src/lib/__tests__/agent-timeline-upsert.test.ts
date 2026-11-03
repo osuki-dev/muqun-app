@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { drawnRowKey, reconcileAgentSnapshotPending } from '../agent-timeline-upsert';
+import { drawnRowKey, reconcileAgentSnapshotPending, sameTimeline } from '../agent-timeline-upsert';
 import type { TimelineItem } from '@/lib/agent-protocol';
 
 const row = (
@@ -86,5 +86,15 @@ describe('reconcileAgentSnapshotPending', () => {
     const next = reconcileAgentSnapshotPending(ordered([row('u1', 'hi')]), snapshot);
     expect(next.map((item) => item.id)).toEqual(['u1', 'a1']);
     expect(next.every((item) => item.row_key === undefined)).toBe(true);
+  });
+});
+
+describe('sameTimeline', () => {
+  test('a timeline of the same objects changes nothing, a changed or new row does', () => {
+    const rows = [row('u1', 'hi'), row('a1', 'hello', 'assistant')];
+    expect(sameTimeline(rows, rows)).toBe(true);
+    expect(sameTimeline(rows, [...rows])).toBe(true);
+    expect(sameTimeline(rows, [rows[0], row('a1', 'hello', 'assistant')])).toBe(false);
+    expect(sameTimeline(rows, [...rows, row('u2', 'more')])).toBe(false);
   });
 });
