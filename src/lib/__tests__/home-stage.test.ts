@@ -976,7 +976,7 @@ describe('stage panels', () => {
     expect(panels[1]!.lastSeenMs).toBe(now - 7000);
   });
 
-  test('native sessions lead the chips; a pane hosting a listed session is that session', () => {
+  test('chips are conversations: live sessions, then each idle agent latest, then unlinked terminals', () => {
     const listing = (sessions: Record<string, unknown>[]) =>
       ({
         a: {
@@ -1004,6 +1004,8 @@ describe('stage panels', () => {
             agent('2', 'blocked', { paneId: 'p2', instanceId: 'i2' }),
             // Same pane id, another incarnation: not the session's terminal.
             agent('3', 'working', { paneId: 'p3', instanceId: 'new' }),
+            // Idle, but the gateway says an idle session runs in it.
+            agent('4', 'idle', { paneId: 'p4', instanceId: 'i4' }),
           ],
         },
       } as never,
@@ -1019,8 +1021,17 @@ describe('stage panels', () => {
           status: 'busy',
           terminal: { sessionId: 'herdr', paneId: 'p3', instanceId: 'old' },
         },
+        // Idle history: Claude is live already; Cursor's newest stands for it.
         { asid: 's3', status: 'idle' },
         { asid: 's4', agentId: 'codex', status: 'idle' },
+        { asid: 's5', agentId: 'cursor', status: 'unknown' },
+        { asid: 's6', agentId: 'cursor', status: 'idle' },
+        {
+          asid: 's7',
+          agentId: 'opencode',
+          status: 'idle',
+          terminal: { sessionId: 'herdr', paneId: 'p4', instanceId: 'i4' },
+        },
       ]),
       attention: {
         k: {
@@ -1034,6 +1045,8 @@ describe('stage panels', () => {
       ['session:claude:s1', 'needs-you'],
       ['session:codex:s4', 'needs-you'],
       ['session:claude:s2', 'working'],
+      ['session:opencode:s7', 'idle'],
+      ['session:cursor:s5', 'idle'],
       ['1', 'working'],
       ['3', 'working'],
     ]);

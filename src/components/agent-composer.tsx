@@ -79,6 +79,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { NO_SIDE_INSETS, type SideInsets } from '@/hooks/use-side-insets';
 import { composerChipIds } from '@/lib/agent-composer-chips';
@@ -855,6 +856,19 @@ export const AgentComposer = memo(function AgentComposer({
   const [inboxOpen, setInboxOpen] = useState(false);
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
+  const closePopups = () => {
+    setAttachmentMenuOpen(false);
+    setCommandMenuServer(null);
+    closeToolbarMenu();
+    setModeMenuOpen(false);
+    setInboxOpen(false);
+    setInboxMenuId(null);
+  };
+  // Back closes an open menu before it leaves the screen.
+  useBackToClose(
+    attachmentMenuOpen || modeMenuOpen || inboxOpen || commandMenuOpen || toolbarMenuOpen,
+    closePopups
+  );
 
   // A provider may report session spend without reporting context occupancy.
   const contextPill = useMemo(() => {
@@ -1726,14 +1740,7 @@ export const AgentComposer = memo(function AgentComposer({
           <Pressable
             testID="agent-composer-popup-scrim"
             style={[styles.backdrop, { top: -windowHeight }]}
-            onPress={() => {
-              setAttachmentMenuOpen(false);
-              setCommandMenuServer(null);
-              closeToolbarMenu();
-              setModeMenuOpen(false);
-              setInboxOpen(false);
-              setInboxMenuId(null);
-            }}
+            onPress={closePopups}
           />
         ) : null}
 

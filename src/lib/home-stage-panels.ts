@@ -80,10 +80,9 @@ export type StagePanel = {
   /** When the app last confirmed its agents with it, for "last seen"; offline only. */
   lastSeenMs?: number;
   /**
-   * Its agents: the native sessions waiting on the reader or running first,
-   * then the terminal panes' agents no session stands for -- each group
-   * waiting first, then running, then the rest, in listing or mirror order;
-   * none on an offline computer.
+   * Its agents as conversations (`stageAgentLines`): native sessions first,
+   * then the terminal agents no listed session stands for; none on an
+   * offline computer.
    */
   agents: StageAgentLine[];
 };
@@ -207,11 +206,16 @@ function sessionPane(
   return listedAtMs >= panes.checkedAtMs ? pane : undefined;
 }
 
+/** Native session chips shown before terminal agents, unless more are live. */
+const NATIVE_CHIP_LIMIT = 6;
+
 /**
- * The computer's agents for the chips: native sessions first -- those the
- * listing says run or a request waits on (or whose own terminal pane does) --
- * then the terminal panes' agents that no listed session stands for. A pane
- * hosting a listed session is that session, shown once, as the session.
+ * The computer's agents for the chips, as conversations. Native sessions
+ * first: every live one -- running, waited on by a request, or running in a
+ * terminal pane by the gateway's word (that pane is this session, shown once,
+ * as the session) -- then, up to `NATIVE_CHIP_LIMIT`, each other agent's most
+ * recent session, so an idle agent still opens its conversation. Then only
+ * the terminal agents no listed session stands for.
  */
 function stageAgentLines({
   serverId,
@@ -231,7 +235,8 @@ function stageAgentLines({
   tasks: readonly TaskView[];
 }): StageAgentLine[] {
   const claimed = new Set<string>();
-  const native: StageAgentLine[] = [];
+  const live: StageAgentLine[] = [];
+  const recent: StageAgentLine[] = [];
   for (const session of listed?.serverId === serverId ? listed.sessions : []) {
     const pane = sessionPane(session, panes, listedAtMs);
     if (pane?.paneId) claimed.add(pane.paneId);
@@ -248,13 +253,12 @@ function stageAgentLines({
         : RUNNING_SESSION.includes(session.status) || (pane?.hasAgent && pane.status === 'working')
           ? 'working'
           : 'idle';
-    if (mark === 'idle') continue;
     const title = hasRealSessionTitle(session) ? session.title.trim() : undefined;
-    native.push({
+    (mark !== 'idle' || pane ? live : recent).push({
       key: `session:${session.agentId}:${session.asid}`,
       name: agentDisplayName(undefined, session.agentId),
       mark,
-      status: mark === 'needs-you' ? 'blocked' : 'working',
+      status: mark === 'needs-you' ? 'blocked' : mark,
       ...(title ? { activity: title } : {}),
       session: {
         kind: 'agent-session',
@@ -266,10 +270,22 @@ function stageAgentLines({
       },
     });
   }
+  // The listing is newest first: the first session of each agent not live already.
+  const shown = new Set(live.map((line) => line.session!.agentId));
+  const latest = recent.filter((line) => {
+    const agentId = line.session!.agentId;
+    if (shown.has(agentId)) return false;
+    shown.add(agentId);
+    return true;
+  });
   const terminals = (panes?.agents ?? []).filter(
     (agent) => agent.hasAgent && !(agent.paneId && claimed.has(agent.paneId))
   );
-  return [...byMark(native), ...agentLines(terminals, tasks)];
+  return [
+    ...byMark(live),
+    ...latest.slice(0, Math.max(0, NATIVE_CHIP_LIMIT - live.length)),
+    ...agentLines(terminals, tasks),
+  ];
 }
 
 /** Waiting on the reader first, then running, then the rest, each in the order given. */

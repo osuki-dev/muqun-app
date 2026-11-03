@@ -33,6 +33,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { EdgeFade } from '@/components/edge-fade';
 import { HomeSheetGrabber, HomeSheetHeader, homeSheetStyles } from '@/components/home-sheet';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
 import { useStructuralValue } from '@/hooks/use-structural-value';
@@ -452,6 +453,9 @@ export function HomeStageLayout({
     }),
     [openRequest, openWaitingTask, openPane, openList]
   );
+  // Back closes the pulled-up list, or the computer's actions, before it leaves Home.
+  useBackToClose(listOpen, () => openList(false));
+  useBackToClose(actionsFor !== null, () => setActionsFor(null));
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (1 - sheet.get()) * windowHeight }],
   }));

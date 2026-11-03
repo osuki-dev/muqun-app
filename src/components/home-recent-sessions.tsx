@@ -293,6 +293,7 @@ export function useHomeRecentEntries({
           // device never opened; every other gateway keeps its recents.
           recordAgentSessions:
             record.serverId === targetId ? useHomeAgentSessions.getState().record : undefined,
+          previousAgentSessions: useHomeAgentSessions.getState().byServer[record.serverId],
           confirmSessions: settleGoneSessions,
           servesSnapshot: snapshotServesAgents({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],

@@ -67,6 +67,19 @@ test('the listing keeps the N most recently updated root sessions, newest first'
   expect(kept.map((row) => row.asid)).toEqual(['s11', 's10', 's9', 's8', 's7', 's6', 's5', 's4']);
   expect(kept[0]).toMatchObject({ agentId: 't3', status: 'busy', updatedMs: 11 });
   expect(gatewayAgentSessions(list, 2)).toHaveLength(2);
+  // An older session the gateway says runs in a terminal now stays: it is that pane.
+  const hosted = info('hosted', -1, {
+    runtime: {
+      source: 'terminal',
+      interaction: 'terminal',
+      terminal: { session_id: 'dev', pane_id: 'p', instance_id: 'i' },
+    },
+  });
+  expect(gatewayAgentSessions([...list, hosted], 2).map((row) => row.asid)).toEqual([
+    's11',
+    's10',
+    'hosted',
+  ]);
 });
 
 test('gateway sessions join Continue as agent-session rows ranked by their update time', () => {
@@ -443,6 +456,16 @@ test("the gateway's terminal provenance rides into the Continue snapshot", () =>
   ]);
   expect(listed.terminal).toEqual({ sessionId: 'dev', paneId: 'p-cc', instanceId: 'i-1' });
   expect(gatewayAgentSessions([info('native', 10)])[0].terminal).toBeUndefined();
+  // A listing read in a gap of the gateway's terminal sampling keeps the link,
+  // even past the limit; a session the gateway now says runs natively drops it.
+  const gap = { source: 'unobserved', interaction: 'unavailable', reason: 'terminal_unavailable' };
+  const later = [info('new', 20), info('cc', 10, { runtime: gap } as never)];
+  expect(gatewayAgentSessions(later, 1, [listed]).map((row) => row.terminal?.paneId)).toEqual([
+    undefined,
+    'p-cc',
+  ]);
+  const native = [info('cc', 10, { runtime: { source: 'native', interaction: 'native' } })];
+  expect(gatewayAgentSessions(native, 1, [listed])[0].terminal).toBeUndefined();
 });
 
 test('an agent terminal binding cannot hide a same-ID pane in another or unknown routing session', () => {

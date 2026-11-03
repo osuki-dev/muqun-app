@@ -37,6 +37,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
 import {
   memo,
@@ -884,6 +885,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markAgentUsed = useAgents((state) => state.markUsed);
   /** The new-session picker, open only while more than one agent is ready. */
   const [agentPickerOpen, setAgentPickerOpen] = useState(false);
+  // Back closes the agent picker before it leaves the session.
+  useBackToClose(agentPickerOpen, () => setAgentPickerOpen(false));
   useAgentsDiscoveryRefresh(serverId);
   const selectAgent = agentChoice.select;
   useEffect(() => {
