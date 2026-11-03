@@ -473,6 +473,10 @@ msgstr "{remaining} remaining"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running} running"
+msgstr "{running} running"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -737,7 +741,6 @@ msgstr "Alerts"
 msgid "Align the QR inside the frame"
 msgstr "Align the QR inside the frame"
 
-#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-gallery.tsx
 msgid "All"
@@ -765,9 +768,23 @@ msgstr "All projects"
 msgid "All sessions"
 msgstr "All sessions"
 
+#. placeholder {0}: available.length
+#: src/components/home-recent-sessions.tsx
+msgid "All sessions ({0})"
+msgstr "All sessions ({0})"
+
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions, needs you"
 msgstr "All sessions, needs you"
+
+#: src/components/home-computer-cards.tsx
+msgid "All tasks"
+msgstr "All tasks"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "All tasks on {0}"
+msgstr "All tasks on {0}"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -4201,6 +4218,10 @@ msgstr "Needs setup"
 msgid "Needs update"
 msgstr "Needs update"
 
+#: src/components/home-computer-deck.tsx
+msgid "needs you"
+msgstr "needs you"
+
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -6192,6 +6213,10 @@ msgstr "Search sessions"
 #: src/i18n/labels.ts
 msgid "Search the whole project"
 msgstr "Search the whole project"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Search this computer’s sessions"
+msgstr "Search this computer’s sessions"
 
 #: src/app/settings.tsx
 msgid "Security"

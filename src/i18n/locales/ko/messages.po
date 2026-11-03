@@ -473,6 +473,10 @@ msgstr "{remaining} 남음"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#: src/components/home-computer-deck.tsx
+msgid "{running} running"
+msgstr "{running}개 실행 중"
+
 #. placeholder {0}: shells.length
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
@@ -737,7 +741,6 @@ msgstr "알림"
 msgid "Align the QR inside the frame"
 msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
-#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-gallery.tsx
 msgid "All"
@@ -765,9 +768,23 @@ msgstr "모든 프로젝트"
 msgid "All sessions"
 msgstr "모든 세션"
 
+#. placeholder {0}: available.length
+#: src/components/home-recent-sessions.tsx
+msgid "All sessions ({0})"
+msgstr "모든 세션 ({0})"
+
 #: src/components/home-stage/home-stage-layout.tsx
 msgid "All sessions, needs you"
 msgstr "모든 세션, 확인이 필요합니다"
+
+#: src/components/home-computer-cards.tsx
+msgid "All tasks"
+msgstr "모든 작업"
+
+#. placeholder {0}: server.label
+#: src/components/home-computer-cards.tsx
+msgid "All tasks on {0}"
+msgstr "{0}의 모든 작업"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -4201,6 +4218,10 @@ msgstr "설정 필요"
 msgid "Needs update"
 msgstr "업데이트 필요"
 
+#: src/components/home-computer-deck.tsx
+msgid "needs you"
+msgstr "확인 필요"
+
 #: src/components/home-stage/home-stage-layout.tsx
 #: src/components/home-stage/stage-agent-row.tsx
 #: src/components/server-tasks-sheet.tsx
@@ -6192,6 +6213,10 @@ msgstr "세션 검색"
 #: src/i18n/labels.ts
 msgid "Search the whole project"
 msgstr "프로젝트 전체 검색"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Search this computer’s sessions"
+msgstr "이 컴퓨터의 세션 검색"
 
 #: src/app/settings.tsx
 msgid "Security"

@@ -729,20 +729,7 @@ export function homeContinueServerId(entry: HomeContinueEntry): string | undefin
   return target.kind === 'ssh-host' ? undefined : target.serverId;
 }
 
-/**
- * The computers Recent offers a filter chip for, in the reader's own order:
- * only those with a row, and none at all unless there are two to choose from.
- */
-export function homeRecentFilterIds(
-  entries: readonly HomeContinueEntry[],
-  serverIds: readonly string[]
-): string[] {
-  const present = new Set(entries.map(homeContinueServerId));
-  const ids = serverIds.filter((serverId) => present.has(serverId));
-  return ids.length > 1 ? ids : [];
-}
-
-/** Recent narrowed to one computer; every row when no chip is picked. */
+/** Recent narrowed to one computer; every row when none is given. */
 export function filterHomeRecent(
   entries: readonly HomeContinueEntry[],
   serverId: string | null

@@ -3,7 +3,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text } from '@osuki-dev/ui';
 import { OpenIcon, ComputerIcon } from '@/icons';
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   LayoutAnimationConfig,
@@ -29,7 +29,17 @@ import { useStructuralValue } from '@/hooks/use-structural-value';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { HOME_CONTINUE_INITIAL_LIMIT } from '@/lib/home-continue';
+import { homeContinueTarget, type HomeContinueEntry } from '@/lib/home-continue';
+import {
+  computerSessionBadges,
+  computerSessionEntries,
+  homeSessionUrgency,
+  COMPUTER_SESSIONS_SHOWN,
+} from '@/lib/home-computer-sessions';
+import { rowStatusTask } from '@/lib/home-in-progress';
+import { taskAttentionView } from '@/lib/task-attention';
+import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import {
   buildComputerCards,
   lastKnownActivityCaption,
@@ -38,7 +48,6 @@ import {
   taskRollup,
   type ComputerCard,
   HOME_CARD_INSET,
-  FINISHED_ROWS_SHOWN,
 } from '@/lib/home-computer-cards';
 import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
@@ -231,6 +240,8 @@ export function HomeComputerCards({
   onSelectServer,
   onOpenTask,
   onOpenHistory,
+  sessionEntries,
+  renderSessions,
 }: {
   servers: readonly GatewayRecord[];
   /**
@@ -253,6 +264,10 @@ export function HomeComputerCards({
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's task history, everything the card no longer lists. */
   onOpenHistory?: (serverId: string) => void;
+  /** Home's Continue rows, every computer's; each card lists its own above its tasks. */
+  sessionEntries?: readonly HomeContinueEntry[];
+  /** Draws one computer's sessions, given in the card's order. */
+  renderSessions?: (serverId: string, entries: readonly HomeContinueEntry[]) => ReactNode;
 }) {
   const serverIds = servers.map((server) => server.serverId);
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -291,6 +306,38 @@ export function HomeComputerCards({
     pending: inputs.pending,
     nowMs,
   });
+  // Each card's sessions: what needs the reader and what runs first. A row's
+  // urgency is what the row itself shows: its ledger task, else the gateway's
+  // last word while that is current.
+  const recentSeenAtMs = useHomeRecentsStore((state) => state.seenAtMs);
+  const listedSeenAtMs = useHomeAgentSessions((state) => state.seenAtMs);
+  const urgency = (entry: HomeContinueEntry) => {
+    const target = homeContinueTarget(entry.destination);
+    let taskState: TaskView['state'] | undefined;
+    if (target?.kind === 'agent-session') {
+      const task = rowStatusTask(
+        index[target.serverId]?.tasks,
+        target.asid,
+        entry.observation?.observedAtMs
+      );
+      if (task)
+        taskState = taskAttentionView({ task, serverId: target.serverId, requests, nowMs }).state;
+    }
+    const seen = entry.observation?.seen;
+    const confirmedAtMs = Math.max(
+      (seen?.panesOf ? panesByServer[seen.panesOf]?.checkedAtMs : undefined) ?? 0,
+      (seen?.recentKey ? recentSeenAtMs[seen.recentKey] : undefined) ?? 0,
+      (seen?.listedBy ? listedSeenAtMs[seen.listedBy] : undefined) ?? 0
+    );
+    return homeSessionUrgency(entry, taskState, confirmedAtMs, nowMs);
+  };
+  const sessionsByServer: Record<string, HomeContinueEntry[]> = {};
+  if (sessionEntries)
+    for (const serverId of serverIds)
+      sessionsByServer[serverId] = computerSessionEntries(sessionEntries, serverId, urgency);
+  const badges = useStructuralValue(
+    sessionEntries ? computerSessionBadges(sessionEntries, urgency) : {}
+  );
   // The order on screen, held while the reader's finger or eye is on it.
   const held = useHomeSortHold((state) => state.held);
   const shownIds = useFrozenValue(
@@ -310,7 +357,10 @@ export function HomeComputerCards({
           card,
           followed.includes(card.serverId),
           statuses[card.serverId] ?? 'unknown',
-          i18n.locale
+          i18n.locale,
+          (sessionsByServer[card.serverId] ?? [])
+            .slice(0, COMPUTER_SESSIONS_SHOWN)
+            .map((entry) => entry.key)
         ),
       ])
     )
@@ -328,8 +378,10 @@ export function HomeComputerCards({
   ) => {
     const server = servers.find((item) => item.serverId === card.serverId);
     if (!server) return null;
+    const sessions = renderSessions?.(card.serverId, sessionsByServer[card.serverId] ?? []);
     return (
       <ComputerCardView
+        sessions={sessions}
         card={card}
         server={server}
         followed={followed.includes(card.serverId)}
@@ -353,6 +405,7 @@ export function HomeComputerCards({
             servers={servers}
             activeConnection={activeConnection}
             onSelectServer={selectServer}
+            badges={badges}
             renderCard={renderCard}
             signatures={signatures}
           />
@@ -388,6 +441,7 @@ function ComputerCardView({
   activeConnection,
   deckActions,
   deckLayout,
+  sessions,
   onSelect,
   onOpenTask,
   onOpenHistory,
@@ -396,10 +450,12 @@ function ComputerCardView({
   server: GatewayRecord;
   followed: boolean;
   activeConnection?: ActiveServerConnection;
-  /** In the sheaf, the header also moves to the next or previous computer. */
+  /** In the sheaf, the card also moves to the next or previous computer. */
   deckActions?: DeckCardActions;
   /** In the sheaf, every card is as tall as the tallest; this one reports its own height. */
   deckLayout?: DeckCardLayout;
+  /** This computer's sessions, above its tasks. */
+  sessions?: ReactNode;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
   onOpenHistory?: () => void;
@@ -408,17 +464,12 @@ function ComputerCardView({
   // Its own clock, the one the section reads: ages move in the card, not by
   // re-rendering the deck around it.
   const nowMs = useMinuteNow(useServerReachability((state) => state.freshnessNowMs));
-  // Open work is shown up to the usual limit and finished work shows three
-  // rows. There is no fold under the card: the rest of the computer's work is
-  // one tap away in its tasks list, which the header opens.
+  // Sessions lead the card; its tasks follow, compact: at most three rows,
+  // open work first. The rest of the computer's work is one tap away in its
+  // tasks list ("All tasks").
   const openRows = card.now.length + card.pending.length;
-  // In the sheaf every card shows at most three rows, open work first: the
-  // cards are one height, and the header opens the rest.
-  const shownOpen = Math.min(openRows, deckLayout ? DECK_CARD_ROWS : HOME_CONTINUE_INITIAL_LIMIT);
-  const shownFinished = Math.min(
-    card.finished.length,
-    deckLayout ? DECK_CARD_ROWS - shownOpen : FINISHED_ROWS_SHOWN
-  );
+  const shownOpen = Math.min(openRows, DECK_CARD_ROWS);
+  const shownFinished = Math.min(card.finished.length, DECK_CARD_ROWS - shownOpen);
   // This card's own status: a probe or a retry against another computer
   // re-renders only the card whose status moved.
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -467,40 +518,35 @@ function ComputerCardView({
       onOpenTree={(task) => onOpenTask(task, true)}
     />
   );
-  const cardHeader = (
+  const statusLine = statusColor ? (
+    <View style={styles.statusLine}>
+      {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
+      <StatusDot color={statusColor} filled pulse={false} />
+      <Text variant="caption" color={statusColor} numberOfLines={1}>
+        {_(connectionStatusLabel[status])}
+      </Text>
+    </View>
+  ) : null;
+  // In the sheaf the tabs above name the computer; alone, the card does.
+  const cardHeader = deckLayout ? (
+    statusLine ? (
+      <View style={styles.deckStatus}>{statusLine}</View>
+    ) : null
+  ) : (
     <PressableScale
       testID={`home-card-header-${server.serverId}`}
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${_(connectionStatusDescription[status])}`}
-      accessibilityHint={onOpenHistory ? t`Opens its tasks.` : t`Sends your next goal here.`}
-      onPress={onOpenHistory ?? onSelect}
-      accessibilityActions={deckActions?.accessibilityActions}
-      onAccessibilityAction={deckActions?.onAccessibilityAction}
-      style={[styles.header, deckLayout ? styles.historyLink : null]}>
-      {deckLayout ? null : <ComputerIcon size={18} color={theme.colors.primary} />}
+      accessibilityHint={t`Sends your next goal here.`}
+      onPress={onSelect}
+      style={styles.header}>
+      <ComputerIcon size={18} color={theme.colors.primary} />
       <View style={[styles.headerCopy, styles.fill]}>
         <Text variant="bodySmall" weight="medium" numberOfLines={1}>
-          {deckLayout ? t`Tasks` : server.label}
+          {server.label}
         </Text>
-        {statusColor ? (
-          <View style={styles.statusLine}>
-            {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
-            <StatusDot color={statusColor} filled pulse={false} />
-            <Text variant="caption" color={statusColor} numberOfLines={1}>
-              {_(connectionStatusLabel[status])}
-            </Text>
-          </View>
-        ) : null}
+        {statusLine}
       </View>
-      {/* The caption sits in the header's spare right half, so it never
-            takes a line of its own and nothing below it moves when it fades. */}
-      {cachedCaption !== 'none' ? (
-        <LastKnownActivityCaption
-          shown={cachedCaption === 'shown'}
-          testID={`home-card-cached-${server.serverId}`}
-        />
-      ) : null}
-      {deckLayout ? <OpenIcon size={16} color={theme.colors.primary} /> : null}
     </PressableScale>
   );
   return (
@@ -525,56 +571,97 @@ function ComputerCardView({
                 deckLayout.onContentHeight(event.nativeEvent.layout.height + CARD_PADDING_TOP)
             : undefined
         }>
-        {deckLayout ? null : cardHeader}
+        {cardHeader}
         <PairAgainNotice
           testID={`home-card-pair-again-${server.serverId}`}
           status={status}
           server={server}
         />
-
-        {followed ? (
-          <View style={styles.block}>
-            {openRows === 0 && card.finished.length === 0 ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {t`No tasks yet`}
-              </Text>
-            ) : null}
-            {/* One keyed list, not one per section: a task moving between Now
-              and Just finished (it finished, or it was reopened) is the same
-              row element, moved by its layout transition, never re-created. */}
-            {[
-              ...[
-                ...urgentNow.map(nowRow),
-                ...card.pending.map((item) => (
-                  <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
-                )),
-                ...restNow.map(nowRow),
-              ].slice(0, shownOpen),
-              ...card.finished
-                .slice(0, shownFinished)
-                .map((task) => (
-                  <TaskRow
-                    key={task.taskId}
-                    task={task}
-                    inComputerCard
-                    statusCurrent={statusCurrent}
-                    serverId={server.serverId}
-                    discovery={discovery}
-                    nowMs={nowMs}
-                    onOpen={(finished) => onOpenTask(finished)}
-                    onOpenTree={(finished) => onOpenTask(finished, true)}
-                  />
-                )),
-            ]}
-          </View>
-        ) : (
-          <View style={styles.block}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`Not updating from here. Open this computer to see its tasks.`}
+        {sessions}
+        <View
+          style={[
+            styles.tasks,
+            sessions
+              ? { borderTopColor: theme.colors.border, borderTopWidth: StyleSheet.hairlineWidth }
+              : null,
+          ]}>
+          <View style={styles.tasksHeading}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={theme.colors.textMuted}
+              accessibilityRole="header"
+              style={styles.fill}>
+              {t`Tasks`}
             </Text>
+            {/* The caption sits in the heading's spare right half, so it never
+              takes a line of its own and nothing below it moves when it fades. */}
+            {cachedCaption !== 'none' ? (
+              <LastKnownActivityCaption
+                shown={cachedCaption === 'shown'}
+                testID={`home-card-cached-${server.serverId}`}
+              />
+            ) : null}
           </View>
-        )}
-        {deckLayout ? cardHeader : null}
+          {followed ? (
+            <View style={styles.block}>
+              {openRows === 0 && card.finished.length === 0 ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`No tasks yet`}
+                </Text>
+              ) : null}
+              {/* One keyed list, not one per section: a task moving between Now
+                and Just finished (it finished, or it was reopened) is the same
+                row element, moved by its layout transition, never re-created. */}
+              {[
+                ...[
+                  ...urgentNow.map(nowRow),
+                  ...card.pending.map((item) => (
+                    <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
+                  )),
+                  ...restNow.map(nowRow),
+                ].slice(0, shownOpen),
+                ...card.finished
+                  .slice(0, shownFinished)
+                  .map((task) => (
+                    <TaskRow
+                      key={task.taskId}
+                      task={task}
+                      inComputerCard
+                      statusCurrent={statusCurrent}
+                      serverId={server.serverId}
+                      discovery={discovery}
+                      nowMs={nowMs}
+                      onOpen={(finished) => onOpenTask(finished)}
+                      onOpenTree={(finished) => onOpenTask(finished, true)}
+                    />
+                  )),
+              ]}
+            </View>
+          ) : (
+            <View style={styles.block}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`Not updating from here. Open this computer to see its tasks.`}
+              </Text>
+            </View>
+          )}
+          {onOpenHistory ? (
+            <PressableScale
+              testID={`home-card-tasks-${server.serverId}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`All tasks on ${server.label}`}
+              accessibilityHint={t`Opens its tasks.`}
+              onPress={onOpenHistory}
+              accessibilityActions={deckActions?.accessibilityActions}
+              onAccessibilityAction={deckActions?.onAccessibilityAction}
+              style={styles.allTasks}>
+              <Text variant="bodySmall" color={theme.colors.primary} numberOfLines={1}>
+                {t`All tasks`}
+              </Text>
+              <OpenIcon size={14} color={theme.colors.primary} />
+            </PressableScale>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -585,11 +672,12 @@ function cardSignature(
   card: ComputerCard,
   followed: boolean,
   status: ConnectionStatus,
-  locale: string
+  locale: string,
+  sessions: readonly string[]
 ): string {
   // The header's status and pairing notice can add height even while its
   // ledger is hidden. Unfollowed cards show only the explanatory paragraph.
-  const header = [followed, status, locale];
+  const header = [followed, status, locale, sessions];
   if (!followed) return JSON.stringify(header);
   const taskShape = (task: TaskView, childRows = 0) => [
     task.taskId,
@@ -673,9 +761,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  historyLink: { paddingBottom: 4 },
+  deckStatus: { minHeight: 28, justifyContent: 'center' },
+  tasks: { marginTop: 4, paddingTop: 8 },
+  tasksHeading: { minHeight: 24, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  allTasks: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: -6,
+  },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  block: { gap: 4, paddingBottom: 8 },
+  block: { gap: 4, paddingBottom: 4 },
   fill: { flexGrow: 1 },
 });

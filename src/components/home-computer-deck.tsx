@@ -37,6 +37,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { ComputerCard } from '@/lib/home-computer-cards';
+import type { ComputerSessionBadge } from '@/lib/home-computer-sessions';
 import {
   DECK_AT_REST,
   deckCommits,
@@ -114,6 +115,7 @@ export function HomeComputerDeck({
   onSelectServer,
   renderCard,
   signatures,
+  badges = NO_BADGES,
 }: {
   /** Two or more, in the cards' own order. */
   cards: readonly ComputerCard[];
@@ -123,6 +125,8 @@ export function HomeComputerDeck({
   /** What each card shows, as a string that changes when its height may. */
   signatures: Readonly<Record<string, string>>;
   renderCard: (card: ComputerCard, actions?: DeckCardActions, layout?: DeckCardLayout) => ReactNode;
+  /** Sessions needing the reader or running, per computer; a tab behind the front says so. */
+  badges?: Readonly<Record<string, ComputerSessionBadge>>;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -652,6 +656,7 @@ export function HomeComputerDeck({
         servers={servers.filter((server) => ids.includes(server.serverId))}
         selectedId={frontId}
         activeConnection={activeConnection}
+        badges={badges}
         onSelect={selectComputer}
         ring={ring}
         move={move}
@@ -731,6 +736,8 @@ export function HomeComputerDeck({
  */
 const DECK_MOTION_OFF = false;
 
+const NO_BADGES: Readonly<Record<string, ComputerSessionBadge>> = {};
+
 /**
  * What the deck's handlers share outside React: the live move, and the
  * watchdog's last look and timer. Made once per deck.
@@ -774,11 +781,13 @@ function ComputerTabs({
   servers,
   selectedId,
   activeConnection,
+  badges,
   onSelect,
   ring,
   move,
   progress,
 }: {
+  badges: Readonly<Record<string, ComputerSessionBadge>>;
   ring: SharedValue<string>;
   move: SharedValue<DeckMove>;
   progress: SharedValue<number>;
@@ -844,12 +853,21 @@ function ComputerTabs({
         const selected = server.serverId === selectedId;
         const status = statuses[server.serverId] ?? 'unknown';
         const ink = selected ? theme.colors.primary : theme.colors.textMuted;
+        // Behind the front, a computer says what of its sessions wants a look:
+        // needing the reader before running, so nothing goes unnoticed.
+        const badge = selected ? undefined : badges[server.serverId];
+        const running = badge?.running ?? 0;
+        const badgeText = badge?.needsYou ? t`needs you` : running ? t`${running} running` : '';
         return (
           <PressableScale
             key={server.serverId}
             testID={`home-deck-peek-${server.serverId}`}
             accessibilityRole="button"
-            accessibilityLabel={t`Bring ${server.label} to the front`}
+            accessibilityLabel={
+              badgeText
+                ? `${t`Bring ${server.label} to the front`}, ${badgeText}`
+                : t`Bring ${server.label} to the front`
+            }
             accessibilityHint={_(connectionStatusLabel[status])}
             accessibilityState={{ selected }}
             onPress={() => onSelect(server.serverId)}
@@ -870,6 +888,16 @@ function ComputerTabs({
               style={styles.tabName}>
               {server.label}
             </Text>
+            {badgeText ? (
+              <Text
+                testID={`home-deck-badge-${server.serverId}`}
+                variant="caption"
+                weight="semibold"
+                color={badge?.needsYou ? theme.colors.warning : theme.colors.info}
+                numberOfLines={1}>
+                {`· ${badgeText}`}
+              </Text>
+            ) : null}
           </PressableScale>
         );
       })}
@@ -983,11 +1011,11 @@ const styles = StyleSheet.create({
   tabAccent: { position: 'absolute', bottom: 0, height: 2, borderRadius: 1 },
   tab: {
     minHeight: 36,
-    maxWidth: 200,
+    maxWidth: 240,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   tabName: { minWidth: 0, flexShrink: 1 },
   slot: { position: 'absolute', left: 0, right: 0, zIndex: 100 },

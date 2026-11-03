@@ -1,8 +1,16 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, PressableScale, Text, TextField } from '@osuki-dev/ui';
-import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon } from '@/icons';
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { NextIcon, DeleteIcon, CloseIcon, MessageSendIcon, SearchIcon } from '@/icons';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import {
   AppState,
   StyleSheet,
@@ -104,6 +112,7 @@ import { sessionDeleteFailureMessage } from '@/lib/session-delete-failure';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
+import { COMPUTER_SESSIONS_SHOWN } from '@/lib/home-computer-sessions';
 import { heldOrder } from '@/lib/home-sort-hold';
 import { sortHoldTouches, useHomeSortHold } from '@/stores/home-sort-hold';
 import { useFrozenValue } from '@/hooks/use-frozen-value';
@@ -143,29 +152,43 @@ function forgetHomeSessionChoices(serverId: string): void {
 export function HomeContinueSearch({
   query,
   onChange,
+  inCard = false,
+  testID = 'home-continue-search',
 }: {
   query: string;
   onChange: (query: string) => void;
+  /** Inside a computer's card: outlined on the card's own fill, scoped to that computer. */
+  inCard?: boolean;
+  testID?: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const label = inCard ? t`Search this computer’s sessions` : t`Search sessions`;
   return (
     <View
       style={[
         styles.search,
-        {
-          // The same fill as the sessions card and filter chips around it.
-          backgroundColor: background(theme.colors.surface),
-          borderColor: theme.colors.border,
-          borderRadius: profile.chrome.surface,
-        },
+        inCard
+          ? {
+              borderColor: theme.colors.border,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderRadius: profile.chrome.control,
+              minHeight: 40,
+            }
+          : {
+              // The same fill as the sessions card around it.
+              backgroundColor: background(theme.colors.surface),
+              borderColor: theme.colors.border,
+              borderRadius: profile.chrome.surface,
+            },
       ]}>
+      {inCard ? <SearchIcon size={16} color={theme.colors.textMuted} /> : null}
       <TextField
-        testID="home-continue-search"
-        accessibilityLabel={t`Search sessions`}
-        placeholder={t`Search sessions`}
+        testID={testID}
+        accessibilityLabel={label}
+        placeholder={label}
         placeholderTextColor={theme.colors.textMuted}
         value={query}
         onChangeText={onChange}
@@ -177,7 +200,7 @@ export function HomeContinueSearch({
       />
       {query.length ? (
         <PressableScale
-          testID="home-continue-search-clear"
+          testID={`${testID}-clear`}
           accessibilityRole="button"
           accessibilityLabel={t`Clear session search`}
           onPress={() => onChange('')}
@@ -386,6 +409,7 @@ export function HomeRecentSessions({
   query = '',
   pad = false,
   header,
+  inCard = false,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -407,8 +431,13 @@ export function HomeRecentSessions({
   query?: string;
   /** Pad keeps the large ordinal; a phone shrinks it so the title has the row. */
   pad?: boolean;
-  /** Drawn above the rows, e.g. Home's per-computer filter chips. */
+  /** Drawn above the rows. */
   header?: ReactNode;
+  /**
+   * Inside a computer's card: the rows stand on the card's fill and inset, and
+   * the fold reads "All sessions (N)".
+   */
+  inCard?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -420,7 +449,7 @@ export function HomeRecentSessions({
   // What the meta line has across: the row less its padding, ordinal, gaps and arrow.
   const ordinalWidth = compact ? 0 : (pad ? 48 : 30) + 12;
   const metaChars = homeContinueMetaChars(
-    listWidth - 24 - ordinalWidth - 12 - 16,
+    listWidth - (inCard ? 0 : 24) - ordinalWidth - 12 - 16,
     theme.typography.caption.fontSize * fontScale
   );
   const discovery = useAgents((state) => state.index.servers);
@@ -459,7 +488,8 @@ export function HomeRecentSessions({
         style={[
           styles.list,
           {
-            backgroundColor: available.length ? background(theme.colors.surface) : 'transparent',
+            backgroundColor:
+              available.length && !inCard ? background(theme.colors.surface) : 'transparent',
             borderRadius: profile.chrome.surface,
           },
         ]}>
@@ -475,6 +505,7 @@ export function HomeRecentSessions({
             hasSeparator={index < displayed.length - 1}
             servers={servers}
             pad={pad}
+            inCard={inCard}
             metaChars={metaChars}
             onOpen={() => onOpen(homeContinueCommand(entry.destination))}
             onReply={onReply && canReply?.(entry) ? () => onReply(entry) : undefined}
@@ -487,7 +518,7 @@ export function HomeRecentSessions({
           testID="home-continue-no-matches"
           variant="bodySmall"
           color={theme.colors.textMuted}
-          style={{ padding: 12 }}>
+          style={inCard ? styles.noMatchesInCard : styles.noMatches}>
           {t`No matching sessions`}
         </Text>
       ) : null}
@@ -495,10 +526,51 @@ export function HomeRecentSessions({
         <HomeFoldLink
           testID="home-recent-sessions-more"
           expanded={expanded}
+          label={inCard ? t`All sessions (${available.length})` : undefined}
+          onCard={inCard}
           onPress={() => setExpanded(!expanded)}
           style={linkStyle}
         />
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * One computer's sessions inside its card: a search over them alone, then the
+ * first few (the card's order: needs you, running, most recent) and a fold for
+ * the rest. Nothing at all while the computer has no session to list.
+ */
+export function HomeComputerSessions({
+  serverId,
+  entries,
+  ...list
+}: {
+  serverId: string;
+  /** This computer's rows, already in the card's order (`computerSessionEntries`). */
+  entries: readonly HomeContinueEntry[];
+} & Omit<
+  ComponentProps<typeof HomeRecentSessions>,
+  'available' | 'query' | 'inCard' | 'compact' | 'limit' | 'header'
+>) {
+  const [query, setQuery] = useState('');
+  if (!entries.length) return null;
+  return (
+    <View testID={`home-computer-sessions-${serverId}`} style={styles.computerSessions}>
+      <HomeContinueSearch
+        inCard
+        testID={`home-computer-search-${serverId}`}
+        query={query}
+        onChange={setQuery}
+      />
+      <HomeRecentSessions
+        {...list}
+        available={entries}
+        query={query}
+        inCard
+        compact
+        limit={COMPUTER_SESSIONS_SHOWN}
+      />
     </View>
   );
 }
@@ -536,6 +608,7 @@ function RecentSessionRow({
   servers,
   compact,
   pad,
+  inCard,
   metaChars,
   selectedServerId,
   selectedPaneId,
@@ -550,6 +623,7 @@ function RecentSessionRow({
   servers: readonly GatewayRecord[];
   compact: boolean;
   pad: boolean;
+  inCard: boolean;
   metaChars: number;
   selectedServerId?: string;
   selectedPaneId?: string;
@@ -885,12 +959,14 @@ function RecentSessionRow({
         }}
         style={[
           styles.row,
+          inCard && styles.cardRow,
           hasSeparator && {
             borderBottomColor: theme.colors.border,
             borderBottomWidth: StyleSheet.hairlineWidth,
           },
           {
-            backgroundColor: background(surface),
+            // In a card only a selected row takes a fill of its own.
+            backgroundColor: inCard && !selected ? 'transparent' : background(surface),
           },
         ]}>
         <View style={styles.open}>
@@ -975,12 +1051,16 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10, paddingHorizontal: 0 },
   searchClear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   root: { minWidth: 0 },
+  computerSessions: { minWidth: 0, gap: 4, paddingTop: 4 },
   list: { minWidth: 0, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
   },
+  cardRow: { paddingHorizontal: 0 },
+  noMatches: { padding: 12 },
+  noMatchesInCard: { paddingVertical: 12 },
   open: {
     flex: 1,
     minWidth: 0,
