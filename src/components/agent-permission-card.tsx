@@ -196,7 +196,6 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
       style={[
         styles.container,
         { borderRadius: profile.chrome.noticeCard },
-        attached ? styles.attached : null,
         {
           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           borderColor: theme.colors.warning,
@@ -354,9 +353,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginVertical: 6,
     padding: 10,
-  },
-  attached: {
-    marginLeft: 12,
   },
   header: {
     flexDirection: 'row',

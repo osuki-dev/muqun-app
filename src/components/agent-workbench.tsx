@@ -37,7 +37,7 @@ import { useFleetPeers } from '@/stores/fleet-peers';
 import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
-import { useLatestReader, useLatestRef } from '@/hooks/use-render-refs';
+import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
 import {
   memo,
   useCallback,
@@ -261,6 +261,7 @@ import {
 import {
   agentPromptUsesOptimisticRow,
   reconcileAgentSnapshotPending,
+  sameTimeline,
   upsertTimelineItems,
 } from '@/lib/agent-timeline-upsert';
 import {
@@ -1131,24 +1132,41 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * stream effect or re-render anything.
    */
   const syncRef = useRef<CatchUpState>(CATCH_UP_START);
-  const selectAsid = useCallback(
-    (nextAsid: string | undefined) => {
-      if (activeAsidRef.current === nextAsid) return;
-      // A failed read must not show the previous conversation or approvals
-      // beneath the newly selected session.
-      setTimeline([]);
-      setSessionInfo(null);
-      setWindowStart(0);
-      setPermissions([]);
-      setForms([]);
-      setInbox([]);
-      setCompaction(null);
-      syncRef.current = CATCH_UP_START;
-      activeAsidRef.current = nextAsid;
-      setActiveAsid(nextAsid);
-    },
-    [setTimeline]
+  // The last timeline each recent session was left with. Reopening a session
+  // shows it at once instead of an empty list while the snapshot loads; the
+  // snapshot then reconciles it, and only rows that changed are redrawn.
+  const timelineCacheRef = useRef(
+    new Map<string, { timeline: TimelineItem[]; windowStart: number }>()
   );
+  const selectAsid = useStableHandler((nextAsid: string | undefined) => {
+    if (activeAsidRef.current === nextAsid) return;
+    const leaving = activeAsidRef.current;
+    const cache = timelineCacheRef.current;
+    if (leaving) {
+      cache.delete(leaving);
+      cache.set(leaving, {
+        timeline: transcriptStore.getState().timeline as TimelineItem[],
+        windowStart: windowStartRef.current,
+      });
+      if (cache.size > 8) {
+        const oldest = cache.keys().next();
+        if (!oldest.done) cache.delete(oldest.value);
+      }
+    }
+    // Only this session's own last timeline may show here. A session without
+    // one starts empty, so the previous conversation never shows under it.
+    const cached = nextAsid ? cache.get(nextAsid) : undefined;
+    setTimeline(cached?.timeline ?? []);
+    setSessionInfo(null);
+    setWindowStart(cached?.windowStart ?? 0);
+    setPermissions([]);
+    setForms([]);
+    setInbox([]);
+    setCompaction(null);
+    syncRef.current = CATCH_UP_START;
+    activeAsidRef.current = nextAsid;
+    setActiveAsid(nextAsid);
+  });
   const [loading, setLoading] = useState(true);
   /**
    * Home's dock opened this session right after creating it and sending its
@@ -2262,7 +2280,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 // briefly sees the previous session's offset against the new rows.
                 const nextWindow = Math.max(0, timeline.length - HISTORY_PAGE_SIZE);
                 windowStartRef.current = nextWindow;
-                setTimeline(timeline, nextWindow);
+                if (!sameTimeline(transcriptStore.getState().timeline, timeline))
+                  setTimeline(timeline, nextWindow);
                 setWindowStart(nextWindow);
                 follow.reset();
               } else if (replaceAgentTranscript(mode, info?.runtime ?? readRuntime())) {
@@ -2276,7 +2295,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   HISTORY_PAGE_SIZE
                 );
                 windowStartRef.current = nextWindow;
-                setTimeline(timeline, nextWindow);
+                if (!sameTimeline(transcriptStore.getState().timeline, timeline))
+                  setTimeline(timeline, nextWindow);
                 setWindowStart(nextWindow);
               }
 

@@ -416,8 +416,12 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     handledSend.current = scrollToSentRow;
     cancelExpansion();
     setToolBrowsing(false);
-    void listRef.current?.scrollToEnd({ animated: true });
-  }, [scrollToSentRow, keys, cancelExpansion]);
+    // At the end, `maintainScrollAtEnd` already follows the new row. A second,
+    // animated scroll raced it into rows not yet measured and snapped back.
+    // From elsewhere, jump without animation, as the jump-to-latest control does.
+    if (!toolBrowsing && listRef.current?.getState().isAtEnd) return;
+    void listRef.current?.scrollToEnd({ animated: false });
+  }, [scrollToSentRow, keys, cancelExpansion, toolBrowsing]);
   const context = useMemo(
     () => ({
       store,

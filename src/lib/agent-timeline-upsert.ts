@@ -245,6 +245,15 @@ export function carryDrawnRowKeys(
     }
     cursor = Math.max(cursor, index + 1);
     const key = drawnRowKey(previous[index]);
+    // An unchanged row keeps the object it was drawn from: a fresh parse of the
+    // same revision would re-render every visible row on each snapshot.
+    if (
+      previous[index].id === item.id &&
+      previous[index].seq === item.seq &&
+      previous[index].updated_ms === item.updated_ms &&
+      drawnRowKey(item) === key
+    )
+      return previous[index];
     return drawnRowKey(item) === key || taken.has(key) ? item : { ...item, row_key: key };
   });
 }
@@ -263,4 +272,18 @@ export function reconcileAgentSnapshotPending(
   // ACK can precede the user-message event, and unrelated events advance the
   // snapshot sequence. Neither absence nor idle status proves send failure.
   return upsertTimelineItems(pending, carryDrawnRowKeys(previous, snapshot));
+}
+
+/**
+ * Whether storing `next` would change nothing on screen: the same rows, in the
+ * same order, as the very same objects. A snapshot that repeats the timeline
+ * must not replace it, or every visible row re-renders on each send.
+ */
+export function sameTimeline(
+  previous: readonly TimelineItem[],
+  next: readonly TimelineItem[]
+): boolean {
+  if (previous === next) return true;
+  if (previous.length !== next.length) return false;
+  return previous.every((item, index) => item === next[index]);
 }
