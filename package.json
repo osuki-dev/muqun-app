@@ -106,7 +106,7 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "4.30.1",
-    "react-native-skia": "3.8.1",
+    "react-native-skia": "3.9.0",
     "react-native-video": "7.0.0-beta.12",
     "react-native-vision-camera": "^5.2.4",
     "react-native-vision-camera-barcode-scanner": "^5.2.4",

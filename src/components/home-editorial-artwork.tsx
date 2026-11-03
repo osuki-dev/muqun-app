@@ -1,6 +1,4 @@
 import {
-  AlphaType,
-  ColorType,
   Canvas,
   useCanvasRef,
   Image as SkiaImage,
@@ -10,6 +8,8 @@ import {
   vec,
 } from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useArtworkAlphaPlane } from '@/hooks/use-artwork-alpha-plane';
 import { StyleSheet, type LayoutChangeEvent, type ViewInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -116,16 +116,11 @@ function HomeEditorialArtworkImage({
     [box, focalPoint, image, fit, fullBleed, foreground]
   );
   useSkiaDrawReady(canvas, imageRect, Boolean(image && imageRect && box), () => setDrawn(true));
+  const alpha = useArtworkAlphaPlane(image);
   const visibleTop = useMemo(() => {
-    if (!cover || !image) return 0;
-    const pixels = image.readPixels(0, 0, {
-      width: image.width(),
-      height: image.height(),
-      colorType: ColorType.Alpha_8,
-      alphaType: AlphaType.Unpremul,
-    });
-    return pixels ? artworkVisibleTop(pixels, image.width(), image.height()) : 0;
-  }, [cover, image]);
+    if (!cover || !alpha) return 0;
+    return artworkVisibleTop(alpha.pixels, alpha.width, alpha.height);
+  }, [cover, alpha]);
   useEffect(() => {
     if (!image || !imageRect) return;
     onVisibleTopChange?.(

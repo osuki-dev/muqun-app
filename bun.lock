@@ -74,7 +74,7 @@
         "react-native-reanimated": "4.7.1",
         "react-native-safe-area-context": "~5.11.1",
         "react-native-screens": "4.30.1",
-        "react-native-skia": "3.8.1",
+        "react-native-skia": "3.9.0",
         "react-native-video": "7.0.0-beta.12",
         "react-native-vision-camera": "^5.2.4",
         "react-native-vision-camera-barcode-scanner": "^5.2.4",
@@ -2234,15 +2234,15 @@
 
     "react-native-screens": ["react-native-screens@4.30.1", "", { "dependencies": { "react-freeze": "^1.0.0", "warn-once": "^0.1.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-wLzZSQpvMx3FxIlDnb6raDJjsv2x45tFLGFz8RFUvxHzsKU9dWOkZYv9fy2siWtFf3eWGcRh66hL+o+dHhRJLQ=="],
 
-    "react-native-skia": ["react-native-skia@3.8.1", "", { "dependencies": { "canvaskit-wasm": "0.41.1", "react-native-skia-graphite-android": "157.0.0", "react-native-skia-graphite-apple-ios": "157.0.0", "react-native-skia-graphite-apple-macos": "157.0.0", "react-native-skia-graphite-apple-tvos": "157.0.0", "react-native-webgpu-dawn": "157.0.0", "react-reconciler": "0.33.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.79", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-4VVnbs68osnNYqyYwEMHyjwTmWCUpF/fcqGh4Hd815al/qLSS7yhgtACzulvFkrxpfBBtk1g3qv1GBtqXPW1GQ=="],
+    "react-native-skia": ["react-native-skia@3.9.0", "", { "dependencies": { "canvaskit-wasm": "0.41.1", "react-native-skia-graphite-android": "157.1.0", "react-native-skia-graphite-apple-ios": "157.1.0", "react-native-skia-graphite-apple-macos": "157.1.0", "react-native-skia-graphite-apple-tvos": "157.1.0", "react-native-webgpu-dawn": "157.1.0", "react-reconciler": "0.33.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.79", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-ttgn2fjm4d4LkilfP1Dbb5nxKqYBpUr/IwL7bsRh/QJu1eLMk+eSdTomQzOozJUJ9j+ryaCHwsv3W4UixS+o7w=="],
 
-    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@157.0.0", "", {}, "sha512-/FFq+Lw7xBk2cQVRwp49NZCbn71tUxdIYAQjbbcfGH6n+HODEgSbw4VRcGzH5L6VgbFOR7Ee+an1/VvExoSVbg=="],
+    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@157.1.0", "", {}, "sha512-keiIRZc3Vx0B3CwgrCt16BNl6xUS48LfP10DD05lZHX2bGZIHSG5a/spgweXGv44mmyhC4vKxeYqkTuhmArsOw=="],
 
-    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@157.0.0", "", {}, "sha512-5QWJOWQD+NdGt7ANfuWIOxKasyeglJVuBLFEKoBkaiaSYF7/uUv9hJQMtLXGyCxGNHeithnA+EqdS4/1eC89MA=="],
+    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@157.1.0", "", {}, "sha512-zO5rlQtgbx6d5ul0XMSACzGI1RL3tO+r4x4cPP3FeNiBrqYNgbdoMG/q+H2mqafAu0wDLph86Bua3NZqkYvehw=="],
 
-    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@157.0.0", "", {}, "sha512-dqyfEa2cJVELKv/GFLa7VqsJiY5RQ9DSjSQRv6K3vz2czRykqleYet0GObG+yP3MNtv5A7cY4AuUo0+9XoZUPw=="],
+    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@157.1.0", "", {}, "sha512-983/KzFyE9bvLtBsA32lJUhdQFl3WiETHUlBjTeDdfWknrnmCiIvz3bbUDt7cCXkMt/dU43KISslaN1CV9f66g=="],
 
-    "react-native-skia-graphite-apple-tvos": ["react-native-skia-graphite-apple-tvos@157.0.0", "", {}, "sha512-LscPAAl3UruSIDnRBDc4WLCjoWeZ4EZs8bumae9IT/lPEhHkgDHMHu1OayDzgjCdZuNj+ex4RE0RtXvEMhz5Qw=="],
+    "react-native-skia-graphite-apple-tvos": ["react-native-skia-graphite-apple-tvos@157.1.0", "", {}, "sha512-egYrkF7me0bON1xaNARb34hCVGsjdWpw0xy8ewA9knbdw1DzHn0rGKMQet9D1hvwhK3c962PvYj2Jh7oh/2Pig=="],
 
     "react-native-video": ["react-native-video@7.0.0-beta.12", "", { "dependencies": { "@videojs/react": "^10.0.0-beta.11" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": ">=0.35.0" } }, "sha512-m9HnrxafosLWXAeDjWrGgPZms+gJyWRW6OF3ARS+FCITVOGeSsiVfq7OHVMvduYH+yuTfLXeU+wSUv7wxK6Seg=="],
 
@@ -2254,7 +2254,7 @@
 
     "react-native-webgpu": ["react-native-webgpu@0.20.0", "", { "dependencies": { "react-native-webgpu-dawn": "157.1.0" }, "peerDependencies": { "react": "*", "react-native": ">=0.81.0", "react-native-reanimated": ">=4.2.1", "react-native-worklets": ">=0.7.2" }, "optionalPeers": ["react-native-reanimated", "react-native-worklets"] }, "sha512-jnuQ0emS/Pu6dpsHiaaKpFZrBuYsmFp9+rO/AGVJz50U313py1FVMFNv5aFOH3B+OX76CDTsXIjC1VU+GQEs4g=="],
 
-    "react-native-webgpu-dawn": ["react-native-webgpu-dawn@157.0.0", "", {}, "sha512-HRquN2/995ZvcxiKDTiCwk3CduOYg9g3AK4yyoPrfMt5qUBbS6SefCpXE5mksvY4YaFrj2PqrtUuY2K1NkXsmQ=="],
+    "react-native-webgpu-dawn": ["react-native-webgpu-dawn@157.1.0", "", {}, "sha512-T197EGYxTBuw5Qb1yihnOX6+tNsSNem3ymJ+RZVOQbkHn9I2PnKwg3HA+l3eAEGep552kotkNDBAnM5x4oo8QA=="],
 
     "react-native-webview": ["react-native-webview@14.0.1", "", { "dependencies": { "escape-string-regexp": "^4.0.0", "invariant": "2.2.4" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-lBUuvFk459Mo+5vUNqwzGvn+I8rDJE6zvOulG2hWWudeEOJfWTsQwOfuYnRu+27djUIXrESFfC+EQE3PGu+FWA=="],
 
@@ -2931,8 +2931,6 @@
     "react-native-web/@react-native/normalize-colors": ["@react-native/normalize-colors@0.74.89", "", {}, "sha512-qoMMXddVKVhZ8PA1AbUCk83trpd6N+1nF2A6k1i6LsQObyS92fELuk8kU/lQs6M7BsMHwqyLCpQJ1uFgNvIQXg=="],
 
     "react-native-web/memoize-one": ["memoize-one@6.0.0", "", {}, "sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw=="],
-
-    "react-native-webgpu/react-native-webgpu-dawn": ["react-native-webgpu-dawn@157.1.0", "", {}, "sha512-T197EGYxTBuw5Qb1yihnOX6+tNsSNem3ymJ+RZVOQbkHn9I2PnKwg3HA+l3eAEGep552kotkNDBAnM5x4oo8QA=="],
 
     "react-native-worklets/@babel/types": ["@babel/types@7.29.11", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.11", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ=="],
 
