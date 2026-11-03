@@ -26,7 +26,11 @@ import {
 } from '@/lib/approval-notifications';
 import { feedback } from '@/lib/feedback';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { notificationRoute, notificationRouteServer } from '@/lib/notification-route';
+import {
+  createResponseGate,
+  notificationOpening,
+  notificationRouteServer,
+} from '@/lib/notification-route';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import {
   forgetRegisteredPushToken,
@@ -126,15 +130,52 @@ function windowIsPad(): boolean {
   return responsiveWorkspaceLayout(Dimensions.get('window').width).mode === 'pad';
 }
 
+/**
+ * Responses already acted on, held for the app's lifetime rather than one
+ * mount of the root layout: see `createResponseGate`.
+ */
+const freshResponse = createResponseGate();
+
+/**
+ * Whether a computer is paired, read once the stored pairings have loaded.
+ *
+ * A cold start from a tap runs before the keychain read finishes, and an empty
+ * list then would call every computer unpaired. A read that failed answers
+ * `undefined`: the push is trusted and the screen it opens reports the
+ * connection the way it always does.
+ */
+async function pairedLookup(): Promise<((serverId: string) => boolean) | undefined> {
+  const store = useGatewayConnectionStore;
+  if (store.getState().loading) await store.getState().hydrate();
+  const { record, records, hydrationError } = store.getState();
+  if (hydrationError && records.length === 0) return undefined;
+  return (serverId) =>
+    record?.serverId === serverId || records.some((entry) => entry.serverId === serverId);
+}
+
 export function useNotificationObserver() {
   useEffect(() => {
-    function redirect(notification: Notifications.Notification) {
-      const route = notificationRoute(
+    async function redirect(notification: Notifications.Notification) {
+      const opening = notificationOpening(
         notification.request.content.data,
         notification.request.identifier,
-        { isPad: windowIsPad() }
+        { isPad: windowIsPad(), isPaired: await pairedLookup() }
       );
-      if (!route) return;
+      if (!opening) return;
+      if (opening.kind === 'unpaired') {
+        // The computer was unpaired after the push was sent: there is no
+        // workspace to open, so Home, with the reason on screen.
+        router.navigate('/');
+        useInAppNotifications.getState().enqueue({
+          id: `unpaired:${notification.request.identifier}`,
+          title: i18n._(msg`This computer is no longer paired`),
+          body: i18n._(msg`Pair it again to open its agents.`),
+          route: null,
+          kind: 'general',
+        });
+        return;
+      }
+      const { route } = opening;
       // The same fetch-on-intent the home screen's cards make, for the other
       // way into a terminal. A tapped notification is the strongest statement
       // of intent the app ever gets -- the reader is already looking at the
@@ -160,7 +201,7 @@ export function useNotificationObserver() {
     async function handleResponse(response: Notifications.NotificationResponse) {
       const decision = approvalActionDecision(response.actionIdentifier);
       if (!decision) {
-        redirect(response.notification);
+        await redirect(response.notification);
         return;
       }
       const { outcome } = await answerApprovalFromNotification(
@@ -176,20 +217,22 @@ export function useNotificationObserver() {
         return;
       }
       void feedback('warning');
-      redirect(response.notification);
+      await redirect(response.notification);
     }
 
+    function respond(response: Notifications.NotificationResponse) {
+      const key = `${response.notification.request.identifier}\u0000${response.actionIdentifier}`;
+      if (freshResponse(key)) void handleResponse(response);
+    }
+
+    // The tap that launched the app, from a cold start.
     const response = Notifications.getLastNotificationResponse();
     if (response?.notification) {
-      void handleResponse(response);
+      respond(response);
       void Notifications.clearLastNotificationResponseAsync();
     }
 
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(
-      (nextResponse) => {
-        void handleResponse(nextResponse);
-      }
-    );
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener(respond);
     const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
       if (!useAppSettings.getState().notificationsEnabled) return;
       const data = notification.request.content.data;

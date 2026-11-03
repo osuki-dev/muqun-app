@@ -5088,6 +5088,10 @@ msgstr "VINCULAR DE NUEVO"
 msgid "Pair computer"
 msgstr "Vincular ordenador"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Vuelve a emparejarlo para abrir sus agentes"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Empareja uno abajo"
@@ -7532,6 +7536,10 @@ msgstr "Este ordenador no tiene ninguna sesión en la que iniciar un agente"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Este ordenador no ha listado ningún dispositivo vinculado"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Este ordenador ya no está emparejado"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

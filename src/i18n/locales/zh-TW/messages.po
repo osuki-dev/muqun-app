@@ -5088,6 +5088,10 @@ msgstr "需要重新配對"
 msgid "Pair computer"
 msgstr "配對電腦"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "重新配對後即可開啟它的代理程式"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "在下方配對一台"
@@ -7532,6 +7536,10 @@ msgstr "這台電腦沒有可以啟動代理程式的工作階段"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "這台電腦沒有列出任何已配對的裝置"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "這台電腦已不再配對"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

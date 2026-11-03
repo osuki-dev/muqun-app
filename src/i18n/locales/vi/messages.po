@@ -5088,6 +5088,10 @@ msgstr "GHÉP NỐI LẠI"
 msgid "Pair computer"
 msgstr "Ghép nối máy tính"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Hãy ghép nối lại để mở các tác nhân của máy"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Ghép nối ở bên dưới"
@@ -7532,6 +7536,10 @@ msgstr "Máy tính này không có phiên nào để khởi động tác tử"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Máy tính này chưa liệt kê thiết bị nào đã ghép nối"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Máy tính này không còn được ghép nối"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

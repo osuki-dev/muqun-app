@@ -5088,6 +5088,10 @@ msgstr "จับคู่อีกครั้ง"
 msgid "Pair computer"
 msgstr "จับคู่คอมพิวเตอร์"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "จับคู่อีกครั้งเพื่อเปิดเอเจนต์ของเครื่องนี้"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "จับคู่ได้ที่ด้านล่าง"
@@ -7532,6 +7536,10 @@ msgstr "คอมพิวเตอร์นี้ไม่มีเซสชั
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่ได้แสดงรายการอุปกรณ์ที่จับคู่ไว้"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ได้จับคู่อยู่แล้ว"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx

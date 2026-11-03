@@ -5088,6 +5088,10 @@ msgstr "APPAIRER DE NOUVEAU"
 msgid "Pair computer"
 msgstr "Appairer un ordinateur"
 
+#: src/lib/notifications.ts
+msgid "Pair it again to open its agents."
+msgstr "Appairez-le à nouveau pour ouvrir ses agents"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Associez-en un ci-dessous"
@@ -7532,6 +7536,10 @@ msgstr "Cet ordinateur n’a aucune session où démarrer un agent"
 #: src/components/settings-servers.tsx
 msgid "This computer has not listed any paired devices."
 msgstr "Cet ordinateur n’a répertorié aucun appareil appairé"
+
+#: src/lib/notifications.ts
+msgid "This computer is no longer paired"
+msgstr "Cet ordinateur n'est plus appairé"
 
 #: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
