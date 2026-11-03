@@ -34,7 +34,7 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
-import { LaunchOverlay } from '@/components/launch-overlay';
+import { LaunchCoveredContent, LaunchOverlay } from '@/components/launch-overlay';
 import {
   ReskinSurface,
   ReskinTransitionProvider,
@@ -445,157 +445,164 @@ function RootContent() {
           <ReskinSurface id="root">
             <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
             <LaunchOverlay />
-            <ThemeFileOpener />
-            <AppLockGate>
-              <Stack
-                screenLayout={({ children, options, route, navigation }) =>
-                  options.presentation === 'formSheet' ? (
-                    // Presses on a sheet cancel while it is dragged; see `sheet-drag-guard.tsx`.
-                    <SheetDragGuard navigation={navigation}>
-                      {isCenteredSettingsSheetRoute(route.name, isPad) ? (
-                        <SheetRouteFrame detents={options.sheetAllowedDetents}>
-                          {children}
-                        </SheetRouteFrame>
-                      ) : (
-                        children
-                      )}
-                    </SheetDragGuard>
-                  ) : (
-                    <RouteScene modal={options.presentation === 'fullScreenModal'}>
-                      {/* Native full-screen modals have no sheet grabber. Scenes
+            <LaunchCoveredContent>
+              <ThemeFileOpener />
+              <AppLockGate>
+                <Stack
+                  screenLayout={({ children, options, route, navigation }) =>
+                    options.presentation === 'formSheet' ? (
+                      // Presses on a sheet cancel while it is dragged; see `sheet-drag-guard.tsx`.
+                      <SheetDragGuard navigation={navigation}>
+                        {isCenteredSettingsSheetRoute(route.name, isPad) ? (
+                          <SheetRouteFrame detents={options.sheetAllowedDetents}>
+                            {children}
+                          </SheetRouteFrame>
+                        ) : (
+                          children
+                        )}
+                      </SheetDragGuard>
+                    ) : (
+                      <RouteScene modal={options.presentation === 'fullScreenModal'}>
+                        {/* Native full-screen modals have no sheet grabber. Scenes
                           using SheetScene need safe-area clearance and a close button. */}
-                      <SheetFullscreenProvider value={options.presentation === 'fullScreenModal'}>
-                        {children}
-                      </SheetFullscreenProvider>
-                    </RouteScene>
-                  )
-                }
-                screenOptions={{
-                  headerShown: false,
-                  ...pageOptions,
-                  contentStyle: { backgroundColor: screenBackground },
-                  // A screen nobody is looking at should not be rendering. Home
-                  // sits under the terminal for as long as the terminal is open,
-                  // and without this its artwork layers and its one pulse per live
-                  // server card keep the UI thread at vsync the whole time. Work
-                  // that must outlive a blur already lives in a store rather than
-                  // in a screen, so nothing here depends on rendering while hidden.
-                  // Except for the length of a theme change: a Home frozen under
-                  // Settings would re-render under the new theme during the
-                  // transition back to it, which is where that stuttered.
-                  freezeOnBlur: !reskinActive,
-                }}>
-                <Stack.Screen
-                  name="index"
-                  options={{
+                        <SheetFullscreenProvider value={options.presentation === 'fullScreenModal'}>
+                          {children}
+                        </SheetFullscreenProvider>
+                      </RouteScene>
+                    )
+                  }
+                  screenOptions={{
+                    headerShown: false,
                     ...pageOptions,
-                  }}
-                />
-                {/* Native options change in place; sheets retain their measurement contract. */}
-                <Stack.Screen
-                  name="agent"
-                  options={{
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{
-                    ...pageOptions,
-                  }}
-                />
-                {/*
+                    contentStyle: { backgroundColor: screenBackground },
+                    // A screen nobody is looking at should not be rendering. Home
+                    // sits under the terminal for as long as the terminal is open,
+                    // and without this its artwork layers and its one pulse per live
+                    // server card keep the UI thread at vsync the whole time. Work
+                    // that must outlive a blur already lives in a store rather than
+                    // in a screen, so nothing here depends on rendering while hidden.
+                    // Except for the length of a theme change: a Home frozen under
+                    // Settings would re-render under the new theme during the
+                    // transition back to it, which is where that stuttered.
+                    freezeOnBlur: !reskinActive,
+                  }}>
+                  <Stack.Screen
+                    name="index"
+                    options={{
+                      ...pageOptions,
+                    }}
+                  />
+                  {/* Native options change in place; sheets retain their measurement contract. */}
+                  <Stack.Screen
+                    name="agent"
+                    options={{
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="settings"
+                    options={{
+                      ...pageOptions,
+                    }}
+                  />
+                  {/*
               The terminal lives on the root stack rather than in the drawer:
               drawer screens swap without a transition, and its edge-swipe
               gesture fights the terminal's own horizontal panning.
             */}
-                <Stack.Screen
-                  name="servers/[serverId]"
-                  options={{
-                    gestureEnabled: false,
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen
-                  name="ssh"
-                  options={{
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen
-                  name="ssh/[hostId]"
-                  options={{
-                    gestureEnabled: false,
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen name="commands" options={sheetRouteOptions('commands')} />
-                <Stack.Screen name="panels" options={sheetRouteOptions('panels')} />
-                <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
-                <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
-                <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
-                <Stack.Screen
-                  name="settings-servers"
-                  options={sheetRouteOptions('settings-servers')}
-                />
-                <Stack.Screen
-                  name="settings-appearance"
-                  options={sheetRouteOptions('settings-appearance')}
-                />
-                <Stack.Screen
-                  name="settings-alerts"
-                  options={sheetRouteOptions('settings-alerts')}
-                />
-                <Stack.Screen
-                  name="settings-storage"
-                  options={sheetRouteOptions('settings-storage')}
-                />
-                <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
-                <Stack.Screen
-                  name="settings-stage-diagnostics"
-                  options={sheetRouteOptions('settings-stage-diagnostics')}
-                />
-                <Stack.Screen
-                  name="settings-terminal"
-                  options={sheetRouteOptions('settings-terminal')}
-                />
-                <Stack.Screen name="settings-theme" options={sheetRouteOptions('settings-theme')} />
-                <Stack.Screen
-                  name="settings-theme-browse"
-                  options={sheetRouteOptions('settings-theme-browse')}
-                />
-                <Stack.Screen name="settings-font" options={sheetRouteOptions('settings-font')} />
-                {/*
+                  <Stack.Screen
+                    name="servers/[serverId]"
+                    options={{
+                      gestureEnabled: false,
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="ssh"
+                    options={{
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="ssh/[hostId]"
+                    options={{
+                      gestureEnabled: false,
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen name="commands" options={sheetRouteOptions('commands')} />
+                  <Stack.Screen name="panels" options={sheetRouteOptions('panels')} />
+                  <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
+                  <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
+                  <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
+                  <Stack.Screen
+                    name="settings-servers"
+                    options={sheetRouteOptions('settings-servers')}
+                  />
+                  <Stack.Screen
+                    name="settings-appearance"
+                    options={sheetRouteOptions('settings-appearance')}
+                  />
+                  <Stack.Screen
+                    name="settings-alerts"
+                    options={sheetRouteOptions('settings-alerts')}
+                  />
+                  <Stack.Screen
+                    name="settings-storage"
+                    options={sheetRouteOptions('settings-storage')}
+                  />
+                  <Stack.Screen
+                    name="settings-about"
+                    options={sheetRouteOptions('settings-about')}
+                  />
+                  <Stack.Screen
+                    name="settings-stage-diagnostics"
+                    options={sheetRouteOptions('settings-stage-diagnostics')}
+                  />
+                  <Stack.Screen
+                    name="settings-terminal"
+                    options={sheetRouteOptions('settings-terminal')}
+                  />
+                  <Stack.Screen
+                    name="settings-theme"
+                    options={sheetRouteOptions('settings-theme')}
+                  />
+                  <Stack.Screen
+                    name="settings-theme-browse"
+                    options={sheetRouteOptions('settings-theme-browse')}
+                  />
+                  <Stack.Screen name="settings-font" options={sheetRouteOptions('settings-font')} />
+                  {/*
               The one route that is a whole screen wearing a theme rather than a
               panel over one. See `sheetRoutePresentations` for why it stays
               full-screen; the way out is the header's back arrow and the
               pinned Done, not a grabber.
             */}
-                <Stack.Screen
-                  name="custom-theme"
-                  options={{
-                    ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen
-                  name="settings-language"
-                  options={sheetRouteOptions('settings-language')}
-                />
-                <Stack.Screen
-                  name="settings-home-layout"
-                  options={sheetRouteOptions('settings-home-layout')}
-                />
-                <Stack.Screen
-                  name="settings-home-connections"
-                  options={sheetRouteOptions('settings-home-connections')}
-                />
-                <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
-                <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
-                <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />
-                <Stack.Screen name="home-agent" options={sheetRouteOptions('home-agent')} />
-                <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
-                {/*
+                  <Stack.Screen
+                    name="custom-theme"
+                    options={{
+                      ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="settings-language"
+                    options={sheetRouteOptions('settings-language')}
+                  />
+                  <Stack.Screen
+                    name="settings-home-layout"
+                    options={sheetRouteOptions('settings-home-layout')}
+                  />
+                  <Stack.Screen
+                    name="settings-home-connections"
+                    options={sheetRouteOptions('settings-home-connections')}
+                  />
+                  <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
+                  <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
+                  <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />
+                  <Stack.Screen name="home-agent" options={sheetRouteOptions('home-agent')} />
+                  <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
+                  {/*
               A full-screen modal, not a sheet, and the route file says why at
               length: a sheet's one-finger dismiss fought the device's
               one-finger drags, and its transparent content let the terminal
@@ -606,22 +613,22 @@ function RootContent() {
               it; `gestureEnabled: false` is for iOS, where the close button is
               the only way and a swipe is the device's.
             */}
-                <Stack.Screen
-                  name="simfarm"
-                  options={{
-                    ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
-                    ...pageOptions,
-                  }}
-                />
-                <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
-                <Stack.Screen
-                  name="diagram-viewer"
-                  options={{
-                    ...sheetPresentationOptions(sheetRoutePresentations['diagram-viewer']),
-                    ...pageOptions,
-                  }}
-                />
-                {/*
+                  <Stack.Screen
+                    name="simfarm"
+                    options={{
+                      ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
+                      ...pageOptions,
+                    }}
+                  />
+                  <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
+                  <Stack.Screen
+                    name="diagram-viewer"
+                    options={{
+                      ...sheetPresentationOptions(sheetRoutePresentations['diagram-viewer']),
+                      ...pageOptions,
+                    }}
+                  />
+                  {/*
               The agent surface's pickers. They were `<Modal transparent>`
               components mounted inside the workbench, each with its own
               backdrop, its own hand-drawn grabber and its own corner radius;
@@ -629,51 +636,64 @@ function RootContent() {
               button, a real dismissal gesture and `freezeOnBlur` for free.
               How tall each one opens, and why, is in `sheetRouteDetents`.
             */}
-                <Stack.Screen name="agent-sessions" options={sheetRouteOptions('agent-sessions')} />
-                <Stack.Screen
-                  name="agent-session-tree"
-                  options={sheetRouteOptions('agent-session-tree')}
-                />
-                <Stack.Screen
-                  name="agent-subagent-detail"
-                  dangerouslySingular
-                  options={sheetRouteOptions('agent-subagent-detail')}
-                />
-                <Stack.Screen
-                  name="agent-tool-detail"
-                  options={sheetRouteOptions('agent-tool-detail')}
-                />
-                <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
-                <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
-                <Stack.Screen
-                  name="agent-workspace"
-                  options={sheetRouteOptions('agent-workspace')}
-                />
-                <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
-                <Stack.Screen name="settings-voice" options={sheetRouteOptions('settings-voice')} />
-                <Stack.Screen
-                  name="voice-input"
-                  options={{
-                    ...sheetRouteOptions('voice-input'),
-                    sheetElevation: 0,
-                  }}
-                />
-                <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
-                <Stack.Screen
-                  name="pane-history"
-                  dangerouslySingular
-                  options={sheetRouteOptions('pane-history')}
-                />
-                <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
-                <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
-                <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />
-                <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
-                <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
-              </Stack>
-              <InAppNotificationHost />
-            </AppLockGate>
-            <SshConnectPromptGate />
-            <UpdateStatusBanner />
+                  <Stack.Screen
+                    name="agent-sessions"
+                    options={sheetRouteOptions('agent-sessions')}
+                  />
+                  <Stack.Screen
+                    name="agent-session-tree"
+                    options={sheetRouteOptions('agent-session-tree')}
+                  />
+                  <Stack.Screen
+                    name="agent-subagent-detail"
+                    dangerouslySingular
+                    options={sheetRouteOptions('agent-subagent-detail')}
+                  />
+                  <Stack.Screen
+                    name="agent-tool-detail"
+                    options={sheetRouteOptions('agent-tool-detail')}
+                  />
+                  <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
+                  <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
+                  <Stack.Screen
+                    name="agent-workspace"
+                    options={sheetRouteOptions('agent-workspace')}
+                  />
+                  <Stack.Screen
+                    name="agent-worktree"
+                    options={sheetRouteOptions('agent-worktree')}
+                  />
+                  <Stack.Screen
+                    name="settings-voice"
+                    options={sheetRouteOptions('settings-voice')}
+                  />
+                  <Stack.Screen
+                    name="voice-input"
+                    options={{
+                      ...sheetRouteOptions('voice-input'),
+                      sheetElevation: 0,
+                    }}
+                  />
+                  <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+                  <Stack.Screen
+                    name="pane-history"
+                    dangerouslySingular
+                    options={sheetRouteOptions('pane-history')}
+                  />
+                  <Stack.Screen
+                    name="agent-vcs-diff"
+                    options={sheetRouteOptions('agent-vcs-diff')}
+                  />
+                  <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
+                  <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />
+                  <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
+                  <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
+                </Stack>
+                <InAppNotificationHost />
+              </AppLockGate>
+              <SshConnectPromptGate />
+              <UpdateStatusBanner />
+            </LaunchCoveredContent>
           </ReskinSurface>
         </ReskinTransitionProvider>
         {/* Outside the re-skin surface so a transition never photographs it. */}

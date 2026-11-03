@@ -4392,6 +4392,12 @@
         "run": "subflows/launch-home.ad#s8"
       },
       {
+        "target": { "id": "launch-intro-skip|launch-settled" },
+        "mode": "visible",
+        "timeout": 30000,
+        "run": "subflows/launch-home.ad#startup-ready"
+      },
+      {
         "target": {
           "id": "launch-intro-skip"
         },
@@ -6609,9 +6615,9 @@
       },
       { "include": "subflows/dismiss-immersive" },
       {
-        "target": { "text": "(?i)(Skip intro|Try the demo)" },
+        "target": { "id": "launch-intro-skip|launch-settled" },
         "mode": "visible",
-        "timeout": 20000,
+        "timeout": 30000,
         "run": "subflows/launch-home.ad#startup-ready"
       },
       {

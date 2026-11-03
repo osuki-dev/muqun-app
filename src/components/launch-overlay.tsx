@@ -1,5 +1,6 @@
 import { SplashOverlay } from '@osuki-dev/react-native-splash';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { LaunchIntro } from '@/components/launch-intro';
 import { LaunchSceneIntro } from '@/components/launch-intro-scene';
@@ -59,3 +60,26 @@ export function LaunchOverlay() {
     </SplashOverlay>
   );
 }
+
+/**
+ * The app beneath the launch cover, labelled with whether the cover is gone.
+ *
+ * Home mounts under the native splash and the intro, so its controls are in
+ * the view tree seconds before the reader can see them -- and on a first
+ * launch the intro arrives on top of them afterwards. `launch-settled` is the
+ * one signal that the screen now belongs to the app, which is what the
+ * device suite waits for instead of guessing from Home's buttons.
+ */
+export function LaunchCoveredContent({ children }: { children: ReactNode }) {
+  const settled = useLaunchHandoff((state) => state.settled);
+  return (
+    <View
+      style={styles.fill}
+      collapsable={false}
+      testID={settled ? 'launch-settled' : 'launch-covered'}>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });
