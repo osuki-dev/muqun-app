@@ -16,11 +16,15 @@ wait 2000
 snapshot
 screenshot "shots/uploaded-video-playing.png"
 
+# section pause
+# Pause before reading the clock: a playing video's position label changes
+# between the runner resolving it and asserting it.
+press "id=\"video-playback-toggle\""
+wait "label=\"Play\"" 10000
+
 # section progress
 is visible "${TARGET}"
 is hidden "text=\"Could not play this video file.\""
-press "id=\"video-playback-toggle\""
-wait "label=\"Play\"" 10000
 snapshot
 screenshot "shots/uploaded-video-paused.png"
 
