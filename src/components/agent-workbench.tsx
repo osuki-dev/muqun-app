@@ -6361,7 +6361,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canQueueWhileRunning={agentFeatures.inbox}
         canSteerWhileRunning={agentFeatures.extra.promptSteering === true}
         canMentionFiles={agentFeatures.extra.fileMentions !== false}
-        onTurnOffYolo={!loading && yoloMode ? () => setYoloMode(false) : undefined}
+        onTurnOffYolo={!loading && yoloMode ? handleToggleYoloMode : undefined}
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
