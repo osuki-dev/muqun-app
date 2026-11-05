@@ -1877,7 +1877,6 @@ msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "계속"

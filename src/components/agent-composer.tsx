@@ -104,6 +104,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
+import { onOrphanedPick, stashOrphanedPick, takeOrphanedPick } from '@/lib/orphaned-picks';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import {
   pickAttachments,
@@ -905,6 +906,18 @@ export const AgentComposer = memo(function AgentComposer({
 
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
+  const pickScope = voiceContext ?? `${sessionId}:${activeAsid ?? 'new'}`;
+  const addPickedFiles = attachmentUploads.addFiles;
+  useEffect(() => {
+    const take = () => {
+      const files = takeOrphanedPick(pickScope);
+      if (!files) return;
+      console.warn('[attachments] picked files handed to the rebuilt composer', files.length);
+      addPickedFiles(files);
+    };
+    take();
+    return onOrphanedPick(take);
+  }, [pickScope, addPickedFiles]);
   const { clearAttachments } = attachmentUploads;
   const submittingAttachments = Boolean(sending && pendingAttachmentSend);
   // Only staged files belong in the composer. An ACK clears them through the
@@ -1203,8 +1216,16 @@ export const AgentComposer = memo(function AgentComposer({
         return;
       const picker = attachmentUploads.capturePicker();
       if (!picker.isCurrent()) return;
+      // The screen can be rebuilt under the system picker (a tablet re-lays
+      // out on return); the composer for the same conversation takes the files.
+      const scope = pickScope;
       void pickAttachments(source)
         .then((files) => {
+          console.warn('[attachments] picker answered', files.length);
+          if (!picker.isCurrent()) {
+            stashOrphanedPick(scope, files);
+            return;
+          }
           picker.addFiles(files);
           const cut = takePickTruncationNotice();
           if (cut && picker.isCurrent())
@@ -1219,7 +1240,7 @@ export const AgentComposer = memo(function AgentComposer({
           });
         });
     },
-    [attachmentUploads, attachmentTargetId, showToast, t]
+    [attachmentUploads, attachmentTargetId, pickScope, showToast, t]
   );
 
   const readText = useLatestReader(text);

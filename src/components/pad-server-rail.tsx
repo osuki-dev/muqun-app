@@ -4,14 +4,15 @@ import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-s
 import { PreviousIcon, NextIcon, PairScanIcon, SettingsIcon, TerminalWindowIcon } from '@/icons';
 import { useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { HomeRecentSessions, useHomeRecentEntries } from '@/components/home-recent-sessions';
+import { HomeRecentSessionsList, useHomeRecentEntries } from '@/components/home-recent-sessions';
 import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-commands';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { HomeConnections } from '@/components/home-connections';
 import { useThemeLibrary } from '@/stores/theme-library';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -21,7 +22,6 @@ import { homeArtworkPreference } from '@/theme/repository';
 import { resolvePadRailArtwork } from '@/theme/pad-rail-artwork';
 import { Canvas, Image, LinearGradient, Mask, Rect, useImage, vec } from 'react-native-skia';
 import { homeCoverArtworkRect } from '@/lib/hero-feather';
-import { withAlpha } from '@/lib/color';
 import { safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
 
@@ -128,53 +128,42 @@ export function PadServerRail({
         style,
       ]}>
       <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
-      <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
-
       <View style={styles.scroll}>
         <PadRailArtwork />
-        <ScrollView
-          style={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
-          keyboardShouldPersistTaps="handled">
-          {recentEntries.length > 0 ? (
-            <>
-              <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
-              <HomeRecentSessions
-                compact
-                servers={servers}
-                hosts={sshHosts ?? []}
-                selectedServerId={selectedServerId ?? undefined}
-                selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
-                selectedAsid={workbenchSelected ? undefined : selectedAsid}
-                available={recentEntries}
-                onOpen={(command) => {
-                  void commands.dispatch(command);
-                }}
-              />
-            </>
-          ) : null}
-          {compactActions ? (
-            <>
-              <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
-              <HomeConnections
-                servers={servers}
-                hosts={sshHosts ?? []}
-                onOpenServer={(serverId) => {
-                  const server = servers.find((item) => item.serverId === serverId);
-                  if (server) onSelectServer(server);
-                }}
-                onOpenHost={(hostId) => {
-                  const host = sshHosts?.find((item) => item.id === hostId);
-                  if (host && onSelectSshHost) onSelectSshHost(host);
-                }}
-                onManage={() => void commands.manageConnections()}
-                nowMs={nowMs}
-                activeConnection={activeConnection}
-              />
-            </>
-          ) : null}
-        </ScrollView>
+        <HomeRecentSessionsList
+          servers={servers}
+          selectedServerId={selectedServerId ?? undefined}
+          selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
+          selectedAsid={workbenchSelected ? undefined : selectedAsid}
+          available={recentEntries}
+          onOpen={(command) => {
+            void commands.dispatch(command);
+          }}
+          contentContainerStyle={styles.listContent}
+          footer={
+            compactActions ? (
+              <View style={{ gap: profile.rail.contentGap, paddingTop: profile.rail.contentGap }}>
+                <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
+                <HomeConnections
+                  servers={servers}
+                  hosts={sshHosts ?? []}
+                  onOpenServer={(serverId) => {
+                    const server = servers.find((item) => item.serverId === serverId);
+                    if (server) onSelectServer(server);
+                  }}
+                  onOpenHost={(hostId) => {
+                    const host = sshHosts?.find((item) => item.id === hostId);
+                    if (host && onSelectSshHost) onSelectSshHost(host);
+                  }}
+                  onManage={() => void commands.manageConnections()}
+                  nowMs={nowMs}
+                  activeConnection={activeConnection}
+                />
+              </View>
+            ) : undefined
+          }
+        />
+        <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
       </View>
 
       {/* Three explained rows while the rail is empty, three glyphs once it is
@@ -327,6 +316,7 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const plate = useSheetGroundPlate();
   return (
     <View style={styles.railHeader}>
       <Pressable
@@ -336,11 +326,13 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
         onPress={onBack}
         style={({ pressed }) => [
           styles.backButton,
-          { borderRadius: profile.chrome.railItem },
+          // The same plate the rail's labels stand on, so Back stays legible
+          // over the artwork behind it.
+          { borderRadius: profile.chrome.surface },
           {
-            backgroundColor: background(
-              withAlpha(pressed ? theme.colors.surfaceRaised : theme.colors.surface, 0.94)
-            ),
+            backgroundColor: pressed
+              ? theme.colors.surfaceRaised
+              : (plate.backgroundColor ?? background(theme.colors.surface)),
           },
         ]}>
         <PreviousIcon size={20} color={theme.colors.text} />
@@ -435,15 +427,20 @@ function RailAction({
   );
 }
 
+/** Back's 44pt target and its 12pt margins, kept clear above the list. */
+const BACK_CLEARANCE = 68;
+
 const styles = StyleSheet.create({
+  listContent: { paddingHorizontal: 10, paddingTop: BACK_CLEARANCE, paddingBottom: 24 },
   shell: {
     flex: 1,
     minWidth: 0,
     borderCurve: 'continuous',
   },
   railHeader: {
-    width: '100%',
-    borderCurve: 'continuous',
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   artwork: {
     overflow: 'hidden',

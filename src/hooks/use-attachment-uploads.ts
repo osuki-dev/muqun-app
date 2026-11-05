@@ -48,7 +48,10 @@ export interface AttachmentUploads {
   attachments: PendingAttachment[];
   /** Stage files and start uploading them straight away. */
   addFiles: (files: PickedFile[]) => void;
-  capturePicker: () => { addFiles: (files: PickedFile[]) => void; isCurrent: () => boolean };
+  capturePicker: () => {
+    addFiles: (files: PickedFile[]) => void;
+    isCurrent: () => boolean;
+  };
   /** Re-send one file that failed, from its own tile. */
   retryUpload: (id: string) => void;
   removeAttachment: (id: string) => void;
@@ -212,10 +215,9 @@ export function useAttachmentUploads(
   const capturePicker = useCallback(() => {
     const currentRecord = record;
     const ownsUploads = ownership.capture(() => mountedRef.current);
-    const isCurrent = () =>
-      ownsUploads() &&
-      currentRecord !== null &&
-      useGatewayConnectionStore.getState().record === currentRecord;
+    // The same computer, not the same object: the store re-reads its records
+    // (a resume, a rename) without the connection having changed.
+    const isCurrent = () => mountedRef.current;
     const captured = currentRecord
       ? {
           ...currentRecord,
@@ -225,14 +227,31 @@ export function useAttachmentUploads(
     return {
       isCurrent,
       addFiles: (files: PickedFile[]) => {
-        if (!captured || !isCurrent() || files.length === 0) return;
+        if (!captured || files.length === 0) {
+          console.warn('[attachments] nothing to add', { files: files.length, record: !!captured });
+          return;
+        }
+        // Uploads go to the computer the pick started on; never stage them
+        // under a different one.
+        if (useGatewayConnectionStore.getState().record?.serverId !== captured.serverId) {
+          console.warn('[attachments] computer changed during the pick; dropped');
+          return;
+        }
+        if (!mountedRef.current) {
+          console.warn('[attachments] composer gone before the pick landed', files.length);
+          return;
+        }
+        console.warn('[attachments] staging', files.length);
         const previous = attachmentsRef.current;
         const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
           // A retry may temporarily select another computer while explicitly
           // retaining this draft. Its uploads still own this captured endpoint;
           // ordinary switches invalidate ownership through clearAttachments.
-          destinations.current.set(entry.id, { record: captured, isCurrent: ownsUploads });
+          destinations.current.set(entry.id, {
+            record: captured,
+            isCurrent: ownsUploads,
+          });
         commit(next);
         pump();
       },
@@ -273,6 +292,7 @@ export function useAttachmentUploads(
       () => () => {
         // Dictation temporarily covers the same composer; it is not a new destination.
         if (useVoiceInput.getState().request || holdStaged?.('blur')) return;
+        if (attachmentsRef.current.length) console.warn('[attachments] cleared on blur');
         clearAttachments();
       },
       [clearAttachments, holdStaged]
@@ -285,8 +305,15 @@ export function useAttachmentUploads(
           (destination) =>
             !next.records.some((record) => sameUploadRecord(record, destination.record))
         );
-        if (revoked || (next.record !== previous.record && !holdStaged?.('switch')))
+        // A re-read of the same computer (a resume, a rename) is not a switch.
+        const switched =
+          next.record !== previous.record &&
+          !(next.record && previous.record && sameUploadRecord(next.record, previous.record));
+        if (revoked || (switched && !holdStaged?.('switch'))) {
+          if (attachmentsRef.current.length)
+            console.warn('[attachments] cleared on switch', { revoked, switched });
           clearAttachments();
+        }
       }),
     [clearAttachments, holdStaged]
   );
