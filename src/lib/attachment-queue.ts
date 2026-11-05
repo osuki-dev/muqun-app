@@ -21,10 +21,23 @@ export const MAX_VIDEO_UPLOAD_BYTES = 25 * 1024 * 1024;
 export interface UploadLimits {
   maxBytes?: number;
   maxVideoBytes?: number;
+  /** Present when the gateway takes chunked uploads; its caps then replace the single-shot ones. */
+  chunked?: ChunkedUploadLimits;
+}
+
+/** `uploads.chunked` from discovery. */
+export interface ChunkedUploadLimits {
+  chunkBytes: number;
+  /** Cap for any file except video. */
+  maxBytes: number;
+  maxVideoBytes: number;
 }
 
 /** The cap for a file of this type: the gateway's where it named one, else the app's own. */
 export function maxUploadBytesFor(mime: string | undefined, limits?: UploadLimits): number {
+  if (limits?.chunked) {
+    return mime?.startsWith('video/') ? limits.chunked.maxVideoBytes : limits.chunked.maxBytes;
+  }
   return mime?.startsWith('video/')
     ? (limits?.maxVideoBytes ?? MAX_VIDEO_UPLOAD_BYTES)
     : (limits?.maxBytes ?? MAX_UPLOAD_BYTES);

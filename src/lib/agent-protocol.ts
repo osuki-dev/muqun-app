@@ -2542,10 +2542,19 @@ export function parseUploadLimits(value: unknown): UploadLimits | undefined {
     typeof entry === 'number' && Number.isSafeInteger(entry) && entry > 0 ? entry : undefined;
   const maxBytes = bytes(rec.maxBytes);
   const maxVideoBytes = bytes(rec.maxVideoBytes);
-  if (maxBytes === undefined && maxVideoBytes === undefined) return undefined;
+  const chunkedRec = asRecord(rec.chunked);
+  const chunkBytes = bytes(chunkedRec?.chunkBytes);
+  const chunkedMax = bytes(chunkedRec?.maxBytes);
+  const chunkedVideo = bytes(chunkedRec?.maxVideoBytes);
+  const chunked =
+    chunkBytes !== undefined && chunkedMax !== undefined && chunkedVideo !== undefined
+      ? { chunkBytes, maxBytes: chunkedMax, maxVideoBytes: chunkedVideo }
+      : undefined;
+  if (maxBytes === undefined && maxVideoBytes === undefined && !chunked) return undefined;
   return {
     ...(maxBytes !== undefined ? { maxBytes } : {}),
     ...(maxVideoBytes !== undefined ? { maxVideoBytes } : {}),
+    ...(chunked ? { chunked } : {}),
   };
 }
 

@@ -182,6 +182,8 @@ import {
 } from './demo-gateway';
 import { loadGateways, type GatewayRecord } from './gateway-storage';
 import { gatewayUploadName } from './uploaded-attachments';
+import { runChunkedUpload } from './chunked-upload';
+import type { UploadLimits } from './attachment-queue';
 import { demoCapturedHistory } from './demo-captured-history';
 import { withSessionAvailability } from './session-switcher';
 import { validatePairingTransport, type PairingPayload } from './pairing';
@@ -1266,7 +1268,9 @@ export async function uploadAttachment(
   fileUri: string,
   name: string,
   mime: string,
-  isCurrent: () => boolean
+  isCurrent: () => boolean,
+  /** The caps discovery named; `chunked` there sends a large file in slices instead of one request. */
+  limits?: UploadLimits
 ): Promise<UploadedAttachment> {
   assertDeliveryCurrent(isCurrent);
   if (isDemoRecord(record)) throw new Error('Attachments are not available in the demo.');
@@ -1276,30 +1280,93 @@ export async function uploadAttachment(
     const endpoint = { ...captured, url: baseUrl };
     if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
 
-    const form = new FormData();
-    // React Native's FormData takes a local file as this triple. nitro-fetch
-    // recognises it and assembles the multipart body natively, reading the file
-    // on its own thread, so the bytes never pass through JS.
-    form.append('file', { uri: localFilePath(fileUri), name, type: mime } as unknown as Blob);
-
-    const uploadUrl = `${baseUrl}/api/uploads`;
-    const uploadInit: RequestInit = {
-      method: 'POST',
-      // Content-Type is deliberately unset: the multipart boundary belongs to
-      // whichever layer writes the body, and setting it here would not match.
-      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${endpoint.token}` },
-      body: form,
-    };
-    const response =
-      endpoint.transport === GATEWAY_TRANSPORT
-        ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS, endpoint, isCurrent)
-        : await fetchWithin(
+    const send = (path: string, init: RequestInit) => {
+      const url = `${baseUrl}${path}`;
+      const withAuth: RequestInit = {
+        ...init,
+        headers: {
+          ...activeLocaleHeaders(),
+          Authorization: `Bearer ${endpoint.token}`,
+          ...(init.headers as Record<string, string> | undefined),
+        },
+      };
+      return endpoint.transport === GATEWAY_TRANSPORT
+        ? encryptedGatewayFetch(url, withAuth, UPLOAD_TIMEOUT_MS, endpoint, isCurrent)
+        : fetchWithin(
             UPLOAD_TIMEOUT_MS,
             // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
             'Timed out waiting for the upload.',
-            uploadUrl,
-            uploadInit
+            url,
+            withAuth
           );
+    };
+    const okJson = async (response: Response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      return (await response.json()) as Record<string, unknown> | null;
+    };
+
+    const localPath = localFilePath(fileUri);
+    const chunked = limits?.chunked;
+    const fileSize = chunked ? new File(localPath).size : 0;
+    let response: Response;
+    if (chunked && fileSize > chunked.chunkBytes) {
+      const handle = new File(localPath).open(FileMode.ReadOnly);
+      try {
+        response = await runChunkedUpload<Response>({
+          size: fileSize,
+          isCurrent,
+          readChunk: (length) => handle.readBytes(length),
+          transport: {
+            begin: async () => {
+              const started = await okJson(
+                await send('/api/uploads/chunked', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name, size: fileSize, mime }),
+                })
+              );
+              if (typeof started?.uploadId !== 'string') {
+                throw new Error('The server did not start the upload.');
+              }
+              return {
+                uploadId: started.uploadId,
+                chunkBytes:
+                  typeof started.chunkBytes === 'number' ? started.chunkBytes : chunked.chunkBytes,
+              };
+            },
+            put: async (uploadId, index, bytes) => {
+              await okJson(
+                await send(`/api/uploads/chunked/${encodeURIComponent(uploadId)}/${index}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/octet-stream' },
+                  body: bytes,
+                })
+              );
+            },
+            complete: (uploadId) =>
+              send(`/api/uploads/chunked/${encodeURIComponent(uploadId)}/complete`, {
+                method: 'POST',
+              }),
+            abort: async (uploadId) => {
+              await send(`/api/uploads/chunked/${encodeURIComponent(uploadId)}`, {
+                method: 'DELETE',
+              });
+            },
+          },
+        });
+      } finally {
+        handle.close();
+      }
+    } else {
+      const form = new FormData();
+      // React Native's FormData takes a local file as this triple. nitro-fetch
+      // recognises it and assembles the multipart body natively, reading the file
+      // on its own thread, so the bytes never pass through JS.
+      form.append('file', { uri: localPath, name, type: mime } as unknown as Blob);
+      // Content-Type is deliberately unset: the multipart boundary belongs to
+      // whichever layer writes the body, and setting it here would not match.
+      response = await send('/api/uploads', { method: 'POST', body: form });
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
