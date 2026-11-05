@@ -27,7 +27,6 @@ import {
   type PickedFile,
 } from '@/lib/attachments';
 import { uploadAttachment } from '@/lib/gateway-client';
-import { onOrphanedPick, stashOrphanedPick, takeOrphanedPick } from '@/lib/orphaned-picks';
 
 /** A retained draft can outlive selection, but never revocation or repointing. */
 function sameUploadRecord(current: GatewayRecord, captured: GatewayRecord): boolean {
@@ -236,10 +235,7 @@ export function useAttachmentUploads(
           return;
         }
         if (!mountedRef.current) {
-          // The composer that opened the picker was rebuilt meanwhile: the
-          // one that replaced it takes the files.
-          console.warn('[attachments] composer rebuilt; handing over', files.length);
-          stashOrphanedPick(captured.serverId, files);
+          console.warn('[attachments] composer gone before the pick landed', files.length);
           return;
         }
         console.warn('[attachments] staging', files.length);
@@ -262,18 +258,6 @@ export function useAttachmentUploads(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]
   );
-
-  // Take a pick that landed while this computer's composer was being rebuilt.
-  const serverId = record?.serverId;
-  useEffect(() => {
-    if (!serverId) return;
-    const take = () => {
-      const files = takeOrphanedPick(serverId);
-      if (files) capturePicker().addFiles(files);
-    };
-    take();
-    return onOrphanedPick(take);
-  }, [serverId, capturePicker]);
 
   const retryUpload = useCallback(
     (id: string) => {
