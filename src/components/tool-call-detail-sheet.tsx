@@ -8,7 +8,8 @@ import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 import { AssetViewer } from '@/components/asset-viewer';
 import { SheetScene, SheetSceneQuietAction, SHEET_LADDER } from '@/components/sheet-scene';
 import { ToolCallCodeRows } from '@/components/tool-call-code-rows';
-import { basename } from '@/lib/agent-tool-output';
+import { ToolReadImage } from '@/components/tool-read-image';
+import { basename, readImagePath } from '@/lib/agent-tool-output';
 import { assetFromToolFile, type SessionAsset } from '@/lib/session-assets';
 import {
   formatToolDuration,
@@ -86,7 +87,12 @@ export function ToolCallDetailSheet() {
     () => (part ? toolCallDetail(part, { workspace }) : null),
     [part, workspace]
   );
-  const rows = useMemo(() => (detail ? toolCallRows(detail) : []), [detail]);
+  const imagePath = useMemo(
+    () => (part ? readImagePath(part.name, part.input) : undefined),
+    [part]
+  );
+  const showImage = Boolean(imagePath && opened?.asid);
+  const rows = useMemo(() => (detail ? toolCallRows(detail, showImage) : []), [detail, showImage]);
   const [fileAsset, setFileAsset] = useState<SessionAsset | null>(null);
 
   if (!detail) {
@@ -125,6 +131,11 @@ export function ToolCallDetailSheet() {
         <View style={styles.code}>
           <ToolCallCodeRows detail={detail} rows={rows} bottomInset={SHEET_LADDER.gap} />
         </View>
+        {imagePath && opened?.asid ? (
+          <View style={styles.image}>
+            <ToolReadImage asid={opened.asid} path={imagePath} />
+          </View>
+        ) : null}
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.gap) }]}>
           <SheetSceneQuietAction
             testID="agent-tool-detail-copy-input"
@@ -162,6 +173,11 @@ export function ToolCallDetailSheet() {
 const styles = StyleSheet.create({
   body: { flex: 1, minHeight: 0 },
   code: { flex: 1, minHeight: 0, marginHorizontal: SHEET_LADDER.gutter },
+  image: {
+    marginHorizontal: SHEET_LADDER.gutter,
+    marginBottom: SHEET_LADDER.gap,
+    maxHeight: '45%',
+  },
   footer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -3517,6 +3517,7 @@ msgstr "이미지 미리보기"
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
 #: src/components/gateway-image-thumbnail.tsx
+#: src/components/tool-read-image.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "이미지를 표시할 수 없음"

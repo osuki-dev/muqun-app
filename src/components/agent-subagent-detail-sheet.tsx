@@ -184,6 +184,7 @@ export function AgentSubagentDetailSheet({
       onOpenToolDetail: (part) => {
         useToolCallDetailStore.getState().open({
           part,
+          asid,
           sessionId,
           directory: info?.directory,
           transcript: store,

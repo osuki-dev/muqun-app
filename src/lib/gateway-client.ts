@@ -1633,7 +1633,8 @@ export function gatewayImageBinding(asset: MessageImageAsset, capabilities?: rea
   };
 }
 
-export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor | null {
+/** The image record a session file's gateway derivatives describe, or `null` when it names none. */
+export function assetMessageImage(asset: SessionAsset): MessageImageAsset | null {
   if (asset.mcpFile) return null;
   if (asset.gatewayServerId && asset.gatewayServerId !== configuredGatewayServerId()) return null;
   // Listing metadata without derivative fields retains the established asset path.
@@ -1645,21 +1646,24 @@ export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor |
     !asset.preview_declared
   )
     return null;
-  return (
-    gatewayImageBinding({
-      src: asset.path,
-      asset_id: asset.id,
-      url: `/api/assets/${asset.id}/content`,
-      mime: asset.mime,
-      thumbnail_url: asset.thumbnail_url,
-      preview_url: asset.preview_url,
-      download_url: asset.download_url,
-      version_url: asset.version_url,
-      cache_revision: asset.modified_unix_ms,
-      size: asset.size > 0 ? asset.size : undefined,
-      preview_declared: asset.preview_declared,
-    })?.image ?? null
-  );
+  return {
+    src: asset.path,
+    asset_id: asset.id,
+    url: `/api/assets/${asset.id}/content`,
+    mime: asset.mime,
+    thumbnail_url: asset.thumbnail_url,
+    preview_url: asset.preview_url,
+    download_url: asset.download_url,
+    version_url: asset.version_url,
+    cache_revision: asset.modified_unix_ms,
+    size: asset.size > 0 ? asset.size : undefined,
+    preview_declared: asset.preview_declared,
+  };
+}
+
+export function assetPreviewImage(asset: SessionAsset): PreviewImageDescriptor | null {
+  const image = assetMessageImage(asset);
+  return image ? (gatewayImageBinding(image)?.image ?? null) : null;
 }
 
 /**

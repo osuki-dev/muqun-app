@@ -155,6 +155,23 @@ export function toolInputRecord(input: unknown): Record<string, unknown> | null 
   }
 }
 
+const IMAGE_PATH = /\.(png|jpe?g|webp|gif|heic|heif)$/i;
+
+/**
+ * The image a read-like tool opened: its input path when that names an image
+ * file. Claude's `Read` hands the picture back as a content part, which the
+ * transcript does not keep (and must not inline as base64), so the card and
+ * sheet show the file itself, loaded through the session's file-asset route.
+ */
+export function readImagePath(name: string, input: unknown): string | undefined {
+  const kind = classifyTool(name);
+  const lower = (name ?? '').toLowerCase();
+  if (kind !== 'read' && lower !== 'view' && lower !== 'view_image') return undefined;
+  const record = toolInputRecord(input);
+  const path = record ? pickString(record, PATH_KEYS) : undefined;
+  return path && IMAGE_PATH.test(path.split(/[?#]/)[0] ?? '') ? path : undefined;
+}
+
 /**
  * The string fields a half-written JSON object has got to so far.
  *

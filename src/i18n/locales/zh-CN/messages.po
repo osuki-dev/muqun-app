@@ -3517,6 +3517,7 @@ msgstr "图片预览"
 #: src/components/agent-message-block.tsx
 #: src/components/file-text-body.tsx
 #: src/components/gateway-image-thumbnail.tsx
+#: src/components/tool-read-image.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "图片无法显示"
