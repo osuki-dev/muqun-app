@@ -229,6 +229,12 @@ export function useAttachmentUploads(
           console.warn('[attachments] nothing to add', { files: files.length, record: !!captured });
           return;
         }
+        // Uploads go to the computer the pick started on; never stage them
+        // under a different one.
+        if (useGatewayConnectionStore.getState().record?.serverId !== captured.serverId) {
+          console.warn('[attachments] computer changed during the pick; dropped');
+          return;
+        }
         if (!mountedRef.current) {
           // The composer that opened the picker was rebuilt meanwhile: the
           // one that replaced it takes the files.
