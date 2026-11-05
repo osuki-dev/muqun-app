@@ -21,6 +21,7 @@ import {
   AttachmentPreparationError,
 } from './attachment-queue';
 import { planImageCompression } from './image-compression';
+import { compressPickedVideo } from './video-compression';
 import { describeGatewayFailure } from './network-error';
 import { pickedFilesFromDocuments } from './picked-files';
 
@@ -163,7 +164,9 @@ export async function preparePickedAttachment(
   file: PickedFile,
   limitBytes: number
 ): Promise<PickedFile> {
-  const prepared = await compressPickedImage(file);
+  const prepared = file.mime.startsWith('video/')
+    ? await compressPickedVideo(file)
+    : await compressPickedImage(file);
   let size: number;
   try {
     const actual = new File(prepared.uri);
