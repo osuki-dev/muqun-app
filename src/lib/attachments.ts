@@ -23,7 +23,7 @@ import {
 import { planImageCompression } from './image-compression';
 import { compressPickedVideo } from './video-compression';
 import { describeGatewayFailure } from './network-error';
-import { pickedFilesFromDocuments } from './picked-files';
+import { pickedFilesFromDocuments, safePickedFileName } from './picked-files';
 
 // The strip's vocabulary lives with the queue that governs it, which is a
 // module the native pickers do not reach into and so can be tested on its own.
@@ -97,8 +97,9 @@ function resolveMime(reported: string | null | undefined, name: string, uri: str
 
 function toPickedFiles(assets: ImagePicker.ImagePickerAsset[]): PickedFile[] {
   return assets.map((asset) => {
-    const name =
-      asset.fileName ?? fileNameFromUri(asset.uri, asset.type === 'video' ? 'mp4' : 'jpg');
+    const name = safePickedFileName(
+      asset.fileName ?? fileNameFromUri(asset.uri, asset.type === 'video' ? 'mp4' : 'jpg')
+    );
     return {
       uri: asset.uri,
       name,
@@ -207,7 +208,9 @@ export async function pickPhotoLibrary(): Promise<PickedFile[]> {
   // a prompt for an authorisation the app does not need.
   await protectCacheDirectory('ImagePicker');
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
+    // Videos arrive as ordinary picked files: the same size cap, preparation
+    // (compression) and upload path as a video chosen from Files.
+    mediaTypes: ['images', 'videos'],
     allowsMultipleSelection: true,
     selectionLimit: MAX_ATTACHMENTS_PER_PICK,
     quality: 0.85,

@@ -1,4 +1,5 @@
 import type { PickedFile } from './attachment-queue';
+import { videoFileMime } from './media-file';
 
 /** Videos below this are sent as they are: little to win, and a re-encode costs minutes of battery. */
 export const VIDEO_COMPRESS_MIN_BYTES = 8 * 1024 * 1024;
@@ -7,9 +8,13 @@ export const VIDEO_COMPRESS_MIN_BYTES = 8 * 1024 * 1024;
 export const VIDEO_MAX_EDGE = 1920;
 
 /** Whether a picked file is a video worth re-encoding before upload. */
-export function planVideoCompression(file: Pick<PickedFile, 'mime' | 'size'>): boolean {
+export function planVideoCompression(
+  file: Pick<PickedFile, 'mime' | 'size' | 'name' | 'uri'>
+): boolean {
+  // `videoFileMime` refuses HLS/DASH manifests however they are labelled: the
+  // native compressor would otherwise fetch what a playlist points at.
   return (
-    file.mime.startsWith('video/') &&
+    videoFileMime(file) !== undefined &&
     (file.size === undefined || file.size >= VIDEO_COMPRESS_MIN_BYTES)
   );
 }

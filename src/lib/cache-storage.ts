@@ -85,7 +85,7 @@ export const TRASH_PREFIX = 'muqun-trash-';
 
 /**
  * Output folders of Expo modules, spelled the same on both platforms
- * (`ImagePicker`, `ImageManipulator`, `DocumentPicker`). Each holds a fresh
+ * (`ImagePicker`, `ImageManipulator`, `DocumentPicker`, and `VideoCompressor`, our own). Each holds a fresh
  * copy of something the reader already has. Producers hold a lease while they
  * use one (`protectCacheDirectory`), so an unleased one is free to go.
  */
@@ -93,6 +93,7 @@ export const LEASED_CACHE_DIRECTORIES = [
   'ImagePicker',
   'ImageManipulator',
   'DocumentPicker',
+  'VideoCompressor',
 ] as const;
 
 /**
