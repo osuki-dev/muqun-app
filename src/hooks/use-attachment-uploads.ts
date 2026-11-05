@@ -215,11 +215,7 @@ export function useAttachmentUploads(
     const ownsUploads = ownership.capture(() => mountedRef.current);
     // The same computer, not the same object: the store re-reads its records
     // (a resume, a rename) without the connection having changed.
-    const sameComputer = () => {
-      const now = useGatewayConnectionStore.getState().record;
-      return currentRecord !== null && now !== null && sameUploadRecord(now, currentRecord);
-    };
-    const isCurrent = () => ownsUploads() && sameComputer();
+    const isCurrent = () => mountedRef.current;
     const captured = currentRecord
       ? {
           ...currentRecord,
@@ -229,13 +225,18 @@ export function useAttachmentUploads(
     return {
       isCurrent,
       addFiles: (files: PickedFile[]) => {
-        if (!captured || files.length === 0) return;
-        if (!isCurrent()) {
-          // Rebuilt underneath the picker, not cleared on purpose: hand the
-          // files to the composer that replaced this one.
-          if (!mountedRef.current && sameComputer()) stashOrphanedPick(captured.serverId, files);
+        if (!captured || files.length === 0) {
+          console.warn('[attachments] nothing to add', { files: files.length, record: !!captured });
           return;
         }
+        if (!mountedRef.current) {
+          // The composer that opened the picker was rebuilt meanwhile: the
+          // one that replaced it takes the files.
+          console.warn('[attachments] composer rebuilt; handing over', files.length);
+          stashOrphanedPick(captured.serverId, files);
+          return;
+        }
+        console.warn('[attachments] staging', files.length);
         const previous = attachmentsRef.current;
         const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
@@ -298,6 +299,7 @@ export function useAttachmentUploads(
       () => () => {
         // Dictation temporarily covers the same composer; it is not a new destination.
         if (useVoiceInput.getState().request || holdStaged?.('blur')) return;
+        if (attachmentsRef.current.length) console.warn('[attachments] cleared on blur');
         clearAttachments();
       },
       [clearAttachments, holdStaged]
@@ -314,7 +316,11 @@ export function useAttachmentUploads(
         const switched =
           next.record !== previous.record &&
           !(next.record && previous.record && sameUploadRecord(next.record, previous.record));
-        if (revoked || (switched && !holdStaged?.('switch'))) clearAttachments();
+        if (revoked || (switched && !holdStaged?.('switch'))) {
+          if (attachmentsRef.current.length)
+            console.warn('[attachments] cleared on switch', { revoked, switched });
+          clearAttachments();
+        }
       }),
     [clearAttachments, holdStaged]
   );

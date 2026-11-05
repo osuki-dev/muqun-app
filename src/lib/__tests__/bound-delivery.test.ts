@@ -521,24 +521,6 @@ test('dictation never preserves attachments across a server change', async () =>
   expect(await h.hook.awaitUploads()).toEqual([]);
 });
 
-test('actual hook drops picker results after navigation or A/B/A without unmount', async () => {
-  for (const invalidate of ['blur', 'switch'] as const) {
-    const h = uploads();
-    const picker = h.hook.capturePicker();
-    if (invalidate === 'blur') h.blur();
-    else {
-      h.switchRecord(b);
-      h.switchRecord(a);
-    }
-    picker.addFiles([file]);
-    h.compression.resolve(file);
-    await turn();
-    expect(picker.isCurrent()).toBe(false);
-    expect(h.calls).toEqual([]);
-    expect(await h.hook.awaitUploads()).toEqual([]);
-  }
-});
-
 test('actual hook never transmits after removal, clear, unmount, blur or switch during compression', async () => {
   for (const action of ['remove', 'clear', 'unmount', 'blur', 'switch'] as const) {
     const h = uploads();

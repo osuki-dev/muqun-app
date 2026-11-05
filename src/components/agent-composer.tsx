@@ -1205,6 +1205,7 @@ export const AgentComposer = memo(function AgentComposer({
       if (!picker.isCurrent()) return;
       void pickAttachments(source)
         .then((files) => {
+          console.warn('[attachments] picker answered', files.length);
           picker.addFiles(files);
           const cut = takePickTruncationNotice();
           if (cut && picker.isCurrent())
