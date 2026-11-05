@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { DeliveryOwnership } from '@/lib/bound-delivery';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useVoiceInput } from '@/stores/voice-input';
@@ -98,6 +99,12 @@ export function useAttachmentUploads(
    */
   holdStaged?: (reason: 'blur' | 'switch') => boolean
 ): AttachmentUploads {
+  // The caps the computer named in discovery, so a staged file is held to
+  // what this gateway takes rather than to the app's own number.
+  const limits = useAgents((state) =>
+    record ? state.index.servers[record.serverId]?.uploads : undefined
+  );
+  const readLimits = useLatestReader(limits);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
   const mountedRef = useRef(true);
@@ -160,7 +167,8 @@ export function useAttachmentUploads(
           source.uri,
           source.name,
           source.mime,
-          isCurrent
+          isCurrent,
+          readLimits()
         );
         if (isCurrent()) commit(markUploaded(attachmentsRef.current, id, uploaded));
       } catch (failure) {
@@ -177,7 +185,7 @@ export function useAttachmentUploads(
       // A finished upload frees a slot, so whatever is still queued moves up.
       pumpRef.current();
     },
-    [commit]
+    [commit, readLimits]
   );
 
   const pump = useCallback(() => {
@@ -201,11 +209,6 @@ export function useAttachmentUploads(
     };
   }, [releaseWaiters, ownership]);
 
-  // The caps the computer named in discovery, so a staged file is held to
-  // what this gateway takes rather than to the app's own number.
-  const limits = useAgents((state) =>
-    record ? state.index.servers[record.serverId]?.uploads : undefined
-  );
   const capturePicker = useCallback(() => {
     const currentRecord = record;
     const ownsUploads = ownership.capture(() => mountedRef.current);

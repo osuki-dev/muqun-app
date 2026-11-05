@@ -136,6 +136,10 @@ function client() {
     FormData: class {
       append() {}
     },
+    // Only the chunked path reads these; the single-shot cases here never do.
+    File: class {},
+    FileMode: {},
+    runChunkedUpload: async () => response,
     fetchWithin: async (
       _budget: number,
       _message: string,
@@ -375,6 +379,7 @@ function uploads(holdStaged?: (reason: 'blur' | 'switch') => boolean) {
       ],
       useRef: (current: unknown) => ({ current }),
       useCallback: (fn: unknown) => fn,
+      useLatestReader: (value: unknown) => () => value,
       useEffect: (body: () => (() => void) | undefined) => {
         const cleanup = body();
         if (cleanup) cleanups.push(cleanup);
@@ -616,6 +621,7 @@ function selectionPaths() {
     selectionOwner: new DeliverySelection(initial, same, owner),
     deliveryOwnership: owner,
     useCallback: (fn: unknown) => fn,
+    useLatestReader: (value: unknown) => () => value,
     publishSelection: (value: unknown) => {
       expect(typeof value).toBe('object');
     },
