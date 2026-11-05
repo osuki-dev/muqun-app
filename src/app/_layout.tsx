@@ -73,17 +73,14 @@ import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 /**
- * One library warning, silenced, because LogBox answers it by covering the
+ * Library warnings, silenced, because LogBox answers them by covering the
  * composer.
  *
- * reanimated 4.6 warns on native -- per render, `__DEV__` only -- whenever a
- * dependency list is passed to one of its hooks, and it arrives several hundred
- * times in a session. Every remaining source is a library:
+ * reanimated 4 warns on native -- `__DEV__` only -- whenever a dependency list
+ * is passed to one of its hooks. Every remaining source is a library:
  * react-native-keyboard-controller's `useHandler` and its scroll views,
  * gesture-handler's `ReanimatedSwipeable` and `ReanimatedDrawerLayout`. This
- * app's own call sites have none left, and
- * `src/components/__tests__/reanimated-dependencies.test.ts` is what keeps it
- * that way, so nothing of ours is being hidden here.
+ * app's own call sites pass none, so nothing of ours is being hidden here.
  *
  * Silenced rather than tolerated because LogBox does not merely log it. The
  * warning notification is pinned across the bottom of the screen, which is
@@ -94,7 +91,19 @@ import { useSshHostsStore } from '@/stores/ssh-hosts';
  * the way it always did.
  */
 LogBox.ignoreLogs([
-  '[Reanimated] dependencies should only be used in web implementation.',
+  /*
+   * reanimated 4.7 reworded it ("Dependencies should only be used on the web
+   * and are always ignored on native. ..."), which left 4.6's text here matching
+   * nothing and the notification back over the composer. Matched by its prefix.
+   */
+  '[Reanimated] Dependencies should only be used on the web',
+  /*
+   * three 0.18x deprecates `THREE.Clock`, which @react-three/fiber 9 still
+   * constructs for every canvas root: the Home artwork raised it on each launch,
+   * and its notification sat on the Home composer's Task options button on the
+   * iPhone Duo's outer display. Nothing of ours uses `Clock`.
+   */
+  'THREE.Clock: This module has been deprecated',
   /*
    * Legend List's two development diagnostics. The first says a transcript
    * needed one more row container than its pool held and made one, which it

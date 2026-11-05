@@ -7,6 +7,12 @@ wait stable 400 5000
 # section press
 press "${TARGET}"
 
+# section close-layout
+# Choosing a layout closes the picker; when it was already chosen, nothing did.
+# Following a link over the open sheet stacks Home as a modal on it.
+back --system
+wait absent "id=settings-home-layout-sheet" 5000
+
 # section start
 open "muqun:///?stageProgressFixture=linked"
 wait stable 600 5000

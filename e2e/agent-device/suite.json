@@ -247,6 +247,18 @@
         ]
       },
       {
+        "when": {
+          "target": {
+            "id": "settings-home-layout-sheet"
+          }
+        },
+        "steps": [
+          {
+            "run": "flows/home-stage-progress.ad#close-layout"
+          }
+        ]
+      },
+      {
         "run": "flows/home-stage-progress.ad#start"
       },
       {
@@ -484,6 +496,18 @@
             },
             "mode": "press",
             "run": "flows/home-stage-progress.ad#press"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "id": "settings-home-layout-sheet"
+          }
+        },
+        "steps": [
+          {
+            "run": "flows/home-stage-progress.ad#close-layout"
           }
         ]
       },
