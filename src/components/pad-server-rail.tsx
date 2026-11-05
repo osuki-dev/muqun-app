@@ -4,11 +4,11 @@ import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-s
 import { PreviousIcon, NextIcon, PairScanIcon, SettingsIcon, TerminalWindowIcon } from '@/icons';
 import { useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { HomeRecentSessions, useHomeRecentEntries } from '@/components/home-recent-sessions';
+import { HomeRecentSessionsList, useHomeRecentEntries } from '@/components/home-recent-sessions';
 import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-commands';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
@@ -130,51 +130,39 @@ export function PadServerRail({
       <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
       <View style={styles.scroll}>
         <PadRailArtwork />
-        <ScrollView
-          style={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.content,
-            { gap: profile.rail.contentGap, paddingTop: BACK_CLEARANCE },
-          ]}
-          keyboardShouldPersistTaps="handled">
-          {recentEntries.length > 0 ? (
-            <>
-              <HomeRecentSessions
-                compact
-                servers={servers}
-                hosts={sshHosts ?? []}
-                selectedServerId={selectedServerId ?? undefined}
-                selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
-                selectedAsid={workbenchSelected ? undefined : selectedAsid}
-                available={recentEntries}
-                onOpen={(command) => {
-                  void commands.dispatch(command);
-                }}
-              />
-            </>
-          ) : null}
-          {compactActions ? (
-            <>
-              <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
-              <HomeConnections
-                servers={servers}
-                hosts={sshHosts ?? []}
-                onOpenServer={(serverId) => {
-                  const server = servers.find((item) => item.serverId === serverId);
-                  if (server) onSelectServer(server);
-                }}
-                onOpenHost={(hostId) => {
-                  const host = sshHosts?.find((item) => item.id === hostId);
-                  if (host && onSelectSshHost) onSelectSshHost(host);
-                }}
-                onManage={() => void commands.manageConnections()}
-                nowMs={nowMs}
-                activeConnection={activeConnection}
-              />
-            </>
-          ) : null}
-        </ScrollView>
+        <HomeRecentSessionsList
+          servers={servers}
+          selectedServerId={selectedServerId ?? undefined}
+          selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
+          selectedAsid={workbenchSelected ? undefined : selectedAsid}
+          available={recentEntries}
+          onOpen={(command) => {
+            void commands.dispatch(command);
+          }}
+          contentContainerStyle={styles.listContent}
+          footer={
+            compactActions ? (
+              <View style={{ gap: profile.rail.contentGap, paddingTop: profile.rail.contentGap }}>
+                <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
+                <HomeConnections
+                  servers={servers}
+                  hosts={sshHosts ?? []}
+                  onOpenServer={(serverId) => {
+                    const server = servers.find((item) => item.serverId === serverId);
+                    if (server) onSelectServer(server);
+                  }}
+                  onOpenHost={(hostId) => {
+                    const host = sshHosts?.find((item) => item.id === hostId);
+                    if (host && onSelectSshHost) onSelectSshHost(host);
+                  }}
+                  onManage={() => void commands.manageConnections()}
+                  nowMs={nowMs}
+                  activeConnection={activeConnection}
+                />
+              </View>
+            ) : undefined
+          }
+        />
         <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
       </View>
 
@@ -443,6 +431,7 @@ function RailAction({
 const BACK_CLEARANCE = 68;
 
 const styles = StyleSheet.create({
+  listContent: { paddingHorizontal: 10, paddingTop: BACK_CLEARANCE, paddingBottom: 24 },
   shell: {
     flex: 1,
     minWidth: 0,

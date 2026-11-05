@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type ReactElement,
   type ReactNode,
 } from 'react';
 import {
@@ -20,6 +21,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
@@ -542,6 +544,102 @@ export function HomeRecentSessions({
  * first few (the card's order: needs you, running, most recent) and a fold for
  * the rest. Nothing at all while the computer has no session to list.
  */
+/**
+ * Every session, virtualized: the Pad rail lists all of them, so rows off
+ * screen are not mounted. Header and footer scroll with the list.
+ */
+export function HomeRecentSessionsList({
+  servers,
+  available,
+  selectedServerId,
+  selectedPaneId,
+  selectedAsid,
+  onOpen,
+  header,
+  footer,
+  contentContainerStyle,
+}: {
+  servers: readonly GatewayRecord[];
+  available: readonly HomeContinueEntry[];
+  selectedServerId?: string;
+  selectedPaneId?: string;
+  selectedAsid?: string;
+  onOpen: (command: HomeCommand) => void;
+  header?: ReactElement;
+  footer?: ReactElement;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+}) {
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
+  const { fontScale } = useWindowDimensions();
+  const [listWidth, setListWidth] = useState(0);
+  const metaChars = homeContinueMetaChars(
+    listWidth - 24 - 12 - 16,
+    theme.typography.caption.fontSize * fontScale
+  );
+  const pageHeld = useHomeSortHold((state) => state.held);
+  const [openMenus, setOpenMenus] = useState<readonly string[]>([]);
+  const shownKeys = useFrozenValue(
+    available.map((entry) => entry.key),
+    pageHeld || openMenus.length > 0,
+    null
+  );
+  const displayed = heldOrder(shownKeys, available, (entry) => entry.key);
+  const markMenu = useCallback((key: string, open: boolean) => {
+    setOpenMenus((keys) => [...keys.filter((menuKey) => menuKey !== key), ...(open ? [key] : [])]);
+  }, []);
+  const radius = profile.chrome.surface;
+  const last = displayed.length - 1;
+  const renderItem = ({ item, index }: LegendListRenderItemProps<HomeContinueEntry>) => (
+    <View
+      style={{
+        backgroundColor: background(theme.colors.surface),
+        borderTopLeftRadius: index === 0 ? radius : 0,
+        borderTopRightRadius: index === 0 ? radius : 0,
+        borderBottomLeftRadius: index === last ? radius : 0,
+        borderBottomRightRadius: index === last ? radius : 0,
+        overflow: 'hidden',
+      }}>
+      <RecentSessionRow
+        entry={item}
+        number={index + 1}
+        compact
+        selectedServerId={selectedServerId}
+        selectedPaneId={selectedPaneId}
+        selectedAsid={selectedAsid}
+        hasSeparator={index < last}
+        servers={servers}
+        pad={false}
+        inCard={false}
+        metaChars={metaChars}
+        onOpen={() => onOpen(homeContinueCommand(item.destination))}
+        onMenuChange={markMenu}
+      />
+    </View>
+  );
+  return (
+    <View
+      testID="home-recent-sessions"
+      style={styles.virtualRoot}
+      onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}
+      {...sortHoldTouches}>
+      <LegendList
+        data={displayed}
+        keyExtractor={(entry) => entry.key}
+        renderItem={renderItem}
+        estimatedItemSize={72}
+        extraData={[selectedServerId, selectedPaneId, selectedAsid, metaChars, last]}
+        ListHeaderComponent={header}
+        ListFooterComponent={footer}
+        contentContainerStyle={contentContainerStyle}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
+    </View>
+  );
+}
+
 export function HomeComputerSessions({
   serverId,
   entries,
@@ -1052,6 +1150,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10, paddingHorizontal: 0 },
   searchClear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   root: { minWidth: 0 },
+  virtualRoot: { flex: 1, minWidth: 0, minHeight: 0 },
   computerSessions: { minWidth: 0, gap: 4, paddingTop: 4 },
   list: { minWidth: 0, overflow: 'hidden' },
   row: {
