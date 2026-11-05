@@ -4477,13 +4477,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (part: ToolPart) => {
       useToolCallDetailStore.getState().open({
         part,
+        asid: activeAsid ?? undefined,
         sessionId,
         directory: activeDirectory,
         transcript: transcriptStore,
       });
       router.push('/agent-tool-detail');
     },
-    [activeDirectory, router, sessionId, transcriptStore]
+    [activeAsid, activeDirectory, router, sessionId, transcriptStore]
   );
 
   const handleToggleReasoning = useCallback(() => {

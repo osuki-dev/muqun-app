@@ -393,11 +393,13 @@ function pushLines(
 }
 
 /** The rows for `detail`, in order. */
-export function toolCallRows(detail: ToolCallDetail): ToolCallRow[] {
+/** `hasImage`: a picture stands for the output, so an empty one is not announced. */
+export function toolCallRows(detail: ToolCallDetail, hasImage = false): ToolCallRow[] {
   const rows: ToolCallRow[] = [{ type: 'heading', key: 'input-heading', section: 'input' }];
   if (detail.input) pushLines(rows, 'input', detail.input, false);
   else rows.push({ type: 'empty', key: 'input-empty', section: 'input' });
 
+  if (hasImage && !detail.output && !detail.error) return rows;
   rows.push({ type: 'gap', key: 'gap' });
   rows.push({ type: 'heading', key: 'output-heading', section: 'output' });
   const failed = detail.status === 'failed';

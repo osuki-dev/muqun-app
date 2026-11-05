@@ -1,4 +1,5 @@
 import { InlineFileLink } from '@/components/inline-file-link';
+import { ToolReadImage } from '@/components/tool-read-image';
 import { ContentImage } from '@/components/content-image';
 import { contentImageIdentity, type ContentImagePreviewState } from '@/lib/content-image-layout';
 import { isPdfFile } from '@/lib/session-assets';
@@ -90,6 +91,7 @@ import {
   shellTimedOutFromMetadata,
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
+  readImagePath,
   splitUrl,
   textFromContent,
   toolArgumentLine,
@@ -877,8 +879,10 @@ export const AgentToolCard = memo(function AgentToolCard({
         onPreviewImage,
         onOpenFile,
         onOpenFullDiff,
+        asid: audioSessionId,
       }),
     [
+      audioSessionId,
       kind,
       part,
       input,
@@ -1222,6 +1226,8 @@ interface ToolBodyArgs {
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   onOpenFullDiff?: (path?: string) => void;
+  /** The agent session, for files the call names. */
+  asid?: string;
 }
 
 /** One body per family. Nothing here fetches; everything is already in hand. */
@@ -1248,6 +1254,8 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'read': {
+      const imagePath = readImagePath(part.name, part.input);
+      if (imagePath && args.asid) return <ToolReadImage asid={args.asid} path={imagePath} />;
       const preview = readFilePreview(outputText, target, args.files);
       if (preview.type === 'empty') return null;
       if (preview.type === 'output') return <OutputLines text={preview.text} />;

@@ -16,6 +16,8 @@ import type { AgentTranscriptStore } from '@/stores/agent-transcript';
  */
 export interface OpenedToolCall {
   part: ToolPart;
+  /** The agent session the call ran in, for files the call names (an image it read). */
+  asid?: string;
   /** The gateway session, for reading the full output file. */
   sessionId?: string;
   /** The agent session's workspace; an output file is only offered inside it. */
