@@ -310,8 +310,11 @@ export function useAttachmentUploads(
           (destination) =>
             !next.records.some((record) => sameUploadRecord(record, destination.record))
         );
-        if (revoked || (next.record !== previous.record && !holdStaged?.('switch')))
-          clearAttachments();
+        // A re-read of the same computer (a resume, a rename) is not a switch.
+        const switched =
+          next.record !== previous.record &&
+          !(next.record && previous.record && sameUploadRecord(next.record, previous.record));
+        if (revoked || (switched && !holdStaged?.('switch'))) clearAttachments();
       }),
     [clearAttachments, holdStaged]
   );
