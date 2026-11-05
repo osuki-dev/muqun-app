@@ -12,6 +12,7 @@ import { HomeRecentSessions, useHomeRecentEntries } from '@/components/home-rece
 import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-commands';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { HomeConnections } from '@/components/home-connections';
 import { useThemeLibrary } from '@/stores/theme-library';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -21,7 +22,6 @@ import { homeArtworkPreference } from '@/theme/repository';
 import { resolvePadRailArtwork } from '@/theme/pad-rail-artwork';
 import { Canvas, Image, LinearGradient, Mask, Rect, useImage, vec } from 'react-native-skia';
 import { homeCoverArtworkRect } from '@/lib/hero-feather';
-import { withAlpha } from '@/lib/color';
 import { safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
 
@@ -128,18 +128,18 @@ export function PadServerRail({
         style,
       ]}>
       <SurfaceDecoration slot="navigation.background" baseColor={theme.colors.surface} />
-      <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
-
       <View style={styles.scroll}>
         <PadRailArtwork />
         <ScrollView
           style={styles.scroll}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
+          contentContainerStyle={[
+            styles.content,
+            { gap: profile.rail.contentGap, paddingTop: BACK_CLEARANCE },
+          ]}
           keyboardShouldPersistTaps="handled">
           {recentEntries.length > 0 ? (
             <>
-              <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
               <HomeRecentSessions
                 compact
                 servers={servers}
@@ -175,6 +175,7 @@ export function PadServerRail({
             </>
           ) : null}
         </ScrollView>
+        <PadRailHeader onBack={onBack} testID={`${testID}-back`} />
       </View>
 
       {/* Three explained rows while the rail is empty, three glyphs once it is
@@ -327,6 +328,7 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const plate = useSheetGroundPlate();
   return (
     <View style={styles.railHeader}>
       <Pressable
@@ -336,11 +338,13 @@ function PadRailHeader({ onBack, testID }: { onBack: () => void; testID: string 
         onPress={onBack}
         style={({ pressed }) => [
           styles.backButton,
-          { borderRadius: profile.chrome.railItem },
+          // The same plate the rail's labels stand on, so Back stays legible
+          // over the artwork behind it.
+          { borderRadius: profile.chrome.surface },
           {
-            backgroundColor: background(
-              withAlpha(pressed ? theme.colors.surfaceRaised : theme.colors.surface, 0.94)
-            ),
+            backgroundColor: pressed
+              ? theme.colors.surfaceRaised
+              : (plate.backgroundColor ?? background(theme.colors.surface)),
           },
         ]}>
         <PreviousIcon size={20} color={theme.colors.text} />
@@ -435,6 +439,9 @@ function RailAction({
   );
 }
 
+/** Back's 44pt target and its 12pt margins, kept clear above the list. */
+const BACK_CLEARANCE = 68;
+
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
@@ -442,8 +449,9 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   railHeader: {
-    width: '100%',
-    borderCurve: 'continuous',
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   artwork: {
     overflow: 'hidden',

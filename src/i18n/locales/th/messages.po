@@ -1877,7 +1877,6 @@ msgstr "บริบทที่ใช้ไป"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "ดำเนินการต่อ"
