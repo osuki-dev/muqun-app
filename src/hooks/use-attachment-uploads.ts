@@ -27,6 +27,7 @@ import {
   type PickedFile,
 } from '@/lib/attachments';
 import { uploadAttachment } from '@/lib/gateway-client';
+import { onOrphanedPick, stashOrphanedPick, takeOrphanedPick } from '@/lib/orphaned-picks';
 
 /** A retained draft can outlive selection, but never revocation or repointing. */
 function sameUploadRecord(current: GatewayRecord, captured: GatewayRecord): boolean {
@@ -47,7 +48,10 @@ export interface AttachmentUploads {
   attachments: PendingAttachment[];
   /** Stage files and start uploading them straight away. */
   addFiles: (files: PickedFile[]) => void;
-  capturePicker: () => { addFiles: (files: PickedFile[]) => void; isCurrent: () => boolean };
+  capturePicker: () => {
+    addFiles: (files: PickedFile[]) => void;
+    isCurrent: () => boolean;
+  };
   /** Re-send one file that failed, from its own tile. */
   retryUpload: (id: string) => void;
   removeAttachment: (id: string) => void;
@@ -209,10 +213,13 @@ export function useAttachmentUploads(
   const capturePicker = useCallback(() => {
     const currentRecord = record;
     const ownsUploads = ownership.capture(() => mountedRef.current);
-    const isCurrent = () =>
-      ownsUploads() &&
-      currentRecord !== null &&
-      useGatewayConnectionStore.getState().record === currentRecord;
+    // The same computer, not the same object: the store re-reads its records
+    // (a resume, a rename) without the connection having changed.
+    const sameComputer = () => {
+      const now = useGatewayConnectionStore.getState().record;
+      return currentRecord !== null && now !== null && sameUploadRecord(now, currentRecord);
+    };
+    const isCurrent = () => ownsUploads() && sameComputer();
     const captured = currentRecord
       ? {
           ...currentRecord,
@@ -222,14 +229,23 @@ export function useAttachmentUploads(
     return {
       isCurrent,
       addFiles: (files: PickedFile[]) => {
-        if (!captured || !isCurrent() || files.length === 0) return;
+        if (!captured || files.length === 0) return;
+        if (!isCurrent()) {
+          // Rebuilt underneath the picker, not cleared on purpose: hand the
+          // files to the composer that replaced this one.
+          if (!mountedRef.current && sameComputer()) stashOrphanedPick(captured.serverId, files);
+          return;
+        }
         const previous = attachmentsRef.current;
         const next = stageFiles(previous, files, destination?.(), limits);
         for (const entry of next.slice(previous.length))
           // A retry may temporarily select another computer while explicitly
           // retaining this draft. Its uploads still own this captured endpoint;
           // ordinary switches invalidate ownership through clearAttachments.
-          destinations.current.set(entry.id, { record: captured, isCurrent: ownsUploads });
+          destinations.current.set(entry.id, {
+            record: captured,
+            isCurrent: ownsUploads,
+          });
         commit(next);
         pump();
       },
@@ -239,6 +255,18 @@ export function useAttachmentUploads(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]
   );
+
+  // Take a pick that landed while this computer's composer was being rebuilt.
+  const serverId = record?.serverId;
+  useEffect(() => {
+    if (!serverId) return;
+    const take = () => {
+      const files = takeOrphanedPick(serverId);
+      if (files) capturePicker().addFiles(files);
+    };
+    take();
+    return onOrphanedPick(take);
+  }, [serverId, capturePicker]);
 
   const retryUpload = useCallback(
     (id: string) => {

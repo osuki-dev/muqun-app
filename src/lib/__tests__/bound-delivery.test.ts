@@ -363,6 +363,9 @@ function uploads(holdStaged?: (reason: 'blur' | 'switch') => boolean) {
     {
       ...queue,
       DeliveryOwnership,
+      stashOrphanedPick: () => {},
+      takeOrphanedPick: () => undefined,
+      onOrphanedPick: () => () => {},
       record,
       holdStaged,
       markUploading: (entries: queue.PendingAttachment[], id: string) => {
