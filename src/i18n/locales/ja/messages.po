@@ -1441,6 +1441,10 @@ msgstr "画像を選択"
 msgid "Choose project"
 msgstr "プロジェクトを選択"
 
+#: src/components/settings-storage.tsx
+msgid "Choose when saving"
+msgstr "保存時に選択"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
@@ -6090,6 +6094,10 @@ msgstr "ホストを保存"
 msgid "Save image"
 msgstr "画像を保存"
 
+#: src/components/settings-storage.tsx
+msgid "Save location"
+msgstr "保存先"
+
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "ショートカットを保存"
@@ -6143,6 +6151,10 @@ msgstr "保存済み SSH ホスト"
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
 msgstr "保存済みのターミナル履歴"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Saved to {folder}"
+msgstr "{folder} に保存しました"
 
 #: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx

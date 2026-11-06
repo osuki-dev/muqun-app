@@ -1441,6 +1441,10 @@ msgstr "Chọn ảnh"
 msgid "Choose project"
 msgstr "Chọn dự án"
 
+#: src/components/settings-storage.tsx
+msgid "Choose when saving"
+msgstr "Chọn khi lưu"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
@@ -6090,6 +6094,10 @@ msgstr "Lưu host"
 msgid "Save image"
 msgstr "Lưu ảnh"
 
+#: src/components/settings-storage.tsx
+msgid "Save location"
+msgstr "Vị trí lưu"
+
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Lưu lệnh tắt"
@@ -6143,6 +6151,10 @@ msgstr "Host SSH đã lưu"
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
 msgstr "Lịch sử terminal đã lưu"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Saved to {folder}"
+msgstr "Đã lưu vào {folder}"
 
 #: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx
