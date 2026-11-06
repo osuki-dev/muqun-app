@@ -1441,6 +1441,10 @@ msgstr "Bild auswählen"
 msgid "Choose project"
 msgstr "Projekt wählen"
 
+#: src/components/settings-storage.tsx
+msgid "Choose when saving"
+msgstr "Beim Speichern wählen"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Auswählen, welcher Simulator gezeigt wird"
@@ -6090,6 +6094,10 @@ msgstr "Host speichern"
 msgid "Save image"
 msgstr "Bild speichern"
 
+#: src/components/settings-storage.tsx
+msgid "Save location"
+msgstr "Speicherort"
+
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Shortcut speichern"
@@ -6143,6 +6151,10 @@ msgstr "Gespeicherter SSH-Host"
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
 msgstr "Gespeicherter Terminalverlauf"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Saved to {folder}"
+msgstr "In {folder} gespeichert"
 
 #: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx

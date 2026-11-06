@@ -50,8 +50,15 @@ import {
   StackIcon,
   FolderIcon,
 } from '@/icons';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import {
@@ -74,6 +81,12 @@ import { useRenderTally } from '@/lib/render-tally';
 import { planUnusedThemes, type ThemeAssetFile } from '@/lib/theme-storage';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { themeAssetDirectoryUri } from '@/theme/assets';
+import {
+  pickSaveDirectory,
+  saveDirectoryName,
+  savedDirectoryUri,
+  subscribeSaveDirectory,
+} from '@/lib/save-location';
 
 /**
  * Hand the frame back before doing the next expensive thing.
@@ -356,6 +369,7 @@ export function SettingsStorage() {
 
   return (
     <SettingsCard flush>
+      {Platform.OS === 'android' ? <SaveLocationRow /> : null}
       <SettingsBlock
         label={t`Automatic cache cleanup`}
         caption={
@@ -580,6 +594,24 @@ export function SettingsStorage() {
         )}
       </StorageActionTransition>
     </SettingsCard>
+  );
+}
+
+/** Where Save file writes on Android; tapping it picks another folder. */
+function SaveLocationRow() {
+  const { t } = useLingui();
+  const uri = useSyncExternalStore(subscribeSaveDirectory, savedDirectoryUri);
+  return (
+    <SettingsNavRow
+      icon={FolderIcon}
+      trailing={NextIcon}
+      label={t`Save location`}
+      detail={uri ? saveDirectoryName(uri) : t`Choose when saving`}
+      testID="settings-save-location-row"
+      onPress={() => {
+        void pickSaveDirectory().catch(() => undefined);
+      }}
+    />
   );
 }
 

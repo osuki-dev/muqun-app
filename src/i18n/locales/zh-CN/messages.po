@@ -1441,6 +1441,10 @@ msgstr "选择图片"
 msgid "Choose project"
 msgstr "选择项目"
 
+#: src/components/settings-storage.tsx
+msgid "Choose when saving"
+msgstr "保存时选择"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "选择要显示的模拟器"
@@ -6090,6 +6094,10 @@ msgstr "保存主机"
 msgid "Save image"
 msgstr "保存图片"
 
+#: src/components/settings-storage.tsx
+msgid "Save location"
+msgstr "保存位置"
+
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "保存快捷命令"
@@ -6143,6 +6151,10 @@ msgstr "已保存的 SSH 主机"
 #: src/components/pane-history-sheet.tsx
 msgid "Saved terminal history"
 msgstr "已保存的终端历史记录"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Saved to {folder}"
+msgstr "已保存到 {folder}"
 
 #: src/components/settings-home-connections-sheet.tsx
 #: src/components/settings-servers.tsx

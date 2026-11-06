@@ -8,6 +8,12 @@ import { readAssetBytes, assetPreviewImage, type SessionAsset } from '@/lib/gate
 import { FILE_CONTENT_LIMIT, fileContentLimit } from '@/lib/media-limits';
 import { verifiedOriginalImageFile } from '@/lib/image-original-ranges';
 import { saveOriginalPreview, type PreviewImageSource } from '@/lib/gateway-image-previews';
+import {
+  forgetSaveDirectory,
+  pickSaveDirectory,
+  saveDirectoryName,
+  savedDirectoryUri,
+} from '@/lib/save-location';
 
 const LIMIT = FILE_CONTENT_LIMIT;
 let sequence = 0;
@@ -22,7 +28,7 @@ export async function exportFile(
   bytes: Uint8Array,
   photos = false,
   signal?: AbortSignal
-) {
+): Promise<string | undefined> {
   assertSaveActive(signal);
   if (bytes.length > fileContentLimit(mime)) throw new Error('File exceeds the download limit');
   const leaf =
@@ -32,8 +38,6 @@ export async function exportFile(
       ?.replace(/[^\p{L}\p{N}._ -]/gu, '_') || 'file';
   const safeName = /^\.+$/.test(leaf) ? 'file' : leaf;
   if (!photos && Platform.OS === 'android') {
-    const destination = await Directory.pickDirectoryAsync();
-    assertSaveActive(signal);
     // SAF may append a suffix when a sniffed MIME disagrees with the name.
     // Use Android's own extension lookup for the destination, without creating
     // a cache file or maintaining another MIME/extension table.
@@ -41,8 +45,30 @@ export async function exportFile(
     const destinationMime =
       new File(Paths.cache, extension ? `file.${extension}` : 'file').type ||
       'application/octet-stream';
-    await destination.createFile(safeName, destinationMime).write(bytes);
-    return;
+    const write = async (destination: Directory) => {
+      const target = destination.createFile(safeName, destinationMime);
+      try {
+        await target.write(bytes);
+      } catch (error) {
+        try {
+          target.delete();
+        } catch {}
+        throw error;
+      }
+      return saveDirectoryName(destination.uri);
+    };
+    const saved = savedDirectoryUri();
+    if (saved) {
+      try {
+        return await write(new Directory(saved));
+      } catch {
+        // Deleted, renamed or no longer granted: ask for a folder again.
+        forgetSaveDirectory();
+      }
+    }
+    const destination = await pickSaveDirectory();
+    assertSaveActive(signal);
+    return write(destination);
   }
   const directory = new Directory(Paths.cache, `file-export-${Date.now()}-${sequence++}`);
   const disposeCache = await protectTemporaryCacheEntry(directory);
@@ -73,7 +99,7 @@ export async function saveSessionAsset(asset: SessionAsset, photos = asset.kind 
     maxBytes: fileContentLimit(asset.mime),
     download: true,
   });
-  await exportFile(asset.name, asset.mime, bytes, photos);
+  return exportFile(asset.name, asset.mime, bytes, photos);
 }
 
 /** Handles local attachments, decrypted images and authenticated gateway images. */

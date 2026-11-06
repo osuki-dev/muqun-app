@@ -124,7 +124,7 @@ function AudioPlayer({
   const surfaceBackground = useSurfaceBackground();
   const fileActions = useFileActions(asset.name, async () => {
     const resolved = resolve ? await resolve(new AbortController().signal) : asset;
-    await saveSessionAsset(resolved, false);
+    return saveSessionAsset(resolved, false);
   });
   const playback = useContext(AudioPlaybackContext);
   const [draft, setDraft] = useState<number | null>(null);

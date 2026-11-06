@@ -2,12 +2,13 @@ import { useLingui } from '@lingui/react/macro';
 import { Modal, Text, useToast } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState } from 'react';
+import { ToastAndroid } from 'react-native';
 import { DownloadIcon, CloseIcon } from '@/icons';
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import { AudioPlaybackError } from '@/lib/audio-playback-session';
 
 /** File actions float above content so a long press never reflows the transcript. */
-export function useFileActions(name: string, save: () => Promise<void>, image = false) {
+export function useFileActions(name: string, save: () => Promise<unknown>, image = false) {
   const { t } = useLingui();
   const { showToast } = useToast();
   const profile = useAppearanceProfile();
@@ -17,6 +18,12 @@ export function useFileActions(name: string, save: () => Promise<void>, image = 
     setOpen(false);
     setBusy(true);
     void save()
+      .then((folder) => {
+        // Only Android names the folder it wrote into. A system toast, because the
+        // file viewer is a native Modal window that covers the app's own toasts.
+        if (typeof folder === 'string')
+          ToastAndroid.show(t`Saved to ${folder}`, ToastAndroid.SHORT);
+      })
       .catch((error: unknown) => {
         if (!(error instanceof Error) || !/cancel/i.test(error.message))
           showToast({
