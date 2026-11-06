@@ -1,4 +1,3 @@
-import { TRANSIENT_TOAST_DURATION_MS } from '@/lib/session-read-feedback';
 import { sweepCacheAtLaunch, scheduleAutomaticCacheCleanup } from '@/lib/cache-cleanup';
 import { useAppSettings } from '@/stores/app-settings';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
@@ -18,7 +17,6 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
 import {
   ThemeProvider as OsukiThemeProvider,
-  ToastProvider,
   useThemeMode,
   useThemeTokens,
   type ThemeMode,
@@ -27,7 +25,7 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
-import { AppState, LogBox, Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { AppState, LogBox, Platform, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -53,7 +51,7 @@ import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { checkForAppUpdate, checkForAppUpdateOnLaunch, markLaunchHealthy } from '@/lib/app-updates';
 import { LAUNCH_SETTLE_MS } from '@/lib/launch-health';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
-import { useNotificationSurfaceStyle } from '@/components/notification-surface';
+import { AppToastProvider } from '@/components/app-toast-provider';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
@@ -361,7 +359,6 @@ function RootContent() {
   const reskinQuiet = useReskinActivity((state) => state.quiet);
   const reduceMotion = useReducedMotion();
   const profile = useAppearanceProfile();
-  const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const pageOptions = {
     ...profileNavigationOptions(profile, reduceMotion),
     ...(reskinQuiet ? QUIET_ROUTE_OPTIONS : {}),
@@ -428,20 +425,9 @@ function RootContent() {
           notification: colors.danger,
         },
       }}>
-      {/*
-        The toast card is a colored plane over whatever screen raised it, so it
-        answers the pack's background opacity like every other surface: the
-        kit paints it through the root surface decorator. The reader's slider
-        is the applied theme's, not a candidate's -- this sits above the router
-        and outside `CandidateThemeProvider`, which is where a toast belongs.
-      */}
-      <ToastProvider
-        maxWidth={480}
-        defaultDurationMs={TRANSIENT_TOAST_DURATION_MS}
-        toastStyle={[
-          notificationSurfaceStyle,
-          { borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
-        ]}>
+      {/* Above the router and outside `CandidateThemeProvider`: a toast answers
+          the applied theme, not a candidate's. */}
+      <AppToastProvider>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font
@@ -706,7 +692,7 @@ function RootContent() {
           </ReskinSurface>
         </ReskinTransitionProvider>
         {/* Outside the re-skin surface so a transition never photographs it. */}
-      </ToastProvider>
+      </AppToastProvider>
     </ThemeProvider>
   );
 }
