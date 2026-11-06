@@ -22,7 +22,7 @@ export function useFileActions(name: string, save: () => Promise<unknown>, image
         // Only Android names the folder it wrote into. A system toast, because the
         // file viewer is a native Modal window that covers the app's own toasts.
         if (typeof folder === 'string')
-          ToastAndroid.show(t`Saved to ${folder}`, ToastAndroid.SHORT);
+          ToastAndroid.show(t({ message: `Saved to ${folder}` }), ToastAndroid.SHORT);
       })
       .catch((error: unknown) => {
         if (!(error instanceof Error) || !/cancel/i.test(error.message))
