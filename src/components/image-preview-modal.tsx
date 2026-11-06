@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { CloseIcon } from '@/icons';
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useFileActions } from '@/hooks/use-file-actions';
+import { ModalWindowRoot } from '@/components/app-toast-provider';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { savePreviewImage } from '@/lib/save-file';
 import {
@@ -35,7 +36,7 @@ import {
   View,
   type ViewProps,
 } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -119,7 +120,7 @@ export function ImagePreviewModal({
       onRequestClose={onClose}>
       {shown ? <StatusBar hidden /> : null}
       {/* Keep the native modal mounted on rotation; reset only its gesture surface. */}
-      <GestureHandlerRootView
+      <ModalWindowRoot
         style={[styles.root, { backgroundColor: theme.colors.background }]}
         onLayout={({ nativeEvent: { layout: next } }) => {
           setLayout((current) =>
@@ -139,7 +140,7 @@ export function ImagePreviewModal({
             pendingSaves={pendingSaves}
           />
         </Animated.View>
-      </GestureHandlerRootView>
+      </ModalWindowRoot>
     </Modal>
   );
 }
@@ -625,17 +626,15 @@ function PreviewSurface({
             Android hit-tests by Z before draw order, and this is the control
             that has to stay reachable no matter what the pager is doing or
             failing to do underneath it. */}
-      {fileActions.menu && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: insets.bottom + 24,
-            left: 24 + insets.left,
-            right: 24 + insets.right,
-          }}>
-          {fileActions.menu}
-        </View>
-      )}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 24,
+          left: 24 + insets.left,
+          right: 24 + insets.right,
+        }}>
+        {fileActions.menu}
+      </View>
       <PressableScale
         testID="image-preview-close"
         accessibilityRole="button"

@@ -21,6 +21,7 @@ import { PdfAssetPreview } from '@/components/pdf-asset-preview';
 import { VideoAssetPreview } from '@/components/video-asset-preview';
 import { AudioAssetPreview } from '@/components/audio-asset-preview';
 import { useFileActions } from '@/hooks/use-file-actions';
+import { ModalWindowRoot } from '@/components/app-toast-provider';
 import { saveSessionAsset } from '@/lib/save-file';
 import { SheetFrame } from '@/components/sheet-ground';
 import { formatAssetSize } from '@/lib/asset-display';
@@ -403,7 +404,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       navigationBarTranslucent
       animationType={quiet ? 'none' : 'fade'}
       onRequestClose={() => (videoExpanded ? setVideoExpanded(false) : onClose())}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <ModalWindowRoot style={{ flex: 1 }}>
         {/* Both insets are paid here rather than per body: the fill is on this
             view, so padding it keeps the colour edge to edge while the content
             stays clear of the status bar and the gesture bar.
@@ -622,7 +623,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             </View>
           </SheetFrame>
         </ReskinSurface>
-      </GestureHandlerRootView>
+      </ModalWindowRoot>
     </Modal>
   );
 }
