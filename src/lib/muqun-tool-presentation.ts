@@ -57,6 +57,8 @@ function resultRecord(value: unknown, depth = 0): Record<string, unknown> | null
       return null;
     }
   }
+  // Claude Code over ACP reports an MCP result as its bare block list.
+  if (Array.isArray(value)) return resultRecord({ content: value }, depth + 1);
   const record = asRecord(value);
   if (!record) return null;
   if (record.isError === true) {

@@ -64,6 +64,9 @@ test('completed Muqun results use the same file cards regardless of operation', 
   expect(muqunToolPresentation({ ...tool, state: 'running' })?.files).toEqual([]);
   expect(muqunToolPresentation({ ...tool, state: 'failed' })?.files).toEqual([]);
   expect(muqunToolPresentation({ ...tool, name: 'mcp__muqun__exec_run' })?.files).toHaveLength(1);
+  // Claude Code over ACP reports the result as its bare block list.
+  const blocks = [{ type: 'text', text: JSON.stringify(result) }];
+  expect(muqunToolPresentation({ ...tool, output: blocks })?.files).toHaveLength(1);
 });
 
 test('reading a file holds its source pairing across an asynchronous tunnel open', async () => {
