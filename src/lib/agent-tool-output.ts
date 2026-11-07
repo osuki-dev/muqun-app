@@ -515,7 +515,10 @@ export function parseToolOutput(raw: unknown, depth = 0): ParsedToolOutput {
     // nesting the depth cap exists for, and a type check here would have meant
     // it was never reached.
     if (rec.output !== undefined) return parseToolOutput(rec.output, depth + 1);
-    if (Array.isArray(rec.content)) return parseToolOutput(rec.content, depth + 1);
+    // Cursor's `read` answers `{content: "<the file>"}`; others put a list there.
+    if (Array.isArray(rec.content) || typeof rec.content === 'string') {
+      return parseToolOutput(rec.content, depth + 1);
+    }
     if (rec.text !== undefined) return parseToolOutput(rec.text, depth + 1);
     const pretty = prettyJson(raw);
     return { stdout: pretty.text, truncated: pretty.truncated };
