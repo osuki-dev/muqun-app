@@ -928,7 +928,7 @@ test('history pages are not replayed after disconnect and foreign responses fail
   const closed = next.catch((error: Error) => error);
   h.latest().drop();
   // Typed, so the session view can ask again once the socket is back.
-  expect(await closed).toBeInstanceOf(HistoryInterruptedError);
+  expect((await closed) instanceof HistoryInterruptedError).toBe(true);
   h.clock.advance(60_000);
   expect(h.transports).toHaveLength(1);
 });
