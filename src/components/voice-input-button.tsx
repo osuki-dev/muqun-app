@@ -3,7 +3,7 @@ import { useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { memo, useEffect, useRef, useState, type ComponentProps } from 'react';
 import {
   AppState,
   BackHandler,
@@ -26,10 +26,13 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useResolvedLocale } from '@/i18n/provider';
 import { useLatestReader } from '@/hooks/use-render-refs';
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { EASE_OUT, RISE_DISTANCE, fadeIn, fadeOut, timing } from '@/lib/motion';
 import { VoiceInputError } from '@/lib/voice-input-session';
 import { VoiceMeterHistory, VOICE_METER_SAMPLES } from '@/lib/voice-meter-history';
-import { VoiceLevelRing, VoiceRecordingWaveform } from '@/components/voice-recording-waveform';
+import {
+  VoiceRecordingWaveform,
+  VoiceTranscribingArc,
+} from '@/components/voice-recording-waveform';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
 import {
@@ -48,6 +51,11 @@ const enter = fadeIn('short');
 const exit = fadeOut('short');
 const REALTIME_TOP_INSET = 28;
 const REALTIME_BOTTOM_INSET = 48;
+const WORD_ENTER_MS = 220;
+const LIVE_WORD_LIMIT = 240;
+const LIVE_LINE_HEIGHT = 20;
+/** The subtitle grows to this many lines, then scrolls. */
+const LIVE_MAX_LINES = 3;
 
 /**
  * What a recording reports many times a second: the elapsed time and the
@@ -88,6 +96,38 @@ function PartialText({
   return <Text {...props}>{partial}</Text>;
 }
 
+/**
+ * A word in the live transcript. It rises into place once, when it first
+ * appears; words already on screen never move again, so the subtitle reads as
+ * words arriving rather than the line being redrawn.
+ */
+const LiveWord = memo(function LiveWord({ word, color }: { word: string; color: string }) {
+  return (
+    <Animated.Text entering={wordEnter} style={[styles.liveText, { color }]}>
+      {word}
+    </Animated.Text>
+  );
+});
+
+function wordEnter() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: RISE_DISTANCE }] },
+    animations: {
+      opacity: withTiming(1, { duration: WORD_ENTER_MS, easing: EASE_OUT }),
+      transform: [{ translateY: withTiming(0, { duration: WORD_ENTER_MS, easing: EASE_OUT }) }],
+    },
+  };
+}
+
+/**
+ * Words for the subtitle: a CJK character (with any punctuation after it) on
+ * its own, since those scripts wrap between characters, otherwise a word with
+ * its trailing space, and a line break between the service's segments.
+ */
+const WORD =
+  /\n|[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF][\u3000-\u303F\uFF01-\uFF0F\uFF1A-\uFF1F]*|[^\s\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]+[^\S\n]*|[^\S\n]+/g;
+
 function LiveTranscript({
   readout,
   fallback = '',
@@ -98,10 +138,14 @@ function LiveTranscript({
   fallback?: string;
   onHeightChange?: (height: number) => void;
 }) {
-  const text = useStore(readout, (state) => state.partial) || fallback;
+  const partial = useStore(readout, (state) => state.partial);
   const theme = useThemeTokens();
   const scroll = useRef<ScrollViewInstance>(null);
   const following = useRef(true);
+  // Only the newest words are laid out one by one; earlier ones have long
+  // scrolled up out of the subtitle, and the full text lands in the composer.
+  const words = partial.match(WORD) ?? [];
+  const first = Math.max(0, words.length - LIVE_WORD_LIMIT);
   return (
     <ScrollView
       ref={scroll}
@@ -115,25 +159,32 @@ function LiveTranscript({
             nativeEvent.contentOffset.y <
           32;
       }}
-      onContentSizeChange={() => {
-        if (following.current) scroll.current?.scrollToEnd({ animated: false });
+      onContentSizeChange={(_, height) => {
+        // A new line scrolls the subtitle up rather than cutting to it.
+        if (following.current) scroll.current?.scrollToEnd({ animated: true });
+        onHeightChange?.(Math.ceil(Math.min(height, LIVE_MAX_LINES * LIVE_LINE_HEIGHT)));
       }}>
-      <Text
-        testID="voice-live-transcript"
-        weight="regular"
-        color={theme.colors.text}
-        style={styles.liveText}
-        onTextLayout={({ nativeEvent }) => {
-          // Measure the untruncated text, not the capped viewport, so the
-          // composer can grow without feeding its own height back into itself.
-          const bottom = nativeEvent.lines.reduce(
-            (height, line) => Math.max(height, line.y + line.height),
-            0
-          );
-          onHeightChange?.(Math.ceil(bottom));
-        }}>
-        {text}
-      </Text>
+      {partial ? (
+        <View
+          testID="voice-live-transcript"
+          accessible
+          accessibilityLabel={partial}
+          style={styles.liveWords}>
+          {words.slice(first).map((word, index) =>
+            // Keyed by position and text: a word the service revises rises in
+            // again, and the words before it stay where they are.
+            word === '\n' ? (
+              <View key={`${first + index}:break`} style={styles.liveBreak} />
+            ) : (
+              <LiveWord key={`${first + index}:${word}`} word={word} color={theme.colors.text} />
+            )
+          )}
+        </View>
+      ) : (
+        <Text weight="regular" color={theme.colors.text} style={styles.liveText}>
+          {fallback}
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -180,7 +231,8 @@ function VoiceRecording({
         setState,
         (value, duration) => {
           const samples = meter.push(value, duration);
-          if (samples) history.set(reduced ? samples : withTiming(samples, timing('button')));
+          // Raw: the waveform slides and eases between samples on the UI thread.
+          if (samples) history.set(samples);
           readout.setState({ seconds: Math.floor(duration) });
         },
         (text) => {
@@ -303,7 +355,7 @@ function VoiceRecording({
       ) : (
         <>
           <View pointerEvents="none" style={styles.actionGlyph}>
-            <VoiceLevelRing history={history} processing={transcribing} level={realtime} />
+            <VoiceTranscribingArc processing={transcribing} />
           </View>
           <Animated.View style={[styles.actionGlyph, stopDimStyle]}>
             <Animated.View style={stopSquareStyle}>
@@ -399,6 +451,13 @@ function VoiceRecording({
             pointerEvents="box-none"
             style={[styles.pendingActions, compact && styles.compactPendingActions]}>
             {cancel}
+            {realtime ? (
+              // The transcript has the field, so the voice runs along the
+              // bottom between the two controls.
+              <View style={styles.realtimeMeter}>
+                <VoiceRecordingWaveform history={history} processing={!recording} compact />
+              </View>
+            ) : null}
             {stop}
           </View>
         </>
@@ -554,6 +613,7 @@ const styles = StyleSheet.create({
   },
   pendingLabelText: { fontSize: 12, lineHeight: 17, textAlign: 'center' },
   pendingTranscript: { fontSize: 12, lineHeight: 17, textAlign: 'center', flexShrink: 1 },
+  realtimeMeter: { flex: 1, height: 44, justifyContent: 'center', paddingHorizontal: 8 },
   pendingActions: {
     position: 'absolute',
     left: 12,
@@ -582,7 +642,9 @@ const styles = StyleSheet.create({
   },
   readoutText: { flex: 1, maxHeight: '100%' },
   liveTranscript: { flex: 1, maxHeight: '100%' },
-  liveText: { fontSize: 14, lineHeight: 20 },
+  liveText: { fontSize: 14, lineHeight: LIVE_LINE_HEIGHT },
+  liveWords: { flexDirection: 'row', flexWrap: 'wrap', alignContent: 'flex-start' },
+  liveBreak: { width: '100%', height: 0 },
   detail: { fontSize: 12, lineHeight: 17 },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   action: {
