@@ -61,6 +61,13 @@ export interface GatewaySocketAppState {
   subscribe(listener: (active: boolean) => void): () => void;
 }
 
+/**
+ * A history request the connection gave up on -- closed, interrupted or timed
+ * out -- rather than one the gateway refused. Requests are never replayed on a
+ * new connection; the caller asks again once the socket is open.
+ */
+export class HistoryInterruptedError extends Error {}
+
 export type GatewaySocketState =
   /** Nothing wants the socket. */
   | 'idle'
@@ -398,10 +405,13 @@ export class GatewaySocket {
       releaseState = this.onStateChange((state) => {
         if (state === 'open') send();
         else if (['paused', 'unauthorized', 'unavailable', 'superseded', 'backoff'].includes(state))
-          reject(new Error('History connection interrupted; refresh before retrying'));
+          reject(
+            new HistoryInterruptedError('History connection interrupted; refresh before retrying')
+          );
       });
       cancelDeadline = this.schedule(
-        () => reject(new Error('History request timed out; refresh before retrying')),
+        () =>
+          reject(new HistoryInterruptedError('History request timed out; refresh before retrying')),
         35_000
       );
       held = true;
@@ -951,7 +961,9 @@ export class GatewaySocket {
   private drop(): void {
     if (this.connection || this.disposed) {
       for (const pending of this.historyRequests.values())
-        pending.reject(new Error('History connection closed; refresh before retrying'));
+        pending.reject(
+          new HistoryInterruptedError('History connection closed; refresh before retrying')
+        );
       this.historyRequests.clear();
     }
     this.preparation++;

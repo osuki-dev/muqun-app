@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { AgentDomainEvent } from '../agent-protocol';
 import {
   GatewaySocket,
+  HistoryInterruptedError,
   gatewaySocketPath,
   MAX_RECONNECT_DELAY_MS,
   socketFailureIsUnauthorized,
@@ -926,7 +927,8 @@ test('history pages are not replayed after disconnect and foreign responses fail
   const next = h.socket.requestHistory('computer', 'session', 'earlier');
   const closed = next.catch((error: Error) => error);
   h.latest().drop();
-  expect(String(await closed)).toContain('closed');
+  // Typed, so the session view can ask again once the socket is back.
+  expect(await closed).toBeInstanceOf(HistoryInterruptedError);
   h.clock.advance(60_000);
   expect(h.transports).toHaveLength(1);
 });

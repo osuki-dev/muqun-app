@@ -1,6 +1,8 @@
 import { useGatewayGeneration } from '@/stores/gateway-connection-generation';
-import { useCallback, useEffect, useEffectEvent, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useServerChannels } from '@/stores/server-channels';
+import { HistoryInterruptedError } from '@/lib/gateway-socket';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useLatestReader } from '@/hooks/use-render-refs';
 import { ForegroundSessionActivation } from '@/lib/foreground-session-activation';
@@ -115,6 +117,17 @@ export function useForegroundAgentSession(options: {
   }, [activation, scope, enabled, attempt, read]);
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
   const shown = enabled && failure?.scope === scope ? failure : null;
+  // A load the connection dropped is asked again once the socket is open,
+  // instead of waiting on Retry: the gateway never refused it. Once per failure.
+  const socketOpen = useServerChannels((state) => state.sockets[options.serverId] === 'open');
+  const autoRetried = useRef<unknown>(null);
+  useEffect(() => {
+    const error = shown?.error;
+    if (!socketOpen || shown?.retrying || !(error instanceof HistoryInterruptedError)) return;
+    if (autoRetried.current === error) return;
+    autoRetried.current = error;
+    retry();
+  }, [shown, socketOpen, retry]);
   return {
     error: shown ? shown.error : null,
     /** The notice's own attempt state, updated in place while a retry runs. */
