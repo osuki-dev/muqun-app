@@ -405,10 +405,13 @@ export class GatewaySocket {
       releaseState = this.onStateChange((state) => {
         if (state === 'open') send();
         else if (['paused', 'unauthorized', 'unavailable', 'superseded', 'backoff'].includes(state))
-          reject(new HistoryInterruptedError('History connection interrupted; refresh before retrying'));
+          reject(
+            new HistoryInterruptedError('History connection interrupted; refresh before retrying')
+          );
       });
       cancelDeadline = this.schedule(
-        () => reject(new HistoryInterruptedError('History request timed out; refresh before retrying')),
+        () =>
+          reject(new HistoryInterruptedError('History request timed out; refresh before retrying')),
         35_000
       );
       held = true;
@@ -958,7 +961,9 @@ export class GatewaySocket {
   private drop(): void {
     if (this.connection || this.disposed) {
       for (const pending of this.historyRequests.values())
-        pending.reject(new HistoryInterruptedError('History connection closed; refresh before retrying'));
+        pending.reject(
+          new HistoryInterruptedError('History connection closed; refresh before retrying')
+        );
       this.historyRequests.clear();
     }
     this.preparation++;
