@@ -58,13 +58,42 @@ function GlowingWaveform({ history, processing = false }: WaveformProps) {
   useEffect(() => {
     transition.set(withTiming(processing ? 1 : 0, { duration: reduced ? 0 : 280 }));
   }, [processing, reduced, transition]);
-  const lastPaint = useSharedValue(-1000);
+  // Samples arrive a few times a second, each shifting the history one slot.
+  // Between arrivals the ribbon slides on by the fraction of a slot that has
+  // elapsed, so it flows instead of stepping; the interval is learnt from the
+  // arrivals themselves. The newest level is eased every frame for the same
+  // reason. Both run on the UI thread, at the display's own rate.
+  const now = useSharedValue(0);
+  const arrival = useSharedValue({ at: -1, interval: SAMPLE_INTERVAL_MS });
+  const shift = useSharedValue(0);
+  const target = useSharedValue(0);
+  const level = useSharedValue(0);
+  useAnimatedReaction(
+    () => history.get(),
+    (samples, previous) => {
+      if (previous === null || samples === previous) return;
+      const at = now.get();
+      const last = arrival.get();
+      const gap = at - last.at;
+      arrival.set({
+        at,
+        interval:
+          last.at < 0
+            ? last.interval
+            : Math.min(MAX_INTERVAL_MS, Math.max(MIN_INTERVAL_MS, last.interval * 0.8 + gap * 0.2)),
+      });
+      target.set(samples[samples.length - 1] ?? 0);
+    }
+  );
   const frame = useFrameCallback(({ timeSinceFirstFrame, timeSincePreviousFrame }) => {
     // Reanimated resets elapsed time whenever a stopped callback is activated.
-    if (timeSincePreviousFrame === null) lastPaint.set(-1000);
-    if (timeSinceFirstFrame - lastPaint.get() < 1000 / 30) return;
-    lastPaint.set(timeSinceFirstFrame);
+    if (timeSincePreviousFrame === null) arrival.set({ ...arrival.get(), at: -1 });
+    now.set(timeSinceFirstFrame);
     clock.set(timeSinceFirstFrame / 1000);
+    const last = arrival.get();
+    shift.set(last.at < 0 ? 0 : Math.min(1, (timeSinceFirstFrame - last.at) / last.interval));
+    const ease = 1 - Math.exp(-(timeSincePreviousFrame ?? 16) / LEVEL_EASE_MS);
+    level.set(level.get() + (target.get() - level.get()) * ease);
   }, false);
   useEffect(() => {
     const sync = (state: string) => frame.setActive(!reduced && state === 'active');
@@ -84,9 +113,9 @@ function GlowingWaveform({ history, processing = false }: WaveformProps) {
     time: reduced ? 0 : clock.get(),
     motion: reduced ? 0 : 1,
     processing: transition.get(),
-    // The recorder smooths history once; another timing here would chase
-    // every intermediate frame and make the waveform lag behind speech.
     amplitudes: history.get(),
+    shift: reduced ? 0 : shift.get(),
+    level: reduced ? (history.get()[VOICE_METER_SAMPLES - 1] ?? 0) : level.get(),
     tint,
     highlight,
     tintOpacity,
@@ -130,49 +159,26 @@ export function VoiceRecordingWaveform({
 }
 
 /**
- * The stop control's ring: the recorder's level while recording, a slowly
- * turning arc while the recording is transcribed.
+ * The stop control's transcribing arc: a slowly turning stretch of the
+ * control's outline while the recording is transcribed. The level itself is
+ * the waveform's.
  *
- * The level is for realtime transcription, where the field belongs to the
- * live transcript and the full-width waveform would sit on top of it. It
- * breathes with a smoothed level -- the RMS of the newest few samples of the
- * history the waveform reads, eased toward on the UI thread -- rather than
- * jumping with each sample. `level={false}` keeps only the transcribing arc,
- * for a recorder whose waveform already shows the level.
- *
- * The arc cross-fades in over the level as `processing` turns on and stops
- * turning the moment it turns off. It is a stroke along the ring's outline,
- * not a rotated top border: under a squarer corner a rotated border is a
- * straight bar swinging around the stop square. It never grows past the 44pt
- * control. Reduce Motion: no scaling and no travel, only fades.
+ * The arc fades in as `processing` turns on and stops turning the moment it
+ * turns off. It is a stroke along the outline, not a rotated top border: under
+ * a squarer corner a rotated border is a straight bar swinging around the stop
+ * square. Reduce Motion: no travel, only the fade.
  */
-export function VoiceLevelRing({
-  history,
-  processing = false,
-  level = true,
-}: {
-  history: SharedValue<number[]>;
-  processing?: boolean;
-  level?: boolean;
-}) {
+export function VoiceTranscribingArc({ processing = false }: { processing?: boolean }) {
   const theme = useThemeTokens();
   // Traced on the stop control, so it takes that control's corner: a circle
   // under a round profile, a rounded square under an angular one.
   const profile = useAppearanceProfile();
-  const corner = Math.min(LEVEL_RING_SIZE / 2, profile.chrome.roundControl);
+  const corner = Math.min(ARC_SIZE / 2, profile.chrome.roundControl);
   const reduced = useReducedMotion();
   const settled = useSharedValue(processing ? 1 : 0);
   useEffect(() => {
     settled.set(withTiming(processing ? 1 : 0, timing('short')));
   }, [processing, settled]);
-  const smoothed = useSharedValue(0);
-  useAnimatedReaction(
-    () => history.get(),
-    (samples) => {
-      const previous = smoothed.get();
-      smoothed.set(previous + (recentLevel(samples) - previous) * LEVEL_EASE);
-    }
-  );
   const turn = useSharedValue(0);
   useEffect(() => {
     if (!processing || reduced) {
@@ -183,76 +189,42 @@ export function VoiceLevelRing({
     turn.set(withRepeat(withTiming(1, { duration: ARC_PERIOD_MS, easing: Easing.linear }), -1));
     return () => cancelAnimation(turn);
   }, [processing, reduced, turn]);
-  const levelStyle = useAnimatedStyle(() => {
-    const quiet = settled.get();
-    const live = Math.min(1, smoothed.get());
-    return {
-      // Under the arc it stays as a faint track.
-      opacity: (0.3 + live * 0.7) * (1 - quiet) + 0.18 * quiet,
-      transform: [
-        {
-          scale: reduced
-            ? 1
-            : Math.min(LEVEL_RING_MAX_SCALE, (0.88 + live * 0.32) * (1 - quiet) + quiet),
-        },
-      ],
-    };
-  });
   const arcStyle = useAnimatedStyle(() => ({ opacity: settled.get() }));
-  // The arc is a stretch of the ring's own outline travelling around it. The
-  // outline is traced twice, so a stretch that runs past the end of one lap
-  // continues on the next instead of wrapping to a second path.
+  // The arc is a stretch of the outline travelling around it. The outline is
+  // traced twice, so a stretch that runs past the end of one lap continues on
+  // the next instead of wrapping to a second path.
   const arcStart = useDerivedValue(() => turn.get() / 2);
   const arcEnd = useDerivedValue(() => (turn.get() + ARC_LENGTH) / 2);
-  const inset = LEVEL_RING_BORDER / 2;
+  const inset = ARC_STROKE / 2;
   const outline = Skia.RRectXY(
-    Skia.XYWHRect(inset, inset, LEVEL_RING_SIZE - inset * 2, LEVEL_RING_SIZE - inset * 2),
+    Skia.XYWHRect(inset, inset, ARC_SIZE - inset * 2, ARC_SIZE - inset * 2),
     Math.max(0, corner - inset),
     Math.max(0, corner - inset)
   );
   const arcPath = Skia.PathBuilder.Make().addRRect(outline).addRRect(outline).detach();
-  const shape = { borderRadius: corner, borderCurve: 'continuous' as const };
   return (
-    <>
-      {level ? (
-        <Animated.View
-          pointerEvents="none"
-          accessible={false}
-          style={[styles.levelRing, shape, { borderColor: theme.colors.primary }, levelStyle]}
-        />
+    <Animated.View
+      testID={processing ? 'voice-transcribing-arc' : undefined}
+      pointerEvents="none"
+      accessible={false}
+      style={[styles.arc, arcStyle]}>
+      {/* A Skia surface only while there is an arc to draw: none for the
+          whole of a recording, beside the waveform's own canvas. */}
+      {processing ? (
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Path
+            path={arcPath}
+            color={theme.colors.primary}
+            style="stroke"
+            strokeWidth={ARC_STROKE}
+            strokeCap="round"
+            start={arcStart}
+            end={arcEnd}
+          />
+        </Canvas>
       ) : null}
-      <Animated.View
-        testID={processing ? 'voice-transcribing-arc' : undefined}
-        pointerEvents="none"
-        accessible={false}
-        style={[styles.arc, arcStyle]}>
-        {/* A Skia surface only while there is an arc to draw: none for the
-            whole of a recording, beside the waveform's own canvas. */}
-        {processing ? (
-          <Canvas style={StyleSheet.absoluteFill}>
-            <Path
-              path={arcPath}
-              color={theme.colors.primary}
-              style="stroke"
-              strokeWidth={LEVEL_RING_BORDER}
-              strokeCap="round"
-              start={arcStart}
-              end={arcEnd}
-            />
-          </Canvas>
-        ) : null}
-      </Animated.View>
-    </>
+    </Animated.View>
   );
-}
-
-/** The RMS of the newest few samples: a level that follows speech, not each blip. */
-function recentLevel(samples: number[]): number {
-  'worklet';
-  const from = Math.max(0, samples.length - LEVEL_WINDOW);
-  let sum = 0;
-  for (let index = from; index < samples.length; index += 1) sum += samples[index]! ** 2;
-  return samples.length > from ? Math.sqrt(sum / (samples.length - from)) : 0;
 }
 
 function QuietProcessingIndicator() {
@@ -269,15 +241,14 @@ function QuietProcessingIndicator() {
   );
 }
 
-const LEVEL_RING_SIZE = 34;
-const LEVEL_RING_BORDER = 2;
-/** The stop control the ring is traced on. */
-const STOP_CONTROL_SIZE = 44;
-/** The ring at its loudest still fits inside the control, border and all. */
-const LEVEL_RING_MAX_SCALE = (STOP_CONTROL_SIZE - LEVEL_RING_BORDER) / LEVEL_RING_SIZE;
-/** Samples the level is the RMS of, and how far each update eases toward it. */
-const LEVEL_WINDOW = 4;
-const LEVEL_EASE = 0.3;
+const ARC_SIZE = 34;
+const ARC_STROKE = 2;
+/** The meter's nominal cadence and the range the learnt one is held to. */
+const SAMPLE_INTERVAL_MS = 75;
+const MIN_INTERVAL_MS = 40;
+const MAX_INTERVAL_MS = 200;
+/** How quickly the waveform's live edge follows the newest sample. */
+const LEVEL_EASE_MS = 70;
 /** One lap of the transcribing arc, and how much of the outline it covers. */
 const ARC_PERIOD_MS = 1400;
 const ARC_LENGTH = 0.25;
@@ -295,12 +266,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   quietRing: { width: QUIET_RING_SIZE, height: QUIET_RING_SIZE, borderWidth: 2, opacity: 0.6 },
-  levelRing: {
-    position: 'absolute',
-    width: LEVEL_RING_SIZE,
-    height: LEVEL_RING_SIZE,
-    borderWidth: LEVEL_RING_BORDER,
-  },
-  arc: { position: 'absolute', width: LEVEL_RING_SIZE, height: LEVEL_RING_SIZE },
+  arc: { position: 'absolute', width: ARC_SIZE, height: ARC_SIZE },
   bar: { flex: 1, maxWidth: 4, height: 20, borderRadius: 2 },
 });

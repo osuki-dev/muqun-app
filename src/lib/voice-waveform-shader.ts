@@ -7,14 +7,20 @@ uniform float time;
 uniform float motion;
 uniform float processing;
 uniform float amplitudes[${VOICE_METER_SAMPLES}];
+uniform float shift;
+uniform float level;
 uniform float3 tint;
 uniform float3 highlight;
 uniform float tintOpacity;
 
+// A normalised Gaussian blend of the samples: smooth in position, so neither a
+// new sample nor the slide between them puts a corner in the ribbon.
 float sampleAt(float position) {
   float value = 0.0;
-  ${Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => `value += amplitudes[${index}] * max(0.0, 1.0 - abs(position - ${index}.0));`).join('\n  ')}
-  return clamp(value, 0.0, 1.0);
+  float weight = 0.0;
+  float w;
+  ${Array.from({ length: VOICE_METER_SAMPLES }, (_, index) => `w = exp(-0.6 * (position - ${index}.0) * (position - ${index}.0)); value += amplitudes[${index}] * w; weight += w;`).join('\n  ')}
+  return clamp(value / max(weight, 0.0001), 0.0, 1.0);
 }
 
 half4 main(float2 coord) {
@@ -27,9 +33,12 @@ half4 main(float2 coord) {
   float x = (coord.x - center.x) / spread + 0.5;
   float boundedX = clamp(x, 0.0, 1.0);
   float envelope = pow(max(0.0, sin(boundedX * 3.14159265)), 0.8);
-  // Interpolated samples avoid the hard steps of a discrete meter. The recent
-  // sample gives the whole ribbon an immediate response to a new syllable.
-  float energy = mix(sampleAt(boundedX * ${VOICE_METER_SAMPLES - 1}.0), amplitudes[${VOICE_METER_SAMPLES - 1}], 0.35);
+  // Interpolated samples avoid the hard steps of a discrete meter, and the shift
+  // slides them left between arrivals so the history flows rather than steps.
+  // The eased live level gives the whole ribbon an immediate response to a new
+  // syllable without jumping to it.
+  float position = min(boundedX * ${VOICE_METER_SAMPLES - 1}.0 + shift, ${VOICE_METER_SAMPLES - 1}.0);
+  float energy = mix(sampleAt(position), level, 0.35);
   float breath = 0.8 + 0.4 * sin(phase * 1.8);
   float amplitude = (breath + energy * height * 0.30) * envelope;
   float y = coord.y - center.y;
