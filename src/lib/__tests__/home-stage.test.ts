@@ -335,6 +335,41 @@ describe('theme layout', () => {
     expect(framed.edges).toEqual({ x: 0.22, y: 0.32 });
   });
 
+  test('whole art stands on the progress cards, never behind them', () => {
+    for (const viewport of PHONES) {
+      for (const lift of [0, 10, 64, 118]) {
+        const lifted = { ...viewport, lift };
+        const cards = viewport.floor - lift;
+        // A wide scene (width-limited) glides up whole; a tall figure also shrinks.
+        for (const aspect of [1.5, 0.6]) {
+          const figure = stageHeroPlacement(hero({ aspect }), lifted);
+          expect(foot(figure)).toBeCloseTo(cards - 8);
+          expect(figure.fade.from).toBeGreaterThan(1);
+          expect(figure.plane.y).toBeGreaterThan(hudBottom(viewport));
+          // A painted ground keeps a short, soft edge wherever it stands.
+          const scene = stageHeroPlacement(hero({ aspect, solidBottom: true }), lifted);
+          expect(foot(scene)).toBeCloseTo(cards - 8);
+          expect(foot(scene) - body(scene)).toBeCloseTo(16);
+        }
+        const wide = stageHeroPlacement(hero({ aspect: 1.5 }), lifted);
+        expect(wide.plane.height).toBeCloseTo(
+          stageHeroPlacement(hero({ aspect: 1.5 }), viewport).plane.height
+        );
+        // An inset picture stays centred until the cards reach it, then keeps above them.
+        const inset = stageHeroPlacement(
+          hero({ box: 'standard', feather: 'inset', aspect: 1.5 }),
+          lifted
+        );
+        const resting = stageHeroPlacement(
+          hero({ box: 'standard', feather: 'inset', aspect: 1.5 }),
+          viewport
+        );
+        expect(foot(inset)).toBeLessThanOrEqual(cards - 8 + 1e-6);
+        expect(inset.box.y).toBeCloseTo(Math.min(resting.box.y, cards - 8 - resting.box.height));
+      }
+    }
+  });
+
   test("the overlay band sits under the HUD and a figure's face, over the foot rows", () => {
     for (const viewport of PHONES) {
       const figure = stageHeroPlacement(hero(), viewport);

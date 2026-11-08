@@ -136,6 +136,12 @@ export type StageViewProps = {
    * stands on them.
    */
   foot: number;
+  /**
+   * How far the working agents' progress cards stand above the foot rows, in
+   * points (0 for none): whole art stands on them. The scene glides there;
+   * the static stage places it.
+   */
+  lift?: number;
   /** Home is not on screen or the app is in the background: no frames. */
   paused: boolean;
   /** Bumped when a task completes. */
@@ -173,6 +179,7 @@ export function StageView({
   leftInset = 0,
   rightInset = 0,
   foot,
+  lift = 0,
   paused,
   burst,
   opener,
@@ -523,8 +530,8 @@ export function StageView({
 
   const floor = foot > 0 ? Math.max(0, size.height - foot) : stageDefaultFloor(size.height);
   const viewport = useMemo(
-    () => ({ width: size.width, height: size.height, inset, floor, leftInset, rightInset }),
-    [size.width, size.height, inset, floor, leftInset, rightInset]
+    () => ({ width: size.width, height: size.height, inset, floor, lift, leftInset, rightInset }),
+    [size.width, size.height, inset, floor, lift, leftInset, rightInset]
   );
   const art = useStageArt(composition, viewport);
   const band = viewport.height > 0 ? stageOverlayBand(art, viewport) : null;
@@ -567,6 +574,7 @@ export function StageView({
                 rightInset={rightInset}
                 inset={inset}
                 floor={floor}
+                lift={lift}
                 backdrop={backdrop}
                 painting={painting}
                 hero={hero}

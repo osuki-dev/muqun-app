@@ -73,6 +73,11 @@ export type StageSceneProps = {
   rightInset?: number;
   /** Where the HUD's foot rows start, in points from the top: the art stands on it. */
   floor: number;
+  /**
+   * How far the working agents' progress cards stand above the floor, in
+   * points: whole art stands on them (`StageViewport.lift`), gliding there.
+   */
+  lift: number;
   /** The deepest layer: a full-scene wallpaper. */
   backdrop: StagePicture | null;
   /** The sky role's painting, a band across the top. */

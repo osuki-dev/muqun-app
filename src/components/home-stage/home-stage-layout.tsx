@@ -9,7 +9,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { PressableScale, Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Haptics from 'expo-haptics';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -142,6 +142,9 @@ const HUD_GUTTER = 20;
 
 /** The foot's entrance, in order: the agent row, the sessions handle, the strip. */
 const FOOT_ENTRY = { agents: 0, handle: 1, strip: 2, count: 3 } as const;
+
+/** The art waits this long before coming down onto progress cards that shrank. */
+const LIFT_SETTLE_MS = 1500;
 
 /** Sessions shown in the strip before "All sessions". */
 export const STAGE_STRIP_LIMIT = 6;
@@ -387,6 +390,8 @@ export function HomeStageLayout({
   // The foot rows' height above the dock, measured: the art stands on them.
   const [footStack, setFootStack] = useState(0);
   const foot = footStack > 0 ? dockHeight + 6 + footStack : 0;
+  // How far the progress cards rise above the foot rows: whole art stands on them.
+  const [lift, setLift] = useState(0);
   const openComputer = useStableHandler(() => opener.open(() => onOpen(selectedIndex)));
   // Where the needs-you card and the progress subtitle stand, as the Stage measured it.
   const [band, setBand] = useState<StageOverlayBand | null>(null);
@@ -516,6 +521,7 @@ export function HomeStageLayout({
         rightInset={sideInsets.right}
         inset={topInset}
         foot={foot}
+        lift={panels.length > 0 ? lift : 0}
         paused={paused || listOpen}
         burst={burst}
         opener={opener}
@@ -643,6 +649,8 @@ export function HomeStageLayout({
                   room={subtitleRoom}
                   subtitle={!listOpen && !waiting}
                   paused={paused}
+                  holdLift={typing || paused || listOpen}
+                  onLift={setLift}
                   onOpen={openProgress}>
                   {(hidden) => (
                     <StageAgentRow
@@ -898,6 +906,11 @@ function StageStatusLine({ panel, halo }: { panel: StagePanel; halo: StageTextHa
  * fade out under them and back when they go. While typing the row folds away
  * so the strip sits on the composer, and up to two one-line subtitles float
  * above the strip.
+ *
+ * How far the subtitles rise above the row (`onLift`) is what whole art
+ * stands on. It is held while typing folds the row, while Home is away and
+ * while the full list is up, so the art never glides for those, and it
+ * comes down only after `LIFT_SETTLE_MS`.
  */
 function StageFootLine({
   serverId,
@@ -906,6 +919,8 @@ function StageFootLine({
   compact,
   maxRows,
   room,
+  holdLift,
+  onLift,
   onOpen,
   children,
 }: {
@@ -917,12 +932,34 @@ function StageFootLine({
   maxRows: number;
   /** Height above the row the subtitles may grow into, held in layout whether or not they show. */
   room: number;
+  holdLift: boolean;
+  onLift: (lift: number) => void;
   onOpen: (line: StageProgress) => void;
   /** The row's content, told whether the row is hidden (covered or folded) so its motion can rest. */
   children: (hidden: boolean) => ReactNode;
 }) {
   const [shown, setShown] = useState(false);
   const covered = subtitle && shown;
+  const [stackHeight, setStackHeight] = useState(0);
+  // The first subtitle stands in the chips' place; only what is taller rises over the art.
+  const lift = covered ? Math.max(0, Math.round(stackHeight - STAGE_AGENT_ROW_HEIGHT)) : 0;
+  // The art rises at once when the cards grow, but comes down only once they
+  // have stayed lower a moment: a report flicking between one line and two,
+  // or one agent's line handing over to the next, does not bob it.
+  const reported = useRef(0);
+  const reportLift = useEffectEvent((next: number) => {
+    reported.current = next;
+    onLift(next);
+  });
+  useEffect(() => {
+    if (holdLift) return;
+    if (lift >= reported.current) {
+      reportLift(lift);
+      return;
+    }
+    const timer = setTimeout(() => reportLift(lift), LIFT_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [lift, holdLift]);
   // Two fades on one row: the chips go under a subtitle, and the whole row
   // folds to nothing while typing, its height easing so the strip glides up
   // with the keyboard instead of jumping a row in one frame.
@@ -960,6 +997,9 @@ function StageFootLine({
             compact={compact}
             maxRows={maxRows}
             onShownChange={setShown}
+            onHeight={(height) => {
+              if (!compact) setStackHeight(height);
+            }}
             onOpen={onOpen}
           />
         </View>

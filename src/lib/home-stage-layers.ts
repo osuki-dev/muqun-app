@@ -11,7 +11,8 @@
  *   width-fit band at the top, as the 2D cover shows it, feathered into the
  *   wallpaper's base; the HUD keeps the authored sky open.
  * - **figure** -- a cover header over a cut-out. The figure stands in the 2D
- *   cover box, tucked under the computer's name, in front of the wallpaper.
+ *   cover box, tucked under the computer's name, in front of the wallpaper;
+ *   whole, it stands on the working agents' progress cards when they show.
  * - **inset** -- a standard header with artwork. A smaller picture in the
  *   standard band just below the HUD, in front of the wallpaper.
  * - **world** -- no artwork (hidden by the author or the reader, or absent).
