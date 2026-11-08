@@ -1,9 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, Text } from '@osuki-dev/ui';
+import { resolveFontStyle, useThemeTokens, Text } from '@osuki-dev/ui';
 import { PressableScale } from '@/components/pressable-scale';
 import { useIsFocused } from 'expo-router';
 import { UndoIcon, StopIcon, CloseIcon } from '@/icons';
-import { memo, useEffect, useRef, useState, type ComponentProps } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import {
   AppState,
   BackHandler,
@@ -14,6 +14,7 @@ import {
   View,
   useWindowDimensions,
   type ScrollViewInstance,
+  type TextStyle,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -101,9 +102,9 @@ function PartialText({
  * appears; words already on screen never move again, so the subtitle reads as
  * words arriving rather than the line being redrawn.
  */
-const LiveWord = memo(function LiveWord({ word, color }: { word: string; color: string }) {
+const LiveWord = memo(function LiveWord({ word, face }: { word: string; face: TextStyle }) {
   return (
-    <Animated.Text entering={wordEnter} style={[styles.liveText, { color }]}>
+    <Animated.Text entering={wordEnter} style={[styles.liveText, face]}>
       {word}
     </Animated.Text>
   );
@@ -145,6 +146,17 @@ function LiveTranscript({
   // Only the newest words are laid out one by one; earlier ones have long
   // scrolled up out of the subtitle, and the full text lands in the composer.
   const words = partial.match(WORD) ?? [];
+  // Each word is its own Animated.Text, outside the theme's Text, so it takes
+  // the theme's face and colour here, as the fallback's Text does.
+  const face = useMemo(
+    () => ({
+      ...resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular', {
+        fontSize: styles.liveText.fontSize,
+      }),
+      color: theme.colors.text,
+    }),
+    [theme.fonts, theme.typeStyles.body.fontFamily, theme.colors.text]
+  );
   const first = Math.max(0, words.length - LIVE_WORD_LIMIT);
   return (
     <ScrollView
@@ -176,7 +188,7 @@ function LiveTranscript({
             word === '\n' ? (
               <View key={`${first + index}:break`} style={styles.liveBreak} />
             ) : (
-              <LiveWord key={`${first + index}:${word}`} word={word} color={theme.colors.text} />
+              <LiveWord key={`${first + index}:${word}`} word={word} face={face} />
             )
           )}
         </View>
