@@ -243,12 +243,18 @@ export function stageLayerCentre(depth: number): StageVec3 {
  * the `floor`, where the HUD's foot rows start (the agents' row, then the
  * sessions and the composer). The art reaches down to it and fades out
  * behind them.
+ *
+ * `lift` is how far the working agents' progress cards stand above the
+ * floor (0, or absent, for none): they stack upward from the agents' row
+ * into the art's free height, so art that must stay whole -- a contained
+ * figure, an inset picture -- stands on them rather than behind them.
  */
 export type StageViewport = {
   width: number;
   height: number;
   inset: number;
   floor: number;
+  lift?: number;
   leftInset?: number;
   rightInset?: number;
 };
@@ -482,14 +488,20 @@ export function stagePaintingPlacement(
  * header's artwork).
  *
  * A contained figure fits its measured silhouette between the HUD and the
- * work rows, keeping every extremity visible without fading its feet. Clear
- * authoring margins cannot lift or shrink it. Covered figures keep the
- * established title overlap and bottom fade, as Editorial's cover does.
+ * work rows, standing on them under the computer's name and keeping every
+ * extremity visible without fading its feet. Clear authoring margins cannot
+ * lift or shrink it. When working agents' progress cards stack up from the
+ * agents' row (`viewport.lift`), it stands on the cards instead, so they
+ * never hide its lower part; a figure that already fills the room's height
+ * grows smaller to stay whole. A painted ground edge (`solidBottom`) fades
+ * softly wherever the figure stands. Covered figures keep the established
+ * title overlap and bottom fade, as Editorial's cover does.
  *
  * The inset picture is centred between the HUD and the floor, the view's
  * width (a little more for a wide picture, `INSET_ZOOM`) unless that is
- * taller than the room; a cut-out fades at its foot, a framed picture at
- * every edge.
+ * taller than the room; progress cards that would reach it push it up, and
+ * then shrink it, so it stays above them. A cut-out fades at its foot, a
+ * framed picture at every edge.
  */
 export function stageHeroPlacement(
   hero: {
@@ -521,10 +533,13 @@ export function stageHeroPlacement(
     };
   }
   const ratio = ratioOf(hero.aspect).width;
+  // Where whole art must end: above the progress cards, or the foot rows.
+  const clear = viewport.floor - Math.max(0, viewport.lift ?? 0) - INSET_GAP_PT;
   if (hero.box === 'cover') {
     if (hero.fit === 'contain') {
       // Fit the visible silhouette, not its transparent authoring canvas. Its
-      // complete head and feet stay between the HUD and the first work row.
+      // complete head and feet stay between the HUD and the first work row,
+      // or the progress cards stacked on it.
       const top = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;
       // Both ends remain in view during the full camera tilt and computer pan.
       const side =
@@ -534,7 +549,7 @@ export function stageHeroPlacement(
         x: side,
         y: top,
         width: Math.max(0, viewport.width - side * 2),
-        height: Math.max(0, viewport.floor - INSET_GAP_PT - top),
+        height: Math.max(0, clear - top),
       };
       const bounds = hero.bounds ?? { x: 0, y: 0, width: 1, height: 1 };
       const content = within(
@@ -554,7 +569,8 @@ export function stageHeroPlacement(
         height,
       };
       // A scenic fragment can also have clear sky. Soften its painted bottom
-      // edge without dissolving the feet of an actual character cut-out.
+      // edge, wherever it stands, without dissolving the feet of an actual
+      // character cut-out.
       const fadeFrom = hero.solidBottom ? content.y + content.height - INSET_GAP_PT * 2 : null;
       return placeArt(box, drawn, fadeFrom, { x: 0, y: 0 });
     }
@@ -570,8 +586,13 @@ export function stageHeroPlacement(
   }
   const roomTop = viewport.inset + STAGE_HUD_BOTTOM_PT + INSET_GAP_PT;
   const room = Math.max(0, viewport.floor - INSET_GAP_PT - roomTop);
-  const height = Math.min(room, (viewport.width / ratio) * INSET_ZOOM);
-  const box = { x: 0, y: roomTop + (room - height) / 2, width: viewport.width, height };
+  const height = Math.min(
+    room,
+    Math.max(0, clear - roomTop),
+    (viewport.width / ratio) * INSET_ZOOM
+  );
+  const centred = roomTop + (room - height) / 2;
+  const box = { x: 0, y: Math.min(centred, clear - height), width: viewport.width, height };
   const drawn =
     hero.fit === 'contain'
       ? zoomedContain(box, ratio, INSET_ZOOM, { x: hero.focal.x, y: hero.focal.y })

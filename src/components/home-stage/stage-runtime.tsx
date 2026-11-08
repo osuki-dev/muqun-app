@@ -53,6 +53,8 @@ type Motion = {
   /** The fractional selection the camera's pan follows. */
   flow: StageSpring;
   dive: StageSpring;
+  /** The art's lift onto the progress cards, gliding to the cards' height. */
+  lift: StageSpring;
   look: [number, number];
   burst: number;
   lastFrameMs: number;
@@ -108,6 +110,7 @@ export function StageRuntime(
     leftInset = 0,
     rightInset = 0,
     floor,
+    lift,
     backdrop,
     painting,
     hero,
@@ -128,6 +131,7 @@ export function StageRuntime(
     motion.current = {
       flow: { value: selected, velocity: 0 },
       dive: { value: 0, velocity: 0 },
+      lift: { value: lift, velocity: 0 },
       look: [0, 0],
       burst: 0,
       lastFrameMs: 0,
@@ -176,17 +180,22 @@ export function StageRuntime(
     activate();
   });
   useEffect(() => applyTheme(), [world, themeKey, scene, gl]);
+  // Where the art's glide onto the progress cards stands now.
+  const glidingLift = useEffectEvent(() => motionState().lift.value);
   useEffect(() => {
     world.setViewport({
       width: size.width,
       height: size.height,
       inset,
       floor,
+      lift: glidingLift(),
       leftInset,
       rightInset,
     });
     wake();
   }, [world, size.width, size.height, inset, floor, leftInset, rightInset]);
+  // Cards came or went: the art glides onto them (`useFrame`).
+  useEffect(() => wake(), [lift]);
   useEffect(() => {
     world.setRole(role);
     wake();
@@ -309,6 +318,22 @@ export function StageRuntime(
         ? { value: flowGoal, velocity: 0 }
         : stepStageSpring(state.flow, flowGoal, dt, STAGE_CARD_SPRING);
     state.dive = stepStageSpring(state.dive, dive ? 1 : 0, dt, DIVE_SPRING);
+    // The art stands on the progress cards: it glides as they come and go,
+    // and under Reduce Motion is simply placed.
+    const liftWas = state.lift.value;
+    state.lift = reducedMotion
+      ? { value: lift, velocity: 0 }
+      : stepStageSpring(state.lift, lift, dt, STAGE_CARD_SPRING);
+    if (state.lift.value !== liftWas)
+      world.setViewport({
+        width: size.width,
+        height: size.height,
+        inset,
+        floor,
+        lift: state.lift.value,
+        leftInset,
+        rightInset,
+      });
 
     // Tilt (when on) and a vertical drag both look around; the drag springs back.
     const lookGoal: [number, number] = [
@@ -358,6 +383,7 @@ export function StageRuntime(
     const touch =
       !stageSpringAtRest(state.flow, flowGoal) ||
       !stageSpringAtRest(state.dive, dive ? 1 : 0) ||
+      !stageSpringAtRest(state.lift, lift) ||
       dragging;
     const moving = touch || looking || state.burst > 0;
     const ambient = !moving && stageIdleInterval(effects, now - state.activeMs) !== null;

@@ -135,7 +135,11 @@ export type StageFrameInput = {
 export type StageSceneHandle = {
   root: Group;
   setTheme: (theme: StageTheme, scene: Scene, renderer: WebGPURenderer | null) => void;
-  /** The view in points: the layers are laid out over it as the 2D Home lays them out. */
+  /**
+   * The view in points: the layers are laid out over it as the 2D Home lays
+   * them out. The runtime sets it on every frame of the art's glide to a new
+   * `lift`.
+   */
   setViewport: (viewport: StageViewport) => void;
   /** A cover's roles keep the authored sky: the haze's header scrim all but goes. */
   setRole: (role: StageRole) => void;
@@ -563,7 +567,8 @@ export function createStageScene(): StageSceneHandle {
         next.inset === viewport.inset &&
         next.leftInset === viewport.leftInset &&
         next.rightInset === viewport.rightInset &&
-        next.floor === viewport.floor
+        next.floor === viewport.floor &&
+        (next.lift ?? 0) === (viewport.lift ?? 0)
       )
         return;
       viewport = next;

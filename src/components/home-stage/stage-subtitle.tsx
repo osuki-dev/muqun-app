@@ -28,6 +28,7 @@ export function StageSubtitle({
   compact = false,
   maxRows = 5,
   onShownChange,
+  onHeight,
   onOpen,
 }: {
   serverId: string;
@@ -43,6 +44,8 @@ export function StageSubtitle({
   compact?: boolean;
   maxRows?: number;
   onShownChange?: (shown: boolean) => void;
+  /** The stack's laid-out height, in points, as lines come and go. */
+  onHeight?: (height: number) => void;
   onOpen?: (line: StageProgress) => void;
 }) {
   const lines = useStageProgress(serverId, paused);
@@ -53,7 +56,7 @@ export function StageSubtitle({
   }, [visible]);
   useEffect(() => () => report(false), []);
   return visible ? (
-    <SubtitleStack>
+    <SubtitleStack onHeight={onHeight}>
       {lines.slice(0, Math.min(maxRows, compact ? 2 : 5)).map((line) => (
         <HeldSubtitleLine
           key={line.key}
@@ -75,14 +78,23 @@ export function StageSubtitle({
  * the session strip, outside the stack, and stayed out of the accessibility
  * tree.
  */
-function SubtitleStack({ children }: { children: ReactNode }) {
+function SubtitleStack({
+  onHeight,
+  children,
+}: {
+  onHeight?: (height: number) => void;
+  children: ReactNode;
+}) {
   const opacity = useSharedValue(0);
   useEffect(() => {
     opacity.set(withTiming(1, timing('short')));
   }, [opacity]);
   const style = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return (
-    <Animated.View testID="home-stage-subtitle" style={[styles.stack, style]}>
+    <Animated.View
+      testID="home-stage-subtitle"
+      style={[styles.stack, style]}
+      onLayout={(event) => onHeight?.(event.nativeEvent.layout.height)}>
       <LayoutAnimationConfig skipEntering>{children}</LayoutAnimationConfig>
     </Animated.View>
   );
