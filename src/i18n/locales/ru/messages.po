@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more}"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "Ещё {more} в этом сеансе"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
@@ -686,6 +690,7 @@ msgstr "После записи"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "Агент"
 
@@ -2490,6 +2495,10 @@ msgstr "Не удалось сохранить. Проверьте, что ко�
 msgid "Could not search folders. Try again."
 msgstr "Не удалось найти папки. Повторите попытку"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "Не удалось выполнить поиск по сообщениям"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "Импортировать тему"
 msgid "Imported"
 msgstr "Импортирована"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "В сообщениях"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "В работе"
@@ -3573,6 +3586,12 @@ msgstr "В работе"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Включённое использование ограничено. Платные или другие варианты могут оставаться доступными"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "Индексация {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "Команды не найдены. Попробуйте другое с
 msgid "No matching sessions"
 msgstr "Нет подходящих сессий"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "Нет подходящих сообщений"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "В этом проекте пока нет сессий. Начните 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "Нет сессий по запросу «{searchQuery}»"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "Нет подходящих сеансов или сообщений"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "Сначала откройте {mirrorName} на этом телефо�
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "Открыть агента {name} на {label}"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "Открыть {title} на: {0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "Навык запущен"
 msgid "Skip intro"
 msgstr "Пропустить знакомство"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "На некоторых компьютерах поиск не удался"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "Некоторые соединения не показаны на карте"
@@ -7819,6 +7855,10 @@ msgstr "Слишком большой для подсветки — показа
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Слишком много изменений для списка. Это их начало, а не всё"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "Инструмент"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Вызов инструмента"
@@ -8049,6 +8089,7 @@ msgstr "Неподдерживаемый элемент ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "Сессия без названия"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "Режим YOLO включён — нажмите, чтобы выключить"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "Вы"
 

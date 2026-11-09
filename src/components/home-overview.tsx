@@ -979,6 +979,18 @@ export function HomeOverview({
     <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
   ) : undefined;
   const recentQuery = searchContinue ? continueQuery : '';
+  // Content search asks the computers this list covers; a computer with a
+  // card searches its own content from the card.
+  const contentSearchScope = stageLayout
+    ? launchController.chosen
+      ? [launchController.chosen.serverId]
+      : []
+    : homeServers
+        .map((server) => server.serverId)
+        .filter(
+          (serverId) =>
+            !sessionsInCards || !listedCardServers.some((card) => card.serverId === serverId)
+        );
 
   function openServer(serverId: string, paneId?: string, sessionId?: string) {
     retryHomeRefresh(serverId);
@@ -1300,6 +1312,7 @@ export function HomeOverview({
         hosts={sshRows}
         available={recentShown}
         query={recentQuery}
+        contentSearchScope={contentSearchScope}
         canReply={canReply}
         onReply={replyFromHome}
         onOpen={openRecentCommand}

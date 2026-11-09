@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more} 项"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "此会话中还有 {more} 处"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "还有 {overflow} 个"
@@ -686,6 +690,7 @@ msgstr "录完转录"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "Agent"
 
@@ -2490,6 +2495,10 @@ msgstr "保存失败，请确认电脑在线且 Gateway 已更新"
 msgid "Could not search folders. Try again."
 msgstr "无法搜索文件夹，请重试"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "无法搜索消息"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "导入主题"
 msgid "Imported"
 msgstr "已导入"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "消息中"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "进行中"
@@ -3573,6 +3586,12 @@ msgstr "进行中"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "套餐内用量受限，付费或其他使用方式可能仍可用"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "正在建立索引 {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "没有匹配的命令，换个关键词试试"
 msgid "No matching sessions"
 msgstr "没有匹配的会话"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "没有匹配的消息"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "本项目还没有会话。点 + 按钮新建一个"
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "没有与“{searchQuery}”匹配的会话"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "没有匹配的会话或消息"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "请先在这台手机上打开 {mirrorName}"
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "在 {label} 上打开 {name} 代理"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "打开 {title}，定位到：{0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "技能已启动"
 msgid "Skip intro"
 msgstr "跳过介绍"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "部分电脑无法搜索"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "部分连接未在图中显示"
@@ -7819,6 +7855,10 @@ msgstr "文件太大，无法着色，显示为纯文本"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "工具"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具调用"
@@ -8049,6 +8089,7 @@ msgstr "暂不支持的内容（{0}）"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "未命名会话"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "YOLO 模式已开启 — 点按可关闭"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "你"
 

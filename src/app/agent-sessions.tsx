@@ -15,6 +15,9 @@ import {
   type SessionPagesState,
 } from '@/lib/agent-session-page';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
+import { SESSION_SEARCH_CAPABILITY } from '@/lib/session-search';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useSessionReveal } from '@/stores/session-reveal';
 
 const EMPTY_PAGE: SessionPagesState = {
   sessions: [],
@@ -93,6 +96,19 @@ function OwnedAgentSessionsScreen() {
         capabilities
       ),
     [sessionInfo, discoveredAgents, capabilities]
+  );
+
+  // Content search asks the computer this sheet lists, through its own record.
+  const connected = useGatewayConnectionStore((state) => state.record);
+  const searchRecord =
+    connected &&
+    connected.serverId === serverId &&
+    capabilities?.includes(SESSION_SEARCH_CAPABILITY)
+      ? connected
+      : undefined;
+  const contentSearch = useMemo(
+    () => (searchRecord ? { record: searchRecord, agentId: agentId ?? undefined } : undefined),
+    [searchRecord, agentId]
   );
 
   const features = discoveredAgents?.find((agent) => agent.id === agentId)?.features;
@@ -183,6 +199,16 @@ function OwnedAgentSessionsScreen() {
       activeProject={activeProject}
       models={models}
       onSelectSession={actions.selectSession}
+      contentSearch={contentSearch}
+      onOpenSearchHit={(hit) => {
+        useSessionReveal.getState().request({
+          serverId: hit.serverId,
+          asid: hit.asid,
+          itemId: hit.itemId,
+          messageId: hit.messageId,
+        });
+        actions.selectSession(hit.asid);
+      }}
       onCreateNewSession={actions.createSession}
       // The host-wide rows are this route's own copy, so what the reader does
       // to one has to land on the copy too: a deleted session from another

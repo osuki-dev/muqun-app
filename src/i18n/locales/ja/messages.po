@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more} 件"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "このセッションにあと {more} 件"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
@@ -686,6 +690,7 @@ msgstr "録音後に変換"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "エージェント"
 
@@ -2490,6 +2495,10 @@ msgstr "保存できませんでした。パソコンの接続と Gateway の更
 msgid "Could not search folders. Try again."
 msgstr "フォルダを検索できませんでした。もう一度お試しください"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "メッセージを検索できませんでした"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "テーマをインポート"
 msgid "Imported"
 msgstr "インポート済み"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "メッセージ内"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "進行中"
@@ -3573,6 +3586,12 @@ msgstr "進行中"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "プランに含まれる利用枠は制限されています。有料または別の利用方法は引き続き利用できる場合があります"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "インデックス作成中 {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "一致するコマンドがありません。別の語句で検索して
 msgid "No matching sessions"
 msgstr "一致するセッションはありません"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "一致するメッセージはありません"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "このプロジェクトにはまだセッションがありません。
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "「{searchQuery}」に一致するセッションはありません"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "一致するセッションやメッセージはありません"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "先にこの端末で {mirrorName} を開いてください"
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "{label} で {name} エージェントを開く"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "{title} を開いてこの位置へ：{0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "スキルを開始しました"
 msgid "Skip intro"
 msgstr "紹介をスキップ"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "一部のコンピューターを検索できませんでした"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "一部の接続はマップから省略されています"
@@ -7819,6 +7855,10 @@ msgstr "大きすぎてハイライトできません。プレーンテキスト
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "ツール"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "ツール呼び出し"
@@ -8049,6 +8089,7 @@ msgstr "未対応の項目 ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "YOLOモードがオンです — タップしてオフにする"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "あなた"
 
