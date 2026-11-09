@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more} de plus"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "+{more} autres dans cette session"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} autres"
@@ -686,6 +690,7 @@ msgstr "Après enregistrement"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "Agent"
 
@@ -2490,6 +2495,10 @@ msgstr "Enregistrement impossible. Vérifiez que vos ordinateurs sont en ligne e
 msgid "Could not search folders. Try again."
 msgstr "Impossible de rechercher des dossiers. Réessayez"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "Impossible de rechercher dans les messages"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "Importer un thème"
 msgid "Imported"
 msgstr "Importé"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "Dans les messages"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "En cours"
@@ -3573,6 +3586,12 @@ msgstr "En cours"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "L’utilisation incluse est restreinte. Une utilisation payante ou alternative peut rester disponible"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "Indexation {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "Aucune commande correspondante. Essayez un autre mot"
 msgid "No matching sessions"
 msgstr "Aucune session correspondante"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "Aucun message ne correspond"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "Aucune session dans ce projet pour l’instant. Lancez-en une avec le bo
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "Aucune session ne correspond à « {searchQuery} »"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "Aucune session ni aucun message ne correspond"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "Ouvrez d’abord {mirrorName} sur ce téléphone"
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "Ouvrir l'agent {name} sur {label}"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "Ouvrir {title} à : {0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "Compétence lancée"
 msgid "Skip intro"
 msgstr "Passer l'introduction"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "Certains ordinateurs n’ont pas pu être interrogés"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "Certaines connexions sont omises de la carte"
@@ -7819,6 +7855,10 @@ msgstr "Trop volumineux pour la coloration — affiché en texte brut"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "Outil"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Appel d’outil"
@@ -8049,6 +8089,7 @@ msgstr "Élément non pris en charge ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "Session sans titre"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "Le mode YOLO est activé — appuyez pour le désactiver"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "Vous"
 

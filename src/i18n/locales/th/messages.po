@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more} รายการ"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "อีก {more} รายการในเซสชันนี้"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
@@ -686,6 +690,7 @@ msgstr "หลังบันทึกเสียง"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "เอเจนต์"
 
@@ -2490,6 +2495,10 @@ msgstr "บันทึกไม่ได้ โปรดตรวจสอบ�
 msgid "Could not search folders. Try again."
 msgstr "ค้นหาโฟลเดอร์ไม่สำเร็จ โปรดลองอีกครั้ง"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "ค้นหาข้อความไม่ได้"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "นำเข้าธีม"
 msgid "Imported"
 msgstr "นำเข้าแล้ว"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "ในข้อความ"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "กำลังดำเนินการ"
@@ -3573,6 +3586,12 @@ msgstr "กำลังดำเนินการ"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "การใช้งานที่รวมอยู่ในแผนถูกจำกัด การใช้งานแบบชำระเงินหรือทางเลือกอื่นอาจยังใช้ได้"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "กำลังสร้างดัชนี {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "ไม่มีคำสั่งที่ตรงกัน ลอง�
 msgid "No matching sessions"
 msgstr "ไม่มีเซสชันที่ตรงกัน"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "ไม่มีข้อความที่ตรงกัน"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "โปรเจกต์นี้ยังไม่มีเซสชั
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "ไม่มีเซสชันที่ตรงกับ “{searchQuery}”"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "ไม่มีเซสชันหรือข้อความที่ตรงกัน"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "เปิด {mirrorName} บนโทรศัพท์นี้ก่�
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "เปิดเอเจนต์ {name} บน {label}"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "เปิด {title} ที่: {0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "เริ่มสกิลแล้ว"
 msgid "Skip intro"
 msgstr "ข้ามคำแนะนำ"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "ค้นหาในคอมพิวเตอร์บางเครื่องไม่ได้"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "การเชื่อมต่อบางรายการไม่แสดงบนแผนผัง"
@@ -7819,6 +7855,10 @@ msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แส�
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "เครื่องมือ"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "การเรียกใช้เครื่องมือ"
@@ -8049,6 +8089,7 @@ msgstr "รายการที่ยังไม่รองรับ ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "เซสชันไม่มีชื่อ"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "เปิดโหมด YOLO อยู่ — แตะเพื่อปิด"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "คุณ"
 

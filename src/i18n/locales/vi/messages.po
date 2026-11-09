@@ -516,6 +516,10 @@ msgstr "→ {name}"
 msgid "+{more} more"
 msgstr "+{more} mục"
 
+#: src/components/session-content-results.tsx
+msgid "+{more} more in this session"
+msgstr "+{more} kết quả khác trong phiên này"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
@@ -686,6 +690,7 @@ msgstr "Sau khi ghi âm"
 
 #: src/components/home-composer-options.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Agent"
 msgstr "Tác nhân"
 
@@ -2490,6 +2495,10 @@ msgstr "Không thể lưu. Hãy kiểm tra các máy tính đang trực tuyến 
 msgid "Could not search folders. Try again."
 msgstr "Không thể tìm kiếm thư mục. Hãy thử lại"
 
+#: src/components/session-content-results.tsx
+msgid "Could not search messages"
+msgstr "Không thể tìm trong tin nhắn"
+
 #: src/components/ssh-terminal-workspace.tsx
 #: src/components/task-row.tsx
 msgid "Could not send"
@@ -3566,6 +3575,10 @@ msgstr "Nhập giao diện"
 msgid "Imported"
 msgstr "Đã nhập"
 
+#: src/components/session-content-results.tsx
+msgid "In messages"
+msgstr "Trong tin nhắn"
+
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "Đang chạy"
@@ -3573,6 +3586,12 @@ msgstr "Đang chạy"
 #: src/components/agent-account-limits-section.tsx
 msgid "Included usage is restricted. Paid or alternative usage may still be available."
 msgstr "Mức sử dụng bao gồm trong gói bị hạn chế. Cách sử dụng trả phí hoặc thay thế có thể vẫn khả dụng"
+
+#. placeholder {0}: indexing.done
+#. placeholder {1}: indexing.total
+#: src/components/session-content-results.tsx
+msgid "Indexing {0}/{1}"
+msgstr "Đang lập chỉ mục {0}/{1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -4433,6 +4452,10 @@ msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 msgid "No matching sessions"
 msgstr "Không có phiên phù hợp"
 
+#: src/components/session-content-results.tsx
+msgid "No messages match"
+msgstr "Không có tin nhắn phù hợp"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4517,6 +4540,10 @@ msgstr "Dự án này chưa có phiên nào. Bắt đầu bằng nút +"
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
 msgstr "Không có phiên nào khớp với “{searchQuery}”"
+
+#: src/components/session-content-results.tsx
+msgid "No sessions or messages match"
+msgstr "Không có phiên hoặc tin nhắn phù hợp"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -4833,6 +4860,11 @@ msgstr "Hãy mở {mirrorName} trên điện thoại này trước"
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
 msgstr "Mở tác tử {name} trên {label}"
+
+#. placeholder {0}: hit.snippet
+#: src/components/session-content-results.tsx
+msgid "Open {title} at: {0}"
+msgstr "Mở {title} tại: {0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -6637,6 +6669,10 @@ msgstr "Đã bắt đầu kỹ năng"
 msgid "Skip intro"
 msgstr "Bỏ qua phần giới thiệu"
 
+#: src/components/session-content-results.tsx
+msgid "Some computers could not be searched"
+msgstr "Không thể tìm trên một số máy tính"
+
 #: src/components/computer-map/screen.tsx
 msgid "Some connections are omitted from the map."
 msgstr "Một số kết nối không được hiển thị trên sơ đồ"
@@ -7819,6 +7855,10 @@ msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng vă
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
 
+#: src/components/session-content-results.tsx
+msgid "Tool"
+msgstr "Công cụ"
+
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Lệnh gọi công cụ"
@@ -8049,6 +8089,7 @@ msgstr "Mục chưa được hỗ trợ ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/session-content-results.tsx
 msgid "Untitled session"
 msgstr "Phiên chưa có tên"
 
@@ -8427,6 +8468,7 @@ msgid "YOLO mode is on — tap to turn it off"
 msgstr "Chế độ YOLO đang bật — chạm để tắt"
 
 #: src/components/agent-message-block.tsx
+#: src/components/session-content-results.tsx
 msgid "You"
 msgstr "Bạn"
 

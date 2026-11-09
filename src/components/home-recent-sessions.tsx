@@ -26,6 +26,9 @@ import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/reac
 import { AgentMark } from '@/components/agent-mark';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { HomeFoldLink } from '@/components/home-fold-link';
+import { SessionContentSearch } from '@/components/session-content-results';
+import { SESSION_SEARCH_CAPABILITY, type ServerSessionSearchHit } from '@/lib/session-search';
+import { useSessionReveal } from '@/stores/session-reveal';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLatestReader, useStableHandler } from '@/hooks/use-render-refs';
@@ -413,6 +416,7 @@ export function HomeRecentSessions({
   pad = false,
   header,
   inCard = false,
+  contentSearchScope,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -441,6 +445,8 @@ export function HomeRecentSessions({
    * the fold reads "All sessions (N)".
    */
   inCard?: boolean;
+  /** The computers whose session content a search also asks (`session_search_v1` only). */
+  contentSearchScope?: readonly string[];
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -458,6 +464,10 @@ export function HomeRecentSessions({
   const discovery = useAgents((state) => state.index.servers);
   const collapsedLimit = limit ?? HOME_CONTINUE_INITIAL_LIMIT;
   const searching = query.trim().length > 0;
+  const contentRecords = useContentSearchRecords(servers, contentSearchScope);
+  const computerLabels = Object.fromEntries(
+    servers.map((server) => [server.serverId, server.label])
+  );
   const live = searchedHomeContinueEntries(
     available,
     query,
@@ -516,7 +526,7 @@ export function HomeRecentSessions({
           />
         ))}
       </View>
-      {!displayed.length ? (
+      {!displayed.length && !(searching && contentRecords.length) ? (
         <Text
           testID="home-continue-no-matches"
           variant="bodySmall"
@@ -524,6 +534,17 @@ export function HomeRecentSessions({
           style={inCard ? styles.noMatchesInCard : styles.noMatches}>
           {t`No matching sessions`}
         </Text>
+      ) : null}
+      {searching && contentRecords.length ? (
+        <SessionContentSearch
+          testID={inCard ? 'home-computer-content-search' : 'home-content-search'}
+          records={contentRecords}
+          query={query}
+          computerLabels={contentRecords.length > 1 ? computerLabels : undefined}
+          titleMatches={displayed.length}
+          surface={inCard ? 'ground' : 'card'}
+          onOpenHit={(hit) => onOpen(openSearchHit(hit))}
+        />
       ) : null}
       {!searching && shouldShowHomeContinueOverflow(available, collapsedLimit) ? (
         <HomeFoldLink
@@ -537,6 +558,41 @@ export function HomeRecentSessions({
       ) : null}
     </View>
   );
+}
+
+/** The scoped computers that can search session content, as records. */
+function useContentSearchRecords(
+  servers: readonly GatewayRecord[],
+  scope: readonly string[] | undefined
+): GatewayRecord[] {
+  // Joined into one string so a capability change elsewhere re-renders nothing.
+  const capable = useServerCapabilities((state) =>
+    (scope ?? [])
+      .filter((serverId) => state.byServer[serverId]?.includes(SESSION_SEARCH_CAPABILITY))
+      .join('\n')
+  );
+  const ids = capable ? capable.split('\n') : [];
+  return servers.filter((server) => ids.includes(server.serverId) && !isDemoRecord(server));
+}
+
+/** Opens a hit's session, asking it to bring the matching row into view. */
+function openSearchHit(hit: ServerSessionSearchHit): HomeCommand {
+  useSessionReveal.getState().request({
+    serverId: hit.serverId,
+    asid: hit.asid,
+    itemId: hit.itemId,
+    messageId: hit.messageId,
+  });
+  return {
+    type: 'open-agent',
+    target: {
+      kind: 'agent-session',
+      serverId: hit.serverId,
+      asid: hit.asid,
+      agentId: hit.agentId,
+      ...(hit.directory ? { directory: hit.directory } : {}),
+    },
+  };
 }
 
 /**
@@ -650,7 +706,7 @@ export function HomeComputerSessions({
   entries: readonly HomeContinueEntry[];
 } & Omit<
   ComponentProps<typeof HomeRecentSessions>,
-  'available' | 'query' | 'inCard' | 'compact' | 'limit' | 'header'
+  'available' | 'query' | 'inCard' | 'compact' | 'limit' | 'header' | 'contentSearchScope'
 >) {
   const [query, setQuery] = useState('');
   if (!entries.length) return null;
@@ -666,6 +722,7 @@ export function HomeComputerSessions({
         {...list}
         available={entries}
         query={query}
+        contentSearchScope={[serverId]}
         inCard
         compact
         limit={COMPUTER_SESSIONS_SHOWN}

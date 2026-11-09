@@ -39,6 +39,7 @@ import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useLatestReader, useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
+import { useSessionRevealRequest } from '@/hooks/use-session-reveal';
 import {
   memo,
   useCallback,
@@ -5079,6 +5080,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     setLoadingEarlier(false);
   }, [windowStart]);
+
+  // A search hit opened this session: bring its row into view.
+  useSessionRevealRequest({
+    serverId,
+    asid: activeAsid,
+    ready: !loading && sessionInfo?.asid === activeAsid,
+    store: transcriptStore,
+    listRef,
+    loadingEarlier,
+    canLoadEarlier: windowStart > 0 || (supportsRemoteEarlier && !earlierExhausted),
+    loadEarlier: handleLoadEarlier,
+    showFrom: (index) => setWindowStart((current) => Math.min(current, index)),
+  });
 
   /**
    * What the engine last said about itself, when that is worth a row.

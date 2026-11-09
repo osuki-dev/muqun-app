@@ -12,8 +12,16 @@ import {
   type ComponentProps,
   type ReactElement,
 } from 'react';
-import { type ScrollViewProps, UIManager, type ViewInstance } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { type ScrollViewProps, StyleSheet, UIManager, type ViewInstance } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
@@ -77,6 +85,39 @@ interface RowContextValue extends Omit<UserProps, 'group'> {
 }
 const RowContext = createContext<RowContextValue | null>(null);
 
+/** How strongly a revealed row is tinted, and for how long it holds. */
+const FLASH_OPACITY = 0.16;
+const FLASH_HOLD_MS = 900;
+
+/**
+ * The accent wash behind a row a search hit opened on: in, held, out.
+ *
+ * Its own component with its own selector, so marking a row re-renders that
+ * row's wash and nothing else -- not the row, not the list.
+ */
+function RowRevealFlash({ store, id }: { store: AgentTranscriptStore; id: string }) {
+  const nonce = useStore(store, (state) => (state.flash?.key === id ? state.flash.nonce : 0));
+  const theme = useThemeTokens();
+  const opacity = useSharedValue(0);
+  useEffect(() => {
+    if (!nonce) return;
+    opacity.set(
+      withSequence(
+        withTiming(FLASH_OPACITY, { duration: 180 }),
+        withDelay(FLASH_HOLD_MS, withTiming(0, { duration: 700 }))
+      )
+    );
+  }, [nonce, opacity]);
+  const style = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  if (!nonce) return null;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.primary }, style]}
+    />
+  );
+}
+
 const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   const context = useContext(RowContext)!;
   const { store, diagramsActive, visibility, playback, beginToolExpansion, rowScope, ...props } =
@@ -96,13 +137,18 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   );
   const visible = useStore(visibility, (keys) => keys.has(id));
   if (!group) return null;
+  const flash = <RowRevealFlash key={`${rowScope}:${id}:flash`} store={store} id={id} />;
   // Recycle the list container, but give each stateful/native part its own
   // lifetime. Expansion, input drafts, timers and native markdown must never
   // carry over when a container is assigned to another part.
   return group.role === 'user' ? (
-    <AgentUserMessage key={`${rowScope}:${id}`} group={group} {...props} />
+    <>
+      {flash}
+      <AgentUserMessage key={`${rowScope}:${id}`} group={group} {...props} />
+    </>
   ) : (
     <AudioPlaybackContext.Provider value={{ ...playback, row: id }}>
+      {flash}
       <DiagramVisibility.Provider value={visible && diagramsActive}>
         <AgentAssistantMessage
           key={`${rowScope}:${id}`}
