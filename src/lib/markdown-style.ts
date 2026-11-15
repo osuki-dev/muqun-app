@@ -198,6 +198,7 @@ export function createMarkdownStyle(
   const codeBackground = fill(colors.surfaceRaised);
   const quoteBackground = fill(colors.primarySubtle);
   const link = colors.primary;
+  const heading = { color: link };
   const mono = codeFamily(fonts);
   /**
    * Every prose block is built from this, which is why the family goes on it
@@ -226,6 +227,7 @@ export function createMarkdownStyle(
     // a reply's "## Objective" is a paragraph heading, not a page title.
     h1: {
       ...base,
+      ...heading,
       fontSize: AGENT_TYPE.prose.size + 2,
       lineHeight: AGENT_TYPE.prose.lineHeight + 2,
       fontWeight: '700',
@@ -234,17 +236,18 @@ export function createMarkdownStyle(
     },
     h2: {
       ...base,
+      ...heading,
       fontSize: AGENT_TYPE.prose.size + 1,
       lineHeight: AGENT_TYPE.prose.lineHeight + 1,
       fontWeight: '700',
       marginTop: 10,
       marginBottom: 4,
     },
-    h3: { ...base, fontWeight: '700', marginTop: 8, marginBottom: 4 },
-    h4: { ...base, fontWeight: '600', marginTop: 6, marginBottom: 4 },
-    h5: { ...base, fontWeight: '600', marginTop: 6, marginBottom: 4 },
-    h6: { ...base, color: muted, fontWeight: '600', marginTop: 6, marginBottom: 4 },
-    strong: { color: text },
+    h3: { ...base, ...heading, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+    h4: { ...base, ...heading, fontWeight: '600', marginTop: 6, marginBottom: 4 },
+    h5: { ...base, ...heading, fontWeight: '600', marginTop: 6, marginBottom: 4 },
+    h6: { ...base, ...heading, fontWeight: '600', marginTop: 6, marginBottom: 4 },
+    strong: { color: link },
     em: { color: text },
     strikethrough: { color: text },
     underline: { color: text },
@@ -252,7 +255,7 @@ export function createMarkdownStyle(
     list: {
       ...base,
       bulletColor: link,
-      markerColor: muted,
+      markerColor: link,
       markerMinWidth: 20,
       gapWidth: 6,
       marginLeft: 2,
@@ -275,14 +278,14 @@ export function createMarkdownStyle(
         caution: { color: colors.danger, backgroundColor: fill(colors.dangerSubtle) },
       },
     },
-    // Inline code is the body ink in the monospace face and nothing more: no
+    // Inline code uses the theme accent in the monospace face: no
     // chip, no border. Models backtick file names, numbers and half their
     // nouns, and a tinted box behind every one of them turned a paragraph
     // into confetti.
     code: {
       fontFamily: mono,
       fontSize: AGENT_TYPE.mono.size,
-      color: text,
+      color: link,
       backgroundColor: 'transparent',
       borderColor: 'transparent',
     },
