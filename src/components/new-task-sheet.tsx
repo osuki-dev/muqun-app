@@ -407,11 +407,10 @@ export function NewTaskSheet({
                             ? Math.max(Keyboard.metrics()?.height ?? 0, Platform.isPad ? 440 : 340)
                             : 0
                         );
-                        promptInput.current?.blur();
-                        Keyboard.dismiss();
-                        void KeyboardController.dismiss({ animated: false }).then(() => {
-                          if (mounted.current) setAttachmentMenuOpen((open) => !open);
-                        });
+                        // Menu visibility belongs to this click, not a native
+                        // keyboard event that may already have been delivered.
+                        setAttachmentMenuOpen((open) => !open);
+                        void KeyboardController.dismiss({ animated: false });
                       }}
                       size={18}
                       color={theme.colors.text}

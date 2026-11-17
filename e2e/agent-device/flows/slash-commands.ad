@@ -1,9 +1,11 @@
 # Query, insert without sending, dismiss, and leave ordinary text alone.
 # One representative query per path keeps native acceptance focused.
 fill id="terminal-composer-input" "/co"
+wait stable 600 5000
 wait "label=\"Insert /compact [instructions]\"" 10000
 is hidden "label=\"Insert /clear\""
 fill id="terminal-composer-input" "/rel"
+wait stable 600 5000
 wait "label=\"Insert /release-notes\"" 10000
 is hidden "label=\"Insert /compact [instructions]\""
 press "label=\"Insert /release-notes\""
@@ -13,10 +15,13 @@ is hidden "id=slash-command"
 is visible "label=\"Send to agent\""
 # Removing the trigger resets dismissal without depending on native key events.
 fill id="terminal-composer-input" "draft"
+wait stable 600 5000
 fill id="terminal-composer-input" "/mod"
+wait stable 600 5000
 wait "label=\"Insert /model [model]\"" 10000
 press "label=\"Close the command list\""
 wait stable 400 5000
 is hidden "id=slash-command"
 fill id="terminal-composer-input" "look at /rel"
+wait stable 600 5000
 is hidden "id=slash-command"

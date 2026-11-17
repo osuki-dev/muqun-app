@@ -1255,7 +1255,19 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
 
     case 'read': {
       const imagePath = readImagePath(part.name, part.input);
-      if (imagePath && args.asid) return <ToolReadImage asid={args.asid} path={imagePath} />;
+      if (imagePath && args.asid) {
+        // Structured results are already rendered by ToolFiles. Resolve the
+        // input path only when the agent did not return an image itself.
+        const returnedImage =
+          args.files.some((file) => file.mime?.startsWith('image/')) ||
+          part.image_assets?.some((asset) => asset.mime.startsWith('image/'));
+        return (
+          <>
+            {!returnedImage ? <ToolReadImage asid={args.asid} path={imagePath} /> : null}
+            <OutputLines text={outputText} />
+          </>
+        );
+      }
       const preview = readFilePreview(outputText, target, args.files);
       if (preview.type === 'empty') return null;
       if (preview.type === 'output') return <OutputLines text={preview.text} />;

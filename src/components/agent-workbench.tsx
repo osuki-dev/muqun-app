@@ -917,7 +917,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ),
     ])
   );
-  const toolIds = useStore(transcriptStore, (state) => state.toolIds);
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
   const [windowStart, setWindowStart] = useState(0);
@@ -4873,21 +4872,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
-  /**
-   * The requests no tool row on screen can carry.
-   *
-   * A permission names the call it came from, so it is drawn under that card.
-   * One that names nothing -- or names a call that has fallen out of the
-   * rendered window -- still has to be answerable, and the footer is where it
-   * lands.
-   */
-  const footerPermissions = useMemo(
-    () =>
-      permissions.filter(
-        (request) => !request.source_tool_call_id || !toolIds.has(request.source_tool_call_id)
-      ),
-    [permissions, toolIds]
-  );
+  // A matching tool can be folded or virtualized off screen. Keep every
+  // unresolved permission reachable at the composer until it is answered.
+  const footerPermissions = permissions;
   const handleSendQueuedItem = useCallback(
     (itemId: string) => {
       const inboxId = queuedInboxId(itemId);

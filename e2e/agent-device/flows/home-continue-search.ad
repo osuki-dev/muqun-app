@@ -42,7 +42,8 @@ wait stable 300 5000
 
 # section settle-typed-ios
 # Use the visible native Search key; the iOS Enter helper can time out after dispatch.
-press "id=Search visible=true"
+wait stable 600 5000
+press "id=Search"
 wait stable 300 5000
 
 # section session-menu
