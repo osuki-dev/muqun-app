@@ -1,3 +1,4 @@
+import { withAlpha as selectionTint } from '@osuki-dev/ui/theme';
 import { isHostPathSource } from '@/lib/message-images';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -280,7 +281,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
             markdownStyle={markdownStyle}
             containerStyle={styles.markdown}
             selectable
-            selectionColor={colors.accent}
+            selectionColor={selectionTint(colors.accent, 0.22)}
             selectionHandleColor={colors.accent}
             streamingAnimation={false}
             textBreakStrategy="simple"

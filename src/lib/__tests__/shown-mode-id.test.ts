@@ -6,6 +6,7 @@ import type { ModeInfo } from '@/lib/agent-protocol';
 const claude: ModeInfo[] = [
   { id: 'default', name: 'Manual' },
   { id: 'plan', name: 'Plan' },
+  { id: 'bypassPermissions', name: 'Bypass permissions' },
   { id: 'background', name: 'Background', hidden: true },
 ];
 
@@ -13,7 +14,16 @@ describe('shownModeId', () => {
   test.each([
     ['another agent’s selection is dropped', { selected: 'build' }, undefined],
     ['… and the catalog default stands in', { selected: 'build', catalogDefault: 'plan' }, 'plan'],
-    ['a selection this agent offers wins', { selected: 'plan', sessionMode: 'default' }, 'plan'],
+    [
+      'confirmed session mode overrides stale local selection',
+      { selected: 'plan', sessionMode: 'default' },
+      'default',
+    ],
+    [
+      'a remote bypass switch replaces a cached manual selection',
+      { selected: 'default', sessionMode: 'bypassPermissions' },
+      'bypassPermissions',
+    ],
     [
       'the session’s own mode before the default',
       { sessionMode: 'default', catalogDefault: 'plan' },
