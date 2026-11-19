@@ -372,7 +372,14 @@ export class GatewaySocket {
     sourceId: string,
     asid: string,
     operation: 'snapshot' | 'earlier' | 'delta' | 'window' | 'page',
-    options: { refresh?: boolean; after?: number; cursor?: string } = {}
+    options: {
+      refresh?: boolean;
+      after?: number;
+      cursor?: string;
+      limit?: number;
+      retained?: boolean;
+      if_seq?: number;
+    } = {}
   ): Promise<{ status: number; body: unknown }> {
     if (this.disposed) return Promise.reject(new Error('Socket disposed'));
     const flightKey = JSON.stringify([
@@ -382,6 +389,9 @@ export class GatewaySocket {
       options.refresh ?? false,
       options.after ?? 0,
       options.cursor ?? null,
+      options.limit ?? null,
+      options.retained ?? false,
+      options.if_seq ?? null,
     ]);
     const existing = this.historyFlights.get(flightKey);
     if (existing) return existing;

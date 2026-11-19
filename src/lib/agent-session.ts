@@ -1,3 +1,4 @@
+import { HistoryInterruptedError } from './gateway-socket';
 import { gatewaySocketFor } from './gateway-socket-runtime';
 import { demoAgentComposerCatalog, demoAgentComposerFiles } from './demo-agent-composer';
 import { demoStageSnapshot, demoStageSessions, DEMO_STAGE_ASIDS } from './demo-stage-progress';
@@ -634,7 +635,14 @@ export async function readAgentSessionAt(
 async function socketHistory(
   asid: string,
   operation: 'snapshot' | 'earlier' | 'delta' | 'window' | 'page',
-  options: { refresh?: boolean; after?: number; cursor?: string } = {},
+  options: {
+    refresh?: boolean;
+    after?: number;
+    cursor?: string;
+    limit?: number;
+    retained?: boolean;
+    if_seq?: number;
+  } = {},
   sourceId = configuredGatewayServerId()
 ) {
   if (
@@ -642,16 +650,22 @@ async function socketHistory(
     !useServerCapabilities.getState().byServer[sourceId]?.includes('agent_history_ws_v1')
   )
     return null;
-  const response = await gatewaySocketFor(sourceId).requestHistory(
-    sourceId,
-    asid,
-    operation,
-    options
-  );
+  const socket = gatewaySocketFor(sourceId);
+  // The authenticated HTTP path can serve the initial transcript immediately
+  // while the live socket is still establishing its subscription.
+  const snapshotRead = operation === 'window' || operation === 'snapshot';
+  if (snapshotRead && !socket.connected) return null;
+  let response;
+  try {
+    response = await socket.requestHistory(sourceId, asid, operation, options);
+  } catch (error) {
+    if (snapshotRead && error instanceof HistoryInterruptedError) return null;
+    throw error;
+  }
   // A large resync (or a legacy Gateway snapshot) can exceed the socket's
   // frame budget. Only repeat idempotent reads over authenticated HTTP;
   // an earlier/page operation may already have advanced provider history.
-  if (response.status === 413 && (operation === 'snapshot' || operation === 'window')) return null;
+  if (response.status === 413 && snapshotRead) return null;
   return {
     ok: response.status >= 200 && response.status < 300,
     status: response.status,
@@ -663,7 +677,15 @@ async function socketHistory(
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
   asid: string,
-  options?: { refresh?: boolean; capabilities?: readonly string[]; historyCursor?: string | null }
+  options?: {
+    refresh?: boolean;
+    capabilities?: readonly string[];
+    historyCursor?: string | null;
+    limit?: number;
+    retained?: boolean;
+    ifSeq?: number;
+    current?: () => boolean;
+  }
 ): Promise<AgentSessionSnapshot> {
   if (usesOfflineDemo()) {
     const recovery = demoSessionRecoverySnapshot(asid, options?.refresh);
@@ -689,28 +711,49 @@ export async function getAgentSessionSnapshot(
   const path = windowed
     ? `/api/agent-sessions/${encodeURIComponent(asid)}/timeline/window`
     : sessionRoute(asid, '', sessionId, true);
-  const cursorQuery = cursor ? `${query ? '&' : '?'}cursor=${encodeURIComponent(cursor)}` : '';
+  const enhanced = windowed && capabilities?.includes('agent_history_window_options_v1');
+  const windowOptions = {
+    ...(enhanced && options?.limit ? { limit: options.limit } : {}),
+    ...(enhanced && options?.retained ? { retained: true } : {}),
+    ...(enhanced && cursor && options?.ifSeq !== undefined ? { if_seq: options.ifSeq } : {}),
+  };
+  const params = new URLSearchParams(query);
+  if (cursor) params.set('cursor', cursor);
+  for (const [key, value] of Object.entries(windowOptions)) params.set(key, String(value));
   const socketResponse = await socketHistory(asid, windowed ? 'window' : 'snapshot', {
     refresh: options?.refresh,
     ...(cursor ? { cursor } : {}),
+    ...windowOptions,
   });
-  if (!socketResponse && configuredGatewayServerId() !== sourceId)
-    throw new Error('The selected computer changed. Open the session again.');
+  const checkOwner = () => {
+    if (configuredGatewayServerId() !== sourceId || options?.current?.() === false)
+      throw new Error('The selected computer changed. Open the session again.');
+  };
+  checkOwner();
   const res =
     socketResponse ??
-    (await gatewayFetch(gatewayUrl(path + query + cursorQuery), {
+    (await gatewayFetch(gatewayUrl(path + (params.toString() ? '?' + params.toString() : '')), {
       method: 'GET',
       headers: gatewayAuthHeaders(),
     }));
+  if (windowOptions.retained && res.status === 404) {
+    const body = await res.text();
+    const error = readApiError(body);
+    checkOwner();
+    if (error.code === 'not_retained')
+      return getAgentSessionSnapshot(sessionId, asid, { ...options, retained: false });
+    throw new Error(`Failed to get agent session: 404 ${body}`);
+  }
   if (windowed && cursor && res.status === 409) {
     const error = readApiError(await res.text());
     if (error.code === 'history_cursor_lost') {
-      if (configuredGatewayServerId() !== sourceId)
-        throw new Error('The selected computer changed. Open the session again.');
+      checkOwner();
       // Reads are safe to repeat. A lost boundary cannot silently skip history.
       const snapshot = await getAgentSessionSnapshot(sessionId, asid, {
         ...options,
         historyCursor: undefined,
+        ifSeq: undefined,
+        retained: false,
       });
       return { ...snapshot, history_reset: true };
     }
@@ -720,12 +763,30 @@ export async function getAgentSessionSnapshot(
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
   const json = await res.json();
-  if (configuredGatewayServerId() !== sourceId)
-    throw new Error('The selected computer changed. Open the session again.');
-  // The snapshot is the first agent-session answer a workbench reads, so
-  // what its envelope advertises decides how the subtree is fetched next.
+  checkOwner();
   observeEnvelopeCapabilities(json, sourceId);
-  return parseAgentSessionSnapshot(envelopeData(json));
+  const data = asRecord(envelopeData(json));
+  const snapshot = parseAgentSessionSnapshot(data);
+  if (data?.unchanged === true) {
+    if (windowOptions.if_seq === undefined) throw new Error('Unexpected history confirmation');
+    if (
+      data.seq !== windowOptions.if_seq ||
+      snapshot.history_cursor !== cursor ||
+      snapshot.info?.asid !== asid ||
+      !Array.isArray(data.permissions) ||
+      !Array.isArray(data.forms) ||
+      !Array.isArray(data.inbox)
+    ) {
+      return getAgentSessionSnapshot(sessionId, asid, {
+        ...options,
+        ifSeq: undefined,
+        retained: false,
+      });
+    }
+    snapshot.history_unchanged = true;
+  }
+  if (windowOptions.retained) snapshot.history_retained = true;
+  return snapshot;
 }
 
 export async function deleteAgentSession(asid: string): Promise<void> {

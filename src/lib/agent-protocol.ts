@@ -1591,6 +1591,10 @@ export interface AgentSessionSnapshot {
   /** Absent on older Gateways; null means an empty history window. */
   history_cursor?: string | null;
   history_reset?: boolean;
+  /** Metadata-only reply to a read naming an exact window and sequence. */
+  history_unchanged?: true;
+  /** Retained first paint, awaiting native reconciliation. */
+  history_retained?: true;
   info: AgentSessionInfo | null;
   timeline: TimelineItem[];
   permissions: PermissionRequest[];

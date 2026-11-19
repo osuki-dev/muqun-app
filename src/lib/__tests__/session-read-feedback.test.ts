@@ -1,4 +1,6 @@
 import { expect, test } from 'bun:test';
+import type { TimelineItem } from '../agent-protocol';
+import { AgentEntryPreviews } from '../agent-entry-preview';
 import { runInNewContext } from 'node:vm';
 import { productionSource, transpile, walk } from '../../test-support/production-source';
 import { classifyAgentSessionGone } from '../agent-request-error';
@@ -76,6 +78,7 @@ function callback(name: string): string {
 
 /** Execute the actual entry and rejected snapshot path, without mounting native UI. */
 function reader() {
+  let timeline: TimelineItem[] = [];
   let reads = 0;
   let now = 0;
   let failure = parked;
@@ -98,6 +101,21 @@ function reader() {
     freshSessionRef: { current: undefined },
     historyCursorRef: { current: undefined },
     snapshotReadRef: { current: 0 },
+    selectionRevision: { current: 0 },
+    appliedSnapshot: { current: null },
+    entryRead: { current: null },
+    agentEntryPreviews: new AgentEntryPreviews(),
+    setDisplaySource: () => {},
+    windowStartRef: { current: 0 },
+    setWindowStart: () => {},
+    setSessionInfo: () => {},
+    setTimeline: (rows: TimelineItem[]) => {
+      timeline = rows;
+    },
+    HISTORY_PAGE_SIZE: 40,
+    CATCH_UP_START: {},
+    follow: { reset: () => {}, getSnapshot: () => ({ atBottom: true }) },
+    sameTimeline: (left: unknown, right: unknown) => left === right,
     preparationBindings: null,
     visible: true,
     preparing: false,
@@ -108,7 +126,11 @@ function reader() {
     useGatewayGeneration: { getState: () => ({ restarts: {} }) },
     useHomeAttention: { getState: () => ({ reserve: () => 1 }) },
     useServerCapabilities: { getState: () => ({ byServer: {} }) },
-    getAgentSessionSnapshot: async (): Promise<unknown> => {
+    getAgentSessionSnapshot: async (
+      _terminal?: string,
+      _asid?: string,
+      _options?: unknown
+    ): Promise<unknown> => {
       reads++;
       throw failure;
     },
@@ -124,8 +146,9 @@ function reader() {
       snapshotFailure = value;
     },
     setEarlierExhausted: () => {},
-    transcriptStore: { getState: () => ({ timeline: [] }) },
-    reconcileAgentSnapshotPending: () => [],
+    transcriptStore: { getState: () => ({ timeline }) },
+    reconcileAgentSnapshotPending: (_existing: TimelineItem[], incoming: TimelineItem[]) =>
+      incoming,
     setInbox: () => {},
     setCompaction: () => {},
     setStagedRevert: () => {},
@@ -134,7 +157,7 @@ function reader() {
     permissionReplies: { replace: () => [] },
     readAutoPermission: () => ({ owner: null, enabled: false }),
     setPermissions: () => {},
-    setForms: () => {},
+    setForms: (_forms: unknown[]) => {},
     syncRef: { current: {} },
     snapshotSettled: () => ({ state: {}, from: null }),
     askCatchUp: () => ({ state: {}, from: null }),
@@ -154,7 +177,8 @@ function reader() {
   };
   const load = runInNewContext(transpile(callback('loadSnapshot')), context) as (
     mode: string,
-    current?: () => boolean
+    current?: () => boolean,
+    prepared?: boolean
   ) => Promise<void>;
   context.loadSnapshot = (mode, current) => {
     const promise = load(mode, current);
@@ -352,4 +376,83 @@ test('an older cached success cannot dismiss a newer real failure notice', async
   expect(f.dismissed).toEqual([]);
   expect(f.shown).toHaveLength(1);
   expect(f.snapshotFailure()?.error).toBe(changed);
+});
+
+test('cached rows remain visible offline, and a prepared confirmation refreshes controls without replacing transcript', async () => {
+  const f = reader();
+  const cached: TimelineItem = {
+    id: 'cached',
+    message_id: 'm',
+    ordinal: 0,
+    seq: 7,
+    updated_ms: 0,
+    role: 'assistant',
+    part: { type: 'text', text: 'ready' },
+  };
+  f.context.agentEntryPreviews.remember(f.context.entrySource, 'session-a', [cached]);
+  const loading: boolean[] = [];
+  f.context.setLoading = (v) => loading.push(v);
+  await f.load('enter');
+  expect(f.context.transcriptStore.getState().timeline).toEqual([cached]);
+  expect(loading).not.toContain(true);
+  const baseline = {
+    history_cursor: 'before',
+    seq: 9,
+    info: null,
+    timeline: [cached],
+    permissions: [],
+    forms: [],
+    inbox: [],
+  };
+  f.context.getAgentSessionSnapshot = async () => baseline;
+  await f.load('enter');
+  const visible = f.context.transcriptStore.getState().timeline;
+  const requested: unknown[] = [];
+  const forms: unknown[][] = [];
+  f.context.setForms = (items) => forms.push(items);
+  f.context.getAgentSessionSnapshot = async (_t, _s, options) => {
+    requested.push(options);
+    return { ...baseline, history_unchanged: true, timeline: [], forms: [{ id: 'question' }] };
+  };
+  await f.load('silent', () => true, true);
+  expect(requested[0]).toMatchObject({ limit: 40, historyCursor: 'before', ifSeq: 9 });
+  expect(f.context.transcriptStore.getState().timeline).toBe(visible);
+  expect(forms).toEqual([[{ id: 'question' }]]);
+});
+
+test('an initial window becomes readable while a later resync is outstanding, and older rows cannot rewind it', async () => {
+  const f = reader();
+  const loading: boolean[] = [];
+  f.context.setLoading = (v) => loading.push(v);
+  const first = Promise.withResolvers<unknown>();
+  const refresh = Promise.withResolvers<unknown>();
+  let count = 0;
+  f.context.getAgentSessionSnapshot = () => (++count === 1 ? first.promise : refresh.promise);
+  const enter = f.load('enter');
+  const silent = f.load('silent');
+  const row: TimelineItem = {
+    id: 'current',
+    message_id: 'm',
+    ordinal: 0,
+    seq: 5,
+    updated_ms: 0,
+    role: 'assistant',
+    part: { type: 'text', text: 'current' },
+  };
+  const snapshot = {
+    seq: 5,
+    history_cursor: 'a',
+    info: null,
+    timeline: [row],
+    permissions: [],
+    forms: [],
+    inbox: [],
+  };
+  first.resolve(snapshot);
+  await enter;
+  expect(loading.at(-1)).toBe(false);
+  expect(f.context.transcriptStore.getState().timeline).toEqual([row]);
+  refresh.resolve({ ...snapshot, seq: 3, timeline: [] });
+  await silent;
+  expect(f.context.transcriptStore.getState().timeline).toEqual([row]);
 });
