@@ -1879,6 +1879,10 @@ msgstr "컨텍스트 압축됨 · 수동"
 msgid "Context used"
 msgstr "사용한 컨텍스트"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "컨텍스트 창"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "작업 받지 않음"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "사용 불가"
@@ -4657,10 +4660,6 @@ msgstr "미보고"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "실행 중이 아님"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "설정 안 됨"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "주소는 페어링된 이 컴퓨터에 접속하는 위치입니다. �
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway가 시작할 때 표시하는 주소입니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "에이전트가 현재 컨텍스트 사용량을 아직 보고하지 않았습니다"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

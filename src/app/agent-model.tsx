@@ -13,6 +13,7 @@ export default function AgentModelScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId?: string;
+    asid?: string;
     /** The computer whose remembered models are listed as recent. */
     memoryScope?: string;
     directory?: string;
@@ -35,6 +36,7 @@ export default function AgentModelScreen() {
 
   return (
     <AgentModelSheet
+      asid={params.asid}
       sessionId={params.sessionId || (fromHome ? undefined : bridgeSessionId) || undefined}
       memoryScope={params.memoryScope || undefined}
       directory={params.directory || (fromHome ? undefined : bridgeDirectory) || undefined}
@@ -42,7 +44,8 @@ export default function AgentModelScreen() {
       selectedModel={selectedModel}
       onSelectModel={(model) => {
         if (fromHome) homeSelect?.(model);
-        else bridgeSelect(model);
+        else if (!params.asid || params.asid === useAgentSheetBridge.getState().activeAsid)
+          bridgeSelect(model);
         router.back();
       }}
       onClose={() => router.back()}

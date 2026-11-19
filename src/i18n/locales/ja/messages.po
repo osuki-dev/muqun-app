@@ -1879,6 +1879,10 @@ msgstr "コンテキストを圧縮しました · 手動"
 msgid "Context used"
 msgstr "コンテキスト使用量"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "コンテキストウィンドウ"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "作業の受け付け停止中"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
@@ -4657,10 +4660,6 @@ msgstr "未報告"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "起動していません"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "未設定"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "アドレスは、このペアリング済みコンピュータに接続
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway が起動時に表示するアドレスです"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "エージェントから現在のコンテキスト使用量が報告されていません"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

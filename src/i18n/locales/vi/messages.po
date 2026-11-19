@@ -1879,6 +1879,10 @@ msgstr "Đã nén ngữ cảnh · thủ công"
 msgid "Context used"
 msgstr "Ngữ cảnh đã dùng"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Cửa sổ ngữ cảnh"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "Không nhận công việc"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -4657,10 +4660,6 @@ msgstr "Chưa báo cáo"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Đã tắt"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Chưa đặt"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "Địa chỉ là nơi kết nối đến máy tính đã ghép nối nà
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Địa chỉ mà Gateway in ra khi khởi động"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Tác tử chưa báo cáo mức sử dụng ngữ cảnh hiện tại"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

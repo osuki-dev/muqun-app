@@ -220,12 +220,14 @@ export const AgentContextSheet = memo(function AgentContextSheet({
       : ratio !== null && ratio > 0.7
         ? theme.colors.warning
         : theme.colors.primary;
-  const costLabel =
-    cost === undefined || cost === null
-      ? t`Not available`
-      : cost === 0
-        ? t`Free`
-        : `$${cost.toFixed(4)}`;
+  const tokenRows = [
+    [t`Tokens this session`, tokens ? spent : undefined],
+    [t`Input`, tokens?.input],
+    [t`Output`, tokens?.output],
+    [t`Reasoning`, tokens?.reasoning],
+    [t`Cache read`, tokens?.cache_read],
+    [t`Cache write`, tokens?.cache_write],
+  ] as const;
   // `modelName` is already normalized by the workbench, including its variant.
   // When it is unavailable, format the session reference by the same rule.
   const displayModelName = modelName || formatModelName(session?.model, '');
@@ -242,140 +244,122 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         showsVerticalScrollIndicator={false}>
         {/* The one piece of decoration in the sheet, and it is a measurement:
             a thin primary bar on `primarySubtle`, no card around it. */}
-        <View style={styles.capacity}>
-          <View style={styles.capacityHeader}>
-            <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-              {t`Context used`}
-            </Text>
-            {ratio === null ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {!hasContext ? t`Not available` : t`no window reported for this model`}
+        {inContext === null ? (
+          <Text testID="agent-context-used" variant="caption" color={theme.colors.textMuted}>
+            {t`The agent has not reported current context usage.`}
+          </Text>
+        ) : (
+          <View style={styles.capacity}>
+            <View style={styles.capacityHeader}>
+              <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                {t`Context used`}
               </Text>
-            ) : (
-              <Text variant="caption" weight="semibold" color={barTone}>
-                {`${(ratio * 100).toFixed(1)}%`}
-              </Text>
-            )}
-          </View>
-          {ratio !== null ? (
-            <View
-              style={[
-                styles.capacityTrack,
-                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-              ]}>
+              {ratio === null ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`no window reported for this model`}
+                </Text>
+              ) : (
+                <Text variant="caption" weight="semibold" color={barTone}>
+                  {`${(ratio * 100).toFixed(1)}%`}
+                </Text>
+              )}
+            </View>
+            {ratio !== null ? (
               <View
                 style={[
-                  styles.capacityFill,
-                  {
-                    width: `${Math.max(2, ratio * 100)}%`,
-                    backgroundColor: barTone,
-                  },
-                ]}
-              />
-            </View>
-          ) : null}
-          {/* What the number is, said plainly: the last turn's input, cached
+                  styles.capacityTrack,
+                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                ]}>
+                <View
+                  style={[
+                    styles.capacityFill,
+                    {
+                      width: `${Math.max(2, ratio * 100)}%`,
+                      backgroundColor: barTone,
+                    },
+                  ]}
+                />
+              </View>
+            ) : null}
+            {/* What the number is, said plainly: the last turn's input, cached
               input, reasoning and output -- which is what the model read. */}
-          <Text testID="agent-context-used" variant="caption" color={theme.colors.textMuted}>
-            {inContext === null
-              ? t`Not available`
-              : limitLabel === null
+            <Text testID="agent-context-used" variant="caption" color={theme.colors.textMuted}>
+              {limitLabel === null
                 ? t`${compact(inContext)} tokens the model last read`
                 : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
-          </Text>
-          {hasContext && contextUsage?.messages !== undefined ? (
-            <Text variant="caption" color={theme.colors.textSubtle}>
-              {t`${contextUsage.messages} messages in context`}
             </Text>
-          ) : null}
-        </View>
+            {hasContext && contextUsage?.messages !== undefined ? (
+              <Text variant="caption" color={theme.colors.textSubtle}>
+                {t`${contextUsage.messages} messages in context`}
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         <SheetSceneGroupRule />
         <AgentAccountLimitsSection serverId={serverId} agentId={agentId} />
-        <SheetSceneGroupHeading title={t`This session`} />
-        <SheetSceneRow
-          title={t`Estimated cost`}
-          meta={
-            <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-              {costLabel}
-            </Text>
-          }
-        />
-        {/* The row's label replaces its contents for a screen reader, so the
-            value it shows is also its accessibility value. */}
-        <SheetSceneRow
-          title={t`Project`}
-          accessibilityValue={{ text: session?.directory || t`Not available` }}
-          meta={
-            <Text
-              variant="caption"
-              color={theme.colors.textMuted}
-              numberOfLines={1}
-              style={styles.metaWide}>
-              {session?.directory || t`Not available`}
-            </Text>
-          }
-        />
-        <SheetSceneRow
-          title={t`Model`}
-          accessibilityValue={{ text: displayModelName || t`Not set` }}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {displayModelName || t`Not set`}
-            </Text>
-          }
-        />
-        {/* "Total spent" next to a number read as money on a sheet that also
-            states a cost. It is tokens, and it says so. */}
-        <SheetSceneRow
-          title={t`Tokens this session`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens ? compact(spent) : t`Not available`}
-            </Text>
-          }
-        />
-        <SheetSceneRow
-          title={t`Input`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens?.input === undefined ? t`Not available` : compact(tokens.input)}
-            </Text>
-          }
-        />
-        <SheetSceneRow
-          title={t`Output`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens?.output === undefined ? t`Not available` : compact(tokens.output)}
-            </Text>
-          }
-        />
-        <SheetSceneRow
-          title={t`Reasoning`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens?.reasoning === undefined ? t`Not available` : compact(tokens.reasoning)}
-            </Text>
-          }
-        />
-        <SheetSceneRow
-          title={t`Cache read`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens?.cache_read === undefined ? t`Not available` : compact(tokens.cache_read)}
-            </Text>
-          }
-        />
-
-        <SheetSceneRow
-          title={t`Cache write`}
-          meta={
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {tokens?.cache_write === undefined ? t`Not available` : compact(tokens.cache_write)}
-            </Text>
-          }
-        />
+        {cost != null || session?.directory || displayModelName || tokens || limitLabel ? (
+          <SheetSceneGroupHeading title={t`This session`} />
+        ) : null}
+        {inContext === null && limitLabel ? (
+          <SheetSceneRow
+            title={t`Context window`}
+            meta={
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {limitLabel}
+              </Text>
+            }
+          />
+        ) : null}
+        {cost != null ? (
+          <SheetSceneRow
+            title={t`Estimated cost`}
+            meta={
+              <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                {cost === 0 ? t`Free` : `$${cost.toFixed(4)}`}
+              </Text>
+            }
+          />
+        ) : null}
+        {session?.directory ? (
+          <SheetSceneRow
+            title={t`Project`}
+            accessibilityValue={{ text: session.directory }}
+            meta={
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                numberOfLines={1}
+                style={styles.metaWide}>
+                {session.directory}
+              </Text>
+            }
+          />
+        ) : null}
+        {displayModelName ? (
+          <SheetSceneRow
+            title={t`Model`}
+            accessibilityValue={{ text: displayModelName }}
+            meta={
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {displayModelName}
+              </Text>
+            }
+          />
+        ) : null}
+        {tokenRows.map(([label, amount]) =>
+          amount === undefined ? null : (
+            <SheetSceneRow
+              key={label}
+              title={label}
+              meta={
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {compact(amount)}
+                </Text>
+              }
+            />
+          )
+        )}
         {session?.git_info?.branch || session?.git_info?.sha ? (
           <>
             <SheetSceneGroupRule />

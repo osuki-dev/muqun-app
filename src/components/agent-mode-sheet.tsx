@@ -30,6 +30,7 @@ const STAGGERED_ROWS = 8;
 export interface AgentModeSheetProps {
   /** The gateway session whose catalog is listed. */
   sessionId?: string;
+  asid?: string;
   /**
    * The workspace whose catalog is listed.
    *
@@ -67,6 +68,7 @@ function agentIcon(id: string, color: string) {
 
 export const AgentModeSheet = memo(function AgentModeSheet({
   sessionId,
+  asid,
   directory,
   agentId,
   agentName,
@@ -129,23 +131,14 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     // discovery named lists its own modes or none.
     const fallbackModes = agentId ? [] : builtinAgents;
     getAgentCatalog(sessionId, undefined, {
+      ...(asid ? { asid } : {}),
       ...(directory ? { directory } : {}),
       ...(agentId ? { agentId } : {}),
     })
       .then((catalog) => {
         if (!active) return;
-        /*
-          The catalogue carries OpenCode's own machinery -- `Compaction`,
-          `Title`, `Summary` -- marked `hidden`, and its subagents marked
-          `mode: "subagent"`. Both were listed here as things to switch the
-          session to, which for the hidden three is switching the session to an
-          internal routine. `selectableModes` is the filter the protocol
-          already states; a host whose whole catalogue is hidden still gets a
-          picker rather than an empty sheet.
-         */
         const listed = selectableModes(catalog?.modes ?? []);
-        const fallback = catalog?.modes && catalog.modes.length > 0 ? catalog.modes : [];
-        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : fallbackModes);
+        setAgents(agentId || listed.length ? listed : fallbackModes);
         setDefaultAgent(catalog?.defaults?.mode);
       })
       .catch((err) => {
@@ -158,9 +151,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory, agentId, builtinAgents]);
-
-  const displayAgents = agents.length > 0 ? agents : builtinAgents;
+  }, [sessionId, asid, directory, agentId, builtinAgents]);
 
   const modeLabel = (agent: ModeInfo): string => {
     const mode = agent.mode?.toLowerCase();
@@ -177,12 +168,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
    */
   const effectiveAgent = effectiveAgentId(selectedAgent, defaultAgent);
 
-  const contentSized = displayAgents.length <= 4;
+  const contentSized = agents.length <= 4;
 
   const content = (
     <>
       <SheetSceneGroupHeading title={t`Available modes`} first />
-      {displayAgents.map((agent, index) => {
+      {agents.map((agent, index) => {
         const isSelected = effectiveAgent === agent.id;
         return (
           <Animated.View

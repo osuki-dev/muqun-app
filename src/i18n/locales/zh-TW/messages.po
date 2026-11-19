@@ -1879,6 +1879,10 @@ msgstr "脈絡已壓縮 · 手動"
 msgid "Context used"
 msgstr "上下文佔用"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "上下文視窗"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "不接受工作"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
@@ -4657,10 +4660,6 @@ msgstr "未提供"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "未執行"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "未設定"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "位址是連上這台已配對電腦的地方。變更位址不會解除
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway 啟動時印出的位址"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Agent 尚未回報目前的上下文用量"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

@@ -1879,6 +1879,10 @@ msgstr "Kontext verdichtet · manuell"
 msgid "Context used"
 msgstr "Kontext belegt"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Kontextfenster"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "Nimmt keine Aufgaben an"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Nicht verfügbar"
@@ -4657,10 +4660,6 @@ msgstr "Nicht gemeldet"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Läuft nicht"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Nicht gesetzt"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "Die Adresse ist der Ort, unter dem dieser gekoppelte Computer erreicht w
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Die Adresse, die das Gateway beim Start ausgibt"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Der Agent hat die aktuelle Kontextnutzung noch nicht gemeldet"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

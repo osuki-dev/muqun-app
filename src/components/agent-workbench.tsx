@@ -107,6 +107,7 @@ import {
   getAgentVcsDiff,
   getAgentVcsFiles,
   getAgentCatalog,
+  selectableModes,
   peekAgentCatalog,
   loadEarlierAgentTimeline,
   getAgentProjects,
@@ -1552,17 +1553,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
   const [catalogRevision, setCatalogRevision] = useState(0);
-  /** The agent the catalog on screen was read for; `null` until one answers. */
-  const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<string | null>(null);
-  useEffect(() => {
-    const scope: AgentCatalogScope = {
+  const readCatalogRevision = useRef(0);
+  const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<AgentCatalogScope | null>(null);
+  const scope = useMemo<AgentCatalogScope>(
+    () => ({
       sessionId,
       ...(activeAsid ? { asid: activeAsid } : {}),
       directory: activeDirectory,
       ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
-    };
+    }),
+    [sessionId, activeAsid, activeDirectory, catalogAgentId]
+  );
+  useEffect(() => {
     const previous = catalogScopeRef.current;
-    if (!shouldRefetchAgentCatalog(previous, scope)) return;
+    const invalidated = catalogRevision !== readCatalogRevision.current;
+    if (!invalidated && !shouldRefetchAgentCatalog(previous, scope)) return;
+    readCatalogRevision.current = catalogRevision;
     catalogScopeRef.current = scope;
     const peeked = peekAgentCatalog(sessionId, {
       ...(scope.asid ? { asid: scope.asid } : {}),
@@ -1572,6 +1578,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // Another scope is another list: what was on screen belonged to the last
     // session, agent or project and must not be offered here even for a
     // moment. This scope's cached answer, or nothing until it answers.
+    setAvailableAgents(peeked?.modes ?? []);
+    setCatalogModels(peeked?.models ?? []);
+    setCatalogDefaults(peeked?.defaults ?? NO_CATALOG_DEFAULTS);
     setSkills(peeked?.skills ?? []);
     setCommands(peeked?.commands ?? []);
     const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
@@ -1586,6 +1595,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let mounted = true;
     getAgentCatalog(sessionId, undefined, {
       forceRefresh: true,
+      requireFresh: invalidated,
       ...(scope.asid ? { asid: scope.asid } : {}),
       ...(scope.directory ? { directory: scope.directory } : {}),
       ...(scope.agentId ? { agentId: scope.agentId } : {}),
@@ -1593,7 +1603,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       .then((catalog) => {
         if (!mounted) return;
         setAvailableAgents(catalog?.modes ?? []);
-        setCatalogAnsweredFor(scope.agentId ?? '');
+        setCatalogAnsweredFor(scope);
         // An empty list from a project OpenCode has not loaded yet keeps this
         // scope's cached one; it never brings back another scope's.
         if (catalog && (!isEmptyAgentCatalog(catalog) || catalog.skills.length > 0)) {
@@ -1619,16 +1629,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, activeAsid, activeDirectory, catalogAgentId, applySelectedModel, catalogRevision]);
+  }, [sessionId, scope, applySelectedModel, catalogRevision]);
   /**
    * Whether the mode chip belongs on screen: the agent's features allow modes
    * and, once its catalog has answered, the catalog lists some. T3 has none.
    */
-  const catalogRead = catalogAnsweredFor === (catalogAgentId ?? '');
+  const catalogRead = !shouldRefetchAgentCatalog(catalogAnsweredFor, scope);
   const canPickMode =
     agentFeatures.modes &&
     (!activeAsid || agentFeatures.extra.modeSwitching !== false) &&
-    (!catalogRead || availableAgents.length > 0);
+    (!catalogRead || selectableModes(availableAgents).length > 0);
   // The selection only once this agent's catalog lists it: it can be another
   // agent's mode carried over from the last session on screen.
   const offeredSelectedMode = catalogRead
@@ -2847,7 +2857,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         case 'agent.resync':
           if (event.reason === 'agent_catalog_changed') {
-            catalogScopeRef.current = null;
             setCatalogRevision((revision) => revision + 1);
           }
           // Housekeeping, not navigation: the reader's place is kept.
@@ -4411,23 +4420,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       pathname: '/agent-model',
       params: {
         sessionId,
+        ...(activeAsid ? { asid: activeAsid } : {}),
         memoryScope,
         ...(activeDirectory ? { directory: activeDirectory } : {}),
         ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
       },
     });
-  }, [router, sessionId, memoryScope, activeDirectory, catalogAgentId]);
+  }, [router, sessionId, activeAsid, memoryScope, activeDirectory, catalogAgentId]);
 
   const openModeSheet = useCallback(() => {
     router.push({
       pathname: '/agent-mode',
       params: {
         sessionId,
+        ...(activeAsid ? { asid: activeAsid } : {}),
         ...(activeDirectory ? { directory: activeDirectory } : {}),
         ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
       },
     });
-  }, [router, sessionId, activeDirectory, catalogAgentId]);
+  }, [router, sessionId, activeAsid, activeDirectory, catalogAgentId]);
 
   const openWorkspaceSheet = useCallback(() => {
     router.push({ pathname: '/agent-workspace', params: { sessionId } });

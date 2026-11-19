@@ -1879,6 +1879,10 @@ msgstr "Context compacted · manual"
 msgid "Context used"
 msgstr "Context used"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Context window"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "Not accepting work"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Not available"
@@ -4657,10 +4660,6 @@ msgstr "Not reported"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Not running"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Not set"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "The address is where this paired computer is reached. Changing it does n
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "The address the Gateway prints when it starts"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "The agent has not reported current context usage"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

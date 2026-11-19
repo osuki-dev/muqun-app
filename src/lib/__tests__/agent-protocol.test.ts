@@ -1194,6 +1194,12 @@ describe('context, shells, engine, diff', () => {
   });
 
   test('tokens may be null, and the ring has nothing to fill', () => {
+    // Some gateways preserve an empty provider usage envelope until the first turn.
+    expect(agentUsageSummary(parseAgentContextUsage({ tokens: {} }), undefined)).toBeNull();
+    expect(
+      agentUsageSummary(parseAgentContextUsage({ tokens: { input: 0, output: 0 } }), undefined)
+        ?.total
+    ).toBe(0);
     const usage = parseAgentContextUsage({ messages: 0, tokens: null });
     expect(usage.tokens).toBeNull();
     expect(contextTokenTotal(usage.tokens)).toBe(0);

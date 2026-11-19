@@ -1879,6 +1879,10 @@ msgstr "Контекст сжат · вручную"
 msgid "Context used"
 msgstr "Контекст занят"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Контекстное окно"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "Не принимает работу"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Недоступно"
@@ -4657,10 +4660,6 @@ msgstr "Не указано"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Выключен"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Не задано"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "Адрес — это то, где доступен этот привя�
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "Адрес, который Gateway выводит при запуске"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Агент ещё не сообщил, какая часть контекста используется"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

@@ -56,6 +56,7 @@ const STAGGERED_ROWS = 8;
 export interface AgentModelSheetProps {
   /** The gateway session whose catalog is listed. */
   sessionId?: string;
+  asid?: string;
   /** The computer whose remembered models are recent (`agent-model-memory.ts`); else `sessionId`. */
   memoryScope?: string;
   /**
@@ -110,6 +111,7 @@ function runningStarts(lengths: readonly number[]): number[] {
 
 export const AgentModelSheet = memo(function AgentModelSheet({
   sessionId,
+  asid,
   memoryScope,
   directory,
   agentId,
@@ -179,6 +181,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setProviders([]);
     setRecentRefs(loadRecentAgentModels(memoryScope ?? sessionId ?? '', agentId, sessionId));
     getAgentCatalog(sessionId, undefined, {
+      ...(asid ? { asid } : {}),
       ...(directory ? { directory } : {}),
       ...(agentId ? { agentId } : {}),
       // Revalidate on every opening so history never supplies stale model metadata.
@@ -201,7 +204,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, memoryScope, directory, agentId, reloadToken]);
+  }, [sessionId, asid, memoryScope, directory, agentId, reloadToken]);
 
   /**
    * Which rows the reader scrolls past, and nothing more.

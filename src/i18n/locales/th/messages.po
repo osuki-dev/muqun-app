@@ -1879,6 +1879,10 @@ msgstr "บีบอัดบริบทแล้ว · ด้วยตนเ�
 msgid "Context used"
 msgstr "บริบทที่ใช้ไป"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "หน้าต่างบริบท"
+
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -4596,7 +4600,6 @@ msgstr "ไม่รับงาน"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
@@ -4657,10 +4660,6 @@ msgstr "ไม่ได้รายงาน"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "ไม่ได้ทำงาน"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "ยังไม่ได้ตั้ง"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -7246,6 +7245,10 @@ msgstr "ที่อยู่นี้ใช้เข้าถึงคอมพ
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
 msgstr "ที่อยู่ที่ Gateway แสดงเมื่อเริ่มทำงาน"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "เอเจนต์ยังไม่ได้รายงานปริมาณบริบทที่ใช้อยู่"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."

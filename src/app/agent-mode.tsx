@@ -10,6 +10,7 @@ export default function AgentModeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId?: string;
+    asid?: string;
     directory?: string;
     agentId?: string;
   }>();
@@ -42,13 +43,15 @@ export default function AgentModeScreen() {
 
   return (
     <AgentModeSheet
+      asid={params.asid}
       sessionId={params.sessionId || bridgeSessionId || undefined}
       directory={params.directory || bridgeDirectory || undefined}
       agentId={agentId}
       agentName={agentDisplayName(mirroredAgents, agentId)}
       selectedAgent={selectedAgent ?? sessionAgent}
       onSelectAgent={(agent) => {
-        selectAgentMode(agent);
+        if (!params.asid || params.asid === useAgentSheetBridge.getState().activeAsid)
+          selectAgentMode(agent);
         router.back();
       }}
       onClose={() => router.back()}
