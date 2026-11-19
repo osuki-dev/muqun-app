@@ -1635,10 +1635,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * and, once its catalog has answered, the catalog lists some. T3 has none.
    */
   const catalogRead = !shouldRefetchAgentCatalog(catalogAnsweredFor, scope);
+  const liveCatalog = Boolean(activeAsid && catalogRead);
+  const canPickModel =
+    canInteractNatively &&
+    (agentFeatures.modelSelection ||
+      (liveCatalog && catalogModels.some((model) => model.enabled !== false)));
+  const offeredModes = selectableModes(availableAgents);
   const canPickMode =
-    agentFeatures.modes &&
+    (agentFeatures.modes || (liveCatalog && offeredModes.length > 0)) &&
     (!activeAsid || agentFeatures.extra.modeSwitching !== false) &&
-    (!catalogRead || selectableModes(availableAgents).length > 0);
+    (!catalogRead || offeredModes.length > 0);
   // The selection only once this agent's catalog lists it: it can be another
   // agent's mode carried over from the last session on screen.
   const offeredSelectedMode = catalogRead
@@ -6402,9 +6408,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canPickMode={canPickMode}
         canAttach={agentFeatures.attachments}
         sessionLead={sessionLead}
-        onOpenModelSheet={
-          canInteractNatively && agentFeatures.modelSelection ? openModelSheet : undefined
-        }
+        onOpenModelSheet={canPickModel ? openModelSheet : undefined}
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
