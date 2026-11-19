@@ -71,7 +71,7 @@ test.each(['queue', 'steer', undefined] as const)(
       () => receipts.push('acknowledged'),
       delivery
     );
-    expect(agentPromptUsesOptimisticRow(paths)).toBe(false);
+    expect(agentPromptUsesOptimisticRow('codex', paths, delivery)).toBe(false);
     await Promise.resolve();
     expect(timeline).toEqual([native]);
     expect(guard.acquire()).toBeNull();

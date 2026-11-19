@@ -3468,6 +3468,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       activeDirectoryRef.current === directory;
     const ownsSource = () => ownsRoute() && activeAsidRef.current === sourceAsid;
     let currentAsid = sourceAsid;
+    let promptAgentId = activeAgentId;
     if (!currentAsid) {
       if (newSessionCreationRef.current) return false;
       newSessionCreationRef.current = true;
@@ -3508,6 +3509,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ]);
               setLoading(false);
               currentAsid = created.asid;
+              promptAgentId = created.agent_id;
               activeAsidRef.current = created.asid;
               setActiveAsid(created.asid);
               setSessionInfo(created);
@@ -3545,44 +3547,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const promptAsid = currentAsid;
 
     const isQueued = promptDelivery === 'queue';
-
-    // Optimistically add user text item.
-    //
-    // With an order key, not on the strength of its id: a locally made
-    // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
-    // message used to render above it and jump back into place when the turn
-    // ended. The key puts the row after everything on screen and before
-    // anything the engine makes next, and the acknowledged row inherits it.
+    const immediateText = !attachments?.length && !isQueued;
+    const optimistic = agentPromptUsesOptimisticRow(promptAgentId, attachments, promptDelivery);
     const tempKey = `temp_usr_${Date.now()}`;
-    const tempUserItem: TimelineItem = {
-      id: tempKey,
-      // The key the list will draw this row under, kept when the engine's own
-      // row takes its place: see `TimelineItem.row_key`.
-      row_key: tempKey,
-      message_id: `msg_${Date.now()}`,
-      ordinal: 0,
-      seq: syncRef.current.seq + 1,
-      updated_ms: Date.now(),
-      role: 'user',
-      part: { type: 'text', text },
-      attachments,
-      queued: isQueued,
-      order: orderKeyAfter(transcriptStore.getState().timeline),
-    };
-    // All attachments stay in the composer's explicit submission UI. Upload
-    // paths are not message identities (images may export as data URIs), and
-    // a submission ACK carries no canonical message ID. Do not guess a match.
-    const optimistic = agentPromptUsesOptimisticRow(attachments, promptDelivery);
+
     if (optimistic) {
+      // Optimistically add user text item.
+      //
+      // With an order key, not on the strength of its id: a locally made
+      // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
+      // message used to render above it and jump back into place when the turn
+      // ended. The key puts the row after everything on screen and before
+      // anything the engine makes next, and the acknowledged row inherits it.
+      const tempUserItem: TimelineItem = {
+        id: tempKey,
+        // The key the list will draw this row under, kept when the engine's own
+        // row takes its place: see `TimelineItem.row_key`.
+        row_key: tempKey,
+        message_id: `msg_${Date.now()}`,
+        ordinal: 0,
+        seq: syncRef.current.seq + 1,
+        updated_ms: Date.now(),
+        role: 'user',
+        part: { type: 'text', text },
+        attachments,
+        queued: isQueued,
+        order: orderKeyAfter(transcriptStore.getState().timeline),
+      };
       setTimeline((prev) => [...prev, tempUserItem]);
       setScrollToSentRow(`grp_${tempKey}`);
+    } else if (immediateText) {
+      // Follow the soon-to-arrive native row when sending from further up.
+      void listRef.current?.scrollToEnd({ animated: false });
     }
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    if (optimistic)
+    if (immediateText)
       setSessionInfo((previous) =>
         previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
       );
@@ -3621,14 +3624,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // that reading arrives twice. The row stays until the snapshot says
         // whether it landed, and the toast says to check before sending again.
         const unconfirmed = isAgentDeliveryUnconfirmed(err);
-        const refused = optimistic && !unconfirmed;
+        const refused = immediateText && !unconfirmed;
         // Otherwise the row goes with the failure. A message that was never
         // delivered has no business sitting in the transcript, and the draft
         // comes back so the reader can try again rather than retype it.
-        if (refused) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        if (refused && optimistic)
+          setTimeline((prev) => prev.filter((item) => item.id !== tempKey));
         // Read authoritative state after an unknown receipt. This neither
         // invents a canonical attachment row nor repeats the prompt.
-        if (optimistic || unconfirmed) void loadSnapshot('silent');
+        if (immediateText || unconfirmed) void loadSnapshot('silent');
         if (unconfirmed && promptDelivery) void refreshInbox().catch(() => {});
         showToast({
           variant: 'danger',

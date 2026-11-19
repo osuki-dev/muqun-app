@@ -117,9 +117,9 @@ describe('inboxTimelineRows', () => {
   });
 
   test('a queued send never draws an optimistic row of its own', () => {
-    expect(agentPromptUsesOptimisticRow(undefined, 'queue')).toBe(false);
-    expect(agentPromptUsesOptimisticRow(['/x.png'], 'steer')).toBe(false);
-    expect(agentPromptUsesOptimisticRow([], 'steer')).toBe(true);
+    expect(agentPromptUsesOptimisticRow('codex', undefined, 'queue')).toBe(false);
+    expect(agentPromptUsesOptimisticRow('codex', ['/x.png'], 'steer')).toBe(false);
+    expect(agentPromptUsesOptimisticRow('codex', [], 'steer')).toBe(true);
   });
 
   test('rows carry the inbox id and files, skip non-prompts and keep identity', () => {
