@@ -263,6 +263,7 @@ const KNOWN_AGENT_NAMES: Readonly<Record<string, string>> = {
   deepseek: 'DeepSeek',
   t3: 'T3 Code',
   codex: 'Codex',
+  copilot: 'GitHub Copilot CLI',
 };
 
 /**

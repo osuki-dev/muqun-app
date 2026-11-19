@@ -1,9 +1,9 @@
 {
-  "inputHash": "364bec595bc6c1e5a7776aa886bd9f565064919d264cb0dc0261518e1ef4fb39",
+  "inputHash": "a98780a8b87791508d6af332616c6ba04ca6227817f38843c29df5392e8440c5",
   "files": {
-    "assets/glyphs-generated/muqun-364bec59.ttf": "2c396b7b509e9cc514f08820bcb4b9844c982d3cb11280c2573059422e4dbfeb",
-    "assets/glyphs-generated/muqun.glyphmap.json": "14ddf97b6fceafa53fe03fec7fc4a9eec1ef599021debbcf7826da0eb1b2fa62",
-    "src/icons/font.generated.ts": "9606c2122f249f304402c609cc0928ef46405f733ae3b4ef32a51c5eb506fd8d",
+    "assets/glyphs-generated/muqun-a98780a8.ttf": "ea87839a352f34b3e78583eb6db0cca291f79072511d36115ad8355df9612c71",
+    "assets/glyphs-generated/muqun.glyphmap.json": "107d06cf4dc7b6cc58fa628c6cf18d8df4a25fc7b3b4925d51045c9c25c5b146",
+    "src/icons/font.generated.ts": "39656a17ddb0c3872343c850f89d49fdab86b2055ba4485115a15e007aa88ca7",
     "src/icons/index.tsx": "2b5449dfc0aeb394254ea68e28a02c679af40f9e8eb0ee8f3858bb86b3a7124a"
   }
 }

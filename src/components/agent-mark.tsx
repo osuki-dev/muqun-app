@@ -1,4 +1,5 @@
 import { AgentIcon } from '@/icons';
+import { AppIcon } from '@/icons/app-icon';
 
 import { AntigravityIcon } from '@/components/antigravity-icon';
 import { ClaudeIcon } from '@/components/claude-icon';
@@ -20,6 +21,8 @@ import { agentMarkKind } from '@/lib/agent-mark-kind';
  */
 export function AgentMark({ kind, size, color }: { kind: string; size: number; color: string }) {
   switch (agentMarkKind(kind)) {
+    case 'copilot':
+      return <AppIcon name="brand-copilot" size={size} color={color} />;
     case 'codex':
       return <CodexIcon size={size} color={color} />;
     case 'opencode':
