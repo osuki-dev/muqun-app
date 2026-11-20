@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "ギャラリーを見る"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "ブラウザー"
 
@@ -2767,6 +2768,7 @@ msgstr "{head} で切り離し"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "詳細"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "このファイル形式は許可されていません"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "ファイル"
 
@@ -3208,6 +3211,7 @@ msgstr "端末に従う"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "フォント"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "{0} のオプション"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "その他のアプリデータ"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "その他のキャッシュ"
 
@@ -6412,6 +6420,7 @@ msgstr "ホスト側で設定してください"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "設定"
 
@@ -7490,6 +7499,7 @@ msgstr "テーマの URL"
 msgid "Theme, {0}"
 msgstr "テーマ、{0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "テーマ"

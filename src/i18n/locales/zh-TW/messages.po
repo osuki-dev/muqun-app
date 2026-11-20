@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "瀏覽主題庫"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "瀏覽器"
 
@@ -2767,6 +2768,7 @@ msgstr "分離於 {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "詳情"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "不允許的檔案類型"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "檔案"
 
@@ -3208,6 +3211,7 @@ msgstr "跟隨手機"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "字型"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "{0} 的選項"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "其他 App 資料"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "其他快取"
 
@@ -6412,6 +6420,7 @@ msgstr "請在主機上設定"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "設定"
 
@@ -7490,6 +7499,7 @@ msgstr "主題網址"
 msgid "Theme, {0}"
 msgstr "主題，{0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "主題"

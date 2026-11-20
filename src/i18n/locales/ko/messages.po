@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "갤러리 둘러보기"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "브라우저"
 
@@ -2767,6 +2768,7 @@ msgstr "{head}에서 분리됨"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "세부 정보"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "허용되지 않는 파일 형식"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "파일"
 
@@ -3208,6 +3211,7 @@ msgstr "휴대폰을 따름"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "글꼴"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "{0} 옵션"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "기타 앱 데이터"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "기타 캐시"
 
@@ -6412,6 +6420,7 @@ msgstr "호스트에서 설정하세요"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "설정"
 
@@ -7490,6 +7499,7 @@ msgstr "테마 URL"
 msgid "Theme, {0}"
 msgstr "테마, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "테마"

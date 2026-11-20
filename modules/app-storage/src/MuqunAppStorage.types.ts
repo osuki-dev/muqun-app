@@ -11,5 +11,7 @@ export type AppStorageModule = {
   /** True for the first JavaScript context of this process, false afterwards. */
   claimProcessLaunch(): boolean;
   /** Null where the platform has no per-app figures (iOS) or refuses the query. */
+  /** Available on newer Android builds. Measures allocated data blocks, excluding caches. */
+  getDataDirectorySizes?(): Promise<Record<string, number> | null>;
   getStorageStats(): Promise<AppStorageStats | null>;
 };

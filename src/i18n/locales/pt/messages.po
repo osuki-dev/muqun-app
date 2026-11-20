@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "Explorar a galeria"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Navegador"
 
@@ -2767,6 +2768,7 @@ msgstr "Desanexado em {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Detalhes"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "Tipo de ficheiro não permitido"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Ficheiros"
 
@@ -3208,6 +3211,7 @@ msgstr "A seguir o telemóvel"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Tipo de letra"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "Opções de {0}"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Outros dados do aplicativo"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "Outra cache"
 
@@ -6412,6 +6420,7 @@ msgstr "Configure no host"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Definições"
 
@@ -7490,6 +7499,7 @@ msgstr "URL do tema"
 msgid "Theme, {0}"
 msgstr "Tema, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Temas"

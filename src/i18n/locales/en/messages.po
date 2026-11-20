@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "Browse the gallery"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Browser"
 
@@ -2767,6 +2768,7 @@ msgstr "Detached at {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Details"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "File type not allowed"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Files"
 
@@ -3208,6 +3211,7 @@ msgstr "Following your phone"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Font"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "Options for {0}"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Other app data"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "Other cache"
 
@@ -6412,6 +6420,7 @@ msgstr "Set up on the host"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Settings"
 
@@ -7490,6 +7499,7 @@ msgstr "Theme URL"
 msgid "Theme, {0}"
 msgstr "Theme, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Themes"

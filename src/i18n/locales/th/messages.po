@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "เรียกดูแกลเลอรี"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "เบราว์เซอร์"
 
@@ -2767,6 +2768,7 @@ msgstr "แยกออกที่ {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "รายละเอียด"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "ไม่อนุญาตไฟล์ประเภทนี้"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "ไฟล์"
 
@@ -3208,6 +3211,7 @@ msgstr "ตามเครื่อง"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "ฟอนต์"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "ข้อมูลแอปอื่น ๆ"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "แคชอื่น ๆ"
 
@@ -6412,6 +6420,7 @@ msgstr "ตั้งค่าบนโฮสต์"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "การตั้งค่า"
 
@@ -7490,6 +7499,7 @@ msgstr "URL ของธีม"
 msgid "Theme, {0}"
 msgstr "ธีม {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "ธีม"

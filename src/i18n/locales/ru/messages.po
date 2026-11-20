@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "Открыть галерею"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Браузер"
 
@@ -2767,6 +2768,7 @@ msgstr "Отсоединён на {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Подробности"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "Недопустимый тип файла"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Файлы"
 
@@ -3208,6 +3211,7 @@ msgstr "Как на телефоне"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Шрифт"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "Параметры {0}"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Другие данные приложения"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "Прочий кэш"
 
@@ -6412,6 +6420,7 @@ msgstr "Настройте на хосте"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Настройки"
 
@@ -7490,6 +7499,7 @@ msgstr "URL темы"
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Темы"

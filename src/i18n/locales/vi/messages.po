@@ -1183,6 +1183,7 @@ msgid "Browse the gallery"
 msgstr "Duyệt thư viện"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Trình duyệt"
 
@@ -2767,6 +2768,7 @@ msgstr "Tách rời tại {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Chi tiết"
 
@@ -3119,6 +3121,7 @@ msgid "File type not allowed"
 msgstr "Loại tệp không được phép"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Tệp"
 
@@ -3208,6 +3211,7 @@ msgstr "Theo điện thoại"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Phông chữ"
 
@@ -5054,6 +5058,10 @@ msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
 
 #: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Dữ liệu ứng dụng khác"
+
+#: src/components/settings-storage.tsx
 msgid "Other cache"
 msgstr "Bộ nhớ đệm khác"
 
@@ -6412,6 +6420,7 @@ msgstr "Thiết lập trên máy chủ"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Cài đặt"
 
@@ -7490,6 +7499,7 @@ msgstr "URL giao diện"
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Chủ đề"
