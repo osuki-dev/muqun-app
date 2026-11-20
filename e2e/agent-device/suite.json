@@ -62,6 +62,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "claude-question-history",
+      "program": "flows/claude-question-history",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-tool-detail",
       "program": "flows/agent-tool-detail",
       "tags": ["full", "agents"],
@@ -210,6 +216,10 @@
     }
   ],
   "programs": {
+    "flows/claude-question-history": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/claude-question-history.ad#history" }
+    ],
     "flows/agent-session-recovery": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-session-recovery.ad#open" },

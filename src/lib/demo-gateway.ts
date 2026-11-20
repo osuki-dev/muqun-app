@@ -739,6 +739,51 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  if (asid === 'demo-tree-leaf-8') {
+    return {
+      info: { ...info, agent_id: 'claude' },
+      permissions: [],
+      forms: [],
+      inbox: [],
+      seq: 1,
+      timeline: [
+        {
+          id: 'demo-answered-question',
+          message_id: 'demo-answered-question',
+          role: 'assistant',
+          ordinal: 0,
+          seq: 1,
+          updated_ms: 1,
+          part: {
+            type: 'tool',
+            id: 'demo-question-call',
+            name: 'AskUserQuestion',
+            input: {
+              questions: [
+                {
+                  header: 'Review',
+                  question: 'Which checks ran?',
+                  multiSelect: true,
+                  options: [{ label: 'Unit' }, { label: 'Device' }, { label: 'Browser' }],
+                },
+                {
+                  header: 'Result',
+                  question: 'What did you observe?',
+                  options: [{ label: 'No change' }],
+                },
+              ],
+            },
+            output:
+              'Your questions have been answered: "Which checks ran?"="Unit, Device", "What did you observe?"="History survived relaunch". You can now continue with these answers in mind.',
+            content: [],
+            metadata: {},
+            state: 'completed',
+            time: { ran: 2000, completed: 2042 },
+          },
+        },
+      ],
+    };
+  }
   const muqunFixtures: Record<
     string,
     {
