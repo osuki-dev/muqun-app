@@ -1,4 +1,4 @@
-import { asRecord, type FileDiffItem, type ToolContent } from './agent-protocol';
+import { asRecord, type FileDiffItem, type ToolContent, type ToolPart } from './agent-protocol';
 
 /**
  * What a tool call is, and what is worth showing of what it said.
@@ -113,7 +113,7 @@ export function classifyTool(name: string): ToolKind {
   // Only `todowrite`/`todo`/`tasks` become a checklist; `subagent` is a tool
   // row, whatever it is called.
   if (n === 'todowrite' || n === 'todoread' || n === 'todo' || n === 'tasks') return 'todo';
-  if (n === 'question' || n === 'ask') return 'question';
+  if (n === 'question' || n === 'ask' || n === 'askuserquestion') return 'question';
   if (n === 'execute' || n === 'code') return 'execute';
   if (n === 'browser') return 'browser';
   return 'mcp';
@@ -690,26 +690,86 @@ export function parseToolQuestions(input: unknown): ToolQuestion[] {
         options.push({ label, ...(description ? { description } : {}) });
       }
     }
-    out.push({ header, question: text, options, multiple: question.multiple === true });
+    out.push({
+      header,
+      question: text,
+      options,
+      multiple: question.multiple === true || question.multiSelect === true,
+    });
   }
   return out;
 }
 
-/**
- * What was answered, per question, as `metadata.answers` states it.
- *
- * `string[][]`: one list per question, because a `multiple` question is
- * answered with several of its options. A payload that sent one string per
- * question rather than a list is read as a list of one.
- */
-export function questionAnswersFromMetadata(metadata: Record<string, unknown>): string[][] {
-  const raw = metadata.answers;
-  if (!Array.isArray(raw)) return [];
-  return raw.map((entry) => {
-    if (typeof entry === 'string') return entry ? [entry] : [];
-    if (!Array.isArray(entry)) return [];
-    return entry.filter((value): value is string => typeof value === 'string' && value.length > 0);
-  });
+function pickedAnswers(raw: unknown, question: ToolQuestion): string[] {
+  if (Array.isArray(raw))
+    return raw.filter((value): value is string => typeof value === 'string' && !!value);
+  if (typeof raw !== 'string' || !raw) return [];
+  const offered = question.options.map((option) => option.label);
+  if (question.multiple && !offered.includes(raw)) {
+    const choices = raw.split(', ');
+    if (choices.every((value) => offered.includes(value))) return choices;
+  }
+  return [raw];
+}
+
+// Claude's older history replay only carries an English receipt. Match the
+// actual question text so punctuation and quotes in a free answer survive.
+function claudeReceiptAnswers(text: string, questions: ToolQuestion[]): string[][] {
+  const prefix = [
+    'Your questions have been answered: ',
+    'The user answered: ',
+    'User has answered your questions: ',
+  ].find((start) => text.startsWith(start));
+  if (!prefix) return [];
+  const end = text.lastIndexOf('". ');
+  if (end < prefix.length) return [];
+  const receipt = text.slice(prefix.length, end + 1);
+  const positions = questions
+    .map(({ question }, index) => {
+      const key = '"' + question + '"="';
+      const start = receipt.startsWith(key) ? 0 : receipt.indexOf(', ' + key);
+      return {
+        index,
+        start,
+        offset: start + key.length + (start === 0 ? 0 : 2),
+      };
+    })
+    .filter(({ start }) => start >= 0)
+    .sort((a, b) => a.start - b.start);
+  if (positions[0]?.start !== 0) return [];
+  const answers: string[][] = [];
+  for (const [n, item] of positions.entries()) {
+    const stop = positions[n + 1]?.start ?? receipt.length;
+    if (receipt[stop - 1] !== '"') return [];
+    answers[item.index] = pickedAnswers(
+      receipt.slice(item.offset, stop - 1),
+      questions[item.index]!
+    );
+  }
+  return answers;
+}
+
+export function toolQuestionHistory(part: ToolPart) {
+  const output = toolInputRecord(part.output);
+  const result = asRecord(output?.toolUseResult) ?? asRecord(part.metadata.toolUseResult) ?? output;
+  let questions = parseToolQuestions(part.input);
+  if (!questions.length) questions = parseToolQuestions(result);
+  const raw = part.metadata.answers ?? result?.answers ?? toolInputRecord(part.input)?.answers;
+  const keyed = asRecord(raw);
+  const receipt = textFromContent(part.content) || parseToolOutput(part.output).stdout;
+  const answers =
+    Array.isArray(raw) || keyed
+      ? questions.map((question, index) =>
+          pickedAnswers(Array.isArray(raw) ? raw[index] : keyed?.[question.question], question)
+        )
+      : claudeReceiptAnswers(receipt, questions);
+  // Some providers return prose or a refusal instead of answer fields.
+  // The block remains readable even when it cannot be assigned to one question.
+  const fallback =
+    answers.some((values) => values?.length) || (result && (result.questions || result.answers))
+      ? ''
+      : receipt;
+  return { questions, answers, fallback };
 }
 
 // ---------------------------------------------------------------------------

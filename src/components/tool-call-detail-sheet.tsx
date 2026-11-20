@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast, Text } from '@osuki-dev/ui';
 
+import { ToolQuestionHistory } from '@/components/agent-tool-card';
 import { AssetViewer } from '@/components/asset-viewer';
 import { SheetScene, SheetSceneQuietAction, SHEET_LADDER } from '@/components/sheet-scene';
 import { ToolCallCodeRows } from '@/components/tool-call-code-rows';
 import { ToolReadImage } from '@/components/tool-read-image';
-import { basename, readImagePath } from '@/lib/agent-tool-output';
+import { basename, classifyTool, readImagePath } from '@/lib/agent-tool-output';
 import { assetFromToolFile, type SessionAsset } from '@/lib/session-assets';
 import {
   formatToolDuration,
@@ -92,7 +93,11 @@ export function ToolCallDetailSheet() {
     [part]
   );
   const showImage = Boolean(imagePath && opened?.asid);
-  const rows = useMemo(() => (detail ? toolCallRows(detail, showImage) : []), [detail, showImage]);
+  const isQuestion = !!part && classifyTool(part.name) === 'question';
+  const rows = useMemo(
+    () => (detail && !isQuestion ? toolCallRows(detail, showImage) : []),
+    [detail, isQuestion, showImage]
+  );
   const [fileAsset, setFileAsset] = useState<SessionAsset | null>(null);
 
   if (!detail) {
@@ -129,7 +134,14 @@ export function ToolCallDetailSheet() {
       detail={<ToolCallStatusLine detail={detail} />}>
       <View style={styles.body}>
         <View style={styles.code}>
-          <ToolCallCodeRows detail={detail} rows={rows} bottomInset={SHEET_LADDER.gap} />
+          {part && isQuestion ? (
+            <ScrollView>
+              <ToolQuestionHistory part={part} full />
+              {detail.error ? <Text variant="caption">{detail.error}</Text> : null}
+            </ScrollView>
+          ) : (
+            <ToolCallCodeRows detail={detail} rows={rows} bottomInset={SHEET_LADDER.gap} />
+          )}
         </View>
         {imagePath && opened?.asid ? (
           <View style={styles.image}>
