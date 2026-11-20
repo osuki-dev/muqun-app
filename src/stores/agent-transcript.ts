@@ -182,6 +182,8 @@ export function createAgentTranscriptStore() {
       streamingKey: undefined,
       config: { windowStart: 0, status: undefined },
       inbox: [],
+      flash: undefined,
+      flashRow: (key) => set({ flash: { key, nonce: (get().flash?.nonce ?? 0) + 1 } }),
       setTimeline: (update, windowStart) => {
         const current = get().timeline;
         const next = typeof update === 'function' ? update(current) : update;
@@ -216,6 +218,12 @@ export interface AgentTranscriptState {
   /** The session's inbox; its prompts are drawn after the history (`inboxTimelineRows`). */
   inbox: readonly InboxItem[];
   toolIds: ReadonlySet<string>;
+  /**
+   * The row a search hit opened on, briefly marked. Only that row's selector
+   * changes, so marking it re-renders one row and never the list.
+   */
+  flash: { key: string; nonce: number } | undefined;
+  flashRow: (key: string) => void;
   backgroundTools: number;
   todos: Extract<TimelineItem['part'], { type: 'todo' }>['items'] | undefined;
   setTimeline: (

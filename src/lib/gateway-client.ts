@@ -3530,14 +3530,20 @@ export async function loadSessions(): Promise<SessionsResponse> {
 }
 
 /** Read a saved Gateway with its own credentials, without configuring the live connection. */
-export async function readGatewayRecordJson(record: GatewayRecord, path: string): Promise<unknown> {
+export async function readGatewayRecordJson(
+  record: GatewayRecord,
+  path: string,
+  /** Cancels this read; a cancellable read is never joined with another. */
+  signal?: AbortSignal
+): Promise<unknown> {
   if (!path.startsWith('/api/') || path.includes('://'))
     throw new Error('Invalid Gateway read path');
   const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
   return withRecordBaseUrl(captured, async (baseUrl) => {
-    const init = {
+    const init: RequestInit = {
       method: 'GET',
       headers: { Authorization: `Bearer ${captured.token}`, ...activeLocaleHeaders() },
+      ...(signal ? { signal } : {}),
     };
     const url = `${baseUrl}${path}`;
     // Joined with any identical read of this record already in flight: Home

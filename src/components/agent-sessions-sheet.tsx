@@ -58,6 +58,9 @@ import { AGENT_TYPE } from '@/constants/agent-type';
 import type { AgentSessionAction } from '@/lib/agent-runtime-controls';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { flattenSessionTree } from '@/lib/agent-session-tree';
+import { SessionContentSearch } from '@/components/session-content-results';
+import type { GatewayRecord } from '@/lib/gateway-storage';
+import type { ServerSessionSearchHit } from '@/lib/session-search';
 
 const STAGGERED_ROWS = 8;
 
@@ -137,6 +140,12 @@ export interface AgentSessionsSheetProps {
   onLoadMore?: () => void;
   onSearchQueryChange?: (query: string) => void;
   onDirectoryFilterChange?: (directory: string | undefined) => void;
+  /**
+   * The computer whose session content a search also asks, when it has
+   * `session_search_v1`, scoped to the sheet's agent.
+   */
+  contentSearch?: { record: GatewayRecord; agentId?: string };
+  onOpenSearchHit?: (hit: ServerSessionSearchHit) => void;
 }
 
 export const AgentSessionsSheet = memo(function AgentSessionsSheet({
@@ -164,6 +173,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onLoadMore,
   onSearchQueryChange,
   onDirectoryFilterChange,
+  contentSearch,
+  onOpenSearchHit,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -290,6 +301,10 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     projects,
     remoteSearch,
   ]);
+
+  const searchingContent = contentSearch !== undefined && searchQuery.trim().length > 0;
+  const contentRecord = contentSearch?.record;
+  const contentRecords = useMemo(() => (contentRecord ? [contentRecord] : []), [contentRecord]);
 
   const [nowMs] = useState(() => Date.now());
   const formatTime = (ms?: number) => {
@@ -649,7 +664,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        {filteredRoots.length === 0 && !loading && !loadFailed ? (
+        {filteredRoots.length === 0 && !loading && !loadFailed && !searchingContent ? (
           <View style={styles.empty}>
             <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
               {searchQuery
@@ -728,6 +743,20 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             );
           })
         )}
+        {searchingContent && contentSearch && onOpenSearchHit ? (
+          <SessionContentSearch
+            testID="agent-sessions-content-search"
+            records={contentRecords}
+            query={searchQuery}
+            agentId={contentSearch.agentId}
+            directory={workspaceFilter === CURRENT_WORKSPACE ? activeDirectory : undefined}
+            titleMatches={filteredRoots.length}
+            onOpenHit={(hit) => {
+              onOpenSearchHit(hit);
+              onClose();
+            }}
+          />
+        ) : null}
         {limited ? (
           <Text variant="caption" color={theme.colors.textMuted}>
             {t`Only recent sessions are available with this connection. Search covers the loaded list.`}
