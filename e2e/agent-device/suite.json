@@ -241,32 +241,9 @@
         "run": "flows/home-stage-progress.ad#layout"
       },
       {
-        "when": {
-          "target": {
-            "id": "settings-selection:off:home-layout-stage"
-          }
-        },
-        "steps": [
-          {
-            "target": {
-              "id": "settings-selection:off:home-layout-stage"
-            },
-            "mode": "press",
-            "run": "flows/home-stage-progress.ad#press"
-          }
-        ]
-      },
-      {
-        "when": {
-          "target": {
-            "id": "settings-home-layout-sheet"
-          }
-        },
-        "steps": [
-          {
-            "run": "flows/home-stage-progress.ad#close-layout"
-          }
-        ]
+        "target": { "id": "settings-selection:(on|off):home-layout-stage" },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#choose-layout"
       },
       {
         "run": "flows/home-stage-progress.ad#start"
@@ -494,32 +471,9 @@
         "run": "flows/home-stage-progress.ad#cleanup"
       },
       {
-        "when": {
-          "target": {
-            "id": "settings-selection:off:home-layout-classic"
-          }
-        },
-        "steps": [
-          {
-            "target": {
-              "id": "settings-selection:off:home-layout-classic"
-            },
-            "mode": "press",
-            "run": "flows/home-stage-progress.ad#press"
-          }
-        ]
-      },
-      {
-        "when": {
-          "target": {
-            "id": "settings-home-layout-sheet"
-          }
-        },
-        "steps": [
-          {
-            "run": "flows/home-stage-progress.ad#close-layout"
-          }
-        ]
+        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
+        "mode": "press",
+        "run": "flows/home-stage-progress.ad#choose-layout"
       },
       {
         "run": "flows/home-stage-progress.ad#home"
