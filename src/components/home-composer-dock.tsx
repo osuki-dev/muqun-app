@@ -207,7 +207,6 @@ export function HomeComposerDock({
   outerInsets,
   sideInsets,
   edgeBar,
-  fieldLines,
   autoHide,
   onFieldFocus,
   onDockHeight,
@@ -226,8 +225,6 @@ export function HomeComposerDock({
   sideInsets?: SideInsets;
   /** See `AgentComposer`'s `bar`. */
   edgeBar?: { inset: number };
-  /** See `AgentComposer`'s `fieldLines`. */
-  fieldLines?: number;
   /** See `AgentComposer`'s `autoHide`. */
   autoHide?: DockAutoHide;
   /** See `AgentComposer`'s `onFieldFocus`. */
@@ -2364,7 +2361,7 @@ export function HomeComposerDock({
       outerInsets={outerInsets}
       sideInsets={sideInsets}
       bar={edgeBar}
-      fieldLines={Math.max(3, fieldLines ?? 3)}
+      fieldLines={2}
       compact
       autoHide={autoHide}
       onFieldFocus={(focused) => {

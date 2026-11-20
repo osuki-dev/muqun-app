@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "ギャラリーを見る"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "ブラウザー"
 
@@ -1883,6 +1884,10 @@ msgstr "コンテキストを圧縮しました · 手動"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "コンテキスト使用量"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "コンテキストウィンドウ"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "{head} で切り離し"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "詳細"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "このファイル形式は許可されていません"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "ファイル"
 
@@ -3213,6 +3220,7 @@ msgstr "端末に従う"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "フォント"
 
@@ -4623,7 +4631,6 @@ msgstr "作業の受け付け停止中"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
@@ -4684,10 +4691,6 @@ msgstr "未報告"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "起動していません"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "未設定"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "このコンピュータを開きます"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} のオプション"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "その他のアプリデータ"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "ホスト側で設定してください"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "設定"
 
@@ -7283,6 +7291,10 @@ msgstr "アドレスは、このペアリング済みコンピュータに接続
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway が起動時に表示するアドレスです"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "エージェントから現在のコンテキスト使用量が報告されていません"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "エージェントは今、別のことを尋ねています"
@@ -7523,6 +7535,7 @@ msgstr "テーマの URL"
 msgid "Theme, {0}"
 msgstr "テーマ、{0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "テーマ"

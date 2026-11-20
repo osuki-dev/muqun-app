@@ -45,8 +45,9 @@ import {
   DeleteIcon,
   PhoneIcon,
   CodeIcon,
-  StorageIcon,
   DownloadIcon,
+  DisclosureDownIcon,
+  StorageIcon,
   StackIcon,
   FolderIcon,
 } from '@/icons';
@@ -70,7 +71,7 @@ import {
 } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { type CacheTotals, formatCacheSize } from '@/lib/cache-storage';
-import { readAppStorageStats, readAppUpdateBytes, type AppStorageStats } from '@/lib/app-storage';
+import { readAppStorageStats, readDataBreakdown, type AppStorageStats } from '@/lib/app-storage';
 import { isLaunchCachePurgePending } from '@/lib/launch-cache-purge';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { useAppSettings } from '@/stores/app-settings';
@@ -183,6 +184,8 @@ export function SettingsStorage() {
   const selection = useThemeLibrary((state) => state.library.selection);
 
   const [snapshot, setSnapshot] = useState<StorageSnapshot | null>(null);
+  const [showData, setShowData] = useState(false);
+  const [dataGroups, setDataGroups] = useState<Record<string, number> | null>(null);
   const [themeFiles, setThemeFiles] = useState<ThemeAssetFile[] | null>(null);
   /** Which of the two actions is armed, because never both at once. */
   const [armed, setArmed] = useState<'cache' | 'themes' | null>(null);
@@ -206,7 +209,7 @@ export function SettingsStorage() {
     // spinning row.
     const plan = await inspectCache();
     const stats = await readAppStorageStats();
-    const updatesBytes = await readAppUpdateBytes();
+    const updatesBytes = stats ? 0 : ((await readDataBreakdown(false)).updates ?? 0);
     if (!mounted.current) return;
     setSnapshot({
       buckets: plan ? plan.buckets : EMPTY_TOTALS,
@@ -216,6 +219,17 @@ export function SettingsStorage() {
       purgePending: isLaunchCachePurgePending(),
     });
   }, []);
+
+  useEffect(() => {
+    if (!showData || !snapshot?.stats) return;
+    let active = true;
+    void readDataBreakdown(true).then((groups) => {
+      if (active) setDataGroups(groups);
+    });
+    return () => {
+      active = false;
+    };
+  }, [showData, snapshot]);
 
   const measureThemes = useCallback(async () => {
     try {
@@ -330,7 +344,7 @@ export function SettingsStorage() {
       }
     }
 
-    await measureThemes();
+    await measureAll();
     if (mounted.current) {
       setArmed(null);
       setRemoving(false);
@@ -341,6 +355,16 @@ export function SettingsStorage() {
   const calculating = t`Calculating…`;
   const size = (bytes: number | undefined) =>
     snapshot && bytes !== undefined ? formatCacheSize(bytes) : calculating;
+  const dataRows = Object.entries(dataGroups ?? {}).sort((a, b) => b[1] - a[1]);
+  const measuredData = dataRows.reduce((sum, [, bytes]) => sum + bytes, 0);
+  const dataLabels: Record<string, string> = {
+    updates: t`App updates`,
+    files: t`Files`,
+    'files/theme-assets-v1': t`Themes`,
+    'files/fonts': t`Font`,
+    'private/shared_prefs': t`Settings`,
+    'private/app_webview': t`Browser`,
+  };
   const buckets = snapshot?.buckets;
   const stats = snapshot?.stats ?? null;
   // Android's figure is the one its Settings screen shows; it also counts
@@ -409,20 +433,39 @@ export function SettingsStorage() {
             detail={size(stats.appBytes)}
             testID="settings-storage-app-row"
           />
-          <SettingsInfoRow
+          <SettingsNavRow
             icon={StorageIcon}
             label={t`App data`}
             detail={size(stats.dataBytes)}
             testID="settings-storage-data-row"
+            trailing={showData ? DisclosureDownIcon : NextIcon}
+            onPress={() => setShowData(!showData)}
           />
+          {showData && (
+            <SettingsBlock label={t`Details`}>
+              {dataRows.map(([key, bytes]) => (
+                <Text key={key} variant="caption" color={theme.colors.textMuted}>
+                  {dataLabels[key] ?? key.slice(key.indexOf('/') + 1)}
+                  {' · '}
+                  {size(bytes)}
+                </Text>
+              ))}
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`Other app data`}
+                {' · '}
+                {size(dataGroups ? Math.max(0, stats.dataBytes - measuredData) : undefined)}
+              </Text>
+            </SettingsBlock>
+          )}
         </>
-      ) : null}
-      <SettingsInfoRow
-        icon={DownloadIcon}
-        label={t`App updates`}
-        detail={size(snapshot?.updatesBytes)}
-        testID="settings-storage-updates-row"
-      />
+      ) : (
+        <SettingsInfoRow
+          icon={DownloadIcon}
+          label={t`App updates`}
+          detail={size(snapshot?.updatesBytes)}
+          testID="settings-storage-updates-row"
+        />
+      )}
       <SettingsInfoRow
         icon={StackIcon}
         label={t`Cache`}

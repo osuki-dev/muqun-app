@@ -1,6 +1,7 @@
 import {
   inboxItemAttachments,
   inboxItemText,
+  normalizeAgentId,
   sortTimeline,
   timelineOrderKey,
   type InboxItem,
@@ -17,10 +18,14 @@ import {
  * inbox item is the queued row (`inboxTimelineRows`), matched by its id.
  */
 export function agentPromptUsesOptimisticRow(
+  agentId: string | undefined,
   attachments?: readonly string[],
   delivery?: 'steer' | 'queue'
 ): boolean {
-  return !attachments?.length && delivery !== 'queue';
+  // OpenCode's own inbox and prompt rows carry stable IDs. Its send response
+  // has no message ID and older Gateways replay rows with page-local sequence
+  // numbers. A locally synthesized prompt cannot reliably identify its echo.
+  return !attachments?.length && delivery !== 'queue' && normalizeAgentId(agentId) !== 'opencode';
 }
 
 const inboxRows = new WeakMap<InboxItem, TimelineItem>();

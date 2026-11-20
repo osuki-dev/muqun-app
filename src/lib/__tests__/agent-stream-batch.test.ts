@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { AGENT_STREAM_BATCH_MS, createAgentStreamBatch } from '../agent-stream-batch';
-import { sortTimeline, type AgentDomainEvent, type TimelineItem } from '../agent-protocol';
+import {
+  parseAgentDomainEvent,
+  sortTimeline,
+  type AgentDomainEvent,
+  type TimelineItem,
+} from '../agent-protocol';
 import {
   agentPromptUsesOptimisticRow,
   reconcileAgentSnapshotPending,
@@ -59,6 +64,31 @@ describe('stream presentation batches', () => {
     };
     expect(upsertTimelineItems([pending], [different])).toHaveLength(2);
   });
+  test('OpenCode tail replay keeps both intentional sends exactly once', () => {
+    const text = { type: 'text' as const, text: 'repeat' };
+    const first = item('message_1', 8, { role: 'user', part: text });
+    const pending = item('temp_usr_2', 21, { role: 'user', part: text });
+    const second = item('message_2', 2, { role: 'user', part: text });
+    let timeline = agentPromptUsesOptimisticRow('opencode') ? [first, pending] : [first];
+    const live = createAgentStreamBatch((event) => {
+      if (event.type === 'agent.timeline.upsert')
+        timeline = upsertTimelineItems(timeline, event.items);
+    });
+    const deliver = (seq: number, rows: TimelineItem[]) => {
+      // Older OpenCode Gateways refetched the latest messages, then broadcast
+      // their one-based page positions beside the real event sequence.
+      const event = parseAgentDomainEvent('agent.timeline.upsert', { asid: 's', seq, items: rows });
+      if (!event) throw new Error('Expected timeline event');
+      live.push(event);
+      live.flush();
+    };
+    deliver(20, [{ ...first, seq: 1 }]);
+    expect(timeline.map((row) => row.id)).toEqual([first.id]);
+    deliver(22, [{ ...first, seq: 1 }, second]);
+    deliver(22, [{ ...first, seq: 1 }, second]);
+    expect(timeline.map((row) => row.id)).toEqual([first.id, second.id]);
+  });
+
   test('200 revisions of two parts produce one update with the complete latest values', () => {
     const events: AgentDomainEvent[] = [];
     const batch = createAgentStreamBatch((event) => events.push(event));
@@ -137,15 +167,15 @@ describe('timeline revision merge', () => {
     });
     // Retain the exact matcher: widening it would claim unrelated real images.
     expect(upsertTimelineItems([optimistic], [canonical])).toHaveLength(2);
-    const pendingTimeline = agentPromptUsesOptimisticRow(optimistic.attachments)
+    const pendingTimeline = agentPromptUsesOptimisticRow('codex', optimistic.attachments)
       ? [optimistic]
       : [];
     expect(upsertTimelineItems(pendingTimeline, [canonical])).toEqual([canonical]);
-    expect(agentPromptUsesOptimisticRow()).toBe(true);
-    expect(agentPromptUsesOptimisticRow([])).toBe(true);
+    expect(agentPromptUsesOptimisticRow('codex')).toBe(true);
+    expect(agentPromptUsesOptimisticRow('claude', [])).toBe(true);
     // Paths alone cannot establish attachment MIME; non-images use the same
     // explicit composer pending UI, not a guessed suffix classification.
-    expect(agentPromptUsesOptimisticRow(['/uploads/file.bin'])).toBe(false);
+    expect(agentPromptUsesOptimisticRow('codex', ['/uploads/file.bin'])).toBe(false);
   });
 
   test('same text, different images, identical repeats and incomplete exports retain every native ID', () => {

@@ -80,8 +80,7 @@ import {
   groupPathsByDirectory,
   parsePatchSections,
   parseToolOutput,
-  parseToolQuestions,
-  questionAnswersFromMetadata,
+  toolQuestionHistory,
   QUESTION_MAX,
   QUESTION_OPTION_MAX,
   resultCountFromMetadata,
@@ -98,7 +97,6 @@ import {
   toolInputJson,
   toolInputRecord,
   type ToolKind,
-  type ToolQuestion,
 } from '@/lib/agent-tool-output';
 import { toolDurationMs, type AgentSessionInfo, type ToolPart } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -619,15 +617,6 @@ export const AgentToolCard = memo(function AgentToolCard({
           ? i18n._(subagentActionWord[child.action])
           : i18n._(subagentStateWord.unknown)
       : '';
-  const questions = useMemo(
-    () => (kind === 'question' ? parseToolQuestions(part.input) : []),
-    [kind, part.input]
-  );
-  const answers = useMemo(
-    () => (kind === 'question' ? questionAnswersFromMetadata(part.metadata) : []),
-    [kind, part.metadata]
-  );
-
   const writeContent = typeof input?.content === 'string' ? input.content : undefined;
   const oldString =
     typeof input?.oldString === 'string'
@@ -867,8 +856,6 @@ export const AgentToolCard = memo(function AgentToolCard({
         patchFiles,
         grepGroups,
         globGroups,
-        questions,
-        answers,
         subagentText: subagent?.text ?? '',
         subagentPrompt: subagent?.prompt ?? '',
         canOpenSession: Boolean(part.child_session_id && onOpenChildSession),
@@ -895,8 +882,6 @@ export const AgentToolCard = memo(function AgentToolCard({
       patchFiles,
       grepGroups,
       globGroups,
-      questions,
-      answers,
       subagent,
       onOpenChildSession,
       writeContent,
@@ -1214,8 +1199,6 @@ interface ToolBodyArgs {
   patchFiles: ReturnType<typeof diffFilesFromMetadata>;
   grepGroups: ReturnType<typeof groupGrepMatches>;
   globGroups: ReturnType<typeof groupPathsByDirectory>;
-  questions: readonly ToolQuestion[];
-  answers: readonly string[][];
   subagentText: string;
   subagentPrompt: string;
   canOpenSession: boolean;
@@ -1255,7 +1238,19 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
 
     case 'read': {
       const imagePath = readImagePath(part.name, part.input);
-      if (imagePath && args.asid) return <ToolReadImage asid={args.asid} path={imagePath} />;
+      if (imagePath && args.asid) {
+        // Structured results are already rendered by ToolFiles. Resolve the
+        // input path only when the agent did not return an image itself.
+        const returnedImage =
+          args.files.some((file) => file.mime?.startsWith('image/')) ||
+          part.image_assets?.some((asset) => asset.mime.startsWith('image/'));
+        return (
+          <>
+            {!returnedImage ? <ToolReadImage asid={args.asid} path={imagePath} /> : null}
+            <OutputLines text={outputText} />
+          </>
+        );
+      }
       const preview = readFilePreview(outputText, target, args.files);
       if (preview.type === 'empty') return null;
       if (preview.type === 'output') return <OutputLines text={preview.text} />;
@@ -1384,9 +1379,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // answer the same thing. What is left once it has been answered is a row
       // naming a question with no way to see what was asked or what was said,
       // so the card keeps a body: the questions, and what was picked in each.
-      return (
-        <QuestionBody questions={args.questions} answers={args.answers} fallback={outputText} />
-      );
+      return <ToolQuestionHistory part={part} />;
 
     case 'todo': {
       const items = readTodoItems(input);
@@ -1682,28 +1675,15 @@ const WebResult = memo(function WebResult({
   return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
 });
 
-/**
- * What was asked, and which of the offered answers came back.
- *
- * The tool asks with `input.questions[]` -- a short `header`, the question
- * itself, and the options it will accept -- and answers in
- * `metadata.answers[i]`, one list per question. The card used to read
- * `input.question` and `input.prompt`, keys this tool has never sent, so a
- * question row in the transcript said nothing at all.
- *
- * The interactive form card is where a live question is answered; this is the
- * record of one that was.
- */
-const QuestionBody = memo(function QuestionBody({
-  questions,
-  answers,
-  fallback,
+/** Read-only record shared by the timeline and the complete tool detail. */
+export const ToolQuestionHistory = memo(function ToolQuestionHistory({
+  part,
+  full = false,
 }: {
-  questions: readonly ToolQuestion[];
-  answers: readonly string[][];
-  /** The engine's own sentence about what was answered, for a card with no `questions[]`. */
-  fallback: string;
+  part: ToolPart;
+  full?: boolean;
 }) {
+  const { questions, answers, fallback } = useMemo(() => toolQuestionHistory(part), [part]);
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -1721,7 +1701,7 @@ const QuestionBody = memo(function QuestionBody({
 
   return (
     <View style={styles.stretch}>
-      {questions.slice(0, QUESTION_MAX).map((question, index) => {
+      {questions.slice(0, full ? undefined : QUESTION_MAX).map((question, index) => {
         const picked = answers[index] ?? [];
         // An answer the option list does not hold: a free-text reply, or an
         // engine that answered with something it never offered.
@@ -1760,7 +1740,7 @@ const QuestionBody = memo(function QuestionBody({
               />
             ) : null}
             <View style={styles.optionsWrap}>
-              {question.options.slice(0, QUESTION_OPTION_MAX).map((option) => {
+              {question.options.slice(0, full ? undefined : QUESTION_OPTION_MAX).map((option) => {
                 // An answered question marks what was chosen rather than
                 // repeating it underneath: the options are already the list.
                 const chosen = picked.includes(option.label);
@@ -1809,6 +1789,9 @@ const QuestionBody = memo(function QuestionBody({
           </View>
         );
       })}
+      {fallback ? (
+        <BoundedMarkdown markdown={fallback} markdownStyle={answeredStyle} openLinks={false} />
+      ) : null}
     </View>
   );
 });

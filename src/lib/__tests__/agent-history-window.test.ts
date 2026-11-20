@@ -25,6 +25,7 @@ function fixture(
         '\n({ snapshot: getAgentSessionSnapshot, earlier: loadEarlierAgentTimeline })'
     ),
     {
+      URLSearchParams,
       usesOfflineDemo: () => false,
       configuredGatewayServerId: pending.serverId ?? (() => 'computer'),
       useServerCapabilities: {
@@ -174,15 +175,29 @@ test('page requests are scoped to the reader and lost cursors are never reported
 });
 
 test('oversized snapshot reads can use HTTP without replaying a stateful history page', async () => {
+  class HistoryInterruptedError extends Error {
+    constructor() {
+      super('History interrupted');
+    }
+  }
+  let interrupted = false;
+  let connected = true;
+  const sent: string[] = [];
   const read = runInNewContext(
     transpile(declaration('src/lib/agent-session.ts', 'socketHistory') + '\nsocketHistory'),
     {
+      HistoryInterruptedError,
       configuredGatewayServerId: () => 'computer',
       useServerCapabilities: {
         getState: () => ({ byServer: { computer: ['agent_history_ws_v1'] } }),
       },
       gatewaySocketFor: () => ({
-        requestHistory: async () => ({ status: 413, body: { error: 'too_large' } }),
+        connected,
+        requestHistory: async (_source: string, _asid: string, operation: string) => {
+          sent.push(operation);
+          if (interrupted) throw new HistoryInterruptedError();
+          return { status: 413, body: { error: 'too_large' } };
+        },
       }),
     }
   );
@@ -190,4 +205,54 @@ test('oversized snapshot reads can use HTTP without replaying a stateful history
   expect(await read('session', 'window')).toBeNull();
   expect((await read('session', 'page', { cursor: 'boundary' })).status).toBe(413);
   expect((await read('session', 'earlier')).status).toBe(413);
+  expect(sent).toEqual(['snapshot', 'window', 'page', 'earlier']);
+
+  interrupted = true;
+  expect(await read('session', 'window')).toBeNull();
+  await expect(read('session', 'page', { cursor: 'anchor' })).rejects.toThrow(
+    'History interrupted'
+  );
+  interrupted = false;
+  connected = false;
+  sent.length = 0;
+  expect(await read('session', 'window')).toBeNull();
+  expect(await read('session', 'snapshot')).toBeNull();
+  expect((await read('session', 'page', { cursor: 'boundary' })).status).toBe(413);
+  expect(sent).toEqual(['page']);
+});
+
+test('retained misses and stale conditional replies recover with a full current window', async () => {
+  const f = fixture(['agent_history_window_v1', 'agent_history_window_options_v1']);
+  const data = {
+    info: { asid: 's' },
+    seq: 7,
+    history_cursor: 'anchor',
+    permissions: [],
+    forms: [],
+    inbox: [],
+  };
+  f.responses.push(
+    { status: 404, body: { code: 'not_retained' } },
+    { status: 200, body: { data: { ...data, timeline: [] } } }
+  );
+  const cold = await f.snapshot('t', 's', { retained: true, limit: 40 });
+  expect(cold.history_retained).toBeUndefined();
+  expect(f.requests.map((r) => r.options)).toEqual([
+    { refresh: undefined, limit: 40, retained: true },
+    { refresh: undefined, limit: 40 },
+  ]);
+  const options = { ifSeq: 7, historyCursor: 'anchor', limit: 40 };
+  f.responses.push({ status: 200, body: { data: { ...data, unchanged: true } } });
+  const valid = await f.snapshot('t', 's', options);
+  expect(valid.history_unchanged).toBe(true);
+  expect(valid.info?.asid).toBe('s');
+  expect(f.requests.at(-1)?.options).toMatchObject({ if_seq: 7, cursor: 'anchor' });
+  f.responses.push(
+    { status: 200, body: { data: { ...data, unchanged: true, history_cursor: 'other' } } },
+    { status: 200, body: { data: { ...data, seq: 8 } } }
+  );
+  const recovered = await f.snapshot('t', 's', options);
+  expect(recovered.history_unchanged).toBeUndefined();
+  expect(recovered.seq).toBe(8);
+  expect(f.requests.at(-1)?.options).toEqual({ refresh: undefined, cursor: 'anchor', limit: 40 });
 });

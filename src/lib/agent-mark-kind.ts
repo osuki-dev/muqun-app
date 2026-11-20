@@ -3,6 +3,7 @@ export type AgentMarkKind =
   | 'opencode'
   | 'deepseek'
   | 't3'
+  | 'copilot'
   | 'codex'
   | 'pi'
   | 'fx'
@@ -15,6 +16,7 @@ const MARK_KINDS: ReadonlySet<string> = new Set<AgentMarkKind>([
   'opencode',
   'deepseek',
   't3',
+  'copilot',
   'codex',
   'pi',
   'fx',

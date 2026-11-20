@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "瀏覽主題庫"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "瀏覽器"
 
@@ -1883,6 +1884,10 @@ msgstr "脈絡已壓縮 · 手動"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "上下文佔用"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "上下文視窗"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "分離於 {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "詳情"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "不允許的檔案類型"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "檔案"
 
@@ -3213,6 +3220,7 @@ msgstr "跟隨手機"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "字型"
 
@@ -4623,7 +4631,6 @@ msgstr "不接受工作"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
@@ -4684,10 +4691,6 @@ msgstr "未提供"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "未執行"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "未設定"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "打開這台電腦"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的選項"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "其他 App 資料"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "請在主機上設定"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "設定"
 
@@ -7283,6 +7291,10 @@ msgstr "位址是連上這台已配對電腦的地方。變更位址不會解除
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway 啟動時印出的位址"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Agent 尚未回報目前的上下文用量"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "代理程式現在問的是別的問題"
@@ -7523,6 +7535,7 @@ msgstr "主題網址"
 msgid "Theme, {0}"
 msgstr "主題，{0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "主題"

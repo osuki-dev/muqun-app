@@ -8,6 +8,7 @@ wait "id=new-task-agents" 10000
 scroll down 0.5
 wait "id=new-task-prompt" 10000
 fill "id=new-task-prompt" "QA attachment draft"
+wait stable 600 5000
 press "id=new-task-attach"
 wait "label=\"Choose files\"" 10000
 is visible "label=\"Photo library\""

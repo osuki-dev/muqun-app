@@ -126,7 +126,6 @@ import {
   HOME_DOCK_OUTER_BOTTOM_INSET,
   HOME_DOCK_OUTER_INSET,
   nextRestingInset,
-  PAD_DOCK_FIELD_LINES,
   padDockOuterInset,
   padHomeColumns,
   padLaunchLayoutEnabled,
@@ -1141,7 +1140,6 @@ export function HomeOverview({
           ? { inset: HOME_CARD_INSET }
           : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
       }
-      fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={(height, clipHeight) => {
         setDockHeight(height);
         setDockClipHeight(clipHeight);

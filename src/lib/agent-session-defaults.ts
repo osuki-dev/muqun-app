@@ -164,8 +164,8 @@ export function catalogModeId(
  * `build` stayed selected on a Claude Code session, whose catalog has its own
  * modes, and the pill fell back to `build` when nothing was selected at all.
  * So every candidate must be one this agent's catalog lists: the screen's
- * selection (a pick, the session's own mode, or the remembered one), then the
- * session's mode, then the catalog's default. None of them -- or a catalog
+ * session's confirmed mode, then the local selection for a new session,
+ * then the catalog's default. None of them -- or a catalog
  * with no modes -- names nothing. Until the catalog answers only the
  * session's own mode is shown: it is the one fact that is about this agent.
  */
@@ -185,8 +185,8 @@ export function shownModeId(input: {
   // A session may run a mode the picker does not offer (one set elsewhere);
   // while the catalog lists it, it is still what the session runs.
   return (
-    listed(input.selected, offered) ??
     listed(input.sessionMode, input.modes) ??
+    listed(input.selected, offered) ??
     listed(input.catalogDefault, offered)
   );
 }

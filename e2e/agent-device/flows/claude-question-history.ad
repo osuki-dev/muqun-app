@@ -1,0 +1,18 @@
+# A saved, answered Claude question can be reopened after leaving the transcript.
+# section history
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-8"
+wait "id=agent-tool-toggle" 15000
+is hidden "text=\"History survived relaunch\""
+press "id=agent-tool-toggle"
+wait "text=\"History survived relaunch\"" 5000
+is visible "text=\"Several answers\""
+is visible "text=\"Device\""
+screenshot "shots/claude-question-inline.png"
+press "id=agent-tool-open-detail"
+wait "id=agent-tool-detail-sheet" 10000
+is visible "text=\"History survived relaunch\""
+screenshot "shots/claude-question-detail.png"
+back --system
+wait "id=agent-subagent-detail-transcript" 10000
+press "id=agent-tool-toggle"
+is hidden "text=\"History survived relaunch\""

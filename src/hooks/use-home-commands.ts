@@ -243,9 +243,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   // hook, so its answer is reported the same way. A ref, because the notice is
   // created inside `dispatch` itself.
   const dispatchRef = useRef<((command: HomeCommand) => Promise<unknown>) | null>(null);
+  const commandController = controller.current;
   const dispatch = useCallback(
     async (command: HomeCommand) => {
-      const result = await controller.current.dispatch(command);
+      const result = await commandController.dispatch(command);
       if (result.status === 'missing-target') {
         showToast({
           variant: 'danger',
@@ -303,7 +304,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       }
       return result;
     },
-    [controller.current, router, showToast, t]
+    [commandController, router, showToast, t]
   );
   useEffect(() => {
     dispatchRef.current = dispatch;

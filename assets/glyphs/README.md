@@ -33,6 +33,7 @@ Lucide source in a `replaces` history entry for the 77 replacements. The histori
 Brand marks are separate and are not claimed as Muqun interface artwork.
 See [AUDIT.md](./AUDIT.md) for the visual review and its limits.
 
+- `brand-copilot.svg`: GitHub Copilot mark from [GitHub Octicons](https://github.com/primer/octicons/blob/main/icons/copilot-24.svg), [MIT license](./LICENSE-octicons).
 - OpenCode: the gallery reuses the existing `OpenCodeIcon` two-block component,
   including its secondary tone. It does not invent or regenerate brand artwork.
 - `brand-codex.svg`: OpenAI mark from Simple Icons 14.15.0, CC0-1.0; provenance

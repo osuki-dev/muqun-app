@@ -119,15 +119,16 @@ export function parseTokensUsage(value: unknown): TokensUsage | undefined {
   const rec = asRecord(value);
   if (!rec) return undefined;
   const cache = asRecord(rec.cache);
-  const usage: TokensUsage = {
-    input: asFiniteNumber(rec.input) ?? 0,
-    output: asFiniteNumber(rec.output) ?? 0,
-  };
+  const input = asFiniteNumber(rec.input);
+  const output = asFiniteNumber(rec.output);
   const reasoning = asFiniteNumber(rec.reasoning);
-  if (reasoning !== undefined) usage.reasoning = reasoning;
   // `…/context` nests the two cache counters; `AgentSessionInfo` flattens them.
   const cacheRead = asFiniteNumber(rec.cache_read) ?? asFiniteNumber(cache?.read);
   const cacheWrite = asFiniteNumber(rec.cache_write) ?? asFiniteNumber(cache?.write);
+  if ([input, output, reasoning, cacheRead, cacheWrite].every((count) => count === undefined))
+    return undefined;
+  const usage: TokensUsage = { input: input ?? 0, output: output ?? 0 };
+  if (reasoning !== undefined) usage.reasoning = reasoning;
   if (cacheRead !== undefined) usage.cache_read = cacheRead;
   if (cacheWrite !== undefined) usage.cache_write = cacheWrite;
   return usage;
@@ -1590,6 +1591,10 @@ export interface AgentSessionSnapshot {
   /** Absent on older Gateways; null means an empty history window. */
   history_cursor?: string | null;
   history_reset?: boolean;
+  /** Metadata-only reply to a read naming an exact window and sequence. */
+  history_unchanged?: true;
+  /** Retained first paint, awaiting native reconciliation. */
+  history_retained?: true;
   info: AgentSessionInfo | null;
   timeline: TimelineItem[];
   permissions: PermissionRequest[];

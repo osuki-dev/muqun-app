@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "เรียกดูแกลเลอรี"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "เบราว์เซอร์"
 
@@ -1883,6 +1884,10 @@ msgstr "บีบอัดบริบทแล้ว · ด้วยตนเ�
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "บริบทที่ใช้ไป"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "หน้าต่างบริบท"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "แยกออกที่ {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "รายละเอียด"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "ไม่อนุญาตไฟล์ประเภทนี้"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "ไฟล์"
 
@@ -3213,6 +3220,7 @@ msgstr "ตามเครื่อง"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "ฟอนต์"
 
@@ -4623,7 +4631,6 @@ msgstr "ไม่รับงาน"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
@@ -4684,10 +4691,6 @@ msgstr "ไม่ได้รายงาน"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "ไม่ได้ทำงาน"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "ยังไม่ได้ตั้ง"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "เปิดคอมพิวเตอร์เครื่องนี
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "ข้อมูลแอปอื่น ๆ"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "ตั้งค่าบนโฮสต์"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "การตั้งค่า"
 
@@ -7283,6 +7291,10 @@ msgstr "ที่อยู่นี้ใช้เข้าถึงคอมพ
 msgid "The address the Gateway prints when it starts."
 msgstr "ที่อยู่ที่ Gateway แสดงเมื่อเริ่มทำงาน"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "เอเจนต์ยังไม่ได้รายงานปริมาณบริบทที่ใช้อยู่"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "ตอนนี้เอเจนต์กำลังถามเรื่องอื่น"
@@ -7523,6 +7535,7 @@ msgstr "URL ของธีม"
 msgid "Theme, {0}"
 msgstr "ธีม {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "ธีม"

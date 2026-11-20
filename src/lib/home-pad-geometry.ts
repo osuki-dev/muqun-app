@@ -11,9 +11,6 @@ export function padLaunchLayoutEnabled(
   return contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
 }
 
-/** The Pad cover dock's field, empty: room for a paragraph, not one line. */
-export const PAD_DOCK_FIELD_LINES = 3;
-
 /** The phone dock's gutter outside its field and its shadow, on each side and below. */
 export const HOME_DOCK_OUTER_INSET = 12;
 export const HOME_DOCK_OUTER_BOTTOM_INSET = 8;

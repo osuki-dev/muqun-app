@@ -1,3 +1,4 @@
+import { agentEntryPreviews } from '@/lib/agent-entry-preview';
 import { useForegroundAgentSession } from '@/hooks/use-foreground-agent-session';
 import { describeConnectionError } from '@/lib/network-error';
 import { isAgentSessionPreparingAt, sessionPreparationSource } from '@/lib/agent-session-prepare';
@@ -108,6 +109,7 @@ import {
   getAgentVcsDiff,
   getAgentVcsFiles,
   getAgentCatalog,
+  selectableModes,
   peekAgentCatalog,
   loadEarlierAgentTimeline,
   getAgentProjects,
@@ -918,7 +920,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ),
     ])
   );
-  const toolIds = useStore(transcriptStore, (state) => state.toolIds);
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
   const [windowStart, setWindowStart] = useState(0);
@@ -965,7 +966,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     historyCursorRef.current = undefined;
     historyPagingRef.current = false;
     setEarlierExhausted(false);
-  }, [activeAsid, serverId]);
+  }, [activeAsid, serverId, entrySource]);
   // Opening a session answers its question notices: the form is on screen now.
   useEffect(() => {
     if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid, serverId);
@@ -986,6 +987,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const openedAsidRef = useRef<string | undefined>(undefined);
   const entryIntentRef = useRef<string | null>(null);
   const snapshotReadRef = useRef(0);
+  const appliedSnapshot = useRef<{
+    source: string | null;
+    asid: string;
+    seq: number;
+    request: number;
+  } | null>(null);
+  const entryRead = useRef<{ source: string; asid: string; promise: Promise<void> } | null>(null);
+  const selectionRevision = useRef(0);
+  const [displaySource, setDisplaySource] = useState(entrySource);
   const catchUpRef = useRef<() => void>(() => {});
   const handleCreateNewSessionRef = useRef<((agentId?: string) => Promise<void>) | null>(null);
   const [worktreeRevision, setWorktreeRevision] = useState(0);
@@ -1129,33 +1139,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * stream effect or re-render anything.
    */
   const syncRef = useRef<CatchUpState>(CATCH_UP_START);
-  // The last timeline each recent session was left with. Reopening a session
-  // shows it at once instead of an empty list while the snapshot loads; the
-  // snapshot then reconciles it, and only rows that changed are redrawn.
-  const timelineCacheRef = useRef(
-    new Map<string, { timeline: TimelineItem[]; windowStart: number }>()
-  );
   const selectAsid = useStableHandler((nextAsid: string | undefined) => {
     if (activeAsidRef.current === nextAsid) return;
+    selectionRevision.current++;
     const leaving = activeAsidRef.current;
-    const cache = timelineCacheRef.current;
-    if (leaving) {
-      cache.delete(leaving);
-      cache.set(leaving, {
-        timeline: transcriptStore.getState().timeline as TimelineItem[],
-        windowStart: windowStartRef.current,
-      });
-      if (cache.size > 8) {
-        const oldest = cache.keys().next();
-        if (!oldest.done) cache.delete(oldest.value);
-      }
-    }
-    // Only this session's own last timeline may show here. A session without
-    // one starts empty, so the previous conversation never shows under it.
-    const cached = nextAsid ? cache.get(nextAsid) : undefined;
-    setTimeline(cached?.timeline ?? []);
+    if (leaving && appliedSnapshot.current?.asid === leaving)
+      agentEntryPreviews.remember(
+        appliedSnapshot.current.source,
+        leaving,
+        transcriptStore.getState().timeline
+      );
+    appliedSnapshot.current = null;
+    const cached = nextAsid
+      ? agentEntryPreviews.read(readPreparationSource(true), nextAsid)
+      : undefined;
+    setTimeline(cached ?? [], 0);
     setSessionInfo(null);
-    setWindowStart(cached?.windowStart ?? 0);
+    windowStartRef.current = 0;
+    setWindowStart(0);
     setPermissions([]);
     setForms([]);
     setInbox([]);
@@ -1554,17 +1555,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
   const [catalogRevision, setCatalogRevision] = useState(0);
-  /** The agent the catalog on screen was read for; `null` until one answers. */
-  const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<string | null>(null);
-  useEffect(() => {
-    const scope: AgentCatalogScope = {
+  const readCatalogRevision = useRef(0);
+  const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<AgentCatalogScope | null>(null);
+  const scope = useMemo<AgentCatalogScope>(
+    () => ({
       sessionId,
       ...(activeAsid ? { asid: activeAsid } : {}),
       directory: activeDirectory,
       ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
-    };
+    }),
+    [sessionId, activeAsid, activeDirectory, catalogAgentId]
+  );
+  useEffect(() => {
     const previous = catalogScopeRef.current;
-    if (!shouldRefetchAgentCatalog(previous, scope)) return;
+    const invalidated = catalogRevision !== readCatalogRevision.current;
+    if (!invalidated && !shouldRefetchAgentCatalog(previous, scope)) return;
+    readCatalogRevision.current = catalogRevision;
     catalogScopeRef.current = scope;
     const peeked = peekAgentCatalog(sessionId, {
       ...(scope.asid ? { asid: scope.asid } : {}),
@@ -1574,6 +1580,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // Another scope is another list: what was on screen belonged to the last
     // session, agent or project and must not be offered here even for a
     // moment. This scope's cached answer, or nothing until it answers.
+    setAvailableAgents(peeked?.modes ?? []);
+    setCatalogModels(peeked?.models ?? []);
+    setCatalogDefaults(peeked?.defaults ?? NO_CATALOG_DEFAULTS);
     setSkills(peeked?.skills ?? []);
     setCommands(peeked?.commands ?? []);
     const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
@@ -1588,6 +1597,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let mounted = true;
     getAgentCatalog(sessionId, undefined, {
       forceRefresh: true,
+      requireFresh: invalidated,
       ...(scope.asid ? { asid: scope.asid } : {}),
       ...(scope.directory ? { directory: scope.directory } : {}),
       ...(scope.agentId ? { agentId: scope.agentId } : {}),
@@ -1595,7 +1605,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       .then((catalog) => {
         if (!mounted) return;
         setAvailableAgents(catalog?.modes ?? []);
-        setCatalogAnsweredFor(scope.agentId ?? '');
+        setCatalogAnsweredFor(scope);
         // An empty list from a project OpenCode has not loaded yet keeps this
         // scope's cached one; it never brings back another scope's.
         if (catalog && (!isEmptyAgentCatalog(catalog) || catalog.skills.length > 0)) {
@@ -1621,16 +1631,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, activeAsid, activeDirectory, catalogAgentId, applySelectedModel, catalogRevision]);
+  }, [sessionId, scope, applySelectedModel, catalogRevision]);
   /**
    * Whether the mode chip belongs on screen: the agent's features allow modes
    * and, once its catalog has answered, the catalog lists some. T3 has none.
    */
-  const catalogRead = catalogAnsweredFor === (catalogAgentId ?? '');
+  const catalogRead = !shouldRefetchAgentCatalog(catalogAnsweredFor, scope);
+  const liveCatalog = Boolean(activeAsid && catalogRead);
+  const canPickModel =
+    canInteractNatively &&
+    (agentFeatures.modelSelection ||
+      (liveCatalog && catalogModels.some((model) => model.enabled !== false)));
+  const offeredModes = selectableModes(availableAgents);
   const canPickMode =
-    agentFeatures.modes &&
+    (agentFeatures.modes || (liveCatalog && offeredModes.length > 0)) &&
     (!activeAsid || agentFeatures.extra.modeSwitching !== false) &&
-    (!catalogRead || availableAgents.length > 0);
+    (!catalogRead || offeredModes.length > 0);
   // The selection only once this agent's catalog lists it: it can be another
   // agent's mode carried over from the last session on screen.
   const offeredSelectedMode = catalogRead
@@ -2142,7 +2158,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * already at the bottom.
    */
   const loadSnapshot = useCallback(
-    async (mode: 'enter' | 'silent' | 'refresh' = 'enter', current?: () => boolean) => {
+    async (
+      mode: 'enter' | 'silent' | 'refresh' = 'enter',
+      current?: () => boolean,
+      prepared = false
+    ) => {
       const asid = activeAsid;
       if (!asid) {
         if (initialCheckDoneRef.current) {
@@ -2151,12 +2171,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return;
       }
       const ownerGeneration = ownerGenerationRef.current;
+      const selection = selectionRevision.current;
       const source = readPreparationSource();
       const sourceOwner = readPreparationSource(true);
       const foregroundOwner = globalOwnerRef.current;
       const feedbackScope = JSON.stringify([sourceOwner, asid, 'history']);
       const ownsSnapshot = () =>
         current?.() !== false &&
+        selectionRevision.current === selection &&
         mountedRef.current &&
         ownerGenerationRef.current === ownerGeneration &&
         activeAsidRef.current === asid &&
@@ -2167,14 +2189,47 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // when that old refusal arrives after preparation has already settled.
       const request = ++snapshotReadRef.current;
       if (mode === 'refresh') readFeedback.clear(feedbackScope);
-      if (mode === 'enter' && freshSessionRef.current !== asid) setLoading(true);
+      if (mode === 'enter' && freshSessionRef.current !== asid) {
+        const previous = appliedSnapshot.current;
+        const preview = agentEntryPreviews.read(sourceOwner, asid);
+        if (previous?.source !== sourceOwner || previous.asid !== asid) {
+          appliedSnapshot.current = null;
+          // A connect before the first snapshot may already owe a catch-up.
+          if (previous) syncRef.current = CATCH_UP_START;
+          follow.reset();
+          setTimeline(preview ?? [], 0);
+          windowStartRef.current = 0;
+          setWindowStart(0);
+          setPermissions([]);
+          setForms([]);
+          setInbox([]);
+          setSessionInfo(null);
+        }
+        setDisplaySource(sourceOwner);
+        setLoading(transcriptStore.getState().timeline.length === 0);
+      }
       const snapshotTicket = useHomeAttention.getState().reserve();
       return settleAfter(
         async () => {
           return recoverWith(
             async () => {
               let requestedCursor = mode === 'enter' ? undefined : historyCursorRef.current;
+              const baseline = appliedSnapshot.current;
+              const capabilities = useServerCapabilities.getState().byServer[serverId];
               let snap = await getAgentSessionSnapshot(sessionId, asid, {
+                current: ownsSnapshot,
+                limit: HISTORY_PAGE_SIZE,
+                retained:
+                  mode === 'enter' &&
+                  capabilities?.includes('agent_session_resume_v1') &&
+                  Boolean(foregroundSessionAgent(preparationBindings, source, asid)),
+                ifSeq:
+                  prepared &&
+                  requestedCursor &&
+                  baseline?.source === sourceOwner &&
+                  baseline.asid === asid
+                    ? baseline.seq
+                    : undefined,
                 refresh: mode === 'refresh',
                 historyCursor: requestedCursor,
                 capabilities: useServerCapabilities.getState().byServer[serverId],
@@ -2188,11 +2243,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ) {
                 requestedCursor = historyCursorRef.current;
                 snap = await getAgentSessionSnapshot(sessionId, asid, {
+                  current: ownsSnapshot,
+                  limit: HISTORY_PAGE_SIZE,
                   historyCursor: requestedCursor,
                   capabilities: useServerCapabilities.getState().byServer[serverId],
                 });
               }
               if (!ownsSnapshot()) return;
+              const last = appliedSnapshot.current;
+              if (
+                last?.source === sourceOwner &&
+                last.asid === asid &&
+                ((last.seq > snap.seq && !snap.history_reset) ||
+                  (last.request > request && (snap.history_reset || last.seq === snap.seq)))
+              )
+                return;
+              appliedSnapshot.current = { source: sourceOwner, asid, seq: snap.seq, request };
               if (request === snapshotReadRef.current) {
                 readFeedback.clear(feedbackScope);
                 setSnapshotFailure(null);
@@ -2200,13 +2266,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               historyCursorRef.current = snap.history_cursor;
               setEarlierExhausted(snap.history_cursor === null);
               const fresh = freshSessionRef.current === asid;
-              const timeline = fresh
-                ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
-                : reconcileAgentSnapshotPending(
-                    transcriptStore.getState().timeline,
-                    snap.timeline,
-                    Boolean(snap.info?.deleted || snap.info?.revert)
-                  );
+              const timeline = snap.history_unchanged
+                ? transcriptStore.getState().timeline
+                : fresh
+                  ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
+                  : reconcileAgentSnapshotPending(
+                      transcriptStore.getState().timeline,
+                      snap.timeline,
+                      Boolean(snap.info?.deleted || snap.info?.revert)
+                    );
               const pendingFirstPrompt =
                 fresh && timeline.some((item) => item.id.startsWith('temp_'));
               if (fresh && !pendingFirstPrompt && !promptDispatchRef.current) {
@@ -2272,7 +2340,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 }
               }
 
-              if (mode === 'enter') {
+              if (mode === 'enter' && follow.getSnapshot().atBottom) {
                 // Publish the new dataset and its window together; otherwise the list
                 // briefly sees the previous session's offset against the new rows.
                 const nextWindow = Math.max(0, timeline.length - HISTORY_PAGE_SIZE);
@@ -2297,6 +2365,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 setWindowStart(nextWindow);
               }
 
+              if (!snap.history_unchanged) agentEntryPreviews.remember(sourceOwner, asid, timeline);
+              setDisplaySource(sourceOwner);
+              if (mode === 'enter' && request !== snapshotReadRef.current) setLoading(false);
+
               const pendingPermissions = permissionReplies.replace(
                 readAutoPermission().owner,
                 snap.permissions.map((permission) =>
@@ -2304,7 +2376,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 )
               );
               setPermissions(pendingPermissions);
-              if (readAutoPermission().enabled && nativeAgentInteraction(info?.runtime)) {
+              if (
+                !snap.history_retained &&
+                readAutoPermission().enabled &&
+                nativeAgentInteraction(info?.runtime)
+              ) {
                 for (const permission of pendingPermissions) handleAutoPermission(permission);
               }
               setForms(snap.forms);
@@ -2313,7 +2389,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                * that was asked for before this landed is paid here rather than lost.
                * See `lib/agent-catch-up.ts`.
                */
-              const settled = snapshotSettled(syncRef.current, snap.seq);
+              const settled = snapshotSettled(
+                snap.history_reset && last && last.seq > snap.seq
+                  ? CATCH_UP_START
+                  : syncRef.current,
+                snap.seq
+              );
               syncRef.current = settled.state;
               if (settled.from !== null) catchUpRef.current();
               if (info) applySelectedModel(info.model ?? undefined);
@@ -2329,7 +2410,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                * between this call leaving and landing is still unread afterwards,
                * which is the honest answer.
                */
-              if (info && appActiveRef.current && replaceAgentTranscript(mode, info.runtime)) {
+              if (
+                !snap.history_unchanged &&
+                info &&
+                appActiveRef.current &&
+                replaceAgentTranscript(mode, info.runtime)
+              ) {
                 const idle = info.time_idle;
                 const viewedAsid = info.asid;
                 void (
@@ -2351,15 +2437,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                * not asked for again at all -- that read was answering a question the
                * snapshot had just answered.
                */
-              requestIdleCallback(
-                () => {
-                  if (!ownsSnapshot() || !appActiveRef.current) return;
-                  void sideLoadsRef.current.context();
-                  void sideLoadsRef.current.shells();
-                  void sideLoadsRef.current.diffs();
-                },
-                { timeout: 250 }
-              );
+              if (!snap.history_unchanged)
+                requestIdleCallback(
+                  () => {
+                    if (!ownsSnapshot() || !appActiveRef.current) return;
+                    void sideLoadsRef.current.context();
+                    void sideLoadsRef.current.shells();
+                    void sideLoadsRef.current.diffs();
+                  },
+                  { timeout: 250 }
+                );
             },
             (err) => {
               if (!ownsSnapshot() || request !== snapshotReadRef.current) return;
@@ -2394,6 +2481,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 }
                 setLoading(false);
                 setSessionInfo(null);
+                agentEntryPreviews.remember(sourceOwner, asid, []);
                 setTimeline([]);
                 setWindowStart(0);
                 setPermissions([]);
@@ -2488,7 +2576,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (entryIntentRef.current === intent) return;
     entryIntentRef.current = intent;
     openedAsidRef.current = activeAsid;
-    void loadSnapshot('enter').catch(() => {});
+    const promise = loadSnapshot('enter').catch(() => {});
+    entryRead.current = { source: entrySource, asid: activeAsid, promise };
   });
   useEffect(() => {
     enterSnapshot();
@@ -2686,6 +2775,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
            * empty transcript. OpenCode announces each one.
            */
           if (info.deleted) {
+            agentEntryPreviews.remember(readPreparationSource(true), info.asid, []);
             // A late inventory reply must not resurrect an explicitly deleted node.
             childrenRequestRef.current++;
             const deletedTarget = homeTargetFor(info.asid, info.directory, info.agent_id);
@@ -2849,7 +2939,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         case 'agent.resync':
           if (event.reason === 'agent_catalog_changed') {
-            catalogScopeRef.current = null;
             setCatalogRevision((revision) => revision + 1);
           }
           // Housekeeping, not navigation: the reader's place is kept.
@@ -2887,6 +2976,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       syncHomeRecentTitle,
       syncHomeRecentObservation,
       syncHomeRecentStatus,
+      readPreparationSource,
       serverId,
     ]
   );
@@ -2920,9 +3010,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (openedAsidRef.current !== asid) void loadSnapshot('silent').catch(() => {});
       return;
     }
+    const revision = selectionRevision.current;
+    const deltaSource = readPreparationSource(true);
     void getAgentTimelineDelta(sessionId, asid, asked.from)
       .then((delta) => {
-        if (asid !== activeAsidRef.current) return;
+        if (
+          asid !== activeAsidRef.current ||
+          revision !== selectionRevision.current ||
+          deltaSource !== readPreparationSource(true)
+        )
+          return;
         if (delta.resync) {
           void loadSnapshot('silent');
           return;
@@ -2951,7 +3048,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [setTimeline, sessionId, loadSnapshot, applyViewed, readRuntime]);
+  }, [setTimeline, sessionId, loadSnapshot, applyViewed, readRuntime, readPreparationSource]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -2967,9 +3064,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     asid: activeAsid,
     foreground: appActive && globalOwnerEpoch > 0,
     ownsForeground: isGlobalOwner,
-    onPrepared: (current) => {
+    onPrepared: async (current) => {
       setCatalogRevision((revision) => revision + 1);
-      return loadSnapshot('silent', current);
+      const entry = entryRead.current;
+      if (
+        useServerCapabilities
+          .getState()
+          .byServer[serverId]?.includes('agent_history_window_options_v1') &&
+        entry &&
+        entry.source === readPreparationSource(true) &&
+        entry.asid === activeAsid
+      ) {
+        await entry.promise;
+        if (!current()) return;
+      }
+      return loadSnapshot('silent', current, true);
     },
   });
   const retryActivation = sessionActivation.retry;
@@ -3455,6 +3564,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       activeDirectoryRef.current === directory;
     const ownsSource = () => ownsRoute() && activeAsidRef.current === sourceAsid;
     let currentAsid = sourceAsid;
+    let promptAgentId = activeAgentId;
     if (!currentAsid) {
       if (newSessionCreationRef.current) return false;
       newSessionCreationRef.current = true;
@@ -3495,6 +3605,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ]);
               setLoading(false);
               currentAsid = created.asid;
+              promptAgentId = created.agent_id;
               activeAsidRef.current = created.asid;
               setActiveAsid(created.asid);
               setSessionInfo(created);
@@ -3532,44 +3643,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const promptAsid = currentAsid;
 
     const isQueued = promptDelivery === 'queue';
-
-    // Optimistically add user text item.
-    //
-    // With an order key, not on the strength of its id: a locally made
-    // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
-    // message used to render above it and jump back into place when the turn
-    // ended. The key puts the row after everything on screen and before
-    // anything the engine makes next, and the acknowledged row inherits it.
+    const immediateText = !attachments?.length && !isQueued;
+    const optimistic = agentPromptUsesOptimisticRow(promptAgentId, attachments, promptDelivery);
     const tempKey = `temp_usr_${Date.now()}`;
-    const tempUserItem: TimelineItem = {
-      id: tempKey,
-      // The key the list will draw this row under, kept when the engine's own
-      // row takes its place: see `TimelineItem.row_key`.
-      row_key: tempKey,
-      message_id: `msg_${Date.now()}`,
-      ordinal: 0,
-      seq: syncRef.current.seq + 1,
-      updated_ms: Date.now(),
-      role: 'user',
-      part: { type: 'text', text },
-      attachments,
-      queued: isQueued,
-      order: orderKeyAfter(transcriptStore.getState().timeline),
-    };
-    // All attachments stay in the composer's explicit submission UI. Upload
-    // paths are not message identities (images may export as data URIs), and
-    // a submission ACK carries no canonical message ID. Do not guess a match.
-    const optimistic = agentPromptUsesOptimisticRow(attachments, promptDelivery);
+
     if (optimistic) {
+      // Optimistically add user text item.
+      //
+      // With an order key, not on the strength of its id: a locally made
+      // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
+      // message used to render above it and jump back into place when the turn
+      // ended. The key puts the row after everything on screen and before
+      // anything the engine makes next, and the acknowledged row inherits it.
+      const tempUserItem: TimelineItem = {
+        id: tempKey,
+        // The key the list will draw this row under, kept when the engine's own
+        // row takes its place: see `TimelineItem.row_key`.
+        row_key: tempKey,
+        message_id: `msg_${Date.now()}`,
+        ordinal: 0,
+        seq: syncRef.current.seq + 1,
+        updated_ms: Date.now(),
+        role: 'user',
+        part: { type: 'text', text },
+        attachments,
+        queued: isQueued,
+        order: orderKeyAfter(transcriptStore.getState().timeline),
+      };
       setTimeline((prev) => [...prev, tempUserItem]);
       setScrollToSentRow(`grp_${tempKey}`);
+    } else if (immediateText) {
+      // Follow the soon-to-arrive native row when sending from further up.
+      void listRef.current?.scrollToEnd({ animated: false });
     }
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    if (optimistic)
+    if (immediateText)
       setSessionInfo((previous) =>
         previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
       );
@@ -3608,14 +3720,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // that reading arrives twice. The row stays until the snapshot says
         // whether it landed, and the toast says to check before sending again.
         const unconfirmed = isAgentDeliveryUnconfirmed(err);
-        const refused = optimistic && !unconfirmed;
+        const refused = immediateText && !unconfirmed;
         // Otherwise the row goes with the failure. A message that was never
         // delivered has no business sitting in the transcript, and the draft
         // comes back so the reader can try again rather than retype it.
-        if (refused) setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        if (refused && optimistic)
+          setTimeline((prev) => prev.filter((item) => item.id !== tempKey));
         // Read authoritative state after an unknown receipt. This neither
         // invents a canonical attachment row nor repeats the prompt.
-        if (optimistic || unconfirmed) void loadSnapshot('silent');
+        if (immediateText || unconfirmed) void loadSnapshot('silent');
         if (unconfirmed && promptDelivery) void refreshInbox().catch(() => {});
         showToast({
           variant: 'danger',
@@ -4413,23 +4526,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       pathname: '/agent-model',
       params: {
         sessionId,
+        ...(activeAsid ? { asid: activeAsid } : {}),
         memoryScope,
         ...(activeDirectory ? { directory: activeDirectory } : {}),
         ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
       },
     });
-  }, [router, sessionId, memoryScope, activeDirectory, catalogAgentId]);
+  }, [router, sessionId, activeAsid, memoryScope, activeDirectory, catalogAgentId]);
 
   const openModeSheet = useCallback(() => {
     router.push({
       pathname: '/agent-mode',
       params: {
         sessionId,
+        ...(activeAsid ? { asid: activeAsid } : {}),
         ...(activeDirectory ? { directory: activeDirectory } : {}),
         ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
       },
     });
-  }, [router, sessionId, activeDirectory, catalogAgentId]);
+  }, [router, sessionId, activeAsid, activeDirectory, catalogAgentId]);
 
   const openWorkspaceSheet = useCallback(() => {
     router.push({ pathname: '/agent-workspace', params: { sessionId } });
@@ -4874,21 +4989,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
-  /**
-   * The requests no tool row on screen can carry.
-   *
-   * A permission names the call it came from, so it is drawn under that card.
-   * One that names nothing -- or names a call that has fallen out of the
-   * rendered window -- still has to be answerable, and the footer is where it
-   * lands.
-   */
-  const footerPermissions = useMemo(
-    () =>
-      permissions.filter(
-        (request) => !request.source_tool_call_id || !toolIds.has(request.source_tool_call_id)
-      ),
-    [permissions, toolIds]
-  );
+  // A matching tool can be folded or virtualized off screen. Keep every
+  // unresolved permission reachable at the composer until it is answered.
+  const footerPermissions = permissions;
   const handleSendQueuedItem = useCallback(
     (itemId: string) => {
       const inboxId = queuedInboxId(itemId);
@@ -5036,8 +5139,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setLoadingEarlier(true);
     const owner = activeAsid;
     const ownerGeneration = ownerGenerationRef.current;
+    const revision = selectionRevision.current;
+    const pageSource = readPreparationSource(true);
     const ownsPage = () =>
-      activeAsidRef.current === owner && ownerGenerationRef.current === ownerGeneration;
+      activeAsidRef.current === owner &&
+      ownerGenerationRef.current === ownerGeneration &&
+      selectionRevision.current === revision &&
+      readPreparationSource(true) === pageSource;
     void loadEarlierAgentTimeline(sessionId, owner, historyCursorRef.current)
       .then(async (page) => {
         // The adapter lost the cursor this paging read from (a restart, an
@@ -5072,6 +5180,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionId,
     setTimeline,
     supportsRemoteEarlier,
+    readPreparationSource,
     windowStart,
   ]);
 
@@ -5946,6 +6055,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             </Text>
           </View>
         ) : loading ||
+          displaySource !== entrySource ||
           (awaitingFirstRow &&
             activeAsid === initialAsid &&
             timelineEmpty &&
@@ -6418,9 +6528,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         canPickMode={canPickMode}
         canAttach={agentFeatures.attachments}
         sessionLead={sessionLead}
-        onOpenModelSheet={
-          canInteractNatively && agentFeatures.modelSelection ? openModelSheet : undefined
-        }
+        onOpenModelSheet={canPickModel ? openModelSheet : undefined}
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}

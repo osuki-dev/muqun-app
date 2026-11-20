@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "Browse the gallery"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Browser"
 
@@ -1883,6 +1884,10 @@ msgstr "Context compacted · manual"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "Context used"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Context window"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "Detached at {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Details"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "File type not allowed"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Files"
 
@@ -3213,6 +3220,7 @@ msgstr "Following your phone"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Font"
 
@@ -4623,7 +4631,6 @@ msgstr "Not accepting work"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Not available"
@@ -4684,10 +4691,6 @@ msgstr "Not reported"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Not running"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Not set"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "Opens this computer"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Options for {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Other app data"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "Set up on the host"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Settings"
 
@@ -7283,6 +7291,10 @@ msgstr "The address is where this paired computer is reached. Changing it does n
 msgid "The address the Gateway prints when it starts."
 msgstr "The address the Gateway prints when it starts"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "The agent has not reported current context usage"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "The agent is asking something else now"
@@ -7523,6 +7535,7 @@ msgstr "Theme URL"
 msgid "Theme, {0}"
 msgstr "Theme, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Themes"

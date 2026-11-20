@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "浏览主题库"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "浏览器"
 
@@ -1883,6 +1884,10 @@ msgstr "上下文已压缩 · 手动"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "上下文占用"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "上下文窗口"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "分离于 {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "详情"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "不允许的文件类型"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "文件"
 
@@ -3213,6 +3220,7 @@ msgstr "跟随手机"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "字体"
 
@@ -4623,7 +4631,6 @@ msgstr "不接受工作"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "不可用"
@@ -4684,10 +4691,6 @@ msgstr "未提供"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "未运行"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "未设置"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "打开这台电脑"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的选项"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "其他应用数据"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "请在主机上配置"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "设置"
 
@@ -7283,6 +7291,10 @@ msgstr "地址是连接这台已配对电脑的位置。更改地址不会取消
 msgid "The address the Gateway prints when it starts."
 msgstr "Gateway 启动时打印出的地址"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Agent 尚未报告当前上下文用量"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "代理现在问的是别的问题"
@@ -7523,6 +7535,7 @@ msgstr "主题链接"
 msgid "Theme, {0}"
 msgstr "主题，{0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "主题"

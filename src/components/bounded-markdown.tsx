@@ -1,3 +1,4 @@
+import { withAlpha as selectionTint } from '@osuki-dev/ui/theme';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -236,7 +237,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         markdownStyle={linkStyle}
         containerStyle={styles.stretch}
         selectable
-        selectionColor={selectionColor ?? theme.colors.primary}
+        selectionColor={selectionColor ?? selectionTint(theme.colors.primary, 0.22)}
         selectionHandleColor={theme.colors.primary}
         // The native renderer fades appended text/new rows only, and checks
         // the platform's Reduce Motion setting itself. Its progressive filter

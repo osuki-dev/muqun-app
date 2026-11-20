@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "Duyệt thư viện"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Trình duyệt"
 
@@ -1883,6 +1884,10 @@ msgstr "Đã nén ngữ cảnh · thủ công"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "Ngữ cảnh đã dùng"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Cửa sổ ngữ cảnh"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "Tách rời tại {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Chi tiết"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "Loại tệp không được phép"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Tệp"
 
@@ -3213,6 +3220,7 @@ msgstr "Theo điện thoại"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Phông chữ"
 
@@ -4623,7 +4631,6 @@ msgstr "Không nhận công việc"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -4684,10 +4691,6 @@ msgstr "Chưa báo cáo"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Đã tắt"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Chưa đặt"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "Mở máy tính này"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Dữ liệu ứng dụng khác"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "Thiết lập trên máy chủ"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Cài đặt"
 
@@ -7283,6 +7291,10 @@ msgstr "Địa chỉ là nơi kết nối đến máy tính đã ghép nối nà
 msgid "The address the Gateway prints when it starts."
 msgstr "Địa chỉ mà Gateway in ra khi khởi động"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Tác tử chưa báo cáo mức sử dụng ngữ cảnh hiện tại"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "Tác tử giờ đang hỏi điều khác"
@@ -7523,6 +7535,7 @@ msgstr "URL giao diện"
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Chủ đề"

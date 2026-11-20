@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "Открыть галерею"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Браузер"
 
@@ -1883,6 +1884,10 @@ msgstr "Контекст сжат · вручную"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "Контекст занят"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Контекстное окно"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "Отсоединён на {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Подробности"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "Недопустимый тип файла"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Файлы"
 
@@ -3213,6 +3220,7 @@ msgstr "Как на телефоне"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Шрифт"
 
@@ -4623,7 +4631,6 @@ msgstr "Не принимает работу"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Недоступно"
@@ -4684,10 +4691,6 @@ msgstr "Не указано"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "Выключен"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Не задано"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "Открывает этот компьютер"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Параметры {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Другие данные приложения"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "Настройте на хосте"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Настройки"
 
@@ -7283,6 +7291,10 @@ msgstr "Адрес — это то, где доступен этот привя�
 msgid "The address the Gateway prints when it starts."
 msgstr "Адрес, который Gateway выводит при запуске"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "Агент ещё не сообщил, какая часть контекста используется"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "Агент теперь спрашивает о другом"
@@ -7523,6 +7535,7 @@ msgstr "URL темы"
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Темы"

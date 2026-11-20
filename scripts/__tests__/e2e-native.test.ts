@@ -895,7 +895,18 @@ describe('native end-to-end gate', () => {
     expect(() => exactSelectorMatches(button, 'role=button || label="Other"')).toThrow();
   });
   test('deferred private AX captures retry only reads and never establish false absence', async () => {
-    for (const recovers of [false, true]) {
+    for (const [recovers, reason] of [
+      [false, 'XCTest-backed snapshot tiers deferred'],
+      [true, 'XCTest-backed snapshot tiers deferred'],
+      [
+        false,
+        'XCTest-backed snapshot tiers are running with a short recovery probe after recent slow accessibility work on this screen',
+      ],
+      [
+        true,
+        'XCTest-backed snapshot tiers are running with a short recovery probe after recent slow accessibility work on this screen',
+      ],
+    ] as const) {
       const calls: string[][] = [];
       const runner = new NativeRunner(
         suite,
@@ -911,7 +922,8 @@ describe('native end-to-end gate', () => {
                   snapshotQuality: {
                     state: 'sparse',
                     backend: 'private-ax',
-                    reason: 'XCTest-backed snapshot tiers deferred',
+                    reason,
+                    reasonCode: 'budget',
                   },
                 }),
           };

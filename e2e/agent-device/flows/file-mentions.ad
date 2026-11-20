@@ -6,6 +6,7 @@ press "${TARGET}"
 
 # section s3
 fill id="terminal-composer-input" "@"
+wait stable 600 5000
 
 # section s4
 is visible "${TARGET}"
@@ -24,6 +25,7 @@ scroll up 0.2
 
 # section s7
 fill id="terminal-composer-input" "@the"
+wait stable 600 5000
 
 # section s8
 wait stable 400 5000
@@ -63,12 +65,15 @@ press "${TARGET}"
 
 # section s21
 fill id="terminal-composer-input" "mail ellen"
+wait stable 600 5000
 
 # section s22
 fill id="terminal-composer-input" "mail ellen@"
+wait stable 600 5000
 
 # section s23
 fill id="terminal-composer-input" "mail ellen@exa"
+wait stable 600 5000
 
 # section s24
 wait stable 400 5000
@@ -90,6 +95,7 @@ press "${TARGET}"
 
 # section s30
 fill id="terminal-composer-input" "@"
+wait stable 600 5000
 
 # section s31
 wait stable 400 5000

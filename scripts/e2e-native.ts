@@ -1001,7 +1001,8 @@ export class NativeRunner {
       const deferredPrivateAX =
         quality?.backend === 'private-ax' &&
         quality.state === 'sparse' &&
-        /deferred/i.test(quality.reason ?? '');
+        (/deferred/i.test(quality.reason ?? '') ||
+          (quality.reasonCode === 'budget' && /short recovery probe/i.test(quality.reason ?? '')));
       const timedOutPrivateAX =
         quality?.backend === 'private-ax' &&
         quality.state === 'recovered' &&

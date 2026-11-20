@@ -21,6 +21,8 @@ try {
   const hash = createHash('sha256').update('nano-1.0.1;upm=1000;safeZone=1000;');
   hash.update(await readFile(fileURLToPath(import.meta.url)));
   hash.update(await readFile(join(root, 'src/icons/semantic-catalog.json')));
+  const artworkLicense = await readFile(join(sourceDir, 'LICENSE-octicons'), 'utf8');
+  hash.update(artworkLicense);
   const files = (await readdir(sourceDir)).filter((name) => name.endsWith('.svg')).sort();
   for (const file of files) {
     const svg = await readFile(join(sourceDir, file), 'utf8');
@@ -64,7 +66,9 @@ try {
     await readFile(result.glyphmapPath, 'utf8')
   );
   const fontBuffer = await readFile(result.ttfPath);
-  const font = Font.create(fontBuffer, { type: 'ttf' }).get();
+  const generatedFont = Font.create(fontBuffer, { type: 'ttf' });
+  const font = generatedFont.get();
+  font.name.licence = [font.name.licence, artworkLicense].filter(Boolean).join('\n\n');
   for (const [name, [, layers]] of Object.entries(generatedMap.i)) {
     if (layers.length === 0) throw new Error(`Icon has no generated layers: ${name}`);
     for (const [codepoint] of layers) {
@@ -75,7 +79,7 @@ try {
   }
   await mkdir(outputDir, { recursive: true });
   const fontName = `${result.family}.ttf`;
-  await writeFile(join(outputDir, fontName), fontBuffer);
+  await writeFile(join(outputDir, fontName), generatedFont.write({ type: 'ttf', toBuffer: true }));
   await writeFile(join(outputDir, 'muqun.glyphmap.json'), await readFile(result.glyphmapPath));
   await writeFile(
     join(root, 'src/icons/font.generated.ts'),

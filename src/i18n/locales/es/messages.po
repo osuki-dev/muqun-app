@@ -1188,6 +1188,7 @@ msgid "Browse the gallery"
 msgstr "Explorar la galería"
 
 #: src/app/commands.tsx
+#: src/components/settings-storage.tsx
 msgid "Browser"
 msgstr "Navegador"
 
@@ -1883,6 +1884,10 @@ msgstr "Contexto compactado · manual"
 #: src/components/agent-context-sheet.tsx
 msgid "Context used"
 msgstr "Contexto usado"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context window"
+msgstr "Ventana de contexto"
 
 #: src/app/explore.tsx
 #: src/components/launch-intro.tsx
@@ -2772,6 +2777,7 @@ msgstr "Desacoplado en {head}"
 
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/settings-storage.tsx
 msgid "Details"
 msgstr "Detalles"
 
@@ -3124,6 +3130,7 @@ msgid "File type not allowed"
 msgstr "Tipo de archivo no permitido"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Files"
 msgstr "Archivos"
 
@@ -3213,6 +3220,7 @@ msgstr "Siguiendo al teléfono"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-font-sheet.tsx
+#: src/components/settings-storage.tsx
 msgid "Font"
 msgstr "Fuente"
 
@@ -4623,7 +4631,6 @@ msgstr "No acepta trabajo"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-composer.tsx
-#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "No disponible"
@@ -4684,10 +4691,6 @@ msgstr "No indicado"
 #: src/i18n/labels.ts
 msgid "Not running"
 msgstr "No está en marcha"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Not set"
-msgstr "Sin definir"
 
 #: src/components/agent-account-limits-section.tsx
 #: src/components/agent-model-sheet.tsx
@@ -5085,6 +5088,10 @@ msgstr "Abre este ordenador"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Opciones de {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other app data"
+msgstr "Otros datos de la aplicación"
 
 #: src/components/settings-storage.tsx
 msgid "Other cache"
@@ -6445,6 +6452,7 @@ msgstr "Configúralo en el host"
 #: src/components/app-drawer-content.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-storage.tsx
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -7283,6 +7291,10 @@ msgstr "La dirección es el lugar donde se accede a este ordenador vinculado. Ca
 msgid "The address the Gateway prints when it starts."
 msgstr "La dirección que el Gateway muestra al arrancar"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent has not reported current context usage."
+msgstr "El agente aún no ha indicado cuánto contexto está usando"
+
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
 msgstr "Ahora el agente pregunta otra cosa"
@@ -7523,6 +7535,7 @@ msgstr "URL del tema"
 msgid "Theme, {0}"
 msgstr "Tema, {0}"
 
+#: src/components/settings-storage.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Themes"
 msgstr "Temas"
